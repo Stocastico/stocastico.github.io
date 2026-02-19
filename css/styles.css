@@ -994,3 +994,179 @@ h1, h2, h3 {
   .hero-actions { flex-direction: column; align-items: center; }
   .btn { width: 100%; justify-content: center; }
 }
+
+/* ─── 18. Globe (About section) ─────────────────────────── */
+.about-globe {
+  margin-top: clamp(3.5rem, 7vw, 5.5rem);
+  text-align: center;
+}
+
+.globe-header {
+  margin-bottom: 2rem;
+}
+
+.globe-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  background: linear-gradient(135deg, var(--text) 50%, var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.4rem;
+}
+
+.globe-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  letter-spacing: 0.07em;
+}
+
+.globe-scene {
+  position: relative;
+  height: clamp(340px, 58vw, 580px);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 65%, rgba(10,22,60,0.95) 0%, var(--bg) 68%);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 0 80px rgba(108,99,255,0.04), 0 30px 80px rgba(0,0,0,0.5);
+}
+
+#globe-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  display: block;
+}
+#globe-canvas:active { cursor: grabbing; }
+
+/* Tooltip */
+.globe-tooltip {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  background: rgba(8, 12, 20, 0.88);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid var(--border-hov);
+  border-radius: var(--r-md);
+  padding: 0.65rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  opacity: 0;
+  transition: opacity 150ms ease, transform 150ms ease;
+  transform: translateY(5px);
+  min-width: 165px;
+  max-width: 230px;
+  z-index: 10;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.globe-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.gt-type {
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gt-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.gt-info {
+  font-size: 0.77rem;
+  color: var(--text-muted);
+}
+
+/* Legend */
+.globe-legend {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.5rem;
+  display: flex;
+  gap: 1.25rem;
+  background: rgba(8, 12, 20, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.45em 1.15em;
+  z-index: 5;
+}
+.gl-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.gl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gl-dot.gl-home  { background: var(--accent2); box-shadow: 0 0 7px var(--accent2); }
+.gl-dot.gl-visit { background: #ffd060;         box-shadow: 0 0 7px rgba(255,208,96,0.9); }
+
+/* ─── 19. Enhanced Blog Cards ────────────────────────────── */
+/* Override base card to remove top-padding — header accent bar takes its place */
+.blog-card {
+  padding: 0;
+  gap: 0;
+}
+
+.blog-card-accent {
+  height: 4px;
+  width: 100%;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  flex-shrink: 0;
+}
+.blog-accent-research    { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.blog-accent-engineering { background: linear-gradient(90deg, #ff6b6b, #ffd060); }
+.blog-accent-ai          { background: linear-gradient(90deg, var(--accent2), #00ff9d); }
+.blog-accent-general     { background: linear-gradient(90deg, var(--text-faint), var(--text-muted)); }
+
+.blog-card-body {
+  padding: 1.4rem 1.5rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.blog-tag {
+  display: inline-block;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(108, 99, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.2em 0.8em;
+  align-self: flex-start;
+}
+
+.blog-card-foot {
+  padding: 0.7rem 1.5rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+@media (max-width: 680px) {
+  .globe-legend {
+    bottom: 0.75rem;
+    right: 50%;
+    transform: translateX(50%);
+  }
+}

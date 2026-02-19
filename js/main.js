@@ -163,7 +163,32 @@ const DATA = {
        url:     "blog/my-post.html" // relative or absolute URL
      }
   */
-  blogPosts: [],
+  blogPosts: [
+    {
+      title:   'Why Multi-user AR Belongs in Every Classroom',
+      date:    '2024-11-20',
+      excerpt: 'After four large-scale pilots and hundreds of students, here is what we learned about designing collaborative XR experiences that genuinely improve learning outcomes.',
+      tag:     'Research',
+      readMin: 7,
+      url:     '#',
+    },
+    {
+      title:   'Vision Transformers in Production: A Battle-Tested Guide',
+      date:    '2024-09-10',
+      excerpt: 'ViT models are powerful, but shipping them has real gotchas. Here is how we brought inference time from 800 ms down to 45 ms with quantisation, smart batching, and memory layout.',
+      tag:     'Engineering',
+      readMin: 9,
+      url:     '#',
+    },
+    {
+      title:   'Multi-modal Speaker Diarisation at Broadcast Scale',
+      date:    '2024-07-18',
+      excerpt: 'Combining audio embeddings, lip-motion detection, and spatial cues to identify six-plus concurrent speakers in a live broadcast feed — and why the hard part is not the model.',
+      tag:     'AI',
+      readMin: 6,
+      url:     '#',
+    },
+  ],
 
 };
 
@@ -379,6 +404,313 @@ class NeuralNetwork {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   GLOBE 3D — interactive world map in the About section
+   ═══════════════════════════════════════════════════════════ */
+
+/* Edit these to update the pins on the globe.
+   lived   → cyan pins  (places you have called home)
+   visited → gold pins  (work trips, conferences, holidays)
+   ---------------------------------------------------------- */
+const GLOBE_LOCATIONS = {
+  lived: [
+    { name: 'Crema, Italy',         lat:  45.36, lon:   9.68, info: 'Home town' },
+    { name: 'San Sebastián, Spain', lat:  43.32, lon:  -1.98, info: 'Current home' },
+  ],
+  visited: [
+    { name: 'Bilbao, Spain',          lat:  43.26, lon:  -2.93, info: 'Vicomtech Foundation' },
+    { name: 'Barcelona, Spain',       lat:  41.38, lon:   2.17, info: 'GRUP MEDIAPRO HQ' },
+    { name: 'Madrid, Spain',          lat:  40.42, lon:  -3.70, info: 'Conferences' },
+    { name: 'Berlin, Germany',        lat:  52.52, lon:  13.40, info: 'Fraunhofer HHI' },
+    { name: 'Amsterdam, Netherlands', lat:  52.37, lon:   4.90, info: 'IBC Show' },
+    { name: 'London, UK',             lat:  51.50, lon:  -0.12, info: 'Research visits' },
+    { name: 'Milan, Italy',           lat:  45.46, lon:   9.19, info: 'Conferences' },
+    { name: 'New York, USA',          lat:  40.71, lon: -74.01, info: 'Research conference' },
+    { name: 'Tokyo, Japan',           lat:  35.68, lon: 139.69, info: 'Research visit' },
+  ],
+};
+
+class Globe3D {
+  constructor(canvasEl) {
+    if (!canvasEl || typeof THREE === 'undefined') return;
+
+    this.canvas    = canvasEl;
+    this.parent    = canvasEl.parentElement;
+    this.tooltip   = document.getElementById('globe-tooltip');
+    this.raycaster = new THREE.Raycaster();
+    this.mouse     = new THREE.Vector2(-9, -9);   /* off-screen initially */
+    this._mpos     = { x: 0, y: 0 };
+    this.pulseRings   = [];
+    this.markerMeshes = [];
+    this.isDragging   = false;
+    this.prevMouse    = { x: 0, y: 0 };
+    this.rotX         =  0.25;
+    this.rotY         = -1.6;   /* initial view — Europe faces camera */
+    this.velX         = 0;
+    this.velY         = 0;
+
+    this._resize();
+    this._initScene();
+    this._buildGlobe();
+    this._buildAtmosphere();
+    this._buildGrid();
+    this._buildMarkers();
+    this._buildArcs();
+    this._bindEvents();
+    this._animate();
+  }
+
+  _resize() {
+    this.w = this.parent.clientWidth  || 800;
+    this.h = this.parent.clientHeight || 500;
+  }
+
+  _initScene() {
+    this.scene  = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(42, this.w / this.h, 0.01, 100);
+    this.camera.position.z = 2.75;
+
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.renderer.setSize(this.w, this.h);
+    this.renderer.setClearColor(0x000000, 0);
+
+    /* Lights */
+    this.scene.add(new THREE.AmbientLight(0x334466, 1.2));
+    const sun = new THREE.DirectionalLight(0xaabbff, 1.4);
+    sun.position.set(4, 3, 3);
+    this.scene.add(sun);
+    const rim = new THREE.PointLight(0x00d4ff, 0.6, 12);
+    rim.position.set(-4, 1, -2);
+    this.scene.add(rim);
+
+    /* Pivot — everything rotatable lives here */
+    this.pivot = new THREE.Group();
+    this.pivot.rotation.x = this.rotX;
+    this.pivot.rotation.y = this.rotY;
+    this.scene.add(this.pivot);
+  }
+
+  _buildGlobe() {
+    const mat = new THREE.MeshPhongMaterial({
+      color:     0x0a1628,
+      emissive:  0x050c1a,
+      specular:  0x1a3366,
+      shininess: 22,
+    });
+    this.pivot.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat));
+  }
+
+  _buildAtmosphere() {
+    /* Thin surface luminance */
+    this.pivot.add(new THREE.Mesh(
+      new THREE.SphereGeometry(1.007, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0x1a3a7a, transparent: true, opacity: 0.1, depthWrite: false }),
+    ));
+    /* Atmosphere shell (rendered from inside the shell → BackSide) */
+    this.pivot.add(new THREE.Mesh(
+      new THREE.SphereGeometry(1.14, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0x3355bb, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }),
+    ));
+    /* Wide outer halo — fixed in scene space so it doesn't rotate */
+    this.scene.add(new THREE.Mesh(
+      new THREE.SphereGeometry(1.24, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.028, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+    ));
+  }
+
+  _buildGrid() {
+    const mat = (op) => new THREE.LineBasicMaterial({ color: 0x1e3d7a, transparent: true, opacity: op });
+    const R   = 1.002;
+    /* Latitude circles */
+    for (let lat = -80; lat <= 80; lat += 20) {
+      const phi = (90 - lat) * Math.PI / 180;
+      const r   = R * Math.sin(phi);
+      const y   = R * Math.cos(phi);
+      const pts = [];
+      for (let i = 0; i <= 64; i++) {
+        const t = (i / 64) * Math.PI * 2;
+        pts.push(new THREE.Vector3(r * Math.cos(t), y, r * Math.sin(t)));
+      }
+      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.45)));
+    }
+    /* Longitude meridians */
+    for (let lon = 0; lon < 360; lon += 20) {
+      const theta = lon * Math.PI / 180;
+      const pts   = [];
+      for (let i = 0; i <= 64; i++) {
+        const phi = (i / 64) * Math.PI;
+        pts.push(new THREE.Vector3(
+          R * Math.sin(phi) * Math.cos(theta),
+          R * Math.cos(phi),
+          R * Math.sin(phi) * Math.sin(theta),
+        ));
+      }
+      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.45)));
+    }
+  }
+
+  /* Latitude/longitude → Three.js Vector3 on a sphere of given radius */
+  _ll(lat, lon, r) {
+    const phi   = (90 - lat) * Math.PI / 180;
+    const theta = (lon + 180) * Math.PI / 180;
+    return new THREE.Vector3(
+      -r * Math.sin(phi) * Math.cos(theta),
+       r * Math.cos(phi),
+       r * Math.sin(phi) * Math.sin(theta),
+    );
+  }
+
+  _buildMarkers() {
+    const CYAN = new THREE.Color(0x00d4ff);
+    const GOLD = new THREE.Color(0xffd060);
+
+    const addPin = (loc, color, type) => {
+      const pos = this._ll(loc.lat, loc.lon, 1.008);
+      const nrm = pos.clone().normalize();
+
+      /* Glow dot */
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.014, 10, 10),
+        new THREE.MeshBasicMaterial({ color }),
+      );
+      dot.position.copy(pos);
+      dot.userData = { name: loc.name, info: loc.info, type };
+      this.pivot.add(dot);
+      this.markerMeshes.push(dot);
+
+      /* Static halo ring */
+      const halo = new THREE.Mesh(
+        new THREE.RingGeometry(0.020, 0.026, 40),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
+      );
+      halo.position.copy(pos);
+      halo.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
+      this.pivot.add(halo);
+
+      /* Pulsing ring (animated) */
+      const pulse = new THREE.Mesh(
+        new THREE.RingGeometry(0.013, 0.018, 40),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+      );
+      pulse.position.copy(pos);
+      pulse.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
+      pulse.userData = { phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.35 };
+      this.pivot.add(pulse);
+      this.pulseRings.push(pulse);
+    };
+
+    GLOBE_LOCATIONS.lived.forEach(l   => addPin(l, CYAN, 'lived'));
+    GLOBE_LOCATIONS.visited.forEach(l => addPin(l, GOLD, 'visited'));
+  }
+
+  _buildArcs() {
+    /* Draw great-circle arcs connecting lived ↔ nearby visited locations */
+    const mat = new THREE.LineBasicMaterial({
+      color: 0x6c63ff, transparent: true, opacity: 0.18,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    GLOBE_LOCATIONS.lived.forEach(from => {
+      GLOBE_LOCATIONS.visited.forEach(to => {
+        const deg = Math.hypot(from.lat - to.lat, from.lon - to.lon);
+        if (deg > 28) return;   /* skip very long-haul arcs */
+        const s   = this._ll(from.lat, from.lon, 1.005);
+        const e   = this._ll(to.lat,   to.lon,   1.005);
+        const mid = s.clone().add(e).normalize().multiplyScalar(1.28);
+        const pts = new THREE.QuadraticBezierCurve3(s, mid, e).getPoints(60);
+        this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat.clone()));
+      });
+    });
+  }
+
+  _bindEvents() {
+    const cv = this.canvas;
+
+    const start = (x, y) => {
+      this.isDragging = true;
+      this.prevMouse  = { x, y };
+      this.velX = this.velY = 0;
+    };
+    const move = (x, y) => {
+      if (this.isDragging) {
+        const dx = x - this.prevMouse.x;
+        const dy = y - this.prevMouse.y;
+        this.velX  = dy * 0.005;
+        this.velY  = dx * 0.005;
+        this.rotX  = Math.max(-1.2, Math.min(1.2, this.rotX + dy * 0.005));
+        this.rotY += dx * 0.005;
+        this.prevMouse = { x, y };
+      }
+      const rect  = cv.getBoundingClientRect();
+      this._mpos  = { x: x - rect.left, y: y - rect.top };
+      this.mouse.x = ((x - rect.left) / rect.width)  *  2 - 1;
+      this.mouse.y = ((y - rect.top)  / rect.height) * -2 + 1;
+    };
+    const end = () => { this.isDragging = false; };
+
+    cv.addEventListener('mousedown',  e => start(e.clientX, e.clientY));
+    window.addEventListener('mousemove',  e => move(e.clientX, e.clientY));
+    window.addEventListener('mouseup',    end);
+    cv.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    cv.addEventListener('touchmove',  e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+    cv.addEventListener('touchend',   end);
+
+    window.addEventListener('resize', () => {
+      this._resize();
+      this.camera.aspect = this.w / this.h;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(this.w, this.h);
+    });
+  }
+
+  _animate() {
+    requestAnimationFrame(() => this._animate());
+
+    /* Inertia + auto-spin */
+    if (!this.isDragging) {
+      this.velX *= 0.93;
+      this.velY  = Math.abs(this.velY) < 0.0002 ? 0.0014 : this.velY * 0.93;
+      this.rotX  = Math.max(-1.2, Math.min(1.2, this.rotX + this.velX));
+      this.rotY += this.velY;
+    }
+    this.pivot.rotation.x = this.rotX;
+    this.pivot.rotation.y = this.rotY;
+
+    /* Pulse rings: scale up and fade out */
+    const t = performance.now() * 0.001;
+    this.pulseRings.forEach(ring => {
+      const norm = ((t * ring.userData.speed + ring.userData.phase) % (Math.PI * 2)) / (Math.PI * 2);
+      const s    = 1 + norm * 2.6;
+      ring.scale.set(s, s, 1);
+      ring.material.opacity = (1 - norm) * 0.6;
+    });
+
+    /* Raycasting hover */
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const hits = this.raycaster.intersectObjects(this.markerMeshes);
+    if (hits.length > 0) {
+      const { name, info, type } = hits[0].object.userData;
+      if (this.tooltip) {
+        this.tooltip.querySelector('.gt-type').textContent = type === 'lived' ? '● Home' : '◆ Work & Travel';
+        this.tooltip.querySelector('.gt-type').style.color = type === 'lived' ? '#00d4ff' : '#ffd060';
+        this.tooltip.querySelector('.gt-name').textContent = name;
+        this.tooltip.querySelector('.gt-info').textContent = info;
+        let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
+        if (tx + 220 > this.w) tx = this._mpos.x - 228;
+        if (ty + 90  > this.h) ty = this._mpos.y - 96;
+        if (ty < 4) ty = 4;
+        this.tooltip.style.left = tx + 'px';
+        this.tooltip.style.top  = ty + 'px';
+        this.tooltip.classList.add('visible');
+      }
+    } else if (this.tooltip) {
+      this.tooltip.classList.remove('visible');
+    }
+
+    this.renderer.render(this.scene, this.camera);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    SCROLL-TRIGGERED REVEAL
    ═══════════════════════════════════════════════════════════ */
 function initScrollReveal() {
@@ -540,15 +872,21 @@ function renderBlog() {
   }
 
   grid.innerHTML = DATA.blogPosts.map((post, i) => {
-    const date = new Date(post.date).toLocaleDateString('en-GB', {
-      year: 'numeric', month: 'long', day: 'numeric',
-    });
+    const date    = new Date(post.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+    const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
+    const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
     return `
       <a href="${post.url}" class="blog-card" data-animate data-delay="${i * 80}">
-        <span class="blog-date">${date}</span>
-        <span class="blog-title">${post.title}</span>
-        <span class="blog-excerpt">${post.excerpt}</span>
-        <span class="blog-read">Read →</span>
+        <div class="blog-card-accent blog-accent-${tagSlug}"></div>
+        <div class="blog-card-body">
+          <span class="blog-tag">${post.tag || 'Post'}</span>
+          <span class="blog-title">${post.title}</span>
+          <span class="blog-excerpt">${post.excerpt}</span>
+        </div>
+        <div class="blog-card-foot">
+          <span class="blog-date">${date}</span>
+          <span class="blog-read">${readStr}</span>
+        </div>
       </a>
     `;
   }).join('');
@@ -608,6 +946,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       canvas.style.display = 'none';
     }
+  }
+
+  /* Three.js Globe */
+  const globeCanvas = document.getElementById('globe-canvas');
+  if (globeCanvas && typeof THREE !== 'undefined') {
+    new Globe3D(globeCanvas);
   }
 
 });
