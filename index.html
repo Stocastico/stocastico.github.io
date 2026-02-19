@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <title>Stefano Masneri · Senior AI Engineer</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════ NAVIGATION ═══════════════ -->
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a class="nav-logo" href="#hero" aria-label="Back to top">SM</a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#research">Research</a></li>
+        <li><a href="#publications">Publications</a></li>
+        <li><a href="#skills">Skills</a></li>
+        <li><a href="#blog">Blog</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section id="hero" aria-label="Introduction">
+    <!-- Three.js canvas lives here -->
+    <canvas id="neural-canvas" aria-hidden="true"></canvas>
+
+    <!-- Gradient orbs for extra depth -->
+    <div class="hero-orb orb-1" aria-hidden="true"></div>
+    <div class="hero-orb orb-2" aria-hidden="true"></div>
+
+    <div class="hero-content">
+      <span class="hero-eyebrow">Senior AI Engineer</span>
+      <h1 class="hero-name">
+        Stefano<br />
+        <em>Masneri</em>
+      </h1>
+      <p class="hero-tagline">
+        AI &nbsp;·&nbsp; Machine Learning &nbsp;·&nbsp; Computer Vision &nbsp;·&nbsp; Augmented Reality
+      </p>
+      <p class="hero-location">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        San Sebastián, Spain
+      </p>
+      <div class="hero-actions">
+        <a href="#about" class="btn btn-primary">About Me</a>
+        <a href="#contact" class="btn btn-ghost">Get in Touch</a>
+      </div>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <div class="scroll-hint-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ABOUT ═══════════════ -->
+  <section id="about" class="section" aria-label="About me">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">About</span>
+        <h2 class="section-title">Who I Am</h2>
+      </header>
+
+      <div class="about-grid">
+        <!-- Photo -->
+        <div class="about-photo-col" data-animate data-delay="100">
+          <div class="photo-card">
+            <!--
+              ╔══════════════════════════════╗
+              ║  REPLACE THIS PLACEHOLDER    ║
+              ║  with your photo:            ║
+              ║  <img src="img/photo.jpg"    ║
+              ║       alt="Stefano Masneri"  ║
+              ║       class="photo-img" />   ║
+              ╚══════════════════════════════╝
+            -->
+            <div class="photo-placeholder" role="img" aria-label="Photo placeholder — add your own image">
+              <span class="photo-initials">SM</span>
+              <span class="photo-hint">Add your photo here</span>
+            </div>
+          </div>
+
+          <!-- Quick stats -->
+          <div class="stats-row">
+            <div class="stat-item">
+              <span class="stat-number" data-count="271">0</span><span class="stat-suffix">+</span>
+              <span class="stat-label">Citations</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" data-count="20">0</span><span class="stat-suffix">+</span>
+              <span class="stat-label">Publications</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" data-count="15">0</span><span class="stat-suffix">+</span>
+              <span class="stat-label">Years Exp.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="about-text-col" data-animate data-delay="200">
+          <p class="about-lead">
+            I'm a Senior AI Engineer at <strong>GRUP MEDIAPRO</strong>, passionate about
+            building intelligent systems that bridge cutting-edge research and real-world impact.
+          </p>
+          <p>
+            My work spans <strong>computer vision</strong>, <strong>deep learning</strong>,
+            <strong>augmented reality</strong>, and multi-modal media analysis. I hold a
+            <strong>PhD from the University of the Basque Country (UPV/EHU)</strong>, where I
+            researched collaborative, multi-user augmented reality experiences for education — a
+            field that merges my love for technology with its transformative power in learning.
+          </p>
+          <p>
+            Previously I contributed to research at <strong>Vicomtech Foundation</strong>
+            (Basque Research and Technology Alliance) and the
+            <strong>Fraunhofer Institute for Telecommunications</strong>, working on projects
+            ranging from automated psycholinguistics video annotation to audience engagement
+            measurement and multi-modal speaker diarisation.
+          </p>
+          <p>
+            I'm driven by curiosity, open collaboration, and a belief that AI should serve
+            people — making everyday experiences smarter, more accessible, and more human.
+          </p>
+
+          <!-- Social links -->
+          <div class="social-links" aria-label="Social and academic profiles">
+            <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn" aria-label="LinkedIn profile">
+              <!-- LinkedIn icon -->
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>
+              LinkedIn
+            </a>
+            <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener" class="social-btn" aria-label="Google Scholar profile">
+              <!-- Scholar cap icon -->
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>
+              Google Scholar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ RESEARCH ═══════════════ -->
+  <section id="research" class="section section-alt" aria-label="Research interests">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Research</span>
+        <h2 class="section-title">What I Work On</h2>
+      </header>
+      <!-- Cards injected by JS — see js/main.js → DATA.research -->
+      <div class="research-grid" id="research-grid" role="list"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PUBLICATIONS ═══════════════ -->
+  <section id="publications" class="section" aria-label="Publications">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Publications</span>
+        <h2 class="section-title">Selected Work</h2>
+      </header>
+      <!-- Items injected by JS — see js/main.js → DATA.publications -->
+      <div class="publications-list" id="publications-list" role="list"></div>
+      <div class="publications-cta" data-animate>
+        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en"
+           target="_blank" rel="noopener" class="btn btn-ghost">
+          View all on Google Scholar →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ SKILLS ═══════════════ -->
+  <section id="skills" class="section section-alt" aria-label="Skills">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Skills</span>
+        <h2 class="section-title">Expertise</h2>
+      </header>
+      <!-- Groups injected by JS — see js/main.js → DATA.skills -->
+      <div class="skills-grid" id="skills-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BLOG (extensible placeholder) ═══════════════ -->
+  <!--
+    HOW TO ADD A BLOG POST
+    ────────────────────────
+    Open js/main.js and add an entry to DATA.blogPosts:
+    {
+      title:   "My first post",
+      date:    "2024-12-01",
+      excerpt: "A short summary...",
+      url:     "blog/my-first-post.html"   // or a full URL
+    }
+    The card will appear automatically.
+    When no posts exist the section shows "Coming soon".
+  -->
+  <section id="blog" class="section" aria-label="Blog">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Blog</span>
+        <h2 class="section-title">Thoughts &amp; Writing</h2>
+      </header>
+      <div class="blog-grid" id="blog-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CONTACT ═══════════════ -->
+  <section id="contact" class="section section-alt" aria-label="Contact">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Contact</span>
+        <h2 class="section-title">Get in Touch</h2>
+      </header>
+      <div class="contact-wrap">
+        <p class="contact-lead" data-animate>
+          Whether you want to collaborate on a research project, discuss AI,
+          or simply say hello — I'm always happy to connect.
+        </p>
+        <!-- Cards injected by JS — see js/main.js → DATA.contact -->
+        <div class="contact-grid" id="contact-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="footer-year"></span> Stefano Masneri &nbsp;·&nbsp; Built with care in San Sebastián</p>
+    </div>
+  </footer>
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
