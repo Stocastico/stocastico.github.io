@@ -1116,7 +1116,6 @@ h1, h2, h3 {
   flex-shrink: 0;
 }
 .gl-dot.gl-home   { background: #00d4ff; box-shadow: 0 0 7px #00d4ff; }
-.gl-dot.gl-work   { background: #ffd060; box-shadow: 0 0 7px rgba(255,208,96,0.9); }
 .gl-dot.gl-travel { background: #ff8c42; box-shadow: 0 0 7px rgba(255,140,66,0.9); }
 .gl-dot.gl-region { background: #ff8c42; box-shadow: 0 0 7px rgba(255,140,66,0.9); border-radius: 3px; }
 

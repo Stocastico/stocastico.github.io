@@ -404,17 +404,56 @@ class NeuralNetwork {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   GEOCODING  (OpenStreetMap Nominatim — free, no key needed)
+   Fills lat/lon for any LOCATIONS entry that omits them.
+   Runs once at page load; respects 1-req/sec Nominatim ToS.
+   ═══════════════════════════════════════════════════════════ */
+async function geocodeLocations(locs) {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const API   = 'https://nominatim.openstreetmap.org/search';
+
+  /* Collect every item missing coordinates into a flat list */
+  const pending = [];
+  const collect = (obj) => { if (obj.lat == null || obj.lon == null) pending.push(obj); };
+  (locs.pins    || []).forEach(collect);
+  (locs.regions || []).forEach(collect);
+  (locs.trips   || []).forEach(t => (t.cities || []).forEach(collect));
+
+  if (!pending.length) return;   /* nothing to do — all coords already provided */
+
+  for (let i = 0; i < pending.length; i++) {
+    if (i > 0) await sleep(1100);   /* max 1 req/sec — Nominatim ToS */
+    const item = pending[i];
+    try {
+      const url  = `${API}?q=${encodeURIComponent(item.name)}&format=json&limit=1`;
+      const res  = await fetch(url);
+      const json = await res.json();
+      if (!json.length) throw new Error('no results');
+      item.lat = parseFloat(json[0].lat);
+      item.lon = parseFloat(json[0].lon);
+      console.info(`[Globe] geocoded "${item.name}" → (${item.lat.toFixed(3)}, ${item.lon.toFixed(3)})`);
+    } catch (e) {
+      console.warn(`[Globe] geocoding failed for "${item.name}": ${e.message} — pin skipped`);
+      item._skip = true;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    GLOBE 3D — interactive world map in the About section
    Location data lives in  data/locations.js  (edit that file).
    ═══════════════════════════════════════════════════════════ */
 class Globe3D {
 
-  /* Hex colours for each pin type — must match CSS legend dots */
-  static PIN_COLORS = { lived: 0x00d4ff, work: 0xffd060, travel: 0xff8c42 };
+  /* Two-colour scheme:
+       cyan  (#00d4ff) — lived + work  (places you belong to)
+       coral (#ff8c42) — travel + trips + regions  (places you explored)
+     Visual weight still differentiates lived (large, pulsing) from
+     work (small, static) even though they share a colour. */
+  static PIN_COLORS = { lived: 0x00d4ff, work: 0x00d4ff, travel: 0xff8c42 };
 
-  /* Tooltip labels & colours per marker type */
   static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', region: '◉ Region', trip: '➜ Trip stop' };
-  static TT_COLOR = { lived: '#00d4ff', work: '#ffd060', travel: '#ff8c42', region: '#ff8c42', trip: '#e8edf8' };
+  static TT_COLOR = { lived: '#00d4ff', work: '#00d4ff', travel: '#ff8c42', region: '#ff8c42', trip: '#e8edf8' };
 
   constructor(canvasEl) {
     if (!canvasEl || typeof THREE === 'undefined') return;
@@ -536,7 +575,7 @@ class Globe3D {
 
   /* ── Region discs (islands, countries) ─────────────────── */
   _buildRegions() {
-    (LOCATIONS.regions || []).forEach(reg => {
+    (LOCATIONS.regions || []).filter(reg => !reg._skip).forEach(reg => {
       const color = new THREE.Color(reg.color || '#ff8c42');
       const pos   = this._ll(reg.lat, reg.lon, 1.003);
       /* radius: degrees of arc → 3D chord length on unit sphere */
@@ -574,14 +613,15 @@ class Globe3D {
 
   /* ── Standard pins (lived / work / travel) ──────────────── */
   _buildMarkers() {
-    (LOCATIONS.pins || []).forEach(loc => {
-      const hex   = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
-      const color = new THREE.Color(hex);
-      const pos   = this._ll(loc.lat, loc.lon, 1.008);
+    (LOCATIONS.pins || []).filter(loc => !loc._skip).forEach(loc => {
+      const hex    = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
+      const color  = new THREE.Color(hex);
+      const pos    = this._ll(loc.lat, loc.lon, 1.008);
+      const isHome = (loc.type === 'lived');   /* bigger, pulsing — "I live/lived here" */
 
-      /* Glow dot — the raycaster hit target */
+      /* Dot — lived pins are larger and more prominent */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.014, 10, 10),
+        new THREE.SphereGeometry(isHome ? 0.016 : 0.011, 10, 10),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
@@ -589,33 +629,36 @@ class Globe3D {
       this.pivot.add(dot);
       this.markerMeshes.push(dot);
 
-      /* Static halo */
+      /* Static halo — thicker for lived, thinner for work/travel */
+      const [rIn, rOut, op] = isHome ? [0.022, 0.028, 0.6] : [0.015, 0.019, 0.35];
       const halo = new THREE.Mesh(
-        new THREE.RingGeometry(0.020, 0.026, 40),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
+        new THREE.RingGeometry(rIn, rOut, 40),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }),
       );
       halo.position.copy(pos);
       this._faceOut(halo, pos);
       this.pivot.add(halo);
 
-      /* Animated pulse ring */
-      const pulse = new THREE.Mesh(
-        new THREE.RingGeometry(0.013, 0.018, 40),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
-      );
-      pulse.position.copy(pos);
-      this._faceOut(pulse, pos);
-      pulse.userData = { phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.35 };
-      this.pivot.add(pulse);
-      this.pulseRings.push(pulse);
+      /* Animated pulse ring — only for lived pins */
+      if (isHome) {
+        const pulse = new THREE.Mesh(
+          new THREE.RingGeometry(0.014, 0.019, 40),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+        );
+        pulse.position.copy(pos);
+        this._faceOut(pulse, pos);
+        pulse.userData = { phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.35 };
+        this.pivot.add(pulse);
+        this.pulseRings.push(pulse);
+      }
     });
   }
 
   /* ── Trip paths with animated traveller dot ─────────────── */
   _buildTrips() {
     (LOCATIONS.trips || []).forEach(trip => {
-      const color    = new THREE.Color(trip.color || '#a78bfa');
-      const cities   = trip.cities || [];
+      const color    = new THREE.Color(trip.color || '#ff8c42');   /* coral default */
+      const cities   = (trip.cities || []).filter(c => !c._skip);  /* drop geocoding failures */
       if (cities.length < 2) return;
 
       const curves  = [];
@@ -1015,10 +1058,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* Three.js Globe */
+  /* Three.js Globe — geocode any entries missing lat/lon, then build */
   const globeCanvas = document.getElementById('globe-canvas');
-  if (globeCanvas && typeof THREE !== 'undefined') {
-    new Globe3D(globeCanvas);
+  if (globeCanvas && typeof THREE !== 'undefined' && typeof LOCATIONS !== 'undefined') {
+    geocodeLocations(LOCATIONS).then(() => new Globe3D(globeCanvas));
   }
 
 });

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Globe3D — Test Suite</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #080c14;
+      color: #e8edf8;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; color: #00d4ff; }
+    .subtitle { color: #8893a4; font-size: 0.8rem; margin-bottom: 2rem; }
+    #canvas-wrap {
+      width: 100%;
+      max-width: 680px;
+      height: 340px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+    #results { max-width: 780px; }
+    .suite-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #4d5a70;
+      margin: 1.5rem 0 0.5rem;
+    }
+    .test {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      background: rgba(255,255,255,0.03);
+    }
+    .badge {
+      flex-shrink: 0;
+      font-weight: 700;
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 1px;
+    }
+    .pass .badge { background: #00d4ff22; color: #00d4ff; }
+    .fail .badge { background: #ff4d6d22; color: #ff4d6d; }
+    .skip .badge { background: #ffd06022; color: #ffd060; }
+    .pending .badge { background: #8893a422; color: #8893a4; }
+    .detail { color: #8893a4; font-size: 0.75rem; }
+    #summary {
+      margin-top: 2rem;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      max-width: 780px;
+    }
+    #summary.all-pass { background: #00d4ff11; border: 1px solid #00d4ff44; }
+    #summary.has-fail  { background: #ff4d6d11; border: 1px solid #ff4d6d44; }
+    #status {
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      color: #ffd060;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Globe3D · Test Suite</h1>
+  <p class="subtitle">Exercises geocoding, marker building, pulse rings, trips, and region discs.</p>
+
+  <div id="status">⏳ Loading Three.js…</div>
+
+  <div id="canvas-wrap">
+    <canvas id="test-canvas"></canvas>
+  </div>
+
+  <div id="results"></div>
+  <div id="summary"></div>
+
+  <!-- Three.js (same CDN as main site) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+
+  <!-- Inline LOCATIONS for the test — does NOT load data/locations.js -->
+  <script>
+  /* ════════════════════════════════════════════════════
+     TEST FIXTURE — deliberately includes:
+       • pins WITH lat/lon (should render immediately)
+       • one pin WITHOUT lat/lon (should be geocoded)
+       • one BOGUS name (should fail, _skip=true)
+       • a trip
+       • a region
+     ════════════════════════════════════════════════════ */
+  const LOCATIONS = {
+    pins: [
+      /* lived — 2 pins, should each produce a pulse ring */
+      { type: 'lived', name: 'San Sebastián, Spain', lat: 43.32, lon: -1.98, info: 'Current home' },
+      { type: 'lived', name: 'Crema, Italy',         lat: 45.36, lon:  9.68, info: 'Home town' },
+
+      /* work — 1 pin, no pulse ring */
+      { type: 'work',  name: 'Berlin, Germany',      lat: 52.52, lon: 13.40, info: 'Fraunhofer HHI' },
+
+      /* travel — WITH lat/lon, no geocoding needed */
+      { type: 'travel', name: 'Prague, Czechia',     lat: 50.07, lon: 14.43, info: 'Holiday' },
+
+      /* travel — no lat/lon → SHOULD be geocoded (real city) */
+      { type: 'travel', name: 'Paris, France',                               info: 'Holiday' },
+
+      /* travel — bogus name → geocoding SHOULD fail, _skip=true */
+      { type: 'travel', name: 'XXXXXXBOGUSXXX99999', info: 'Should be skipped' },
+    ],
+    trips: [
+      {
+        name:     'Test Trip',
+        color:    '#c084fc',
+        cycleSec: 20,
+        cities: [
+          { name: 'Tokyo',  lat:  35.68, lon: 139.69 },
+          { name: 'Osaka',  lat:  34.69, lon: 135.50 },
+          { name: 'Tokyo',  lat:  35.68, lon: 139.69 },  /* round trip */
+        ],
+      },
+    ],
+    regions: [
+      { name: 'Tenerife, Spain', lat: 28.29, lon: -16.63, radius: 1.2, color: '#ff8c42', info: 'Holiday' },
+    ],
+  };
+  </script>
+
+  <!-- Copy of geocodeLocations() from js/main.js (standalone, no page dependency) -->
+  <script src="../js/main.js"></script>
+
+  <!-- Test runner -->
+  <script>
+  /* ─── Tiny test harness ─────────────────────────────── */
+  const _tests   = [];
+  let   _globe   = null;
+
+  function test(label, fn) { _tests.push({ label, fn, result: null, detail: '' }); }
+  function pass(t, detail = '') { t.result = 'pass'; t.detail = detail; }
+  function fail(t, detail = '') { t.result = 'fail'; t.detail = detail; }
+  function skip(t, detail = '') { t.result = 'skip'; t.detail = detail; }
+
+  function render() {
+    const out = document.getElementById('results');
+    out.innerHTML = '';
+
+    const groups = {
+      'Environment': _tests.filter(t => t.label.startsWith('[env]')),
+      'Geocoding':   _tests.filter(t => t.label.startsWith('[geo]')),
+      '_ll() math':  _tests.filter(t => t.label.startsWith('[ll]')),
+      'Markers':     _tests.filter(t => t.label.startsWith('[marker]')),
+      'Trips':       _tests.filter(t => t.label.startsWith('[trip]')),
+      'Regions':     _tests.filter(t => t.label.startsWith('[region]')),
+    };
+
+    let total = 0, passed = 0, failed = 0;
+    for (const [group, list] of Object.entries(groups)) {
+      if (!list.length) continue;
+      const h = document.createElement('p');
+      h.className = 'suite-title';
+      h.textContent = group;
+      out.appendChild(h);
+      for (const t of list) {
+        total++;
+        if (t.result === 'pass') passed++;
+        if (t.result === 'fail') failed++;
+        const div = document.createElement('div');
+        const label = t.label.replace(/^\[\w+\]\s*/, '');
+        div.className = `test ${t.result || 'pending'}`;
+        div.innerHTML = `<span class="badge">${(t.result || 'WAIT').toUpperCase()}</span>
+          <span>${label}${t.detail ? `<br><span class="detail">${t.detail}</span>` : ''}</span>`;
+        out.appendChild(div);
+      }
+    }
+
+    const sumEl = document.getElementById('summary');
+    sumEl.className = failed ? 'has-fail' : 'all-pass';
+    sumEl.textContent = `${passed} / ${total} passed${failed ? ` — ${failed} FAILED` : ' — all green ✓'}`;
+  }
+
+  /* ─── Declare tests ─────────────────────────────────── */
+
+  /* Environment */
+  test('[env] THREE.js is loaded',           function(t) {
+    typeof THREE !== 'undefined' ? pass(t, `r${THREE.REVISION}`) : fail(t, 'THREE not found');
+  });
+  test('[env] geocodeLocations() is defined', function(t) {
+    typeof geocodeLocations === 'function' ? pass(t) : fail(t, 'function not found');
+  });
+  test('[env] Globe3D class is defined',     function(t) {
+    typeof Globe3D === 'function' ? pass(t) : fail(t, 'class not found');
+  });
+  test('[env] LOCATIONS fixture has pins, trips, regions', function(t) {
+    const ok = Array.isArray(LOCATIONS.pins) && Array.isArray(LOCATIONS.trips) && Array.isArray(LOCATIONS.regions);
+    ok ? pass(t, `${LOCATIONS.pins.length} pins, ${LOCATIONS.trips.length} trips, ${LOCATIONS.regions.length} regions`) : fail(t);
+  });
+
+  /* Geocoding */
+  test('[geo] Paris, France — lat/lon filled after geocode', function(t) {
+    const pin = LOCATIONS.pins.find(p => p.name === 'Paris, France');
+    if (!pin) return fail(t, 'pin not found in fixture');
+    if (pin._skip) return fail(t, 'pin was skipped instead of geocoded');
+    (typeof pin.lat === 'number' && typeof pin.lon === 'number')
+      ? pass(t, `lat=${pin.lat.toFixed(2)}, lon=${pin.lon.toFixed(2)}`)
+      : fail(t, `lat=${pin.lat}, lon=${pin.lon}`);
+  });
+  test('[geo] BOGUS name — _skip flag is true', function(t) {
+    const pin = LOCATIONS.pins.find(p => p.name === 'XXXXXXBOGUSXXX99999');
+    if (!pin) return fail(t, 'pin not found in fixture');
+    pin._skip === true ? pass(t, '_skip=true as expected') : fail(t, `_skip=${pin._skip}, lat=${pin.lat}, lon=${pin.lon}`);
+  });
+  test('[geo] Pins with lat/lon are not marked _skip', function(t) {
+    const withCoords = LOCATIONS.pins.filter(p => p.lat != null && !p.name.includes('BOGUS'));
+    const skipped = withCoords.filter(p => p._skip);
+    skipped.length === 0
+      ? pass(t, `${withCoords.length} pre-coordinated pins, none skipped`)
+      : fail(t, `${skipped.length} pre-coordinated pin(s) wrongly skipped: ${skipped.map(p=>p.name).join(', ')}`);
+  });
+
+  /* _ll() math */
+  test('[ll] lat=0,lon=0 → Vector3 ≈ (r,0,0)', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    const r = 1; const v = _globe._ll(0, 0, r);
+    const ok = Math.abs(v.x - r) < 1e-6 && Math.abs(v.y) < 1e-6 && Math.abs(v.z) < 1e-6;
+    ok ? pass(t, `(${v.x.toFixed(4)}, ${v.y.toFixed(4)}, ${v.z.toFixed(4)})`) : fail(t, `got (${v.x.toFixed(4)}, ${v.y.toFixed(4)}, ${v.z.toFixed(4)})`);
+  });
+  test('[ll] lat=90,lon=0 → Vector3 ≈ (0,r,0)  (north pole)', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    const r = 1; const v = _globe._ll(90, 0, r);
+    const ok = Math.abs(v.x) < 1e-6 && Math.abs(v.y - r) < 1e-6 && Math.abs(v.z) < 1e-6;
+    ok ? pass(t, `(${v.x.toFixed(4)}, ${v.y.toFixed(4)}, ${v.z.toFixed(4)})`) : fail(t, `got (${v.x.toFixed(4)}, ${v.y.toFixed(4)}, ${v.z.toFixed(4)})`);
+  });
+  test('[ll] lat=0,lon=90 → Vector3 ≈ (0,0,r)', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    const r = 1; const v = _globe._ll(0, 90, r);
+    const ok = Math.abs(v.x) < 1e-6 && Math.abs(v.y) < 1e-6 && Math.abs(v.z - r) < 1e-6;
+    ok ? pass(t, `(${v.x.toFixed(4)}, ${v.y.toFixed(4)}, ${v.z.toFixed(4)})`) : fail(t, `got (${v.x.toFixed(4)}, ${v.y.toFixed(4)}, ${v.z.toFixed(4)})`);
+  });
+
+  /* Markers */
+  test('[marker] Pulse rings — exactly 2 (one per "lived" pin)', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    const n = _globe.pulseRings.length;
+    n === 2 ? pass(t, `${n} pulse rings found`) : fail(t, `expected 2, got ${n}`);
+  });
+  test('[marker] Bogus pin not in markerMeshes', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    const bogus = _globe.markerMeshes.filter(m => m.userData.name === 'XXXXXXBOGUSXXX99999');
+    bogus.length === 0 ? pass(t, 'bogus pin correctly absent from scene') : fail(t, `found ${bogus.length} bogus mesh(es)`);
+  });
+  test('[marker] Non-skipped pins present in markerMeshes', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    /* Expect: 2 lived + 1 work + 1 travel (Prague) + Paris if geocoded = up to 5, minus bogus */
+    const paris = LOCATIONS.pins.find(p => p.name === 'Paris, France');
+    const expectedMin = 4;  /* at minimum the 4 pre-coordinated non-bogus pins */
+    const n = _globe.markerMeshes.length;
+    n >= expectedMin
+      ? pass(t, `${n} marker meshes (Paris geocoded: ${paris && !paris._skip ? 'yes' : 'no'})`)
+      : fail(t, `expected ≥${expectedMin}, got ${n}`);
+  });
+  test('[marker] PIN_COLORS: lived and work both use cyan', function(t) {
+    const ok = Globe3D.PIN_COLORS.lived === 0x00d4ff && Globe3D.PIN_COLORS.work === 0x00d4ff;
+    ok ? pass(t, `lived=0x${Globe3D.PIN_COLORS.lived.toString(16)}, work=0x${Globe3D.PIN_COLORS.work.toString(16)}`)
+       : fail(t, `lived=0x${(Globe3D.PIN_COLORS.lived||0).toString(16)}, work=0x${(Globe3D.PIN_COLORS.work||0).toString(16)}`);
+  });
+  test('[marker] PIN_COLORS: travel uses coral', function(t) {
+    const ok = Globe3D.PIN_COLORS.travel === 0xff8c42;
+    ok ? pass(t, `travel=0x${Globe3D.PIN_COLORS.travel.toString(16)}`)
+       : fail(t, `travel=0x${(Globe3D.PIN_COLORS.travel||0).toString(16)}`);
+  });
+
+  /* Trips */
+  test('[trip] tripAnimations has 1 entry (one test trip)', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    const n = _globe.tripAnimations.length;
+    n === 1 ? pass(t, '1 trip animation registered') : fail(t, `expected 1, got ${n}`);
+  });
+  test('[trip] Trip animation has curves array', function(t) {
+    if (!_globe || !_globe.tripAnimations.length) return skip(t, 'no trip animations');
+    const anim = _globe.tripAnimations[0];
+    Array.isArray(anim.curves) && anim.curves.length > 0
+      ? pass(t, `${anim.curves.length} arc curve(s)`)
+      : fail(t, `curves=${JSON.stringify(anim.curves)}`);
+  });
+  test('[trip] Trip animation has particle (traveller dot)', function(t) {
+    if (!_globe || !_globe.tripAnimations.length) return skip(t, 'no trip animations');
+    const anim = _globe.tripAnimations[0];
+    anim.particle instanceof THREE.Mesh ? pass(t, 'particle mesh found') : fail(t, 'no particle mesh');
+  });
+
+  /* Regions */
+  test('[region] Region disc built for Tenerife', function(t) {
+    if (!_globe) return skip(t, 'globe not built');
+    /* Regions add children to pivot; we look for CircleGeometry meshes at Tenerife position */
+    const tenPos = _globe._ll(28.29, -16.63, 1.003);
+    let found = false;
+    _globe.pivot.children.forEach(child => {
+      if (child.geometry && child.geometry.type === 'CircleGeometry') {
+        const d = child.position.distanceTo(tenPos);
+        if (d < 0.05) found = true;
+      }
+    });
+    found ? pass(t, 'CircleGeometry disc near Tenerife coords') : fail(t, 'no disc near Tenerife coords');
+  });
+
+  /* ─── Run ────────────────────────────────────────────── */
+  async function runTests() {
+    const statusEl = document.getElementById('status');
+
+    /* 1. Env tests (synchronous) */
+    _tests.filter(t => t.label.startsWith('[env]')).forEach(t => t.fn(t));
+    render();
+
+    /* 2. Geocoding (async) */
+    statusEl.textContent = '⏳ Geocoding locations (Nominatim, 1 req/sec)…';
+    try {
+      await geocodeLocations(LOCATIONS);
+      statusEl.textContent = '⏳ Geocoding done — building Globe3D…';
+    } catch (e) {
+      statusEl.textContent = `⚠ geocodeLocations threw: ${e.message}`;
+    }
+
+    /* Geo tests */
+    _tests.filter(t => t.label.startsWith('[geo]')).forEach(t => t.fn(t));
+    render();
+
+    /* 3. Build Globe3D */
+    try {
+      _globe = new Globe3D(document.getElementById('test-canvas'));
+      /* Globe constructor is sync, but animation loop starts immediately */
+      statusEl.textContent = '⏳ Globe built — running assertions…';
+    } catch (e) {
+      statusEl.textContent = `⚠ Globe3D constructor threw: ${e.message}`;
+      console.error(e);
+    }
+
+    /* Allow one rAF so _animate() initialises state */
+    await new Promise(r => requestAnimationFrame(r));
+
+    /* Remaining tests */
+    _tests.filter(t => !t.label.startsWith('[env]') && !t.label.startsWith('[geo]'))
+          .forEach(t => t.fn(t));
+    render();
+
+    const failed = _tests.filter(t => t.result === 'fail').length;
+    statusEl.textContent = failed
+      ? `⚠ ${failed} test(s) FAILED — check details below`
+      : '✓ All tests passed';
+    statusEl.style.color = failed ? '#ff4d6d' : '#00d4ff';
+  }
+
+  /* Start only after THREE is confirmed loaded */
+  if (typeof THREE === 'undefined') {
+    document.getElementById('status').textContent = '✗ THREE.js failed to load — tests aborted';
+  } else {
+    document.getElementById('status').textContent = '⏳ Running environment checks…';
+    runTests();
+  }
+  </script>
+</body>
+</html>
