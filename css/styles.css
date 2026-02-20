@@ -1090,13 +1090,16 @@ h1, h2, h3 {
   bottom: 1.25rem;
   right: 1.5rem;
   display: flex;
-  gap: 1.25rem;
+  gap: 0.9rem;
   background: rgba(8, 12, 20, 0.72);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 0.45em 1.15em;
+  padding: 0.45em 1.1em;
   z-index: 5;
+  flex-wrap: wrap;
+  max-width: calc(100% - 3rem);
+  justify-content: center;
 }
 .gl-item {
   display: flex;
@@ -1112,8 +1115,10 @@ h1, h2, h3 {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.gl-dot.gl-home  { background: var(--accent2); box-shadow: 0 0 7px var(--accent2); }
-.gl-dot.gl-visit { background: #ffd060;         box-shadow: 0 0 7px rgba(255,208,96,0.9); }
+.gl-dot.gl-home   { background: #00d4ff; box-shadow: 0 0 7px #00d4ff; }
+.gl-dot.gl-work   { background: #ffd060; box-shadow: 0 0 7px rgba(255,208,96,0.9); }
+.gl-dot.gl-travel { background: #ff8c42; box-shadow: 0 0 7px rgba(255,140,66,0.9); }
+.gl-dot.gl-region { background: #ff8c42; box-shadow: 0 0 7px rgba(255,140,66,0.9); border-radius: 3px; }
 
 /* ─── 19. Enhanced Blog Cards ────────────────────────────── */
 /* Override base card to remove top-padding — header accent bar takes its place */

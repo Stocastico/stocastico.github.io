@@ -405,59 +405,53 @@ class NeuralNetwork {
 
 /* ═══════════════════════════════════════════════════════════
    GLOBE 3D — interactive world map in the About section
+   Location data lives in  data/locations.js  (edit that file).
    ═══════════════════════════════════════════════════════════ */
-
-/* Edit these to update the pins on the globe.
-   lived   → cyan pins  (places you have called home)
-   visited → gold pins  (work trips, conferences, holidays)
-   ---------------------------------------------------------- */
-const GLOBE_LOCATIONS = {
-  lived: [
-    { name: 'Crema, Italy',         lat:  45.36, lon:   9.68, info: 'Home town' },
-    { name: 'San Sebastián, Spain', lat:  43.32, lon:  -1.98, info: 'Current home' },
-  ],
-  visited: [
-    { name: 'Bilbao, Spain',          lat:  43.26, lon:  -2.93, info: 'Vicomtech Foundation' },
-    { name: 'Barcelona, Spain',       lat:  41.38, lon:   2.17, info: 'GRUP MEDIAPRO HQ' },
-    { name: 'Madrid, Spain',          lat:  40.42, lon:  -3.70, info: 'Conferences' },
-    { name: 'Berlin, Germany',        lat:  52.52, lon:  13.40, info: 'Fraunhofer HHI' },
-    { name: 'Amsterdam, Netherlands', lat:  52.37, lon:   4.90, info: 'IBC Show' },
-    { name: 'London, UK',             lat:  51.50, lon:  -0.12, info: 'Research visits' },
-    { name: 'Milan, Italy',           lat:  45.46, lon:   9.19, info: 'Conferences' },
-    { name: 'New York, USA',          lat:  40.71, lon: -74.01, info: 'Research conference' },
-    { name: 'Tokyo, Japan',           lat:  35.68, lon: 139.69, info: 'Research visit' },
-  ],
-};
-
 class Globe3D {
+
+  /* Hex colours for each pin type — must match CSS legend dots */
+  static PIN_COLORS = { lived: 0x00d4ff, work: 0xffd060, travel: 0xff8c42 };
+
+  /* Tooltip labels & colours per marker type */
+  static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', region: '◉ Region', trip: '➜ Trip stop' };
+  static TT_COLOR = { lived: '#00d4ff', work: '#ffd060', travel: '#ff8c42', region: '#ff8c42', trip: '#e8edf8' };
+
   constructor(canvasEl) {
     if (!canvasEl || typeof THREE === 'undefined') return;
+    if (typeof LOCATIONS === 'undefined') {
+      console.warn('Globe3D: data/locations.js not loaded — globe will not render.');
+      return;
+    }
 
-    this.canvas    = canvasEl;
-    this.parent    = canvasEl.parentElement;
-    this.tooltip   = document.getElementById('globe-tooltip');
-    this.raycaster = new THREE.Raycaster();
-    this.mouse     = new THREE.Vector2(-9, -9);   /* off-screen initially */
-    this._mpos     = { x: 0, y: 0 };
-    this.pulseRings   = [];
-    this.markerMeshes = [];
-    this.isDragging   = false;
-    this.prevMouse    = { x: 0, y: 0 };
-    this.rotX         =  0.25;
-    this.rotY         = -1.6;   /* initial view — Europe faces camera */
-    this.velX         = 0;
-    this.velY         = 0;
+    this.canvas         = canvasEl;
+    this.parent         = canvasEl.parentElement;
+    this.tooltip        = document.getElementById('globe-tooltip');
+    this.raycaster      = new THREE.Raycaster();
+    this.mouse          = new THREE.Vector2(-9, -9);
+    this._mpos          = { x: 0, y: 0 };
+    this.pulseRings     = [];
+    this.markerMeshes   = [];
+    this.tripAnimations = [];
+    this.isDragging     = false;
+    this.prevMouse      = { x: 0, y: 0 };
+    this.rotX           =  0.25;
+    this.rotY           = -1.6;   /* initial view: Europe faces camera */
+    this.velX           = 0;
+    this.velY           = 0;
 
     this._resize();
     this._initScene();
     this._buildGlobe();
     this._buildAtmosphere();
     this._buildGrid();
+    this._buildRegions();   /* discs first so pins sit on top */
     this._buildMarkers();
-    this._buildArcs();
+    this._buildTrips();
     this._bindEvents();
     this._animate();
   }
+
+  /* ── Internals ──────────────────────────────────────────── */
 
   _resize() {
     this.w = this.parent.clientWidth  || 800;
@@ -474,7 +468,6 @@ class Globe3D {
     this.renderer.setSize(this.w, this.h);
     this.renderer.setClearColor(0x000000, 0);
 
-    /* Lights */
     this.scene.add(new THREE.AmbientLight(0x334466, 1.2));
     const sun = new THREE.DirectionalLight(0xaabbff, 1.4);
     sun.position.set(4, 3, 3);
@@ -483,7 +476,6 @@ class Globe3D {
     rim.position.set(-4, 1, -2);
     this.scene.add(rim);
 
-    /* Pivot — everything rotatable lives here */
     this.pivot = new THREE.Group();
     this.pivot.rotation.x = this.rotX;
     this.pivot.rotation.y = this.rotY;
@@ -491,27 +483,24 @@ class Globe3D {
   }
 
   _buildGlobe() {
-    const mat = new THREE.MeshPhongMaterial({
-      color:     0x0a1628,
-      emissive:  0x050c1a,
-      specular:  0x1a3366,
-      shininess: 22,
-    });
-    this.pivot.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat));
+    this.pivot.add(new THREE.Mesh(
+      new THREE.SphereGeometry(1, 64, 64),
+      new THREE.MeshPhongMaterial({ color: 0x0a1628, emissive: 0x050c1a, specular: 0x1a3366, shininess: 22 }),
+    ));
   }
 
   _buildAtmosphere() {
-    /* Thin surface luminance */
+    /* Inner surface glow */
     this.pivot.add(new THREE.Mesh(
       new THREE.SphereGeometry(1.007, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x1a3a7a, transparent: true, opacity: 0.1, depthWrite: false }),
+      new THREE.MeshBasicMaterial({ color: 0x1a3a7a, transparent: true, opacity: 0.10, depthWrite: false }),
     ));
-    /* Atmosphere shell (rendered from inside the shell → BackSide) */
+    /* Atmosphere shell */
     this.pivot.add(new THREE.Mesh(
       new THREE.SphereGeometry(1.14, 32, 32),
       new THREE.MeshBasicMaterial({ color: 0x3355bb, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }),
     ));
-    /* Wide outer halo — fixed in scene space so it doesn't rotate */
+    /* Wide outer halo — fixed in world space */
     this.scene.add(new THREE.Mesh(
       new THREE.SphereGeometry(1.24, 32, 32),
       new THREE.MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.028, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending }),
@@ -521,139 +510,202 @@ class Globe3D {
   _buildGrid() {
     const mat = (op) => new THREE.LineBasicMaterial({ color: 0x1e3d7a, transparent: true, opacity: op });
     const R   = 1.002;
-    /* Latitude circles */
     for (let lat = -80; lat <= 80; lat += 20) {
       const phi = (90 - lat) * Math.PI / 180;
-      const r   = R * Math.sin(phi);
-      const y   = R * Math.cos(phi);
-      const pts = [];
-      for (let i = 0; i <= 64; i++) {
-        const t = (i / 64) * Math.PI * 2;
-        pts.push(new THREE.Vector3(r * Math.cos(t), y, r * Math.sin(t)));
-      }
+      const r = R * Math.sin(phi), y = R * Math.cos(phi), pts = [];
+      for (let i = 0; i <= 64; i++) { const t = (i / 64) * Math.PI * 2; pts.push(new THREE.Vector3(r * Math.cos(t), y, r * Math.sin(t))); }
       this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.45)));
     }
-    /* Longitude meridians */
     for (let lon = 0; lon < 360; lon += 20) {
-      const theta = lon * Math.PI / 180;
-      const pts   = [];
-      for (let i = 0; i <= 64; i++) {
-        const phi = (i / 64) * Math.PI;
-        pts.push(new THREE.Vector3(
-          R * Math.sin(phi) * Math.cos(theta),
-          R * Math.cos(phi),
-          R * Math.sin(phi) * Math.sin(theta),
-        ));
-      }
+      const theta = lon * Math.PI / 180, pts = [];
+      for (let i = 0; i <= 64; i++) { const p = (i / 64) * Math.PI; pts.push(new THREE.Vector3(R * Math.sin(p) * Math.cos(theta), R * Math.cos(p), R * Math.sin(p) * Math.sin(theta))); }
       this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.45)));
     }
   }
 
-  /* Latitude/longitude → Three.js Vector3 on a sphere of given radius */
+  /* Lat/lon → THREE.Vector3 on a sphere of radius r */
   _ll(lat, lon, r) {
-    const phi   = (90 - lat) * Math.PI / 180;
-    const theta = (lon + 180) * Math.PI / 180;
-    return new THREE.Vector3(
-      -r * Math.sin(phi) * Math.cos(theta),
-       r * Math.cos(phi),
-       r * Math.sin(phi) * Math.sin(theta),
-    );
+    const phi = (90 - lat) * Math.PI / 180, theta = (lon + 180) * Math.PI / 180;
+    return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
   }
 
+  /* Orient a flat mesh (CircleGeometry / RingGeometry) to lie on the sphere surface */
+  _faceOut(mesh, pos) {
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
+  }
+
+  /* ── Region discs (islands, countries) ─────────────────── */
+  _buildRegions() {
+    (LOCATIONS.regions || []).forEach(reg => {
+      const color = new THREE.Color(reg.color || '#ff8c42');
+      const pos   = this._ll(reg.lat, reg.lon, 1.003);
+      /* radius: degrees of arc → 3D chord length on unit sphere */
+      const R     = Math.sin((reg.radius * Math.PI) / 180);
+
+      /* Filled translucent disc */
+      const disc = new THREE.Mesh(
+        new THREE.CircleGeometry(R, 48),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+      );
+      disc.position.copy(pos);
+      this._faceOut(disc, pos);
+      this.pivot.add(disc);
+
+      /* Crisp outline ring */
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(R * 0.88, R, 48),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
+      );
+      ring.position.copy(pos);
+      this._faceOut(ring, pos);
+      this.pivot.add(ring);
+
+      /* Tiny centre dot — holds tooltip userData */
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.008, 8, 8),
+        new THREE.MeshBasicMaterial({ color }),
+      );
+      dot.position.copy(pos);
+      dot.userData = { name: reg.name, info: reg.info || 'Region', type: 'region' };
+      this.pivot.add(dot);
+      this.markerMeshes.push(dot);
+    });
+  }
+
+  /* ── Standard pins (lived / work / travel) ──────────────── */
   _buildMarkers() {
-    const CYAN = new THREE.Color(0x00d4ff);
-    const GOLD = new THREE.Color(0xffd060);
+    (LOCATIONS.pins || []).forEach(loc => {
+      const hex   = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
+      const color = new THREE.Color(hex);
+      const pos   = this._ll(loc.lat, loc.lon, 1.008);
 
-    const addPin = (loc, color, type) => {
-      const pos = this._ll(loc.lat, loc.lon, 1.008);
-      const nrm = pos.clone().normalize();
-
-      /* Glow dot */
+      /* Glow dot — the raycaster hit target */
       const dot = new THREE.Mesh(
         new THREE.SphereGeometry(0.014, 10, 10),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
-      dot.userData = { name: loc.name, info: loc.info, type };
+      dot.userData = { name: loc.name, info: loc.info, type: loc.type };
       this.pivot.add(dot);
       this.markerMeshes.push(dot);
 
-      /* Static halo ring */
+      /* Static halo */
       const halo = new THREE.Mesh(
         new THREE.RingGeometry(0.020, 0.026, 40),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
       );
       halo.position.copy(pos);
-      halo.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
+      this._faceOut(halo, pos);
       this.pivot.add(halo);
 
-      /* Pulsing ring (animated) */
+      /* Animated pulse ring */
       const pulse = new THREE.Mesh(
         new THREE.RingGeometry(0.013, 0.018, 40),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
       );
       pulse.position.copy(pos);
-      pulse.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
+      this._faceOut(pulse, pos);
       pulse.userData = { phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.35 };
       this.pivot.add(pulse);
       this.pulseRings.push(pulse);
-    };
-
-    GLOBE_LOCATIONS.lived.forEach(l   => addPin(l, CYAN, 'lived'));
-    GLOBE_LOCATIONS.visited.forEach(l => addPin(l, GOLD, 'visited'));
+    });
   }
 
-  _buildArcs() {
-    /* Draw great-circle arcs connecting lived ↔ nearby visited locations */
-    const mat = new THREE.LineBasicMaterial({
-      color: 0x6c63ff, transparent: true, opacity: 0.18,
-      blending: THREE.AdditiveBlending, depthWrite: false,
-    });
-    GLOBE_LOCATIONS.lived.forEach(from => {
-      GLOBE_LOCATIONS.visited.forEach(to => {
-        const deg = Math.hypot(from.lat - to.lat, from.lon - to.lon);
-        if (deg > 28) return;   /* skip very long-haul arcs */
-        const s   = this._ll(from.lat, from.lon, 1.005);
-        const e   = this._ll(to.lat,   to.lon,   1.005);
-        const mid = s.clone().add(e).normalize().multiplyScalar(1.28);
-        const pts = new THREE.QuadraticBezierCurve3(s, mid, e).getPoints(60);
-        this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat.clone()));
+  /* ── Trip paths with animated traveller dot ─────────────── */
+  _buildTrips() {
+    (LOCATIONS.trips || []).forEach(trip => {
+      const color    = new THREE.Color(trip.color || '#a78bfa');
+      const cities   = trip.cities || [];
+      if (cities.length < 2) return;
+
+      const curves  = [];
+      const segLens = [];
+      let   total   = 0;
+
+      for (let i = 0; i < cities.length - 1; i++) {
+        const s   = this._ll(cities[i].lat,     cities[i].lon,     1.006);
+        const e   = this._ll(cities[i + 1].lat, cities[i + 1].lon, 1.006);
+        /* Raise the midpoint above the surface for a visible arc */
+        const mid = s.clone().add(e).normalize().multiplyScalar(1.30);
+        const curve = new THREE.QuadraticBezierCurve3(s, mid, e);
+        curves.push(curve);
+        const len = curve.getLength();
+        segLens.push(len);
+        total += len;
+
+        const pts = curve.getPoints(64);
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+
+        /* Soft outer glow line */
+        this.pivot.add(new THREE.Line(geo,
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }),
+        ));
+        /* Bright core line */
+        this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false }),
+        ));
+      }
+
+      /* City stop dots along the route */
+      const seen = new Set();
+      cities.forEach(city => {
+        const key = `${city.lat},${city.lon}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const cpos = this._ll(city.lat, city.lon, 1.010);
+        const cdot = new THREE.Mesh(
+          new THREE.SphereGeometry(0.010, 8, 8),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 }),
+        );
+        cdot.position.copy(cpos);
+        cdot.userData = { name: city.name, info: trip.name, type: 'trip' };
+        this.pivot.add(cdot);
+        this.markerMeshes.push(cdot);
+      });
+
+      /* Animated traveller dot */
+      const traveller = new THREE.Mesh(
+        new THREE.SphereGeometry(0.012, 10, 10),
+        new THREE.MeshBasicMaterial({ color, transparent: true, blending: THREE.AdditiveBlending }),
+      );
+      this.pivot.add(traveller);
+
+      this.tripAnimations.push({
+        curves,
+        segLens,
+        total,
+        particle:  traveller,
+        cycleSec:  trip.cycleSec || 28,
+        offset:    Math.random(),          /* random start so trips don't all sync */
       });
     });
   }
 
+  /* ── Events ─────────────────────────────────────────────── */
   _bindEvents() {
-    const cv = this.canvas;
-
-    const start = (x, y) => {
-      this.isDragging = true;
-      this.prevMouse  = { x, y };
-      this.velX = this.velY = 0;
-    };
-    const move = (x, y) => {
+    const cv    = this.canvas;
+    const start = (x, y) => { this.isDragging = true; this.prevMouse = { x, y }; this.velX = this.velY = 0; };
+    const move  = (x, y) => {
       if (this.isDragging) {
-        const dx = x - this.prevMouse.x;
-        const dy = y - this.prevMouse.y;
-        this.velX  = dy * 0.005;
-        this.velY  = dx * 0.005;
+        const dx = x - this.prevMouse.x, dy = y - this.prevMouse.y;
+        this.velX  = dy * 0.005; this.velY = dx * 0.005;
         this.rotX  = Math.max(-1.2, Math.min(1.2, this.rotX + dy * 0.005));
         this.rotY += dx * 0.005;
         this.prevMouse = { x, y };
       }
-      const rect  = cv.getBoundingClientRect();
-      this._mpos  = { x: x - rect.left, y: y - rect.top };
+      const rect   = cv.getBoundingClientRect();
+      this._mpos   = { x: x - rect.left, y: y - rect.top };
       this.mouse.x = ((x - rect.left) / rect.width)  *  2 - 1;
       this.mouse.y = ((y - rect.top)  / rect.height) * -2 + 1;
     };
     const end = () => { this.isDragging = false; };
 
-    cv.addEventListener('mousedown',  e => start(e.clientX, e.clientY));
-    window.addEventListener('mousemove',  e => move(e.clientX, e.clientY));
-    window.addEventListener('mouseup',    end);
-    cv.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    cv.addEventListener('touchmove',  e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-    cv.addEventListener('touchend',   end);
-
+    cv.addEventListener('mousedown',     e => start(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+    window.addEventListener('mouseup',   end);
+    cv.addEventListener('touchstart',    e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    cv.addEventListener('touchmove',     e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+    cv.addEventListener('touchend',      end);
     window.addEventListener('resize', () => {
       this._resize();
       this.camera.aspect = this.w / this.h;
@@ -662,10 +714,13 @@ class Globe3D {
     });
   }
 
+  /* ── Render loop ────────────────────────────────────────── */
   _animate() {
     requestAnimationFrame(() => this._animate());
 
-    /* Inertia + auto-spin */
+    const t = performance.now() * 0.001;   /* seconds */
+
+    /* Globe rotation — inertia + gentle auto-spin */
     if (!this.isDragging) {
       this.velX *= 0.93;
       this.velY  = Math.abs(this.velY) < 0.0002 ? 0.0014 : this.velY * 0.93;
@@ -675,23 +730,35 @@ class Globe3D {
     this.pivot.rotation.x = this.rotX;
     this.pivot.rotation.y = this.rotY;
 
-    /* Pulse rings: scale up and fade out */
-    const t = performance.now() * 0.001;
+    /* Pulse rings on standard pins */
     this.pulseRings.forEach(ring => {
       const norm = ((t * ring.userData.speed + ring.userData.phase) % (Math.PI * 2)) / (Math.PI * 2);
-      const s    = 1 + norm * 2.6;
-      ring.scale.set(s, s, 1);
+      ring.scale.set(1 + norm * 2.6, 1 + norm * 2.6, 1);
       ring.material.opacity = (1 - norm) * 0.6;
     });
 
-    /* Raycasting hover */
+    /* Animated trip travellers — time-based, constant apparent speed */
+    this.tripAnimations.forEach(anim => {
+      const globalT = ((t / anim.cycleSec) + anim.offset) % 1;
+      let remaining = globalT * anim.total;
+      let ci = anim.segLens.length - 1, localT = 1;
+      for (let i = 0; i < anim.segLens.length; i++) {
+        if (remaining <= anim.segLens[i] + 1e-6) { ci = i; localT = remaining / Math.max(anim.segLens[i], 1e-6); break; }
+        remaining -= anim.segLens[i];
+      }
+      anim.particle.position.copy(anim.curves[ci].getPoint(Math.min(localT, 1)));
+      /* Gentle brightness pulse so the traveller "breathes" */
+      anim.particle.material.opacity = 0.65 + 0.35 * Math.sin(t * 4 + anim.offset * 20);
+    });
+
+    /* Hover raycasting */
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const hits = this.raycaster.intersectObjects(this.markerMeshes);
     if (hits.length > 0) {
       const { name, info, type } = hits[0].object.userData;
       if (this.tooltip) {
-        this.tooltip.querySelector('.gt-type').textContent = type === 'lived' ? '● Home' : '◆ Work & Travel';
-        this.tooltip.querySelector('.gt-type').style.color = type === 'lived' ? '#00d4ff' : '#ffd060';
+        this.tooltip.querySelector('.gt-type').textContent = Globe3D.TT_LABEL[type] || type;
+        this.tooltip.querySelector('.gt-type').style.color = Globe3D.TT_COLOR[type] || '#e8edf8';
         this.tooltip.querySelector('.gt-name').textContent = name;
         this.tooltip.querySelector('.gt-info').textContent = info;
         let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
