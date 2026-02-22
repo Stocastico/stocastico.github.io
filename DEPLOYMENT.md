@@ -39,7 +39,7 @@ Best for: open-source portfolio, zero cost, automatic HTTPS.
 
 ```bash
 # 1. Add a CNAME file to the repo root
-echo "www.stefanomasneri.com" > CNAME
+echo "www.stefano.com" > CNAME
 
 # 2. Set up a CNAME record in your DNS provider:
 #    www  →  <your-username>.github.io
@@ -124,10 +124,12 @@ sudo certbot --nginx -d stefanomasneri.com -d www.stefanomasneri.com
 ## Customising Your Email
 
 In `js/main.js`, find the `DATA.contact` array and replace:
+
 ```js
 value: 'your.email@example.com',
 href:  'mailto:your.email@example.com',
 ```
+
 with your actual email address.
 
 ---
