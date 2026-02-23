@@ -1284,6 +1284,16 @@ if (typeof module !== 'undefined' && module.exports) {
     formatIsoDate,
     geocodeLocations,
     Globe3D,
+    renderPublications,
+    renderBlog,
+    setFooterYear,
+    initNavbar,
+    initMobileMenu,
+    initScrollReveal,
+    initCounters,
+    animateCounter,
+    NeuralNetwork,
+    HeroNameShader,
   };
 }
 
