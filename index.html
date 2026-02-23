@@ -45,8 +45,19 @@
     <div class="hero-content">
       <span class="hero-eyebrow">Senior AI Engineer</span>
       <h1 class="hero-name">
-        Stefano<br />
-        <em>Masneri</em>
+        <span
+          id="hero-name-water"
+          class="hero-name-water"
+          data-line1="Stefano"
+          data-line2="Masneri"
+          aria-label="Stefano Masneri"
+        >
+          <span class="hero-name-fallback" aria-hidden="true">
+            Stefano<br />
+            <em>Masneri</em>
+          </span>
+          <canvas id="hero-name-canvas" aria-hidden="true"></canvas>
+        </span>
       </h1>
       <p class="hero-tagline">
         AI &nbsp;·&nbsp; Machine Learning &nbsp;·&nbsp; Computer Vision &nbsp;·&nbsp; Augmented Reality

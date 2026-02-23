@@ -404,6 +404,221 @@ class NeuralNetwork {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   HERO NAME WATER SHADER
+   Click/tap to create ripples; idle ripples spawn automatically.
+   ═══════════════════════════════════════════════════════════ */
+class HeroNameWaterEffect {
+  static MAX_RIPPLES = 8;
+
+  constructor(container, canvas) {
+    if (!container || !canvas || typeof THREE === 'undefined') return;
+    this.container   = container;
+    this.canvas      = canvas;
+    this.line1       = container.dataset.line1 || 'Stefano';
+    this.line2       = container.dataset.line2 || 'Masneri';
+    this.rippleIndex = 0;
+    this.frameId     = null;
+    this.timer       = null;
+    this.pixelRatio  = Math.min(window.devicePixelRatio || 1, 2);
+    this.waterlineTop = 0.56;
+
+    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    this.renderer.setPixelRatio(this.pixelRatio);
+    this.scene    = new THREE.Scene();
+    this.camera   = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    this.sourceCanvas = document.createElement('canvas');
+    this.sourceCtx    = this.sourceCanvas.getContext('2d');
+    this.textTexture  = new THREE.CanvasTexture(this.sourceCanvas);
+    this.textTexture.minFilter = THREE.LinearFilter;
+    this.textTexture.magFilter = THREE.LinearFilter;
+    this.textTexture.generateMipmaps = false;
+
+    this.uniforms = {
+      uTex:      { value: this.textTexture },
+      uTime:     { value: 0 },
+      uRipples:  { value: Array.from({ length: HeroNameWaterEffect.MAX_RIPPLES }, () => new THREE.Vector3(-4, -4, -4)) },
+      uStrength: { value: 0.018 },
+      uWaterline:{ value: 1 - this.waterlineTop },
+    };
+
+    this.material = new THREE.ShaderMaterial({
+      transparent: true,
+      uniforms: this.uniforms,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = vec4(position.xy, 0.0, 1.0);
+        }
+      `,
+      fragmentShader: `
+        precision mediump float;
+        uniform sampler2D uTex;
+        uniform float uTime;
+        uniform vec3 uRipples[${HeroNameWaterEffect.MAX_RIPPLES}];
+        uniform float uStrength;
+        uniform float uWaterline;
+        varying vec2 vUv;
+
+        void main() {
+          float displacement = 0.0;
+          float highlights = 0.0;
+          float below = step(vUv.y, uWaterline);
+
+          for (int i = 0; i < ${HeroNameWaterEffect.MAX_RIPPLES}; i++) {
+            vec3 r = uRipples[i];
+            float age = uTime - r.z;
+            if (age <= 0.0 || age > 3.5) continue;
+
+            vec2 d = vUv - r.xy;
+            float dist = length(d) + 0.0001;
+            float band = sin(dist * 56.0 - age * 11.0);
+            float envelope = exp(-7.8 * dist) * exp(-1.2 * age);
+
+            displacement += band * envelope;
+            highlights += smoothstep(0.98, 1.0, band) * envelope;
+          }
+
+          float shimmer = sin(vUv.x * 42.0 + uTime * 1.8) * 0.0013;
+          vec2 uv = vUv;
+          uv.x += (displacement * 0.04) * below;
+          uv.y += (displacement * uStrength + shimmer) * below;
+
+          vec4 color = texture2D(uTex, uv);
+          color.rgb += highlights * 0.26 * below;
+
+          float lineGlow = smoothstep(uWaterline - 0.02, uWaterline + 0.002, vUv.y) * 0.09;
+          color.rgb += vec3(0.08, 0.18, 0.26) * lineGlow;
+          gl_FragColor = color;
+        }
+      `,
+    });
+
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
+    this.scene.add(this.mesh);
+
+    this._resize();
+    this._bind();
+    this._startRandomRipples();
+    this._animate();
+    this.container.classList.add('is-ready');
+  }
+
+  _bind() {
+    this._onResizeBound = () => this._resize();
+    this._onPointerBound = (e) => this._handlePointer(e);
+    window.addEventListener('resize', this._onResizeBound);
+    this.container.addEventListener('pointerdown', this._onPointerBound);
+  }
+
+  _resize() {
+    const w = Math.max(220, this.container.clientWidth || 640);
+    const h = Math.max(180, this.container.clientHeight || 280);
+    this.renderer.setSize(w, h, false);
+
+    this.sourceCanvas.width  = Math.floor(w * this.pixelRatio);
+    this.sourceCanvas.height = Math.floor(h * this.pixelRatio);
+    this._drawNameTexture();
+    this.textTexture.needsUpdate = true;
+  }
+
+  _drawNameTexture() {
+    const ctx = this.sourceCtx;
+    const w   = this.sourceCanvas.width;
+    const h   = this.sourceCanvas.height;
+    const cx  = w * 0.5;
+    const waterline = h * this.waterlineTop;
+    const line1Y = h * 0.24;
+    const line2Y = h * 0.40;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const fs1 = Math.max(54, w * 0.135);
+    const fs2 = Math.max(58, w * 0.155);
+    const topGradient = ctx.createLinearGradient(cx - w * 0.3, line1Y - fs1, cx + w * 0.4, line2Y + fs2);
+    topGradient.addColorStop(0, 'rgba(248, 251, 255, 0.75)');
+    topGradient.addColorStop(0.55, 'rgba(160, 228, 255, 0.72)');
+    topGradient.addColorStop(1, 'rgba(120, 134, 255, 0.70)');
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = topGradient;
+    ctx.shadowColor = 'rgba(0, 212, 255, 0.18)';
+    ctx.shadowBlur = 12 * this.pixelRatio;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, waterline, w, h - waterline);
+    ctx.clip();
+    ctx.translate(0, waterline * 2);
+    ctx.scale(1, -1);
+    ctx.globalAlpha = 0.9;
+    ctx.shadowBlur = 8 * this.pixelRatio;
+    ctx.fillStyle = topGradient;
+    ctx.font = `700 ${fs1}px "Playfair Display", Georgia, serif`;
+    ctx.fillText(this.line1, cx, line1Y);
+    ctx.font = `italic 700 ${fs2}px "Playfair Display", Georgia, serif`;
+    ctx.fillText(this.line2, cx, line2Y);
+    ctx.restore();
+
+    const fade = ctx.createLinearGradient(0, waterline, 0, h);
+    fade.addColorStop(0, 'rgba(255, 255, 255, 0.62)');
+    fade.addColorStop(0.55, 'rgba(255, 255, 255, 0.25)');
+    fade.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'source-over';
+
+    const line = ctx.createLinearGradient(0, waterline - (3 * this.pixelRatio), 0, waterline + (2 * this.pixelRatio));
+    line.addColorStop(0, 'rgba(186, 236, 255, 0)');
+    line.addColorStop(1, 'rgba(186, 236, 255, 0.15)');
+    ctx.fillStyle = line;
+    ctx.fillRect(0, waterline - (3 * this.pixelRatio), w, 8 * this.pixelRatio);
+  }
+
+  _handlePointer(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const u = (e.clientX - rect.left) / rect.width;
+    const v = 1 - ((e.clientY - rect.top) / rect.height);
+    this._spawnRipple(u, v);
+  }
+
+  _spawnRipple(u, v) {
+    const idx = this.rippleIndex % HeroNameWaterEffect.MAX_RIPPLES;
+    this.uniforms.uRipples.value[idx].set(
+      THREE.MathUtils.clamp(u, 0.04, 0.96),
+      THREE.MathUtils.clamp(v, 0.04, 0.96),
+      performance.now() * 0.001
+    );
+    this.rippleIndex++;
+  }
+
+  _startRandomRipples() {
+    this.timer = window.setInterval(() => {
+      const u = 0.12 + Math.random() * 0.76;
+      const v = 0.2 + Math.random() * 0.6;
+      this._spawnRipple(u, v);
+    }, 2600);
+  }
+
+  _animate() {
+    this.frameId = requestAnimationFrame(() => this._animate());
+    this.uniforms.uTime.value = performance.now() * 0.001;
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  destroy() {
+    if (this.frameId) cancelAnimationFrame(this.frameId);
+    if (this.timer) clearInterval(this.timer);
+    window.removeEventListener('resize', this._onResizeBound);
+    this.container.removeEventListener('pointerdown', this._onPointerBound);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    GEOCODING  (OpenStreetMap Nominatim — free, no key needed)
    Fills lat/lon for any LOCATIONS entry that omits them.
    Runs once at page load; respects 1-req/sec Nominatim ToS.
@@ -1056,6 +1271,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       canvas.style.display = 'none';
     }
+  }
+
+  const heroNameWrap   = document.getElementById('hero-name-water');
+  const heroNameCanvas = document.getElementById('hero-name-canvas');
+  if (heroNameWrap && heroNameCanvas && typeof THREE !== 'undefined') {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion) new HeroNameWaterEffect(heroNameWrap, heroNameCanvas);
   }
 
   /* Three.js Globe — geocode any entries missing lat/lon, then build */
