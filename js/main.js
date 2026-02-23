@@ -723,6 +723,10 @@ class Globe3D {
     cv.addEventListener('mouseenter', () => { this._mouseOver = true; });
     cv.addEventListener('mouseleave', () => {
       this._mouseOver = false;
+      if (this._hoveredMesh) {
+        this._hoveredMesh.scale.setScalar(1);
+        this._hoveredMesh = null;
+      }
       this.tooltip?.classList.remove('visible');
     });
     cv.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
@@ -918,6 +922,22 @@ function initMobileMenu() {
    data/blog.js respectively.
    ═══════════════════════════════════════════════════════════ */
 
+/* Format YYYY-MM-DD without timezone shifts in local browsers */
+function formatIsoDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return iso || '';
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[3], 10);
+  const utcDate = new Date(Date.UTC(y, mo - 1, d));
+  return utcDate.toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 /* Publication items — data source: PUBLICATIONS (data/publications.js) */
 function renderPublications() {
   const list = document.getElementById('publications-list');
@@ -953,7 +973,7 @@ function renderBlog() {
   }
 
   grid.innerHTML = BLOG_POSTS.map((post, i) => {
-    const date = new Date(post.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+    const date = formatIsoDate(post.date);
     const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
     const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
     return `
@@ -994,6 +1014,8 @@ class HeroNameShader {
     this.my = 0.5;   /* normalised mouse y */
     this.t = 0;
     this.raf = null;
+    this._visible = true;
+    this._io = null;
 
     const gl = canvasEl.getContext('webgl', { alpha: true, premultipliedAlpha: false })
       || canvasEl.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
@@ -1007,6 +1029,11 @@ class HeroNameShader {
         this._bindEvents();
         this._animate();
         h1El.classList.add('hero-name--gpu');  /* hide original text */
+        this._io = new IntersectionObserver(([entry]) => {
+          this._visible = entry.isIntersecting;
+          if (this._visible && !document.hidden && !this.raf) this._animate();
+        }, { threshold: 0 });
+        this._io.observe(this.canvas);
       }
     };
     if (document.fonts?.ready) document.fonts.ready.then(boot);
@@ -1208,11 +1235,13 @@ class HeroNameShader {
 
   _bindEvents() {
     window.addEventListener('mousemove', e => {
+      if (!this._visible) return;
       const r = this.canvas.getBoundingClientRect();
       this.mx = (e.clientX - r.left) / (r.width || 1);
       this.my = (e.clientY - r.top) / (r.height || 1);
     });
     window.addEventListener('touchmove', e => {
+      if (!this._visible) return;
       if (!e.touches[0]) return;
       const r = this.canvas.getBoundingClientRect();
       this.mx = (e.touches[0].clientX - r.left) / (r.width || 1);
@@ -1227,12 +1256,12 @@ class HeroNameShader {
 
     /* pause RAF when the browser tab is hidden */
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && !this.raf) this._animate();
+      if (!document.hidden && this._visible && !this.raf) this._animate();
     });
   }
 
   _animate() {
-    if (document.hidden) { this.raf = null; return; }   /* pause on hidden tab */
+    if (document.hidden || !this._visible) { this.raf = null; return; }   /* pause when hidden or off-screen */
     this.raf = requestAnimationFrame(() => this._animate());
     if (!this.gl || !this.prog) return;
     this.t += 1 / 60;
@@ -1245,13 +1274,24 @@ class HeroNameShader {
 
   destroy() {
     if (this.raf) cancelAnimationFrame(this.raf);
+    if (this._io) this._io.disconnect();
   }
+}
+
+/* Expose a minimal test surface in Node without affecting browser usage */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    formatIsoDate,
+    geocodeLocations,
+    Globe3D,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════
    INIT — runs when DOM is ready
    ═══════════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
 
   /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
@@ -1292,4 +1332,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!pref) new HeroNameShader(nameH1, nameCanvas);
   }
 
-});
+  });
+}

@@ -123,11 +123,12 @@ sudo certbot --nginx -d stefanomasneri.com -d www.stefanomasneri.com
 
 ## Customising Your Email
 
-In `js/main.js`, find the `DATA.contact` array and replace:
+In `index.html`, find the contact card in the **Contact** section and replace:
 
-```js
-value: 'your.email@example.com',
-href:  'mailto:your.email@example.com',
+```html
+<a href="mailto:your.email@example.com" ...>
+...
+<span class="contact-value">your.email@example.com</span>
 ```
 
 with your actual email address.
@@ -148,22 +149,21 @@ with your actual email address.
 
 ## Adding a Blog Post
 
-Open `js/main.js` and add an entry to `DATA.blogPosts`:
+Open `data/blog.js` and add an entry to `BLOG_POSTS`:
 
 ```js
-blogPosts: [
-  {
-    title:   "My first post",
-    date:    "2024-12-01",          // ISO date
-    excerpt: "A short teaser...",
-    url:     "blog/my-first-post.html",
-  },
-],
+{
+  title:   "My first post",
+  date:    "2024-12-01",          // ISO date (YYYY-MM-DD)
+  excerpt: "A short teaser...",
+  tag:     "Research",
+  readMin: 5,
+  url:     "blog/my-first-post.html"
+}
 ```
 
 Create the corresponding HTML file at `blog/my-first-post.html`.
-A starter template for blog posts can be added later — just keep the same
-`css/styles.css` link and font imports in the `<head>`.
+The cards on the homepage are auto-rendered from `data/blog.js`.
 
 ---
 
@@ -185,10 +185,14 @@ A starter template for blog posts can be added later — just keep the same
 ├── index.html          Main page
 ├── css/
 │   └── styles.css      All styles (CSS variables for easy theming)
+├── data/
+│   ├── blog.js         Blog card data
+│   ├── publications.js Publication list data
+│   └── locations.js    Globe pins/trips/regions
 ├── js/
-│   └── main.js         Content data + Three.js animation + UI logic
+│   └── main.js         Three.js animation + UI logic
 ├── img/                (create this folder) — put your photo here
-├── blog/               (create this folder) — put blog post HTML files here
+├── blog/               Blog post HTML files
 ├── CNAME               (optional) — custom domain for GitHub Pages
 └── DEPLOYMENT.md       This file
 ```

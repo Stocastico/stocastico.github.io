@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Multi-modal Speaker Diarisation at Broadcast Scale - article by Stefano Masneri." />
+  <title>Multi-modal Speaker Diarisation at Broadcast Scale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .post {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 5vw, 2rem) 5rem;
+    }
+    .post-meta {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent2);
+      margin-bottom: 0.9rem;
+    }
+    .post-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .post-lead {
+      color: var(--text);
+      font-size: 1.06rem;
+      margin-bottom: 1.5rem;
+    }
+    .post p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .post h2 {
+      font-size: 1.22rem;
+      margin: 2rem 0 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="post">
+    <a href="../index.html#blog" class="btn btn-ghost">Back to blog</a>
+    <p class="post-meta">18 July 2024 · AI · 6 min read</p>
+    <h1 class="post-title">Multi-modal Speaker Diarisation at Broadcast Scale</h1>
+    <p class="post-lead">
+      Audio-only diarisation breaks down quickly in noisy multi-speaker broadcasts.
+      Multi-modal fusion improves reliability, but system design is the hard part.
+    </p>
+    <p>
+      We combined speaker embeddings, lip-motion cues, and camera framing signals.
+      The model stack worked well in isolation; operations and synchronization were the
+      bigger challenge during real-time broadcast windows.
+    </p>
+    <h2>Key operational constraints</h2>
+    <p>
+      Stream alignment across modalities had to stay within strict tolerance. Small clock
+      drifts created identity switches that were hard to debug after the event.
+    </p>
+    <p>
+      We prioritized graceful degradation: when video confidence dropped, the system
+      shifted weight to audio while preserving temporal consistency.
+    </p>
+    <h2>Why this matters</h2>
+    <p>
+      Reliable diarisation powers downstream tasks like subtitle attribution, speaker
+      analytics, and content indexing. Accuracy gains are valuable only if the pipeline
+      can sustain live production load.
+    </p>
+  </main>
+</body>
+</html>

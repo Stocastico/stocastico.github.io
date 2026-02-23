@@ -23,7 +23,7 @@ const BLOG_POSTS = [
         excerpt: 'After four large-scale pilots and hundreds of students, here is what we learned about designing collaborative XR experiences that genuinely improve learning outcomes.',
         tag: 'Research',
         readMin: 7,
-        url: '#',
+        url: 'blog/multi-user-ar-classroom.html',
     },
     {
         title: 'Vision Transformers in Production: A Battle-Tested Guide',
@@ -31,7 +31,7 @@ const BLOG_POSTS = [
         excerpt: 'ViT models are powerful, but shipping them has real gotchas. Here is how we brought inference time from 800 ms down to 45 ms with quantisation, smart batching, and memory layout.',
         tag: 'Engineering',
         readMin: 9,
-        url: '#',
+        url: 'blog/vit-production-guide.html',
     },
     {
         title: 'Multi-modal Speaker Diarisation at Broadcast Scale',
@@ -39,6 +39,6 @@ const BLOG_POSTS = [
         excerpt: 'Combining audio embeddings, lip-motion detection, and spatial cues to identify six-plus concurrent speakers in a live broadcast feed — and why the hard part is not the model.',
         tag: 'AI',
         readMin: 6,
-        url: '#',
+        url: 'blog/multimodal-diarisation-broadcast.html',
     },
 ];

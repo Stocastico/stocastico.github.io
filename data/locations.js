@@ -67,8 +67,8 @@ const LOCATIONS = {
     { type: 'travel', name: 'Vienna, Austria', lat: 48.21, lon: 16.37, info: 'Holiday' },
     { type: 'travel', name: 'Dubrovnik, Croatia', lat: 42.64, lon: 18.11, info: 'Holiday' },
 
-    // ─ Example with no coordinates (auto-geocoded on load) ──
-    { type: 'travel', name: 'Reykjavik, Iceland', info: 'Holiday' },
+    // ─ Travel with explicit coordinates (no geocoding request needed) ─
+    { type: 'travel', name: 'Reykjavik, Iceland', lat: 64.1466, lon: -21.9426, info: 'Holiday' },
 
   ],
 
