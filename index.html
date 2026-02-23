@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta name="description"
+    content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <title>Stefano Masneri · Senior AI Engineer</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet" />
 
   <link rel="stylesheet" href="css/styles.css" />
 </head>
+
 <body>
 
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
@@ -44,26 +49,23 @@
 
     <div class="hero-content">
       <span class="hero-eyebrow">Senior AI Engineer</span>
-      <h1 class="hero-name">
-        <span
-          id="hero-name-water"
-          class="hero-name-water"
-          data-line1="Stefano"
-          data-line2="Masneri"
-          aria-label="Stefano Masneri"
-        >
-          <span class="hero-name-fallback" aria-hidden="true">
-            Stefano<br />
-            <em>Masneri</em>
-          </span>
-          <canvas id="hero-name-canvas" aria-hidden="true"></canvas>
-        </span>
-      </h1>
+      <!-- hero-name-wrap lets the WebGL canvas overlay the h1 exactly -->
+      <div class="hero-name-wrap">
+        <h1 class="hero-name" id="hero-name" aria-label="Stefano Masneri">
+          Stefano<br />
+          <em>Masneri</em>
+        </h1>
+        <!-- Canvas filled by HeroNameShader; h1 stays for accessibility -->
+        <canvas id="name-canvas" class="hero-name-canvas" aria-hidden="true"></canvas>
+      </div>
       <p class="hero-tagline">
         AI &nbsp;·&nbsp; Machine Learning &nbsp;·&nbsp; Computer Vision &nbsp;·&nbsp; Augmented Reality
       </p>
       <p class="hero-location">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+        </svg>
         San Sebastián, Spain
       </p>
       <div class="hero-actions">
@@ -149,14 +151,21 @@
 
           <!-- Social links -->
           <div class="social-links" aria-label="Social and academic profiles">
-            <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn" aria-label="LinkedIn profile">
+            <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn"
+              aria-label="LinkedIn profile">
               <!-- LinkedIn icon -->
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z" />
+              </svg>
               LinkedIn
             </a>
-            <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener" class="social-btn" aria-label="Google Scholar profile">
+            <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+              class="social-btn" aria-label="Google Scholar profile">
               <!-- Scholar cap icon -->
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z" />
+              </svg>
               Google Scholar
             </a>
           </div>
@@ -195,8 +204,52 @@
         <span class="section-tag">Research</span>
         <h2 class="section-title">What I Work On</h2>
       </header>
-      <!-- Cards injected by JS — see js/main.js → DATA.research -->
-      <div class="research-grid" id="research-grid" role="list"></div>
+      <!-- Cards written directly in HTML; update here as your focus areas change -->
+      <div class="research-grid" id="research-grid" role="list">
+
+        <div class="research-card" role="listitem" data-animate data-delay="0">
+          <span class="card-icon" aria-hidden="true">🤖</span>
+          <h3 class="card-title">Artificial Intelligence &amp; Machine Learning</h3>
+          <p class="card-desc">Designing and deploying ML systems — from classical algorithms to modern foundation
+            models — with a focus on production-ready pipelines and real-world performance.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="80">
+          <span class="card-icon" aria-hidden="true">👁️</span>
+          <h3 class="card-title">Computer Vision &amp; Deep Learning</h3>
+          <p class="card-desc">Object detection, semantic segmentation, video understanding, and multi-modal perception.
+            Building systems that help machines see and interpret the visual world.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="160">
+          <span class="card-icon" aria-hidden="true">🥽</span>
+          <h3 class="card-title">Augmented Reality for Education</h3>
+          <p class="card-desc">PhD research on collaborative, multi-user XR experiences that make learning more
+            immersive and effective — from architecture design to large-scale pilots.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="240">
+          <span class="card-icon" aria-hidden="true">🎬</span>
+          <h3 class="card-title">Multi-modal Media Analysis</h3>
+          <p class="card-desc">Combining audio, video, and text signals for applications such as speaker diarisation,
+            audience engagement measurement, and video lecture segmentation.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="320">
+          <span class="card-icon" aria-hidden="true">📊</span>
+          <h3 class="card-title">Video Understanding</h3>
+          <p class="card-desc">End-to-end pipelines for lecture and conference video classification, topic
+            visualisation, and automatic annotation of large audiovisual corpora.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="400">
+          <span class="card-icon" aria-hidden="true">🌐</span>
+          <h3 class="card-title">Interactive &amp; Collaborative Systems</h3>
+          <p class="card-desc">Designing interoperable architectures for multi-user real-time experiences, interactive
+            broadcast/broadband services, and connected media ecosystems.</p>
+        </div>
+
+      </div>
     </div>
   </section>
 
@@ -210,8 +263,8 @@
       <!-- Items injected by JS — see js/main.js → DATA.publications -->
       <div class="publications-list" id="publications-list" role="list"></div>
       <div class="publications-cta" data-animate>
-        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en"
-           target="_blank" rel="noopener" class="btn btn-ghost">
+        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+          class="btn btn-ghost">
           View all on Google Scholar →
         </a>
       </div>
@@ -225,8 +278,78 @@
         <span class="section-tag">Skills</span>
         <h2 class="section-title">Expertise</h2>
       </header>
-      <!-- Groups injected by JS — see js/main.js → DATA.skills -->
-      <div class="skills-grid" id="skills-grid"></div>
+      <!-- Skill groups written directly in HTML; update here as your toolkit evolves -->
+      <div class="skills-grid" id="skills-grid">
+
+        <div class="skill-group" data-animate data-delay="0">
+          <div class="skill-group-title">AI &amp; Machine Learning</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Deep Learning</span>
+            <span class="skill-tag">PyTorch</span>
+            <span class="skill-tag">TensorFlow</span>
+            <span class="skill-tag">Scikit-learn</span>
+            <span class="skill-tag">Transformers</span>
+            <span class="skill-tag">LLMs</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="70">
+          <div class="skill-group-title">Computer Vision</div>
+          <div class="skill-tags">
+            <span class="skill-tag">OpenCV</span>
+            <span class="skill-tag">Object Detection</span>
+            <span class="skill-tag">Semantic Segmentation</span>
+            <span class="skill-tag">Video Analysis</span>
+            <span class="skill-tag">Multi-modal Perception</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="140">
+          <div class="skill-group-title">Augmented Reality</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Unity</span>
+            <span class="skill-tag">WebXR</span>
+            <span class="skill-tag">ARCore/ARKit</span>
+            <span class="skill-tag">Multi-user Systems</span>
+            <span class="skill-tag">XR Authoring</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="210">
+          <div class="skill-group-title">Languages &amp; Tools</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">JavaScript</span>
+            <span class="skill-tag">C++</span>
+            <span class="skill-tag">Docker</span>
+            <span class="skill-tag">Git</span>
+            <span class="skill-tag">Linux</span>
+            <span class="skill-tag">REST APIs</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="280">
+          <div class="skill-group-title">Research</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Academic Writing</span>
+            <span class="skill-tag">Literature Review</span>
+            <span class="skill-tag">Data Analysis</span>
+            <span class="skill-tag">Project Management</span>
+            <span class="skill-tag">Agile</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="350">
+          <div class="skill-group-title">Media &amp; Broadcast</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Multi-modal Analysis</span>
+            <span class="skill-tag">Speaker Diarisation</span>
+            <span class="skill-tag">Broadcast/Broadband Convergence</span>
+            <span class="skill-tag">Audience Engagement</span>
+          </div>
+        </div>
+
+      </div>
     </div>
   </section>
 
@@ -234,15 +357,17 @@
   <!--
     HOW TO ADD A BLOG POST
     ────────────────────────
-    Open js/main.js and add an entry to DATA.blogPosts:
+    Open data/blog.js and add an entry to BLOG_POSTS:
     {
       title:   "My first post",
       date:    "2024-12-01",
       excerpt: "A short summary...",
+      tag:     "Engineering",
+      readMin: 5,
       url:     "blog/my-first-post.html"   // or a full URL
     }
-    The card will appear automatically.
-    When no posts exist the section shows "Coming soon".
+    Cards appear automatically — newest first.
+    Leave BLOG_POSTS = [] to show a "Coming soon" placeholder.
   -->
   <section id="blog" class="section" aria-label="Blog">
     <div class="container">
@@ -266,8 +391,51 @@
           Whether you want to collaborate on a research project, discuss AI,
           or simply say hello — I'm always happy to connect.
         </p>
-        <!-- Cards injected by JS — see js/main.js → DATA.contact -->
-        <div class="contact-grid" id="contact-grid"></div>
+        <!-- Contact cards written directly in HTML; update href/value when details change -->
+        <div class="contact-grid" id="contact-grid">
+
+          <a href="mailto:your.email@example.com" target="_blank" rel="noopener" class="contact-card" data-animate
+            data-delay="0">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">Email</span>
+              <span class="contact-value">your.email@example.com</span>
+            </div>
+          </a>
+
+          <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="contact-card"
+            data-animate data-delay="100">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zm-1.5-12.27a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">LinkedIn</span>
+              <span class="contact-value">stefanomasneri</span>
+            </div>
+          </a>
+
+          <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+            class="contact-card" data-animate data-delay="200">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">Google Scholar</span>
+              <span class="contact-value">Stefano Masneri</span>
+            </div>
+          </a>
+
+        </div>
       </div>
     </div>
   </section>
@@ -281,8 +449,16 @@
 
   <!-- Three.js from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <!-- Globe location data — edit data/locations.js to add/remove pins, trips and regions -->
+  <!-- ── Content data files ──────────────────────────────────────────────
+       Edit these files to update frequently-changing content:
+         data/locations.js    — 3D globe pins, trips, regions
+         data/publications.js — selected papers list
+         data/blog.js         — blog post cards (leave BLOG_POSTS=[] for "Coming soon")
+  ───────────────────────────────────────────────────────────────────── -->
   <script src="data/locations.js"></script>
+  <script src="data/publications.js"></script>
+  <script src="data/blog.js"></script>
   <script src="js/main.js"></script>
 </body>
+
 </html>
