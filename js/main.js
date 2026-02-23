@@ -1,218 +1,43 @@
 /* ============================================================
    PERSONAL WEBSITE — Stefano Masneri
-   main.js v1.0
+   main.js
    ============================================================
-   HOW TO CUSTOMISE THIS FILE
-   ──────────────────────────
-   All editable content lives in the DATA object below.
-   Edit the arrays/objects in each section and the page will
-   automatically update. No HTML edits needed.
+   This file contains only behaviour and animation logic.
+   Content lives in separate, easy-to-edit files:
 
-   For the blog: add items to DATA.blogPosts following
-   the existing shape, or leave the array empty for
-   "Coming soon".
+     index.html           — static sections (hero, about, research,
+                            skills, contact, navigation, footer)
+     data/locations.js    — 3D globe pins, trips, regions
+     data/publications.js — selected papers  (PUBLICATIONS array)
+     data/blog.js         — blog posts       (BLOG_POSTS array)
 
-   To change the neural-network colours, find the
-   NeuralNetwork class and adjust ACCENT_* constants.
+   To change neural-network colours, adjust the ACCENT_* /
+   CYAN_* constants inside the NeuralNetwork class below.
    ============================================================ */
 
 'use strict';
-
-/* ─── CONTENT DATA ──────────────────────────────────────────
-   Edit anything here to update the page.
-   ──────────────────────────────────────────────────────────── */
-const DATA = {
-
-  /* Contact cards */
-  contact: [
-    {
-      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>`,
-      label: 'Email',
-      value: 'your.email@example.com',          /* ← replace with your email */
-      href:  'mailto:your.email@example.com',
-    },
-    {
-      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zm-1.5-12.27a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>`,
-      label: 'LinkedIn',
-      value: 'stefanomasneri',
-      href:  'https://www.linkedin.com/in/stefanomasneri/',
-    },
-    {
-      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>`,
-      label: 'Google Scholar',
-      value: 'Stefano Masneri',
-      href:  'https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en',
-    },
-  ],
-
-  /* Research areas */
-  research: [
-    {
-      icon: '🤖',
-      title: 'Artificial Intelligence & Machine Learning',
-      desc:  'Designing and deploying ML systems — from classical algorithms to modern foundation models — with a focus on production-ready pipelines and real-world performance.',
-    },
-    {
-      icon: '👁️',
-      title: 'Computer Vision & Deep Learning',
-      desc:  'Object detection, semantic segmentation, video understanding, and multi-modal perception. Building systems that help machines see and interpret the visual world.',
-    },
-    {
-      icon: '🥽',
-      title: 'Augmented Reality for Education',
-      desc:  'PhD research on collaborative, multi-user XR experiences that make learning more immersive and effective — from architecture design to large-scale pilots.',
-    },
-    {
-      icon: '🎬',
-      title: 'Multi-modal Media Analysis',
-      desc:  'Combining audio, video, and text signals for applications such as speaker diarisation, audience engagement measurement, and video lecture segmentation.',
-    },
-    {
-      icon: '📊',
-      title: 'Video Understanding',
-      desc:  'End-to-end pipelines for lecture and conference video classification, topic visualisation, and automatic annotation of large audiovisual corpora.',
-    },
-    {
-      icon: '🌐',
-      title: 'Interactive & Collaborative Systems',
-      desc:  'Designing interoperable architectures for multi-user real-time experiences, interactive broadcast/broadband services, and connected media ecosystems.',
-    },
-  ],
-
-  /* Selected publications — edit or add entries freely */
-  publications: [
-    {
-      year:    '2023',
-      title:   'CLEAR: an interoperable architecture for multi-user AR-based school curricula',
-      authors: 'S. Masneri et al.',
-      venue:   'Virtual Reality',
-      url:     'https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en',
-    },
-    {
-      year:    '2023',
-      title:   'Dataset of user interactions across four large pilots on the use of augmented reality in learning experiences',
-      authors: 'S. Masneri et al.',
-      venue:   'Scientific Data (Nature)',
-      url:     'https://www.nature.com/articles/s41597-023-02743-6',
-    },
-    {
-      year:    '2023',
-      title:   'Collaborative AR experience for broadcast-broadband convergence (IEEE Transactions on Multimedia)',
-      authors: 'S. Masneri, M. Sanz-Narrillos, M. Zorrilla et al.',
-      venue:   'IEEE Transactions on Multimedia, Vol. 25',
-      url:     'https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en',
-    },
-    {
-      year:    '2022',
-      title:   'Collaborative Multi-user Augmented Reality Solutions in the Classroom',
-      authors: 'S. Masneri et al.',
-      venue:   'International Conference on Immersive Learning',
-      url:     'https://link.springer.com/chapter/10.1007/978-3-030-93907-6_106',
-    },
-    {
-      year:    '2021',
-      title:   'A Multi-modal Audience Engagement Measurement System',
-      authors: 'S. Masneri et al.',
-      venue:   'Agents and Artificial Intelligence (Springer)',
-      url:     'https://link.springer.com/chapter/10.1007/978-3-030-71158-0_17',
-    },
-    {
-      year:    '2014',
-      title:   'SVM-based Video Segmentation and Annotation of Lectures and Conferences',
-      authors: 'S. Masneri, O. Schreer',
-      venue:   'VISAPP 2014',
-      url:     'https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en',
-    },
-  ],
-
-  /* Skills — add/remove groups and tags */
-  skills: [
-    {
-      group: 'AI & Machine Learning',
-      tags:  ['Deep Learning', 'PyTorch', 'TensorFlow', 'Scikit-learn', 'Transformers', 'LLMs'],
-    },
-    {
-      group: 'Computer Vision',
-      tags:  ['OpenCV', 'Object Detection', 'Semantic Segmentation', 'Video Analysis', 'Multi-modal Perception'],
-    },
-    {
-      group: 'Augmented Reality',
-      tags:  ['Unity', 'WebXR', 'ARCore/ARKit', 'Multi-user Systems', 'XR Authoring'],
-    },
-    {
-      group: 'Languages & Tools',
-      tags:  ['Python', 'JavaScript', 'C++', 'Docker', 'Git', 'Linux', 'REST APIs'],
-    },
-    {
-      group: 'Research',
-      tags:  ['Academic Writing', 'Literature Review', 'Data Analysis', 'Project Management', 'Agile'],
-    },
-    {
-      group: 'Media & Broadcast',
-      tags:  ['Multi-modal Analysis', 'Speaker Diarisation', 'Broadcast/Broadband Convergence', 'Audience Engagement'],
-    },
-  ],
-
-  /* Blog posts — add objects here to show posts.
-     Leave the array empty to show "Coming soon".
-     ─────────────────────────────────────────────
-     Shape: {
-       title:   "My post title",
-       date:    "2024-12-01",       // ISO date string
-       excerpt: "Short summary.",
-       url:     "blog/my-post.html" // relative or absolute URL
-     }
-  */
-  blogPosts: [
-    {
-      title:   'Why Multi-user AR Belongs in Every Classroom',
-      date:    '2024-11-20',
-      excerpt: 'After four large-scale pilots and hundreds of students, here is what we learned about designing collaborative XR experiences that genuinely improve learning outcomes.',
-      tag:     'Research',
-      readMin: 7,
-      url:     '#',
-    },
-    {
-      title:   'Vision Transformers in Production: A Battle-Tested Guide',
-      date:    '2024-09-10',
-      excerpt: 'ViT models are powerful, but shipping them has real gotchas. Here is how we brought inference time from 800 ms down to 45 ms with quantisation, smart batching, and memory layout.',
-      tag:     'Engineering',
-      readMin: 9,
-      url:     '#',
-    },
-    {
-      title:   'Multi-modal Speaker Diarisation at Broadcast Scale',
-      date:    '2024-07-18',
-      excerpt: 'Combining audio embeddings, lip-motion detection, and spatial cues to identify six-plus concurrent speakers in a live broadcast feed — and why the hard part is not the model.',
-      tag:     'AI',
-      readMin: 6,
-      url:     '#',
-    },
-  ],
-
-};
 
 /* ═══════════════════════════════════════════════════════════
    THREE.JS NEURAL NETWORK ANIMATION
    ═══════════════════════════════════════════════════════════ */
 class NeuralNetwork {
   /* Tweak these to change the visual */
-  static PARTICLE_COUNT      = 120;
-  static CONNECTION_DIST     = 170;  /* max distance (px) to draw a line */
-  static SPEED               = 0.4;  /* particle drift speed             */
-  static MOUSE_RADIUS        = 220;  /* attraction zone around cursor    */
-  static MOUSE_STRENGTH      = 0.0008;
+  static PARTICLE_COUNT = 120;
+  static CONNECTION_DIST = 170;  /* max distance (px) to draw a line */
+  static SPEED = 0.4;  /* particle drift speed             */
+  static MOUSE_RADIUS = 220;  /* attraction zone around cursor    */
+  static MOUSE_STRENGTH = 0.0008;
   static ACCENT_R = 0.424; static ACCENT_G = 0.392; static ACCENT_B = 1.0;   /* #6c63ff */
-  static CYAN_R   = 0.0;   static CYAN_G   = 0.831; static CYAN_B   = 1.0;   /* #00d4ff */
+  static CYAN_R = 0.0; static CYAN_G = 0.831; static CYAN_B = 1.0;   /* #00d4ff */
 
   constructor(canvas) {
-    this.canvas   = canvas;
-    this.mouse    = { x: 0, y: 0 };
-    this.frameId  = null;
+    this.canvas = canvas;
+    this.mouse = { x: 0, y: 0 };
+    this.frameId = null;
 
     this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    this.scene    = new THREE.Scene();
-    this.camera   = new THREE.PerspectiveCamera(60, 1, 0.1, 2000);
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 2000);
     this.camera.position.z = 600;
 
     this._initParticles();
@@ -221,15 +46,28 @@ class NeuralNetwork {
 
     window.addEventListener('resize', () => this._onResize());
     window.addEventListener('mousemove', e => {
-      this.mouse.x = e.clientX - window.innerWidth  / 2;
+      this.mouse.x = e.clientX - window.innerWidth / 2;
       this.mouse.y = -(e.clientY - window.innerHeight / 2);
     });
     /* Touch support */
     window.addEventListener('touchmove', e => {
       if (!e.touches[0]) return;
-      this.mouse.x = e.touches[0].clientX - window.innerWidth  / 2;
+      this.mouse.x = e.touches[0].clientX - window.innerWidth / 2;
       this.mouse.y = -(e.touches[0].clientY - window.innerHeight / 2);
     }, { passive: true });
+
+    /* Pause rendering when the section scrolls out of view */
+    this._visible = true;
+    const _ioNN = new IntersectionObserver(([e]) => {
+      this._visible = e.isIntersecting;
+      if (this._visible && !this.frameId) this._animate();
+    }, { threshold: 0 });
+    _ioNN.observe(canvas);
+
+    /* Pause rendering when the browser tab is hidden */
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !this.frameId) this._animate();
+    });
 
     this._animate();
   }
@@ -237,30 +75,30 @@ class NeuralNetwork {
   /* Create a soft glow disc texture for each particle */
   _glowTexture() {
     const size = 64;
-    const c    = document.createElement('canvas');
+    const c = document.createElement('canvas');
     c.width = c.height = size;
     const ctx = c.getContext('2d');
-    const cx  = size / 2;
-    const g   = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
-    g.addColorStop(0,    'rgba(108, 99, 255, 1)');
+    const cx = size / 2;
+    const g = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
+    g.addColorStop(0, 'rgba(108, 99, 255, 1)');
     g.addColorStop(0.25, 'rgba(108, 99, 255, 0.7)');
-    g.addColorStop(0.6,  'rgba(0,  212, 255, 0.25)');
-    g.addColorStop(1,    'rgba(0,    0,   0, 0)');
+    g.addColorStop(0.6, 'rgba(0,  212, 255, 0.25)');
+    g.addColorStop(1, 'rgba(0,    0,   0, 0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, size, size);
     return new THREE.CanvasTexture(c);
   }
 
   _initParticles() {
-    const n   = NeuralNetwork.PARTICLE_COUNT;
+    const n = NeuralNetwork.PARTICLE_COUNT;
     const pos = new Float32Array(n * 3);
 
     this.velocities = [];
 
     for (let i = 0; i < n; i++) {
-      const hw = window.innerWidth  / 2;
+      const hw = window.innerWidth / 2;
       const hh = window.innerHeight / 2;
-      pos[i * 3]     = (Math.random() - 0.5) * hw * 2.2;
+      pos[i * 3] = (Math.random() - 0.5) * hw * 2.2;
       pos[i * 3 + 1] = (Math.random() - 0.5) * hh * 2.2;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 300;
 
@@ -276,12 +114,12 @@ class NeuralNetwork {
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 
     const mat = new THREE.PointsMaterial({
-      size:        6,
-      map:         this._glowTexture(),
-      blending:    THREE.AdditiveBlending,
-      depthWrite:  false,
+      size: 6,
+      map: this._glowTexture(),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
       transparent: true,
-      opacity:     0.85,
+      opacity: 0.85,
     });
 
     this.points = new THREE.Points(geo, mat);
@@ -289,7 +127,7 @@ class NeuralNetwork {
   }
 
   _initLines() {
-    const n       = NeuralNetwork.PARTICLE_COUNT;
+    const n = NeuralNetwork.PARTICLE_COUNT;
     const maxPairs = n * (n - 1) / 2;        /* upper bound */
 
     this.linePosArr = new Float32Array(maxPairs * 6);
@@ -297,13 +135,13 @@ class NeuralNetwork {
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.linePosArr, 3));
-    geo.setAttribute('color',    new THREE.BufferAttribute(this.lineColArr, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(this.lineColArr, 3));
 
     const mat = new THREE.LineBasicMaterial({
       vertexColors: true,
-      blending:     THREE.AdditiveBlending,
-      transparent:  true,
-      depthWrite:   false,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false,
     });
 
     this.lines = new THREE.LineSegments(geo, mat);
@@ -312,23 +150,27 @@ class NeuralNetwork {
   }
 
   _update() {
-    const n    = NeuralNetwork.PARTICLE_COUNT;
+    const n = NeuralNetwork.PARTICLE_COUNT;
     const dist = NeuralNetwork.CONNECTION_DIST;
-    const pos  = this.points.geometry.attributes.position.array;
-    const hw   = window.innerWidth  / 2;
-    const hh   = window.innerHeight / 2;
-    const ms   = NeuralNetwork.MOUSE_STRENGTH;
-    const mr   = NeuralNetwork.MOUSE_RADIUS;
+    const dist2 = dist * dist;           /* squared — avoids sqrt in the O(n²) loop */
+    const pos = this.points.geometry.attributes.position.array;
+    /* Use cached half-dimensions from _onResize — no DOM reads per frame */
+    const hw = this.hw;
+    const hh = this.hh;
+    const ms = NeuralNetwork.MOUSE_STRENGTH;
+    const mr2 = NeuralNetwork.MOUSE_RADIUS ** 2;  /* squared threshold */
+    const hwBound = hw * 1.1;
+    const hhBound = hh * 1.1;
 
     /* Move particles */
     for (let i = 0; i < n; i++) {
       const ix = i * 3, iy = ix + 1, iz = ix + 2;
 
-      /* Mouse attraction (gentle pull) */
+      /* Mouse attraction — squared distance avoids Math.sqrt entirely */
       const dx = this.mouse.x - pos[ix];
       const dy = this.mouse.y - pos[iy];
-      const md = Math.sqrt(dx * dx + dy * dy);
-      if (md < mr && md > 0.1) {
+      const md2 = dx * dx + dy * dy;
+      if (md2 < mr2 && md2 > 0.01) {
         pos[ix] += dx * ms;
         pos[iy] += dy * ms;
       }
@@ -338,53 +180,59 @@ class NeuralNetwork {
       pos[iz] += this.velocities[i].z;
 
       /* Wrap edges */
-      if (pos[ix] >  hw * 1.1) pos[ix] = -hw * 1.1;
-      if (pos[ix] < -hw * 1.1) pos[ix] =  hw * 1.1;
-      if (pos[iy] >  hh * 1.1) pos[iy] = -hh * 1.1;
-      if (pos[iy] < -hh * 1.1) pos[iy] =  hh * 1.1;
+      if (pos[ix] > hwBound) pos[ix] = -hwBound;
+      else if (pos[ix] < -hwBound) pos[ix] = hwBound;
+      if (pos[iy] > hhBound) pos[iy] = -hhBound;
+      else if (pos[iy] < -hhBound) pos[iy] = hhBound;
     }
     this.points.geometry.attributes.position.needsUpdate = true;
 
-    /* Build connection line buffer */
-    const lp  = this.linePosArr;
-    const lc  = this.lineColArr;
-    const R1  = NeuralNetwork.ACCENT_R, G1 = NeuralNetwork.ACCENT_G, B1 = NeuralNetwork.ACCENT_B;
-    const R2  = NeuralNetwork.CYAN_R,   G2 = NeuralNetwork.CYAN_G,   B2 = NeuralNetwork.CYAN_B;
-    let   seg = 0;
+    /* Build connection line buffer
+       Key optimisation: compare squared distances so Math.sqrt is only
+       called for pairs that actually connect (~5-10% of the total). */
+    const lp = this.linePosArr;
+    const lc = this.lineColArr;
+    const R1 = NeuralNetwork.ACCENT_R, G1 = NeuralNetwork.ACCENT_G, B1 = NeuralNetwork.ACCENT_B;
+    const R2 = NeuralNetwork.CYAN_R, G2 = NeuralNetwork.CYAN_G, B2 = NeuralNetwork.CYAN_B;
+    let seg = 0;
 
     for (let i = 0; i < n; i++) {
+      const ax = pos[i * 3], ay = pos[i * 3 + 1], az = pos[i * 3 + 2];
       for (let j = i + 1; j < n; j++) {
-        const ax = pos[i*3], ay = pos[i*3+1], az = pos[i*3+2];
-        const bx = pos[j*3], by = pos[j*3+1], bz = pos[j*3+2];
-        const d  = Math.sqrt((ax-bx)**2 + (ay-by)**2 + (az-bz)**2);
+        const bx = pos[j * 3], by = pos[j * 3 + 1], bz = pos[j * 3 + 2];
+        const ddx = ax - bx, ddy = ay - by, ddz = az - bz;
+        const d2 = ddx * ddx + ddy * ddy + ddz * ddz;
 
-        if (d < dist) {
-          const a = 1 - d / dist;          /* fade with distance */
-          const s = seg * 6;
+        /* Early exit without sqrt — eliminates ~90 % of sqrt calls */
+        if (d2 >= dist2) continue;
 
-          lp[s]   = ax; lp[s+1] = ay; lp[s+2] = az;
-          lp[s+3] = bx; lp[s+4] = by; lp[s+5] = bz;
+        const d = Math.sqrt(d2);         /* sqrt only on confirmed connections */
+        const a = 1 - d / dist;
+        const s = seg * 6;
 
-          /* Gradient from accent → cyan based on position in canvas */
-          const t = (i / n);              /* 0‥1 */
-          lc[s]   = (R1*(1-t) + R2*t) * a;
-          lc[s+1] = (G1*(1-t) + G2*t) * a;
-          lc[s+2] = (B1*(1-t) + B2*t) * a;
-          lc[s+3] = (R2*(1-t) + R1*t) * a;
-          lc[s+4] = (G2*(1-t) + G1*t) * a;
-          lc[s+5] = (B2*(1-t) + B1*t) * a;
+        lp[s] = ax; lp[s + 1] = ay; lp[s + 2] = az;
+        lp[s + 3] = bx; lp[s + 4] = by; lp[s + 5] = bz;
 
-          seg++;
-        }
+        const t = i / n;                /* 0‥1 gradient across canvas */
+        lc[s] = (R1 * (1 - t) + R2 * t) * a;
+        lc[s + 1] = (G1 * (1 - t) + G2 * t) * a;
+        lc[s + 2] = (B1 * (1 - t) + B2 * t) * a;
+        lc[s + 3] = (R2 * (1 - t) + R1 * t) * a;
+        lc[s + 4] = (G2 * (1 - t) + G1 * t) * a;
+        lc[s + 5] = (B2 * (1 - t) + B1 * t) * a;
+
+        seg++;
       }
     }
 
     this.lineGeo.setDrawRange(0, seg * 2);
     this.lineGeo.attributes.position.needsUpdate = true;
-    this.lineGeo.attributes.color.needsUpdate    = true;
+    this.lineGeo.attributes.color.needsUpdate = true;
   }
 
   _animate() {
+    /* Skip frames while tab is hidden or section is off-screen */
+    if (document.hidden || !this._visible) { this.frameId = null; return; }
     this.frameId = requestAnimationFrame(() => this._animate());
     this._update();
     this.renderer.render(this.scene, this.camera);
@@ -392,6 +240,9 @@ class NeuralNetwork {
 
   _onResize() {
     const w = window.innerWidth, h = window.innerHeight;
+    /* Cache half-dimensions so _update() never reads window.innerWidth */
+    this.hw = w / 2;
+    this.hh = h / 2;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
@@ -404,235 +255,20 @@ class NeuralNetwork {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   HERO NAME WATER SHADER
-   Click/tap to create ripples; idle ripples spawn automatically.
-   ═══════════════════════════════════════════════════════════ */
-class HeroNameWaterEffect {
-  static MAX_RIPPLES = 8;
-
-  constructor(container, canvas) {
-    if (!container || !canvas || typeof THREE === 'undefined') return;
-    this.container   = container;
-    this.canvas      = canvas;
-    this.line1       = container.dataset.line1 || 'Stefano';
-    this.line2       = container.dataset.line2 || 'Masneri';
-    this.rippleIndex = 0;
-    this.frameId     = null;
-    this.timer       = null;
-    this.pixelRatio  = Math.min(window.devicePixelRatio || 1, 2);
-    this.waterlineTop = 0.56;
-
-    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    this.renderer.setPixelRatio(this.pixelRatio);
-    this.scene    = new THREE.Scene();
-    this.camera   = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-    this.sourceCanvas = document.createElement('canvas');
-    this.sourceCtx    = this.sourceCanvas.getContext('2d');
-    this.textTexture  = new THREE.CanvasTexture(this.sourceCanvas);
-    this.textTexture.minFilter = THREE.LinearFilter;
-    this.textTexture.magFilter = THREE.LinearFilter;
-    this.textTexture.generateMipmaps = false;
-
-    this.uniforms = {
-      uTex:      { value: this.textTexture },
-      uTime:     { value: 0 },
-      uRipples:  { value: Array.from({ length: HeroNameWaterEffect.MAX_RIPPLES }, () => new THREE.Vector3(-4, -4, -4)) },
-      uStrength: { value: 0.018 },
-      uWaterline:{ value: 1 - this.waterlineTop },
-    };
-
-    this.material = new THREE.ShaderMaterial({
-      transparent: true,
-      uniforms: this.uniforms,
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = vec4(position.xy, 0.0, 1.0);
-        }
-      `,
-      fragmentShader: `
-        precision mediump float;
-        uniform sampler2D uTex;
-        uniform float uTime;
-        uniform vec3 uRipples[${HeroNameWaterEffect.MAX_RIPPLES}];
-        uniform float uStrength;
-        uniform float uWaterline;
-        varying vec2 vUv;
-
-        void main() {
-          float displacement = 0.0;
-          float highlights = 0.0;
-          float below = step(vUv.y, uWaterline);
-
-          for (int i = 0; i < ${HeroNameWaterEffect.MAX_RIPPLES}; i++) {
-            vec3 r = uRipples[i];
-            float age = uTime - r.z;
-            if (age <= 0.0 || age > 3.5) continue;
-
-            vec2 d = vUv - r.xy;
-            float dist = length(d) + 0.0001;
-            float band = sin(dist * 56.0 - age * 11.0);
-            float envelope = exp(-7.8 * dist) * exp(-1.2 * age);
-
-            displacement += band * envelope;
-            highlights += smoothstep(0.98, 1.0, band) * envelope;
-          }
-
-          float shimmer = sin(vUv.x * 42.0 + uTime * 1.8) * 0.0013;
-          vec2 uv = vUv;
-          uv.x += (displacement * 0.04) * below;
-          uv.y += (displacement * uStrength + shimmer) * below;
-
-          vec4 color = texture2D(uTex, uv);
-          color.rgb += highlights * 0.26 * below;
-
-          float lineGlow = smoothstep(uWaterline - 0.02, uWaterline + 0.002, vUv.y) * 0.09;
-          color.rgb += vec3(0.08, 0.18, 0.26) * lineGlow;
-          gl_FragColor = color;
-        }
-      `,
-    });
-
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
-    this.scene.add(this.mesh);
-
-    this._resize();
-    this._bind();
-    this._startRandomRipples();
-    this._animate();
-    this.container.classList.add('is-ready');
-  }
-
-  _bind() {
-    this._onResizeBound = () => this._resize();
-    this._onPointerBound = (e) => this._handlePointer(e);
-    window.addEventListener('resize', this._onResizeBound);
-    this.container.addEventListener('pointerdown', this._onPointerBound);
-  }
-
-  _resize() {
-    const w = Math.max(220, this.container.clientWidth || 640);
-    const h = Math.max(180, this.container.clientHeight || 280);
-    this.renderer.setSize(w, h, false);
-
-    this.sourceCanvas.width  = Math.floor(w * this.pixelRatio);
-    this.sourceCanvas.height = Math.floor(h * this.pixelRatio);
-    this._drawNameTexture();
-    this.textTexture.needsUpdate = true;
-  }
-
-  _drawNameTexture() {
-    const ctx = this.sourceCtx;
-    const w   = this.sourceCanvas.width;
-    const h   = this.sourceCanvas.height;
-    const cx  = w * 0.5;
-    const waterline = h * this.waterlineTop;
-    const line1Y = h * 0.24;
-    const line2Y = h * 0.40;
-
-    ctx.clearRect(0, 0, w, h);
-
-    const fs1 = Math.max(54, w * 0.135);
-    const fs2 = Math.max(58, w * 0.155);
-    const topGradient = ctx.createLinearGradient(cx - w * 0.3, line1Y - fs1, cx + w * 0.4, line2Y + fs2);
-    topGradient.addColorStop(0, 'rgba(248, 251, 255, 0.75)');
-    topGradient.addColorStop(0.55, 'rgba(160, 228, 255, 0.72)');
-    topGradient.addColorStop(1, 'rgba(120, 134, 255, 0.70)');
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = topGradient;
-    ctx.shadowColor = 'rgba(0, 212, 255, 0.18)';
-    ctx.shadowBlur = 12 * this.pixelRatio;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, waterline, w, h - waterline);
-    ctx.clip();
-    ctx.translate(0, waterline * 2);
-    ctx.scale(1, -1);
-    ctx.globalAlpha = 0.9;
-    ctx.shadowBlur = 8 * this.pixelRatio;
-    ctx.fillStyle = topGradient;
-    ctx.font = `700 ${fs1}px "Playfair Display", Georgia, serif`;
-    ctx.fillText(this.line1, cx, line1Y);
-    ctx.font = `italic 700 ${fs2}px "Playfair Display", Georgia, serif`;
-    ctx.fillText(this.line2, cx, line2Y);
-    ctx.restore();
-
-    const fade = ctx.createLinearGradient(0, waterline, 0, h);
-    fade.addColorStop(0, 'rgba(255, 255, 255, 0.62)');
-    fade.addColorStop(0.55, 'rgba(255, 255, 255, 0.25)');
-    fade.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, 0, w, h);
-    ctx.globalCompositeOperation = 'source-over';
-
-    const line = ctx.createLinearGradient(0, waterline - (3 * this.pixelRatio), 0, waterline + (2 * this.pixelRatio));
-    line.addColorStop(0, 'rgba(186, 236, 255, 0)');
-    line.addColorStop(1, 'rgba(186, 236, 255, 0.15)');
-    ctx.fillStyle = line;
-    ctx.fillRect(0, waterline - (3 * this.pixelRatio), w, 8 * this.pixelRatio);
-  }
-
-  _handlePointer(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const u = (e.clientX - rect.left) / rect.width;
-    const v = 1 - ((e.clientY - rect.top) / rect.height);
-    this._spawnRipple(u, v);
-  }
-
-  _spawnRipple(u, v) {
-    const idx = this.rippleIndex % HeroNameWaterEffect.MAX_RIPPLES;
-    this.uniforms.uRipples.value[idx].set(
-      THREE.MathUtils.clamp(u, 0.04, 0.96),
-      THREE.MathUtils.clamp(v, 0.04, 0.96),
-      performance.now() * 0.001
-    );
-    this.rippleIndex++;
-  }
-
-  _startRandomRipples() {
-    this.timer = window.setInterval(() => {
-      const u = 0.12 + Math.random() * 0.76;
-      const v = 0.2 + Math.random() * 0.6;
-      this._spawnRipple(u, v);
-    }, 2600);
-  }
-
-  _animate() {
-    this.frameId = requestAnimationFrame(() => this._animate());
-    this.uniforms.uTime.value = performance.now() * 0.001;
-    this.renderer.render(this.scene, this.camera);
-  }
-
-  destroy() {
-    if (this.frameId) cancelAnimationFrame(this.frameId);
-    if (this.timer) clearInterval(this.timer);
-    window.removeEventListener('resize', this._onResizeBound);
-    this.container.removeEventListener('pointerdown', this._onPointerBound);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
    GEOCODING  (OpenStreetMap Nominatim — free, no key needed)
    Fills lat/lon for any LOCATIONS entry that omits them.
    Runs once at page load; respects 1-req/sec Nominatim ToS.
    ═══════════════════════════════════════════════════════════ */
 async function geocodeLocations(locs) {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const API   = 'https://nominatim.openstreetmap.org/search';
+  const API = 'https://nominatim.openstreetmap.org/search';
 
   /* Collect every item missing coordinates into a flat list */
   const pending = [];
   const collect = (obj) => { if (obj.lat == null || obj.lon == null) pending.push(obj); };
-  (locs.pins    || []).forEach(collect);
+  (locs.pins || []).forEach(collect);
   (locs.regions || []).forEach(collect);
-  (locs.trips   || []).forEach(t => (t.cities || []).forEach(collect));
+  (locs.trips || []).forEach(t => (t.cities || []).forEach(collect));
 
   if (!pending.length) return;   /* nothing to do — all coords already provided */
 
@@ -640,8 +276,8 @@ async function geocodeLocations(locs) {
     if (i > 0) await sleep(1100);   /* max 1 req/sec — Nominatim ToS */
     const item = pending[i];
     try {
-      const url  = `${API}?q=${encodeURIComponent(item.name)}&format=json&limit=1`;
-      const res  = await fetch(url);
+      const url = `${API}?q=${encodeURIComponent(item.name)}&format=json&limit=1`;
+      const res = await fetch(url);
       const json = await res.json();
       if (!json.length) throw new Error('no results');
       item.lat = parseFloat(json[0].lat);
@@ -677,43 +313,73 @@ class Globe3D {
       return;
     }
 
-    this.canvas         = canvasEl;
-    this.parent         = canvasEl.parentElement;
-    this.tooltip        = document.getElementById('globe-tooltip');
-    this.raycaster      = new THREE.Raycaster();
-    this.mouse          = new THREE.Vector2(-9, -9);
-    this._mpos          = { x: 0, y: 0 };
-    this.pulseRings     = [];
-    this.markerMeshes   = [];
+    this.canvas = canvasEl;
+    this.parent = canvasEl.parentElement;
+    this.tooltip = document.getElementById('globe-tooltip');
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2(-9, -9);
+    this._mpos = { x: 0, y: 0 };
+    this.pulseRings = [];
+    this.markerMeshes = [];
     this.tripAnimations = [];
-    this.isDragging     = false;
-    this.prevMouse      = { x: 0, y: 0 };
-    this.rotX           =  0.25;
-    this.rotY           = -1.6;   /* initial view: Europe faces camera */
-    this.velX           = 0;
-    this.velY           = 0;
+    this.isDragging = false;
+    this.prevMouse = { x: 0, y: 0 };
+    this.rotX = 0.25;
+    this.rotY = -1.6;   /* initial view: Europe faces camera */
+    this.velX = 0;
+    this.velY = 0;
+
+    /* Performance: cache tooltip child refs (avoids querySelector every frame) */
+    this._ttType = this.tooltip?.querySelector('.gt-type') || null;
+    this._ttName = this.tooltip?.querySelector('.gt-name') || null;
+    this._ttInfo = this.tooltip?.querySelector('.gt-info') || null;
+
+    /* Performance: skip raycasting when the cursor is outside the canvas */
+    this._mouseOver = false;
+    /* Performance: cached bounding rect — invalidated on resize */
+    this._rect = null;
+    /* RAF id for pause/resume */
+    this._rafId = null;
+    /* Visibility flags */
+    this._globeVisible = true;
+
+    /* The mesh the cursor is currently hovering (scaled up for feedback) */
+    this._hoveredMesh = null;
 
     this._resize();
     this._initScene();
     this._buildGlobe();
     this._buildAtmosphere();
+    this._buildStars();
     this._buildGrid();
     this._buildRegions();   /* discs first so pins sit on top */
     this._buildMarkers();
     this._buildTrips();
     this._bindEvents();
     this._animate();
+
+    /* Pause when canvas is out of the viewport */
+    const _ioGlobe = new IntersectionObserver(([e]) => {
+      this._globeVisible = e.isIntersecting;
+      if (this._globeVisible && !this._rafId) this._animate();
+    }, { threshold: 0 });
+    _ioGlobe.observe(canvasEl);
+
+    /* Pause when the browser tab is hidden */
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !this._rafId) this._animate();
+    });
   }
 
   /* ── Internals ──────────────────────────────────────────── */
 
   _resize() {
-    this.w = this.parent.clientWidth  || 800;
+    this.w = this.parent.clientWidth || 800;
     this.h = this.parent.clientHeight || 500;
   }
 
   _initScene() {
-    this.scene  = new THREE.Scene();
+    this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(42, this.w / this.h, 0.01, 100);
     this.camera.position.z = 2.75;
 
@@ -722,11 +388,14 @@ class Globe3D {
     this.renderer.setSize(this.w, this.h);
     this.renderer.setClearColor(0x000000, 0);
 
-    this.scene.add(new THREE.AmbientLight(0x334466, 1.2));
-    const sun = new THREE.DirectionalLight(0xaabbff, 1.4);
-    sun.position.set(4, 3, 3);
+    /* Ambient: enough fill to see the night side without washing out the day side */
+    this.scene.add(new THREE.AmbientLight(0x223355, 0.9));
+    /* Sun: warm directional — high intensity for vivid textures */
+    const sun = new THREE.DirectionalLight(0xfff5d6, 3.2);
+    sun.position.set(5, 3, 4);
     this.scene.add(sun);
-    const rim = new THREE.PointLight(0x00d4ff, 0.6, 12);
+    /* Cyan rim on the opposite side — keeps the look on-brand */
+    const rim = new THREE.PointLight(0x00d4ff, 0.45, 14);
     rim.position.set(-4, 1, -2);
     this.scene.add(rim);
 
@@ -737,10 +406,30 @@ class Globe3D {
   }
 
   _buildGlobe() {
-    this.pivot.add(new THREE.Mesh(
-      new THREE.SphereGeometry(1, 64, 64),
-      new THREE.MeshPhongMaterial({ color: 0x0a1628, emissive: 0x050c1a, specular: 0x1a3366, shininess: 22 }),
-    ));
+    /* ── Earth textures (Three.js r134 via jsDelivr CDN) ─────────────────────
+       Loaded asynchronously; a fallback dark-ocean material is shown
+       immediately and swapped once the texture arrives. */
+    const CDN = 'https://cdn.jsdelivr.net/npm/three@0.134.0/examples/textures/planets/';
+    const ldr = new THREE.TextureLoader();
+    const mat = new THREE.MeshPhongMaterial({
+      color: 0x0a1628,   /* shown before texture loads */
+      emissive: 0x050c1a,
+      specular: new THREE.Color(0x555555),
+      shininess: 25,
+    });
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat);
+    this.pivot.add(globe);
+
+    /* Day texture (satellite imagery with clouds) */
+    ldr.load(CDN + 'earth_atmos_2048.jpg',
+      tex => { tex.anisotropy = this.renderer.capabilities.getMaxAnisotropy(); mat.map = tex; mat.color.set(0xffffff); mat.needsUpdate = true; },
+      undefined,
+      () => console.warn('[Globe] earth day texture failed to load — using fallback colour'),
+    );
+    /* Specular map (oceans bright, land dull) */
+    ldr.load(CDN + 'earth_specular_2048.jpg',
+      tex => { mat.specularMap = tex; mat.needsUpdate = true; },
+    );
   }
 
   _buildAtmosphere() {
@@ -761,19 +450,40 @@ class Globe3D {
     ));
   }
 
+  _buildStars() {
+    /* Distribute 1 400 stars on a large sphere around the scene */
+    const COUNT = 1400;
+    const pos = new Float32Array(COUNT * 3);
+    for (let i = 0; i < COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 8 + Math.random() * 4;
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this.scene.add(new THREE.Points(geo,
+      new THREE.PointsMaterial({ color: 0xffffff, size: 0.018, transparent: true, opacity: 0.5, sizeAttenuation: true }),
+    ));
+  }
+
   _buildGrid() {
-    const mat = (op) => new THREE.LineBasicMaterial({ color: 0x1e3d7a, transparent: true, opacity: op });
-    const R   = 1.002;
+    /* Very subtle grid — texture already provides geographic context */
+    const mat = (op) => new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: op });
+    const R = 1.002;
     for (let lat = -80; lat <= 80; lat += 20) {
       const phi = (90 - lat) * Math.PI / 180;
       const r = R * Math.sin(phi), y = R * Math.cos(phi), pts = [];
       for (let i = 0; i <= 64; i++) { const t = (i / 64) * Math.PI * 2; pts.push(new THREE.Vector3(r * Math.cos(t), y, r * Math.sin(t))); }
-      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.45)));
+      /* Equator and tropics slightly brighter */
+      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(Math.abs(lat) === 0 ? 0.18 : 0.07)));
     }
     for (let lon = 0; lon < 360; lon += 20) {
       const theta = lon * Math.PI / 180, pts = [];
       for (let i = 0; i <= 64; i++) { const p = (i / 64) * Math.PI; pts.push(new THREE.Vector3(R * Math.sin(p) * Math.cos(theta), R * Math.cos(p), R * Math.sin(p) * Math.sin(theta))); }
-      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.45)));
+      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.07)));
     }
   }
 
@@ -792,9 +502,9 @@ class Globe3D {
   _buildRegions() {
     (LOCATIONS.regions || []).filter(reg => !reg._skip).forEach(reg => {
       const color = new THREE.Color(reg.color || '#ff8c42');
-      const pos   = this._ll(reg.lat, reg.lon, 1.003);
+      const pos = this._ll(reg.lat, reg.lon, 1.003);
       /* radius: degrees of arc → 3D chord length on unit sphere */
-      const R     = Math.sin((reg.radius * Math.PI) / 180);
+      const R = Math.sin((reg.radius * Math.PI) / 180);
 
       /* Filled translucent disc */
       const disc = new THREE.Mesh(
@@ -829,14 +539,21 @@ class Globe3D {
   /* ── Standard pins (lived / work / travel) ──────────────── */
   _buildMarkers() {
     (LOCATIONS.pins || []).filter(loc => !loc._skip).forEach(loc => {
-      const hex    = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
-      const color  = new THREE.Color(hex);
-      const pos    = this._ll(loc.lat, loc.lon, 1.008);
+      const hex = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
+      const color = new THREE.Color(hex);
+      const pos = this._ll(loc.lat, loc.lon, 1.008);
+      const surf = this._ll(loc.lat, loc.lon, 1.001);
       const isHome = (loc.type === 'lived');   /* bigger, pulsing — "I live/lived here" */
+
+      /* Spike — thin line from globe surface up to the dot */
+      this.pivot.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([surf, pos]),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.85 : 0.5 }),
+      ));
 
       /* Dot — lived pins are larger and more prominent */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.016 : 0.011, 10, 10),
+        new THREE.SphereGeometry(isHome ? 0.016 : 0.011, 12, 12),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
@@ -854,57 +571,69 @@ class Globe3D {
       this._faceOut(halo, pos);
       this.pivot.add(halo);
 
-      /* Animated pulse ring — only for lived pins */
+      /* Two staggered animated pulse rings — only for lived/home pins */
       if (isHome) {
-        const pulse = new THREE.Mesh(
-          new THREE.RingGeometry(0.014, 0.019, 40),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
-        );
-        pulse.position.copy(pos);
-        this._faceOut(pulse, pos);
-        pulse.userData = { phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.35 };
-        this.pivot.add(pulse);
-        this.pulseRings.push(pulse);
+        [0, Math.PI].forEach(phaseOffset => {
+          const pulse = new THREE.Mesh(
+            new THREE.RingGeometry(0.014, 0.020, 40),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+          );
+          pulse.position.copy(pos);
+          this._faceOut(pulse, pos);
+          pulse.userData = { phase: phaseOffset, speed: 0.42 };
+          this.pivot.add(pulse);
+          this.pulseRings.push(pulse);
+        });
       }
     });
   }
 
-  /* ── Trip paths with animated traveller dot ─────────────── */
+  /* ── Trip paths with animated traveller + comet trail ───── */
   _buildTrips() {
     (LOCATIONS.trips || []).forEach(trip => {
-      const color    = new THREE.Color(trip.color || '#ff8c42');   /* coral default */
-      const cities   = (trip.cities || []).filter(c => !c._skip);  /* drop geocoding failures */
+      const color = new THREE.Color(trip.color || '#ff8c42');
+      const cities = (trip.cities || []).filter(c => !c._skip);
       if (cities.length < 2) return;
 
-      const curves  = [];
+      const curves = [];
       const segLens = [];
-      let   total   = 0;
+      let total = 0;
 
       for (let i = 0; i < cities.length - 1; i++) {
-        const s   = this._ll(cities[i].lat,     cities[i].lon,     1.006);
-        const e   = this._ll(cities[i + 1].lat, cities[i + 1].lon, 1.006);
-        /* Raise the midpoint above the surface for a visible arc */
-        const mid = s.clone().add(e).normalize().multiplyScalar(1.30);
+        const s = this._ll(cities[i].lat, cities[i].lon, 1.006);
+        const e = this._ll(cities[i + 1].lat, cities[i + 1].lon, 1.006);
+
+        /* Adaptive arc height — scales with chord length to avoid
+           catastrophically tall arcs for nearby cities.
+           Guard against near-antipodal pairs (sum ≈ 0) by falling back
+           to a perpendicular control point. */
+        const chord = s.distanceTo(e);
+        const lift = 1.0 + Math.min(0.48, 0.06 + chord * 0.32);
+        const sum = s.clone().add(e);
+        if (sum.length() < 0.001) sum.set(1, 0, 0).cross(s).normalize();
+        else sum.normalize();
+        const mid = sum.multiplyScalar(lift);
+
         const curve = new THREE.QuadraticBezierCurve3(s, mid, e);
         curves.push(curve);
         const len = curve.getLength();
         segLens.push(len);
         total += len;
 
-        const pts = curve.getPoints(64);
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-
-        /* Soft outer glow line */
-        this.pivot.add(new THREE.Line(geo,
+        const pts = curve.getPoints(96);   /* 96 segments for smooth curves */
+        /* Soft outer glow */
+        this.pivot.add(new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
           new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }),
         ));
-        /* Bright core line */
-        this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false }),
+        /* Bright core */
+        this.pivot.add(new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending, depthWrite: false }),
         ));
       }
 
-      /* City stop dots along the route */
+      /* City-stop dots */
       const seen = new Set();
       cities.forEach(city => {
         const key = `${city.lat},${city.lon}`;
@@ -921,50 +650,86 @@ class Globe3D {
         this.markerMeshes.push(cdot);
       });
 
-      /* Animated traveller dot */
+      /* Traveller dot — explicit opacity:0 to avoid a 1-frame opaque flash */
       const traveller = new THREE.Mesh(
-        new THREE.SphereGeometry(0.012, 10, 10),
-        new THREE.MeshBasicMaterial({ color, transparent: true, blending: THREE.AdditiveBlending }),
+        new THREE.SphereGeometry(0.013, 12, 12),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
       );
       this.pivot.add(traveller);
 
+      /* Comet trail — 6 progressively smaller/dimmer dots trailing behind */
+      const TRAIL = 6;
+      const trail = [];
+      for (let ti = 0; ti < TRAIL; ti++) {
+        const frac = 1 - ti / TRAIL;
+        const td = new THREE.Mesh(
+          new THREE.SphereGeometry(Math.max(0.003, 0.011 * frac * 0.8), 8, 8),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
+        );
+        this.pivot.add(td);
+        trail.push(td);
+      }
+
       this.tripAnimations.push({
-        curves,
-        segLens,
-        total,
-        particle:  traveller,
-        cycleSec:  trip.cycleSec || 28,
-        offset:    Math.random(),          /* random start so trips don't all sync */
+        curves, segLens, total,
+        particle: traveller,
+        trail,
+        cycleSec: trip.cycleSec || 28,
+        offset: Math.random(),
       });
     });
   }
 
+  /* Return the 3-D position on trip anim at fractional time gT ∈ [0,1) */
+  _tripPos(anim, gT) {
+    const norm = ((gT % 1) + 1) % 1;
+    let rem = norm * anim.total;
+    for (let i = 0; i < anim.segLens.length; i++) {
+      if (rem <= anim.segLens[i] + 1e-6) {
+        return anim.curves[i].getPoint(Math.min(rem / Math.max(anim.segLens[i], 1e-6), 1));
+      }
+      rem -= anim.segLens[i];
+    }
+    return anim.curves[anim.curves.length - 1].getPoint(1);
+  }
+
   /* ── Events ─────────────────────────────────────────────── */
   _bindEvents() {
-    const cv    = this.canvas;
+    const cv = this.canvas;
     const start = (x, y) => { this.isDragging = true; this.prevMouse = { x, y }; this.velX = this.velY = 0; };
-    const move  = (x, y) => {
+    const move = (x, y) => {
       if (this.isDragging) {
         const dx = x - this.prevMouse.x, dy = y - this.prevMouse.y;
-        this.velX  = dy * 0.005; this.velY = dx * 0.005;
-        this.rotX  = Math.max(-1.2, Math.min(1.2, this.rotX + dy * 0.005));
+        this.velX = dy * 0.005; this.velY = dx * 0.005;
+        this.rotX = Math.max(-1.2, Math.min(1.2, this.rotX + dy * 0.005));
         this.rotY += dx * 0.005;
         this.prevMouse = { x, y };
       }
-      const rect   = cv.getBoundingClientRect();
-      this._mpos   = { x: x - rect.left, y: y - rect.top };
-      this.mouse.x = ((x - rect.left) / rect.width)  *  2 - 1;
-      this.mouse.y = ((y - rect.top)  / rect.height) * -2 + 1;
+      /* Use cached rect — avoids a forced reflow (getBoundingClientRect) on
+         every mousemove event.  Invalidated on resize. */
+      if (!this._rect) this._rect = cv.getBoundingClientRect();
+      const rect = this._rect;
+      this._mpos = { x: x - rect.left, y: y - rect.top };
+      this.mouse.x = ((x - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = ((y - rect.top) / rect.height) * -2 + 1;
     };
     const end = () => { this.isDragging = false; };
 
-    cv.addEventListener('mousedown',     e => start(e.clientX, e.clientY));
+    cv.addEventListener('mousedown', e => start(e.clientX, e.clientY));
     window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
-    window.addEventListener('mouseup',   end);
-    cv.addEventListener('touchstart',    e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    cv.addEventListener('touchmove',     e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-    cv.addEventListener('touchend',      end);
+    window.addEventListener('mouseup', end);
+    /* mouseenter / mouseleave gate raycasting to when the cursor is
+       actually over the canvas — huge win when browsing other sections */
+    cv.addEventListener('mouseenter', () => { this._mouseOver = true; });
+    cv.addEventListener('mouseleave', () => {
+      this._mouseOver = false;
+      this.tooltip?.classList.remove('visible');
+    });
+    cv.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    cv.addEventListener('touchmove', e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+    cv.addEventListener('touchend', end);
     window.addEventListener('resize', () => {
+      this._rect = null;   /* invalidate cached bounding rect */
       this._resize();
       this.camera.aspect = this.w / this.h;
       this.camera.updateProjectionMatrix();
@@ -974,61 +739,78 @@ class Globe3D {
 
   /* ── Render loop ────────────────────────────────────────── */
   _animate() {
-    requestAnimationFrame(() => this._animate());
+    /* Stop the loop when the tab is hidden or the globe is off-screen */
+    if (document.hidden || !this._globeVisible) { this._rafId = null; return; }
+    this._rafId = requestAnimationFrame(() => this._animate());
 
     const t = performance.now() * 0.001;   /* seconds */
 
-    /* Globe rotation — inertia + gentle auto-spin */
+    /* Globe rotation — smooth inertia + organic auto-spin.
+       Lerp velY toward the target speed so it accelerates into the
+       auto-spin after a drag, with no threshold jerk. */
     if (!this.isDragging) {
-      this.velX *= 0.93;
-      this.velY  = Math.abs(this.velY) < 0.0002 ? 0.0014 : this.velY * 0.93;
-      this.rotX  = Math.max(-1.2, Math.min(1.2, this.rotX + this.velX));
+      const TARGET_SPIN = 0.0014;
+      this.velX *= 0.92;
+      this.velY += (TARGET_SPIN - this.velY) * 0.018;
+      this.rotX = Math.max(-1.2, Math.min(1.2, this.rotX + this.velX));
       this.rotY += this.velY;
     }
     this.pivot.rotation.x = this.rotX;
     this.pivot.rotation.y = this.rotY;
 
-    /* Pulse rings on standard pins */
+    /* Pulse rings — two per lived pin, staggered by π */
     this.pulseRings.forEach(ring => {
       const norm = ((t * ring.userData.speed + ring.userData.phase) % (Math.PI * 2)) / (Math.PI * 2);
-      ring.scale.set(1 + norm * 2.6, 1 + norm * 2.6, 1);
-      ring.material.opacity = (1 - norm) * 0.6;
+      ring.scale.set(1 + norm * 3.0, 1 + norm * 3.0, 1);
+      ring.material.opacity = (1 - norm) * 0.65;
     });
 
-    /* Animated trip travellers — time-based, constant apparent speed */
+    /* Trip travellers + comet trails */
     this.tripAnimations.forEach(anim => {
       const globalT = ((t / anim.cycleSec) + anim.offset) % 1;
-      let remaining = globalT * anim.total;
-      let ci = anim.segLens.length - 1, localT = 1;
-      for (let i = 0; i < anim.segLens.length; i++) {
-        if (remaining <= anim.segLens[i] + 1e-6) { ci = i; localT = remaining / Math.max(anim.segLens[i], 1e-6); break; }
-        remaining -= anim.segLens[i];
-      }
-      anim.particle.position.copy(anim.curves[ci].getPoint(Math.min(localT, 1)));
-      /* Gentle brightness pulse so the traveller "breathes" */
-      anim.particle.material.opacity = 0.65 + 0.35 * Math.sin(t * 4 + anim.offset * 20);
+      const TRAIL_GAP = 0.022;   /* fractional time gap between each trail dot */
+
+      anim.particle.position.copy(this._tripPos(anim, globalT));
+      anim.particle.material.opacity = 0.92;
+
+      anim.trail.forEach((dot, ti) => {
+        dot.position.copy(this._tripPos(anim, globalT - (ti + 1) * TRAIL_GAP));
+        dot.material.opacity = (1 - (ti + 1) / (anim.trail.length + 1)) * 0.75;
+      });
     });
 
-    /* Hover raycasting */
-    this.raycaster.setFromCamera(this.mouse, this.camera);
-    const hits = this.raycaster.intersectObjects(this.markerMeshes);
-    if (hits.length > 0) {
-      const { name, info, type } = hits[0].object.userData;
-      if (this.tooltip) {
-        this.tooltip.querySelector('.gt-type').textContent = Globe3D.TT_LABEL[type] || type;
-        this.tooltip.querySelector('.gt-type').style.color = Globe3D.TT_COLOR[type] || '#e8edf8';
-        this.tooltip.querySelector('.gt-name').textContent = name;
-        this.tooltip.querySelector('.gt-info').textContent = info;
-        let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
-        if (tx + 220 > this.w) tx = this._mpos.x - 228;
-        if (ty + 90  > this.h) ty = this._mpos.y - 96;
-        if (ty < 4) ty = 4;
-        this.tooltip.style.left = tx + 'px';
-        this.tooltip.style.top  = ty + 'px';
-        this.tooltip.classList.add('visible');
+    /* Hover raycasting — only when the cursor is over the canvas.
+       This eliminates all raycasting cost during normal page browsing
+       and on touch devices (where mouseenter never fires). */
+    if (this._mouseOver && this.markerMeshes.length) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      const hits = this.raycaster.intersectObjects(this.markerMeshes);
+      if (hits.length > 0) {
+        const hit = hits[0].object;
+        /* Scale up the hovered marker; reset the previously hovered one */
+        if (this._hoveredMesh !== hit) {
+          if (this._hoveredMesh) this._hoveredMesh.scale.setScalar(1);
+          hit.scale.setScalar(1.6);
+          this._hoveredMesh = hit;
+        }
+        const { name, info, type } = hit.userData;
+        if (this.tooltip) {
+          this._ttType.textContent = Globe3D.TT_LABEL[type] || type;
+          this._ttType.style.color = Globe3D.TT_COLOR[type] || '#e8edf8';
+          this._ttName.textContent = name;
+          this._ttInfo.textContent = info;
+          let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
+          if (tx + 220 > this.w) tx = this._mpos.x - 228;
+          if (ty + 90 > this.h) ty = this._mpos.y - 96;
+          if (ty < 4) ty = 4;
+          this.tooltip.style.left = tx + 'px';
+          this.tooltip.style.top = ty + 'px';
+          this.tooltip.classList.add('visible');
+        }
+      } else {
+        if (this._hoveredMesh) { this._hoveredMesh.scale.setScalar(1); this._hoveredMesh = null; }
+        this.tooltip?.classList.remove('visible');
       }
-    } else if (this.tooltip) {
-      this.tooltip.classList.remove('visible');
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -1045,7 +827,7 @@ function initScrollReveal() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
-      const el    = entry.target;
+      const el = entry.target;
       const delay = parseInt(el.dataset.delay || '0', 10);
       setTimeout(() => el.classList.add('visible'), delay);
       observer.unobserve(el);
@@ -1065,7 +847,7 @@ function initCounters() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
-      const el  = entry.target;
+      const el = entry.target;
       const end = parseInt(el.dataset.count, 10);
       animateCounter(el, end);
       observer.unobserve(el);
@@ -1077,7 +859,7 @@ function initCounters() {
 
 function animateCounter(el, target) {
   const duration = 1800;
-  const start    = performance.now();
+  const start = performance.now();
 
   function step(now) {
     const progress = Math.min((now - start) / duration, 1);
@@ -1110,7 +892,7 @@ function initNavbar() {
    ═══════════════════════════════════════════════════════════ */
 function initMobileMenu() {
   const toggle = document.getElementById('nav-toggle');
-  const links  = document.getElementById('nav-links');
+  const links = document.getElementById('nav-links');
   if (!toggle || !links) return;
 
   toggle.addEventListener('click', () => {
@@ -1130,29 +912,18 @@ function initMobileMenu() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CONTENT INJECTION HELPERS
+   DYNAMIC CONTENT RENDERERS
+   Publications and blog posts are the only sections rendered
+   by JS — their data lives in data/publications.js and
+   data/blog.js respectively.
    ═══════════════════════════════════════════════════════════ */
 
-/* Research cards */
-function renderResearch() {
-  const grid = document.getElementById('research-grid');
-  if (!grid) return;
-
-  grid.innerHTML = DATA.research.map((item, i) => `
-    <div class="research-card" role="listitem" data-animate data-delay="${i * 80}">
-      <span class="card-icon" aria-hidden="true">${item.icon}</span>
-      <h3 class="card-title">${item.title}</h3>
-      <p class="card-desc">${item.desc}</p>
-    </div>
-  `).join('');
-}
-
-/* Publication items */
+/* Publication items — data source: PUBLICATIONS (data/publications.js) */
 function renderPublications() {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
-  list.innerHTML = DATA.publications.map((pub, i) => `
+  list.innerHTML = PUBLICATIONS.map((pub, i) => `
     <div class="pub-item" role="listitem" data-animate data-delay="${i * 70}">
       <div class="pub-year">${pub.year}</div>
       <div>
@@ -1167,27 +938,12 @@ function renderPublications() {
   `).join('');
 }
 
-/* Skills groups */
-function renderSkills() {
-  const grid = document.getElementById('skills-grid');
-  if (!grid) return;
-
-  grid.innerHTML = DATA.skills.map((group, i) => `
-    <div class="skill-group" data-animate data-delay="${i * 70}">
-      <div class="skill-group-title">${group.group}</div>
-      <div class="skill-tags">
-        ${group.tags.map(t => `<span class="skill-tag">${t}</span>`).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-/* Blog posts (or coming-soon placeholder) */
+/* Blog posts — data source: BLOG_POSTS (data/blog.js) */
 function renderBlog() {
   const grid = document.getElementById('blog-grid');
   if (!grid) return;
 
-  if (!DATA.blogPosts.length) {
+  if (!BLOG_POSTS.length) {
     grid.innerHTML = `
       <div class="blog-coming-soon" data-animate>
         Coming soon — stay tuned for thoughts on AI, XR, and beyond.
@@ -1196,8 +952,8 @@ function renderBlog() {
     return;
   }
 
-  grid.innerHTML = DATA.blogPosts.map((post, i) => {
-    const date    = new Date(post.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+  grid.innerHTML = BLOG_POSTS.map((post, i) => {
+    const date = new Date(post.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
     const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
     const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
     return `
@@ -1217,23 +973,6 @@ function renderBlog() {
   }).join('');
 }
 
-/* Contact cards */
-function renderContact() {
-  const grid = document.getElementById('contact-grid');
-  if (!grid) return;
-
-  grid.innerHTML = DATA.contact.map((item, i) => `
-    <a href="${item.href}" target="_blank" rel="noopener"
-       class="contact-card" data-animate data-delay="${i * 100}">
-      <div class="contact-icon">${item.icon}</div>
-      <div class="contact-info">
-        <span class="contact-label">${item.label}</span>
-        <span class="contact-value">${item.value}</span>
-      </div>
-    </a>
-  `).join('');
-}
-
 /* Footer year */
 function setFooterYear() {
   const el = document.getElementById('footer-year');
@@ -1241,16 +980,282 @@ function setFooterYear() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   HERO NAME SHADER
+   Renders "Stefano / Masneri" with iridescent chromatic
+   aberration on a WebGL canvas overlay.  Falls back to the
+   CSS-styled <h1> if WebGL is unavailable.
+   ═══════════════════════════════════════════════════════════ */
+class HeroNameShader {
+
+  constructor(h1El, canvasEl) {
+    this.h1 = h1El;
+    this.canvas = canvasEl;
+    this.mx = 0.5;   /* normalised mouse x */
+    this.my = 0.5;   /* normalised mouse y */
+    this.t = 0;
+    this.raf = null;
+
+    const gl = canvasEl.getContext('webgl', { alpha: true, premultipliedAlpha: false })
+      || canvasEl.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) { console.warn('[HeroName] WebGL unavailable — CSS fallback active'); return; }
+    this.gl = gl;
+
+    /* Wait for web-fonts before measuring / drawing text */
+    const boot = () => {
+      if (this._setupGL()) {
+        this._resize();
+        this._bindEvents();
+        this._animate();
+        h1El.classList.add('hero-name--gpu');  /* hide original text */
+      }
+    };
+    if (document.fonts?.ready) document.fonts.ready.then(boot);
+    else setTimeout(boot, 400);   /* Safari guard */
+  }
+
+  /* ── GLSL compilation helper ── */
+  _compile(type, src) {
+    const gl = this.gl;
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error('[HeroName shader]', gl.getShaderInfoLog(s));
+      return null;
+    }
+    return s;
+  }
+
+  /* ── Compile shaders, upload quad, locate uniforms ── */
+  _setupGL() {
+    const gl = this.gl;
+
+    /* passthrough vertex shader */
+    const VS = `
+      attribute vec2 aPos;
+      varying   vec2 vUv;
+      void main() {
+        vUv         = aPos * 0.5 + 0.5;
+        vUv.y       = 1.0 - vUv.y;
+        gl_Position = vec4(aPos, 0.0, 1.0);
+      }
+    `;
+
+    /* iridescent chromatic-aberration fragment shader */
+    const FS = `
+      precision highp float;
+      uniform sampler2D uTex;
+      uniform float     uTime;
+      uniform vec2      uMouse;
+      uniform vec2      uRes;
+      varying vec2      vUv;
+
+      /* --- value noise --- */
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+      }
+      float noise(vec2 p) {
+        vec2 i = floor(p), f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash(i),            hash(i + vec2(1.0, 0.0)), f.x),
+          mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+          f.y
+        );
+      }
+      float fbm(vec2 p) {
+        return noise(p)       * 0.500
+             + noise(p * 2.1 + vec2(3.7, 1.3)) * 0.250
+             + noise(p * 4.3 + vec2(7.8, 5.2)) * 0.125;
+      }
+
+      void main() {
+        float asp = uRes.x / uRes.y;
+        vec2  uv  = vUv;
+
+        /* animated organic flow */
+        float f1 = fbm(vec2(uv.x * asp * 2.2, uv.y * 2.2)
+                       + vec2(uTime * 0.11, uTime * 0.07));
+        float f2 = fbm(vec2(uv.x * asp * 2.2 + 4.3, uv.y * 2.2 + 3.1)
+                       + vec2(uTime * 0.08, uTime * 0.14));
+        vec2 disp = vec2(f1 - 0.5, f2 - 0.5) * 0.009;
+
+        /* mouse repulsion / warping */
+        vec2  toM = (uMouse - uv) * vec2(asp, 1.0);
+        float md  = length(toM);
+        disp     -= (toM / (md * md + 0.06)) * 0.007;
+
+        /* chromatic aberration — 3 wavelengths offset horizontally */
+        float ab = 0.010;
+        float aR = texture2D(uTex, clamp(uv + disp + vec2( ab, 0.0), 0.0, 1.0)).a;
+        float aG = texture2D(uTex, clamp(uv + disp,                  0.0, 1.0)).a;
+        float aB = texture2D(uTex, clamp(uv + disp - vec2( ab, 0.0), 0.0, 1.0)).a;
+
+        if (max(max(aR, aG), aB) < 0.004) discard;
+
+        /* iridescent colour sweep — cycles with time + viewing angle */
+        float ang   = atan((uv.y - 0.45), (uv.x - 0.5) * asp);
+        float sweep = ang + uTime * 0.30 + md * 0.4;
+        vec3 iri = vec3(
+          0.5 + 0.5 * cos(sweep),
+          0.5 + 0.5 * cos(sweep + 2.094),
+          0.5 + 0.5 * cos(sweep + 4.189)
+        );
+        /* bias toward bright blue-white — glass / crystal look */
+        iri = mix(vec3(0.72, 0.88, 1.00), iri * 1.45, 0.55);
+
+        /* combine per-channel alpha with iridescent colour */
+        vec3  col   = vec3(aR, aG, aB) * iri;
+        float alpha = max(max(aR, aG), aB);
+        gl_FragColor = vec4(col, alpha);
+      }
+    `;
+
+    const vs = this._compile(gl.VERTEX_SHADER, VS);
+    const fs = this._compile(gl.FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return false;
+
+    this.prog = gl.createProgram();
+    gl.attachShader(this.prog, vs);
+    gl.attachShader(this.prog, fs);
+    gl.linkProgram(this.prog);
+    if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+      console.error('[HeroName link]', gl.getProgramInfoLog(this.prog));
+      return false;
+    }
+    gl.useProgram(this.prog);
+
+    /* full-screen quad */
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const aPos = gl.getAttribLocation(this.prog, 'aPos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    this.uTime = gl.getUniformLocation(this.prog, 'uTime');
+    this.uMouse = gl.getUniformLocation(this.prog, 'uMouse');
+    this.uRes = gl.getUniformLocation(this.prog, 'uRes');
+    gl.uniform1i(gl.getUniformLocation(this.prog, 'uTex'), 0);
+
+    /* text texture (filled by _drawText) */
+    this.tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    /* alpha blending for transparent canvas */
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    /* single offscreen 2-D canvas — reused every _drawText() call */
+    this._textCanvas = document.createElement('canvas');
+
+    return true;
+  }
+
+  /* ── Render name text to an offscreen 2D canvas, upload as GL texture ── */
+  _drawText() {
+    const gl = this.gl;
+    const dpr = Math.min(devicePixelRatio, 2);
+    const w = this.canvas.offsetWidth || 400;
+    const h = this.canvas.offsetHeight || 200;
+
+    const tc = this._textCanvas;        /* reuse — no GC churn */
+    tc.width = Math.round(w * dpr);
+    tc.height = Math.round(h * dpr);
+    const ctx = tc.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    /* read the live font-size from the h1 (respects clamp() / viewport) */
+    const fs = parseFloat(getComputedStyle(this.h1).fontSize);
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    /* Line 1: "Stefano" — Inter Bold */
+    ctx.font = `700 ${fs}px 'Inter', system-ui, sans-serif`;
+    ctx.fillText('Stefano', w / 2, 0);
+
+    /* Line 2: "Masneri" — Playfair Display Bold Italic
+       line-height: 1 → second line starts at exactly fs */
+    ctx.font = `italic 700 ${fs}px 'Playfair Display', Georgia, serif`;
+    ctx.fillText('Masneri', w / 2, fs);
+
+    gl.bindTexture(gl.TEXTURE_2D, this.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
+  }
+
+  /* ── Sync canvas size with h1 dimensions ── */
+  _resize() {
+    const gl = this.gl;
+    const dpr = Math.min(devicePixelRatio, 2);
+    const w = this.h1.offsetWidth || 400;
+    const h = this.h1.offsetHeight || 200;
+
+    this.canvas.width = Math.round(w * dpr);
+    this.canvas.height = Math.round(h * dpr);
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
+
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    gl.uniform2f(this.uRes, this.canvas.width, this.canvas.height);
+    this._drawText();
+  }
+
+  _bindEvents() {
+    window.addEventListener('mousemove', e => {
+      const r = this.canvas.getBoundingClientRect();
+      this.mx = (e.clientX - r.left) / (r.width || 1);
+      this.my = (e.clientY - r.top) / (r.height || 1);
+    });
+    window.addEventListener('touchmove', e => {
+      if (!e.touches[0]) return;
+      const r = this.canvas.getBoundingClientRect();
+      this.mx = (e.touches[0].clientX - r.left) / (r.width || 1);
+      this.my = (e.touches[0].clientY - r.top) / (r.height || 1);
+    }, { passive: true });
+    /* debounce resize — avoids GL texture churn while the user drags the window */
+    let _rszTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(_rszTimer);
+      _rszTimer = setTimeout(() => this._resize(), 150);
+    });
+
+    /* pause RAF when the browser tab is hidden */
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !this.raf) this._animate();
+    });
+  }
+
+  _animate() {
+    if (document.hidden) { this.raf = null; return; }   /* pause on hidden tab */
+    this.raf = requestAnimationFrame(() => this._animate());
+    if (!this.gl || !this.prog) return;
+    this.t += 1 / 60;
+    const gl = this.gl;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(this.uTime, this.t);
+    gl.uniform2f(this.uMouse, this.mx, this.my);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  destroy() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    INIT — runs when DOM is ready
    ═══════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* Inject content */
-  renderResearch();
+  /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
-  renderSkills();
   renderBlog();
-  renderContact();
   setFooterYear();
 
   /* UI behaviours */
@@ -1273,17 +1278,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const heroNameWrap   = document.getElementById('hero-name-water');
-  const heroNameCanvas = document.getElementById('hero-name-canvas');
-  if (heroNameWrap && heroNameCanvas && typeof THREE !== 'undefined') {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!prefersReducedMotion) new HeroNameWaterEffect(heroNameWrap, heroNameCanvas);
-  }
-
   /* Three.js Globe — geocode any entries missing lat/lon, then build */
   const globeCanvas = document.getElementById('globe-canvas');
   if (globeCanvas && typeof THREE !== 'undefined' && typeof LOCATIONS !== 'undefined') {
     geocodeLocations(LOCATIONS).then(() => new Globe3D(globeCanvas));
+  }
+
+  /* Hero name — iridescent WebGL shader (progressive enhancement) */
+  const nameH1 = document.getElementById('hero-name');
+  const nameCanvas = document.getElementById('name-canvas');
+  if (nameH1 && nameCanvas) {
+    const pref = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!pref) new HeroNameShader(nameH1, nameCanvas);
   }
 
 });
