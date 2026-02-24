@@ -1236,6 +1236,17 @@ function animateCounter(el, target) {
 /* ═══════════════════════════════════════════════════════════
    NAVBAR SCROLL BEHAVIOUR
    ═══════════════════════════════════════════════════════════ */
+function initTheme() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+}
+
 function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
@@ -1717,6 +1728,7 @@ if (typeof module !== 'undefined' && module.exports) {
     renderPublications,
     renderBlog,
     setFooterYear,
+    initTheme,
     initNavbar,
     initMobileMenu,
     initScrollReveal,
@@ -1741,6 +1753,7 @@ if (typeof document !== 'undefined') {
   setFooterYear();
 
   /* UI behaviours */
+  initTheme();
   initNavbar();
   initMobileMenu();
 

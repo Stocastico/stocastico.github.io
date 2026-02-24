@@ -23,7 +23,7 @@
 
 /* ─── 1. Custom Properties ─────────────────────────────── */
 :root {
-  /* Colours */
+  /* Colours — dark theme (default) */
   --bg: #080c14;
   --bg-alt: #0c1020;
   --bg-card: rgba(255 255 255 / 0.04);
@@ -32,10 +32,8 @@
   --border-hov: rgba(108 99 255 / 0.45);
 
   --accent: #6c63ff;
-  /* indigo-violet */
   --accent-glow: #6c63ff55;
   --accent2: #00d4ff;
-  /* cyan highlight */
   --accent2-glow: #00d4ff44;
 
   --text: #e8edf8;
@@ -65,6 +63,21 @@
 
   /* Navbar height (used for scroll offset) */
   --nav-h: 68px;
+}
+
+/* ─── Light theme overrides ──────────────────────────── */
+[data-theme="light"] {
+  --bg: #f4f6fb;
+  --bg-alt: #e8ecf5;
+  --bg-card: rgba(0 0 0 / 0.04);
+  --bg-card-hov: rgba(0 0 0 / 0.07);
+  --border: rgba(0 0 0 / 0.10);
+  --border-hov: rgba(108 99 255 / 0.45);
+  --accent2: #0099bb;
+  --accent2-glow: #0099bb44;
+  --text: #111827;
+  --text-muted: #4b5563;
+  --text-faint: #9ca3af;
 }
 
 /* ─── 2. Reset & Base ────────────────────────────────────── */
@@ -255,6 +268,49 @@ h3 {
 
 .nav-links a[aria-current='true']::after {
   width: 100%;
+}
+
+/* Theme toggle button */
+.theme-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  flex-shrink: 0;
+}
+
+.theme-btn:hover {
+  color: var(--text);
+  border-color: var(--border-hov);
+  background: var(--bg-card);
+}
+
+.theme-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* Show correct icon based on theme */
+[data-theme="dark"]  .theme-btn .icon-moon { display: none; }
+[data-theme="light"] .theme-btn .icon-sun  { display: none; }
+
+/* ─── Reading Progress Bar ───────────────────────────── */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(to right, var(--accent), var(--accent2));
+  z-index: 1001;
+  transition: width 0.12s linear;
+  pointer-events: none;
 }
 
 /* Mobile hamburger */

@@ -1,10 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Multi-modal Speaker Diarisation at Broadcast Scale - article by Stefano Masneri." />
   <title>Multi-modal Speaker Diarisation at Broadcast Scale</title>
+  <link rel="canonical" href="https://stocastico.github.io/blog/multimodal-diarisation-broadcast.html" />
+
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/blog/multimodal-diarisation-broadcast.html" />
+  <meta property="og:title"       content="Multi-modal Speaker Diarisation at Broadcast Scale" />
+  <meta property="og:description" content="Combining audio embeddings, lip-motion detection, and spatial cues to identify six-plus concurrent speakers in a live broadcast feed." />
+  <meta name="twitter:card"        content="summary" />
+  <meta name="twitter:title"       content="Multi-modal Speaker Diarisation at Broadcast Scale" />
+  <meta name="twitter:description" content="Combining audio embeddings, lip-motion detection, and spatial cues to identify six-plus concurrent speakers in a live broadcast feed." />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -13,8 +25,22 @@
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <main class="post">
-    <a href="../index.html#blog" class="btn btn-ghost">Back to blog</a>
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
+      <a href="../index.html#blog" class="btn btn-ghost">← Back to blog</a>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle colour theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
     <p class="post-meta">18 July 2024 · AI · 6 min read</p>
     <h1 class="post-title">Multi-modal Speaker Diarisation at Broadcast Scale</h1>
     <p class="post-lead">
@@ -42,5 +68,21 @@
       can sustain live production load.
     </p>
   </main>
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var curr = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
+      var bar = document.getElementById('reading-progress');
+      if (bar) window.addEventListener('scroll', function () {
+        var total = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+      }, { passive: true });
+    }());
+  </script>
 </body>
 </html>

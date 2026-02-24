@@ -299,18 +299,34 @@ function slugify(title) {
     .replace(/^-+|-+$/g, '');
 }
 
+const SITE_BASE_URL = 'https://stocastico.github.io';
+
 function buildHtml(fm, bodyHtml) {
   const humanDate = formatHumanDate(fm.date);
   const leadHtml = fm.lead
     ? `\n    <p class="post-lead">\n      ${escapeHtml(fm.lead)}\n    </p>`
     : '';
+  const postUrl = fm.url
+    ? (fm.url.startsWith('http') ? fm.url : `${SITE_BASE_URL}/${fm.url.replace(/^\//, '')}`)
+    : '';
+  const canonicalHtml = postUrl ? `\n  <link rel="canonical" href="${escapeHtml(postUrl)}" />` : '';
+  const ogHtml = postUrl ? `
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="${escapeHtml(postUrl)}" />
+  <meta property="og:title"       content="${escapeHtml(fm.title)}" />
+  <meta property="og:description" content="${escapeHtml(fm.excerpt)}" />
+  <meta name="twitter:card"        content="summary" />
+  <meta name="twitter:title"       content="${escapeHtml(fm.title)}" />
+  <meta name="twitter:description" content="${escapeHtml(fm.excerpt)}" />` : '';
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="${escapeHtml(fm.excerpt)}" />
+  <meta name="description" content="${escapeHtml(fm.excerpt)}" />${canonicalHtml}${ogHtml}
   <title>${escapeHtml(fm.title)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -318,14 +334,47 @@ function buildHtml(fm, bodyHtml) {
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
 </head>
 <body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <main class="post">
-    <a href="../index.html#blog" class="btn btn-ghost">Back to blog</a>
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
+      <a href="../index.html#blog" class="btn btn-ghost">← Back to blog</a>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle colour theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
     <p class="post-meta">${humanDate} · ${escapeHtml(String(fm.tag))} · ${fm.readMin} min read</p>
     <h1 class="post-title">${escapeHtml(fm.title)}</h1>${leadHtml}
     ${bodyHtml}
   </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    hljs.highlightAll();
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var curr = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
+      var bar = document.getElementById('reading-progress');
+      if (bar) window.addEventListener('scroll', function () {
+        var total = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+      }, { passive: true });
+    }());
+  </script>
 </body>
 </html>
 `;
