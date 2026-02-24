@@ -17,6 +17,16 @@
 
 'use strict';
 
+function isLowPowerDevice() {
+  const nav = typeof navigator !== 'undefined' ? navigator : null;
+  const cores = nav && typeof nav.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : 8;
+  const coarsePointer = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(pointer: coarse)').matches;
+  const narrowViewport = typeof window !== 'undefined' && window.innerWidth < 760;
+  return coarsePointer || narrowViewport || cores <= 4;
+}
+
 /* ═══════════════════════════════════════════════════════════
    THREE.JS NEURAL NETWORK ANIMATION
    ═══════════════════════════════════════════════════════════ */
@@ -34,6 +44,12 @@ class NeuralNetwork {
     this.canvas = canvas;
     this.mouse = { x: 0, y: 0 };
     this.frameId = null;
+    this._isLowPower = isLowPowerDevice();
+    this.particleCount = this._isLowPower ? 84 : NeuralNetwork.PARTICLE_COUNT;
+    this.connectionDist = this._isLowPower ? 145 : NeuralNetwork.CONNECTION_DIST;
+    this.pixelRatioCap = this._isLowPower ? 1.5 : 2;
+    this.lineFrameStep = this._isLowPower ? 2 : 1;
+    this._lineTick = 0;
 
     this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     this.scene = new THREE.Scene();
@@ -90,7 +106,7 @@ class NeuralNetwork {
   }
 
   _initParticles() {
-    const n = NeuralNetwork.PARTICLE_COUNT;
+    const n = this.particleCount;
     const pos = new Float32Array(n * 3);
 
     this.velocities = [];
@@ -127,7 +143,7 @@ class NeuralNetwork {
   }
 
   _initLines() {
-    const n = NeuralNetwork.PARTICLE_COUNT;
+    const n = this.particleCount;
     const maxPairs = n * (n - 1) / 2;        /* upper bound */
 
     this.linePosArr = new Float32Array(maxPairs * 6);
@@ -150,8 +166,8 @@ class NeuralNetwork {
   }
 
   _update() {
-    const n = NeuralNetwork.PARTICLE_COUNT;
-    const dist = NeuralNetwork.CONNECTION_DIST;
+    const n = this.particleCount;
+    const dist = this.connectionDist;
     const dist2 = dist * dist;           /* squared — avoids sqrt in the O(n²) loop */
     const pos = this.points.geometry.attributes.position.array;
     /* Use cached half-dimensions from _onResize — no DOM reads per frame */
@@ -186,6 +202,7 @@ class NeuralNetwork {
       else if (pos[iy] < -hhBound) pos[iy] = hhBound;
     }
     this.points.geometry.attributes.position.needsUpdate = true;
+    if ((this._lineTick++ % this.lineFrameStep) !== 0) return;
 
     /* Build connection line buffer
        Key optimisation: compare squared distances so Math.sqrt is only
@@ -246,7 +263,7 @@ class NeuralNetwork {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.pixelRatioCap));
   }
 
   destroy() {
@@ -345,6 +362,12 @@ class Globe3D {
 
     /* The mesh the cursor is currently hovering (scaled up for feedback) */
     this._hoveredMesh = null;
+    this._isLowPower = isLowPowerDevice();
+    this._pixelRatioCap = this._isLowPower ? 1.35 : 2;
+    this._starCount = this._isLowPower ? 900 : 1400;
+    this._tripCurvePoints = this._isLowPower ? 64 : 96;
+    this._frameStep = this._isLowPower ? 2 : 1;
+    this._frameTick = 0;
 
     this._resize();
     this._initScene();
@@ -384,7 +407,7 @@ class Globe3D {
     this.camera.position.z = 2.75;
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min((typeof devicePixelRatio === 'number' ? devicePixelRatio : 1), this._pixelRatioCap));
     this.renderer.setSize(this.w, this.h);
     this.renderer.setClearColor(0x000000, 0);
 
@@ -451,8 +474,8 @@ class Globe3D {
   }
 
   _buildStars() {
-    /* Distribute 1 400 stars on a large sphere around the scene */
-    const COUNT = 1400;
+    /* Distribute stars on a large sphere around the scene */
+    const COUNT = this._starCount;
     const pos = new Float32Array(COUNT * 3);
     for (let i = 0; i < COUNT; i++) {
       const theta = Math.random() * Math.PI * 2;
@@ -620,7 +643,7 @@ class Globe3D {
         segLens.push(len);
         total += len;
 
-        const pts = curve.getPoints(96);   /* 96 segments for smooth curves */
+        const pts = curve.getPoints(this._tripCurvePoints);
         /* Soft outer glow */
         this.pivot.add(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(pts),
@@ -738,6 +761,7 @@ class Globe3D {
       this.camera.aspect = this.w / this.h;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(this.w, this.h);
+      this.renderer.setPixelRatio(Math.min((typeof devicePixelRatio === 'number' ? devicePixelRatio : 1), this._pixelRatioCap));
     });
   }
 
@@ -746,6 +770,7 @@ class Globe3D {
     /* Stop the loop when the tab is hidden or the globe is off-screen */
     if (document.hidden || !this._globeVisible) { this._rafId = null; return; }
     this._rafId = requestAnimationFrame(() => this._animate());
+    if ((this._frameTick++ % this._frameStep) !== 0) return;
 
     const t = performance.now() * 0.001;   /* seconds */
 
@@ -1057,6 +1082,11 @@ class HeroNameShader {
     this.raf = null;
     this._visible = true;
     this._io = null;
+    this._isLowPower = isLowPowerDevice();
+    this._pixelRatioCap = this._isLowPower ? 1.4 : 2;
+    this._targetFps = this._isLowPower ? 30 : 45;
+    this._minFrameTime = 1 / this._targetFps;
+    this._lastDrawTime = 0;
 
     const gl = canvasEl.getContext('webgl', { alpha: true, premultipliedAlpha: false })
       || canvasEl.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
@@ -1227,7 +1257,7 @@ class HeroNameShader {
   /* ── Render name text to an offscreen 2D canvas, upload as GL texture ── */
   _drawText() {
     const gl = this.gl;
-    const dpr = Math.min(devicePixelRatio, 2);
+    const dpr = Math.min(devicePixelRatio || 1, this._pixelRatioCap);
     const w = this.canvas.offsetWidth || 400;
     const h = this.canvas.offsetHeight || 200;
 
@@ -1260,7 +1290,7 @@ class HeroNameShader {
   /* ── Sync canvas size with h1 dimensions ── */
   _resize() {
     const gl = this.gl;
-    const dpr = Math.min(devicePixelRatio, 2);
+    const dpr = Math.min(devicePixelRatio || 1, this._pixelRatioCap);
     const w = this.h1.offsetWidth || 400;
     const h = this.h1.offsetHeight || 200;
 
@@ -1305,7 +1335,11 @@ class HeroNameShader {
     if (document.hidden || !this._visible) { this.raf = null; return; }   /* pause when hidden or off-screen */
     this.raf = requestAnimationFrame(() => this._animate());
     if (!this.gl || !this.prog) return;
-    this.t += 1 / 60;
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
+    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
+    const dt = this._lastDrawTime ? Math.min(now - this._lastDrawTime, 0.05) : this._minFrameTime;
+    this._lastDrawTime = now;
+    this.t += dt;
     const gl = this.gl;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(this.uTime, this.t);
