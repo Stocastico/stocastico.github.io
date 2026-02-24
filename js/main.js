@@ -1409,6 +1409,182 @@ function setFooterYear() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   3-D CARD TILT + SPECULAR GLOSS
+   ═══════════════════════════════════════════════════════════ */
+function initCardTilt() {
+  if (prefersReducedMotion()) return;
+  if (typeof window === 'undefined') return;
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) return;
+
+  const MAX_RX = 10;   /* max degrees rotateX */
+  const MAX_RY = 12;   /* max degrees rotateY */
+  const SPRING  = 0.10; /* lerp factor per frame */
+
+  Array.from(document.querySelectorAll('.research-card, .blog-card, .contact-card, .skill-group'))
+    .forEach((card) => {
+      let targetRX = 0, targetRY = 0, targetZ = 0;
+      let currentRX = 0, currentRY = 0, currentZ = 0;
+      let raf = null;
+      let isHovered = false;
+
+      card.style.setProperty('--gloss-x', '50%');
+      card.style.setProperty('--gloss-y', '50%');
+      card.classList.add('tilt-ready');
+
+      function loop() {
+        currentRX += (targetRX - currentRX) * SPRING;
+        currentRY += (targetRY - currentRY) * SPRING;
+        currentZ  += (targetZ  - currentZ)  * SPRING;
+
+        card.style.transform = `perspective(900px) rotateX(${currentRX.toFixed(3)}deg) rotateY(${currentRY.toFixed(3)}deg) translateZ(${currentZ.toFixed(2)}px)`;
+
+        const done = !isHovered
+          && Math.abs(targetRX - currentRX) < 0.05
+          && Math.abs(targetRY - currentRY) < 0.05
+          && Math.abs(targetZ  - currentZ)  < 0.1;
+
+        if (done) {
+          raf = null;
+          card.style.transform  = '';
+          card.style.transition = '';  /* restore CSS transitions (needed for 3D entrance) */
+          return;
+        }
+        raf = requestAnimationFrame(loop);
+      }
+
+      card.addEventListener('mouseenter', () => {
+        isHovered = true;
+        targetZ   = 8;
+        /* Suppress the CSS transform-transition while the spring runs */
+        card.style.transition = `border-color var(--t-med), background var(--t-med), box-shadow var(--t-med)`;
+        if (!raf) raf = requestAnimationFrame(loop);
+      });
+
+      card.addEventListener('mousemove', (e) => {
+        const r  = card.getBoundingClientRect();
+        const cx = (e.clientX - r.left) / r.width;
+        const cy = (e.clientY - r.top)  / r.height;
+        targetRY =  (cx - 0.5) * MAX_RY * 2;
+        targetRX = -(cy - 0.5) * MAX_RX * 2;
+        card.style.setProperty('--gloss-x', `${(cx * 100).toFixed(1)}%`);
+        card.style.setProperty('--gloss-y', `${(cy * 100).toFixed(1)}%`);
+      });
+
+      card.addEventListener('mouseleave', () => {
+        isHovered = false;
+        targetRX = 0;
+        targetRY = 0;
+        targetZ  = 0;
+        card.style.setProperty('--gloss-x', '50%');
+        card.style.setProperty('--gloss-y', '50%');
+        if (!raf) raf = requestAnimationFrame(loop);
+      });
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAGNETIC BUTTONS
+   ═══════════════════════════════════════════════════════════ */
+function initMagneticButtons() {
+  if (prefersReducedMotion()) return;
+  if (typeof window === 'undefined') return;
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) return;
+
+  const RADIUS   = 80;   /* px — proximity trigger distance */
+  const STRENGTH = 0.35; /* fraction of offset to apply     */
+  const SPRING   = 0.14; /* lerp factor per frame           */
+
+  const magnets = Array.from(
+    document.querySelectorAll('.btn-primary, .btn-ghost, .social-btn')
+  ).map(el => ({ el, tx: 0, ty: 0, cx: 0, cy: 0, active: false, raf: null }));
+
+  if (!magnets.length) return;
+
+  function tick(m) {
+    m.cx += (m.tx - m.cx) * SPRING;
+    m.cy += (m.ty - m.cy) * SPRING;
+    const done = !m.active && Math.abs(m.tx - m.cx) < 0.05 && Math.abs(m.ty - m.cy) < 0.05;
+    if (done) {
+      m.cx = 0; m.cy = 0;
+      m.el.style.transform = '';
+      m.raf = null;
+    } else {
+      m.el.style.transform = `translate(${m.cx.toFixed(2)}px,${m.cy.toFixed(2)}px)`;
+      m.raf = requestAnimationFrame(() => tick(m));
+    }
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    magnets.forEach((m) => {
+      const rect = m.el.getBoundingClientRect();
+      const dx   = e.clientX - (rect.left + rect.width  / 2);
+      const dy   = e.clientY - (rect.top  + rect.height / 2);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < RADIUS) {
+        m.active = true;
+        m.tx = dx * STRENGTH;
+        m.ty = dy * STRENGTH;
+        if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
+      } else if (m.active) {
+        m.active = false;
+        m.tx = 0;
+        m.ty = 0;
+        if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
+      }
+    });
+  }, { passive: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLL-DRIVEN 3-D TRANSFORMS
+   ═══════════════════════════════════════════════════════════ */
+function initScroll3D() {
+  if (prefersReducedMotion()) return;
+  if (typeof document === 'undefined') return;
+
+  /* Alternate entrance angles: even cards lean right, odd lean left */
+  Array.from(document.querySelectorAll('.research-card[data-animate]'))
+    .forEach((card, i) => card.style.setProperty('--card-init-ry', `${i % 2 === 0 ? '14' : '-14'}deg`));
+
+  const heroContent = document.querySelector('.hero-content');
+  const heroSection = document.getElementById('hero');
+  const orb1 = document.querySelector('.orb-1');
+  const orb2 = document.querySelector('.orb-2');
+
+  /* Wait for the hero entrance animation to finish before taking over transforms */
+  let ready = false;
+  if (heroContent) {
+    heroContent.addEventListener('animationend', () => { ready = true; }, { once: true });
+    setTimeout(() => { ready = true; }, 1400); /* fallback */
+  } else {
+    ready = true;
+  }
+
+  let rafId = null;
+
+  function update() {
+    rafId = null;
+    if (!ready) return;
+    const scrollY = window.scrollY;
+    const heroH   = heroSection ? heroSection.offsetHeight : 0;
+
+    /* Apply parallax only while the hero section is still in or near view */
+    if (scrollY < heroH * 1.1) {
+      if (heroContent) heroContent.style.transform = `translateY(${scrollY * 0.28}px)`;
+      if (orb1) orb1.style.transform = `translateY(${scrollY * 0.12}px)`;
+      if (orb2) orb2.style.transform = `translateY(${scrollY * 0.20}px)`;
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!rafId) rafId = requestAnimationFrame(update);
+  }, { passive: true });
+
+  update(); /* initial — scrollY is 0 so transforms are no-ops */
+}
+
+/* ═══════════════════════════════════════════════════════════
    HERO NAME SHADER
    Renders "Stefano / Masneri" with iridescent chromatic
    aberration on a WebGL canvas overlay.  Falls back to the
@@ -1719,6 +1895,132 @@ class HeroNameShader {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   HERO BACKGROUND — GLSL NOISE GRADIENT
+   Domain-warped fBm shader: indigo-violet ↔ cyan ↔ deep dark.
+   ═══════════════════════════════════════════════════════════ */
+class NoiseGradient {
+  constructor(canvas) {
+    this.canvas = canvas;
+    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
+             || canvas.getContext('experimental-webgl', { alpha: false, depth: false });
+    if (!gl) { canvas.style.display = 'none'; return; }
+    this.gl = gl;
+    this._setup();
+    this._resize();
+    window.addEventListener('resize', () => this._resize(), { passive: true });
+    this._startTime = performance.now();
+    this._lastT     = 0;
+    this._targetFps = 20; /* background; 20fps is plenty */
+    this._tick      = this._tick.bind(this);
+    this._raf       = requestAnimationFrame(this._tick);
+  }
+
+  _compileShader(type, src) {
+    const s = this.gl.createShader(type);
+    this.gl.shaderSource(s, src);
+    this.gl.compileShader(s);
+    return s;
+  }
+
+  _setup() {
+    const gl = this.gl;
+
+    const vert = this._compileShader(gl.VERTEX_SHADER,
+      `attribute vec2 a_pos;
+       void main(){gl_Position=vec4(a_pos,0.0,1.0);}`);
+
+    /* Domain-warped fBm fragment shader */
+    const frag = this._compileShader(gl.FRAGMENT_SHADER,
+      `precision mediump float;
+       uniform float u_t;
+       uniform vec2  u_res;
+
+       float hash(vec2 p){
+         p=fract(p*vec2(127.1,311.7));
+         p+=dot(p,p+17.5);
+         return fract(p.x*p.y);
+       }
+       float noise(vec2 p){
+         vec2 i=floor(p),f=fract(p);
+         vec2 u=f*f*(3.0-2.0*f);
+         return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),
+                    mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);
+       }
+       float fbm(vec2 p){
+         float v=0.0,a=0.5;
+         for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.1+vec2(0.13,-0.07);a*=0.5;}
+         return v;
+       }
+       void main(){
+         vec2 uv=gl_FragCoord.xy/u_res;
+         uv.y=1.0-uv.y;
+         float t=u_t*0.06;
+         /* First warp pass */
+         vec2 q=vec2(fbm(uv*1.4+t),
+                     fbm(uv*1.4+vec2(1.3,1.7)+t));
+         /* Second warp pass — creates the folded turbulence */
+         vec2 r=vec2(fbm(uv*1.4+2.0*q+vec2(1.7,9.2)+0.15*t),
+                     fbm(uv*1.4+2.0*q+vec2(8.3,2.8)+0.126*t));
+         float f=fbm(uv*1.4+2.5*r);
+         /* Palette: deep dark → indigo-violet → cyan */
+         vec3 col=mix(vec3(0.047,0.063,0.102),
+                      vec3(0.424,0.392,1.000),
+                      clamp(f*2.0-0.15,0.0,1.0));
+         col=mix(col,
+                 vec3(0.000,0.831,1.000),
+                 clamp(f*f*4.0-0.4,0.0,1.0));
+         col*=f*1.35+0.12;
+         gl_FragColor=vec4(col,1.0);
+       }`);
+
+    this.prog = gl.createProgram();
+    gl.attachShader(this.prog, vert);
+    gl.attachShader(this.prog, frag);
+    gl.linkProgram(this.prog);
+    gl.useProgram(this.prog);
+
+    /* Full-screen quad */
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(this.prog, 'a_pos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    this._uTime = gl.getUniformLocation(this.prog, 'u_t');
+    this._uRes  = gl.getUniformLocation(this.prog, 'u_res');
+  }
+
+  _resize() {
+    /* Intentionally cap at 1× DPR — noise looks great at lower res */
+    const scale = Math.min(window.devicePixelRatio || 1, 1.0);
+    const w = Math.round(this.canvas.clientWidth  * scale);
+    const h = Math.round(this.canvas.clientHeight * scale);
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width  = w;
+      this.canvas.height = h;
+      this.gl.viewport(0, 0, w, h);
+    }
+  }
+
+  _tick(now) {
+    this._raf = requestAnimationFrame(this._tick);
+    if (document.hidden) return;
+    if (now - this._lastT < 1000 / this._targetFps) return;
+    this._lastT = now;
+    const t = (now - this._startTime) / 1000;
+    const { gl } = this;
+    gl.uniform1f(this._uTime, t);
+    gl.uniform2f(this._uRes, this.canvas.width, this.canvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  destroy() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+  }
+}
+
 /* Expose a minimal test surface in Node without affecting browser usage */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -1729,6 +2031,9 @@ if (typeof module !== 'undefined' && module.exports) {
     renderBlog,
     setFooterYear,
     initTheme,
+    initCardTilt,
+    initMagneticButtons,
+    initScroll3D,
     initNavbar,
     initMobileMenu,
     initScrollReveal,
@@ -1737,6 +2042,7 @@ if (typeof module !== 'undefined' && module.exports) {
     NeuralNetwork,
     NeuralNetwork2D,
     HeroNameShader,
+    NoiseGradient,
     GlobeFallback2D,
   };
 }
@@ -1760,6 +2066,19 @@ if (typeof document !== 'undefined') {
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
   initCounters();
+
+  /* Interactive 3-D effects — pointer-based (cards, buttons) and scroll-driven */
+  initCardTilt();
+  initMagneticButtons();
+  initScroll3D();
+
+  /* Noise gradient — raw WebGL, runs on devices that support it */
+  const noiseCanvas = document.getElementById('noise-canvas');
+  if (noiseCanvas && !prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
+    new NoiseGradient(noiseCanvas);
+  } else if (noiseCanvas) {
+    noiseCanvas.style.display = 'none';
+  }
 
   /* Three.js neural network — only when THREE is loaded */
   const canvas = document.getElementById('neural-canvas');

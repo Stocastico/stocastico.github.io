@@ -69,7 +69,9 @@
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section id="hero" aria-label="Introduction">
-    <!-- Three.js canvas lives here -->
+    <!-- GLSL noise-gradient background (z-index 0, lowest layer) -->
+    <canvas id="noise-canvas" aria-hidden="true"></canvas>
+    <!-- Three.js neural-network particles (z-index 1, above noise gradient) -->
     <canvas id="neural-canvas" aria-hidden="true"></canvas>
 
     <!-- Gradient orbs for extra depth -->
