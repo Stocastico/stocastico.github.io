@@ -167,6 +167,30 @@ The cards on the homepage are auto-rendered from `data/blog.js`.
 
 ---
 
+## Managing Globe Locations via YAML (No Manual Coordinates in JS)
+
+Source file: `data/locations.yaml`  
+Generated file: `data/locations.js`
+
+Run:
+
+```bash
+./scripts/update-locations.sh
+```
+
+or directly:
+
+```bash
+node scripts/generate-locations.js --input data/locations.yaml --output data/locations.js
+```
+
+Notes:
+- Missing `lat/lon` are auto-geocoded from the place name using OpenStreetMap Nominatim.
+- `trip.color` and `region.color` are auto-filled when omitted.
+- Geocoding results are cached in `.cache/locations-geocode-cache.json`.
+
+---
+
 ## Performance Notes
 
 - No build step, no bundler — the site loads very quickly.
@@ -187,10 +211,14 @@ The cards on the homepage are auto-rendered from `data/blog.js`.
 │   └── styles.css      All styles (CSS variables for easy theming)
 ├── data/
 │   ├── blog.js         Blog card data
+│   ├── locations.yaml  Source data for globe content
 │   ├── publications.js Publication list data
-│   └── locations.js    Globe pins/trips/regions
+│   └── locations.js    Generated globe pins/trips/regions
 ├── js/
 │   └── main.js         Three.js animation + UI logic
+├── scripts/
+│   ├── generate-locations.js  YAML → locations.js generator
+│   └── update-locations.sh    Shortcut command
 ├── img/                (create this folder) — put your photo here
 ├── blog/               Blog post HTML files
 ├── CNAME               (optional) — custom domain for GitHub Pages

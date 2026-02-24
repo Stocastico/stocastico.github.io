@@ -1,0 +1,354 @@
+#!/usr/bin/env node
+'use strict';
+
+const fs = require('node:fs');
+const path = require('node:path');
+
+const DEFAULT_TRIP_COLORS = ['#ff6b6b', '#c084fc', '#22c55e', '#38bdf8', '#f59e0b', '#fb7185'];
+const DEFAULT_REGION_COLOR = '#ff8c42';
+const DEFAULT_TRIP_CYCLE_SEC = 28;
+const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
+const REQUEST_DELAY_MS = 1100;
+
+function parseArgs(argv) {
+  const out = {
+    input: 'data/locations.yaml',
+    output: 'data/locations.js',
+    cache: '.cache/locations-geocode-cache.json',
+    geocode: true,
+  };
+
+  for (let i = 2; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--input' || arg === '-i') out.input = argv[++i];
+    else if (arg === '--output' || arg === '-o') out.output = argv[++i];
+    else if (arg === '--cache') out.cache = argv[++i];
+    else if (arg === '--no-geocode') out.geocode = false;
+    else if (arg === '--help' || arg === '-h') out.help = true;
+    else throw new Error(`Unknown argument: ${arg}`);
+  }
+  return out;
+}
+
+function printHelp() {
+  console.log(`Usage:
+  node scripts/generate-locations.js [options]
+
+Options:
+  -i, --input <path>    YAML source file (default: data/locations.yaml)
+  -o, --output <path>   Generated JS output (default: data/locations.js)
+  --cache <path>        Geocode cache JSON file (default: .cache/locations-geocode-cache.json)
+  --no-geocode          Fail if coordinates are missing instead of querying Nominatim
+  -h, --help            Show help
+`);
+}
+
+function stripYamlComments(line) {
+  let out = '';
+  let inSingle = false;
+  let inDouble = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (ch === "'" && !inDouble) inSingle = !inSingle;
+    if (ch === '"' && !inSingle) inDouble = !inDouble;
+    if (ch === '#' && !inSingle && !inDouble) break;
+    out += ch;
+  }
+  return out.replace(/\s+$/, '');
+}
+
+function parseScalar(raw) {
+  const s = raw.trim();
+  if (s === '') return '';
+  if (s === 'null' || s === '~') return null;
+  if (s === 'true') return true;
+  if (s === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+
+function parseYaml(yamlText) {
+  const lines = yamlText
+    .split('\n')
+    .map(stripYamlComments)
+    .filter((line) => line.trim() !== '');
+  let i = 0;
+
+  function getIndent(line) {
+    const m = line.match(/^ */);
+    return m ? m[0].length : 0;
+  }
+
+  function parseBlock(indent) {
+    if (i >= lines.length) return null;
+    const line = lines[i];
+    const currentIndent = getIndent(line);
+    if (currentIndent < indent) return null;
+    if (line.trim().startsWith('- ')) return parseSequence(indent);
+    return parseMap(indent);
+  }
+
+  function parseMap(indent) {
+    const obj = {};
+    while (i < lines.length) {
+      const line = lines[i];
+      const currentIndent = getIndent(line);
+      if (currentIndent < indent) break;
+      if (currentIndent > indent) throw new Error(`Invalid indentation near: "${line}"`);
+      if (line.trim().startsWith('- ')) break;
+      const trimmed = line.trim();
+      const colonAt = trimmed.indexOf(':');
+      if (colonAt === -1) throw new Error(`Missing ':' in YAML line: "${line}"`);
+      const key = trimmed.slice(0, colonAt).trim();
+      const rest = trimmed.slice(colonAt + 1).trim();
+      i += 1;
+      obj[key] = rest === '' ? parseBlock(indent + 2) : parseScalar(rest);
+    }
+    return obj;
+  }
+
+  function parseInlineMap(text, indent) {
+    const obj = {};
+    const colonAt = text.indexOf(':');
+    if (colonAt === -1) return parseScalar(text);
+    const key = text.slice(0, colonAt).trim();
+    const rest = text.slice(colonAt + 1).trim();
+    obj[key] = rest === '' ? parseBlock(indent + 2) : parseScalar(rest);
+
+    while (i < lines.length) {
+      const line = lines[i];
+      const currentIndent = getIndent(line);
+      if (currentIndent < indent + 2) break;
+      if (currentIndent > indent + 2) throw new Error(`Invalid indentation near: "${line}"`);
+      if (line.trim().startsWith('- ')) break;
+      const trimmed = line.trim();
+      const nextColon = trimmed.indexOf(':');
+      if (nextColon === -1) throw new Error(`Missing ':' in YAML line: "${line}"`);
+      const nextKey = trimmed.slice(0, nextColon).trim();
+      const nextRest = trimmed.slice(nextColon + 1).trim();
+      i += 1;
+      obj[nextKey] = nextRest === '' ? parseBlock(indent + 4) : parseScalar(nextRest);
+    }
+    return obj;
+  }
+
+  function parseSequence(indent) {
+    const arr = [];
+    while (i < lines.length) {
+      const line = lines[i];
+      const currentIndent = getIndent(line);
+      if (currentIndent < indent) break;
+      if (currentIndent !== indent || !line.trim().startsWith('- ')) break;
+      const trimmed = line.trim().slice(2).trim();
+      i += 1;
+      if (trimmed === '') arr.push(parseBlock(indent + 2));
+      else if (trimmed.includes(':')) arr.push(parseInlineMap(trimmed, indent));
+      else arr.push(parseScalar(trimmed));
+    }
+    return arr;
+  }
+
+  const parsed = parseBlock(0);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('YAML root must be an object');
+  }
+  return parsed;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function sanitizeHexColor(color, fallback) {
+  if (typeof color !== 'string') return fallback;
+  const trimmed = color.trim();
+  return /^#[0-9a-fA-F]{6}$/.test(trimmed) ? trimmed.toLowerCase() : fallback;
+}
+
+function ensureDirForFile(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function readJsonIfExists(filePath, fallback) {
+  if (!fs.existsSync(filePath)) return fallback;
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+async function geocodeWithCache(name, cache, userAgent) {
+  if (cache[name]) return cache[name];
+  const url = `${NOMINATIM_API}?q=${encodeURIComponent(name)}&format=json&limit=1`;
+  const res = await fetch(url, {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': userAgent,
+    },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data) || !data.length) throw new Error('No geocoding results');
+  const lat = Number.parseFloat(data[0].lat);
+  const lon = Number.parseFloat(data[0].lon);
+  const result = { lat, lon };
+  cache[name] = result;
+  return result;
+}
+
+function normalizeCity(city) {
+  if (typeof city === 'string') return { name: city };
+  if (!city || typeof city !== 'object') return { name: '' };
+  return { ...city };
+}
+
+function roundCoord(value) {
+  return Number(value.toFixed(5));
+}
+
+function validateSource(source) {
+  if (!source || typeof source !== 'object') throw new Error('YAML source must be an object');
+  if (!Array.isArray(source.pins)) source.pins = [];
+  if (!Array.isArray(source.trips)) source.trips = [];
+  if (!Array.isArray(source.regions)) source.regions = [];
+}
+
+async function compileLocations(source, options) {
+  validateSource(source);
+  const geocodeCache = readJsonIfExists(options.cache, {});
+  const ua = 'stocastico-website-locations-generator/1.0 (+https://github.com/stocastico)';
+  let requests = 0;
+
+  async function fillCoords(item, fallbackName) {
+    const hasCoords = Number.isFinite(item.lat) && Number.isFinite(item.lon);
+    if (hasCoords) {
+      item.lat = roundCoord(Number(item.lat));
+      item.lon = roundCoord(Number(item.lon));
+      return;
+    }
+
+    const placeName = item.name || fallbackName;
+    if (!placeName) throw new Error('Missing location name for geocoding');
+    if (!options.geocode) throw new Error(`Missing coordinates for "${placeName}" (run without --no-geocode)`);
+
+    if (requests > 0) await wait(REQUEST_DELAY_MS);
+    const coords = await geocodeWithCache(placeName, geocodeCache, ua);
+    item.lat = roundCoord(coords.lat);
+    item.lon = roundCoord(coords.lon);
+    requests += 1;
+  }
+
+  const pins = [];
+  for (const rawPin of source.pins) {
+    const pin = { ...rawPin };
+    pin.type = ['lived', 'work', 'travel'].includes(pin.type) ? pin.type : 'travel';
+    await fillCoords(pin, pin.name);
+    pins.push({
+      type: pin.type,
+      name: String(pin.name || ''),
+      lat: pin.lat,
+      lon: pin.lon,
+      info: String(pin.info || ''),
+    });
+  }
+
+  const trips = [];
+  for (let t = 0; t < source.trips.length; t += 1) {
+    const rawTrip = source.trips[t] || {};
+    const cities = [];
+    const sourceCities = Array.isArray(rawTrip.cities) ? rawTrip.cities : [];
+    for (const rawCity of sourceCities) {
+      const city = normalizeCity(rawCity);
+      await fillCoords(city, city.name);
+      cities.push({
+        name: String(city.name || ''),
+        lat: city.lat,
+        lon: city.lon,
+        ...(city.info ? { info: String(city.info) } : {}),
+      });
+    }
+    if (cities.length < 2) continue;
+
+    trips.push({
+      name: String(rawTrip.name || `Trip ${t + 1}`),
+      color: sanitizeHexColor(rawTrip.color, DEFAULT_TRIP_COLORS[t % DEFAULT_TRIP_COLORS.length]),
+      cycleSec: Number.isFinite(rawTrip.cycleSec) ? rawTrip.cycleSec : DEFAULT_TRIP_CYCLE_SEC,
+      cities,
+    });
+  }
+
+  const regions = [];
+  for (const rawRegion of source.regions) {
+    const region = { ...rawRegion };
+    await fillCoords(region, region.name);
+    regions.push({
+      name: String(region.name || ''),
+      lat: region.lat,
+      lon: region.lon,
+      radius: Number.isFinite(region.radius) ? region.radius : 1,
+      color: sanitizeHexColor(region.color, DEFAULT_REGION_COLOR),
+      info: String(region.info || ''),
+    });
+  }
+
+  ensureDirForFile(options.cache);
+  fs.writeFileSync(options.cache, `${JSON.stringify(geocodeCache, null, 2)}\n`);
+
+  return { pins, trips, regions, geocodeRequests: requests };
+}
+
+function toLocationsJs(locations, sourcePath) {
+  const payload = JSON.stringify(
+    {
+      pins: locations.pins,
+      trips: locations.trips,
+      regions: locations.regions,
+    },
+    null,
+    2,
+  );
+  return `/* eslint-disable */
+/* Generated by scripts/generate-locations.js from ${sourcePath} */
+const LOCATIONS = ${payload};
+`;
+}
+
+async function main() {
+  const options = parseArgs(process.argv);
+  if (options.help) {
+    printHelp();
+    return;
+  }
+
+  const inputPath = path.resolve(options.input);
+  const outputPath = path.resolve(options.output);
+  const cachePath = path.resolve(options.cache);
+
+  if (!fs.existsSync(inputPath)) throw new Error(`Input file not found: ${inputPath}`);
+  const sourceRaw = fs.readFileSync(inputPath, 'utf8');
+  const source = parseYaml(sourceRaw);
+  const compiled = await compileLocations(source, { ...options, cache: cachePath });
+  const js = toLocationsJs(compiled, path.relative(process.cwd(), inputPath));
+  ensureDirForFile(outputPath);
+  fs.writeFileSync(outputPath, `${js}\n`, 'utf8');
+  console.log(`Generated ${path.relative(process.cwd(), outputPath)}`);
+  console.log(`Pins: ${compiled.pins.length}, Trips: ${compiled.trips.length}, Regions: ${compiled.regions.length}`);
+  console.log(`Geocoding requests: ${compiled.geocodeRequests}`);
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`Error: ${err.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  parseYaml,
+  compileLocations,
+  toLocationsJs,
+};

@@ -883,12 +883,33 @@ function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
 
-  let last = 0;
+  const links = typeof document.querySelectorAll === 'function'
+    ? Array.from(document.querySelectorAll('#nav-links a[href^="#"]'))
+    : [];
+  const targets = links
+    .map((link) => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean);
+
+  const setActiveLink = () => {
+    if (!links.length || !targets.length) return;
+    const checkpoint = window.scrollY + (window.innerHeight * 0.35);
+    let activeId = targets[0]?.id;
+    targets.forEach((section) => {
+      if (checkpoint >= section.offsetTop) activeId = section.id;
+    });
+    links.forEach((link) => {
+      const isActive = link.getAttribute('href') === `#${activeId}`;
+      link.setAttribute('aria-current', isActive ? 'true' : 'false');
+    });
+  };
+
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     nav.classList.toggle('scrolled', y > 20);
-    last = y;
+    setActiveLink();
   }, { passive: true });
+
+  setActiveLink();
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -899,20 +920,31 @@ function initMobileMenu() {
   const links = document.getElementById('nav-links');
   if (!toggle || !links) return;
 
-  toggle.addEventListener('click', () => {
-    const open = toggle.classList.toggle('open');
+  const setMenuState = (open) => {
+    toggle.classList.toggle('open', open);
     links.classList.toggle('open', open);
+    document.body?.classList?.toggle('menu-open', open);
     toggle.setAttribute('aria-expanded', open);
-  });
+  };
+
+  toggle.addEventListener('click', () => setMenuState(!toggle.classList.contains('open')));
 
   /* Close on link click */
   links.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      toggle.classList.remove('open');
-      links.classList.remove('open');
-      toggle.setAttribute('aria-expanded', false);
-    });
+    a.addEventListener('click', () => setMenuState(false));
   });
+
+  if (typeof document.addEventListener === 'function') {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toggle.classList.contains('open')) setMenuState(false);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!toggle.classList.contains('open')) return;
+      if (toggle.contains?.(e.target) || links.contains?.(e.target)) return;
+      setMenuState(false);
+    });
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -938,6 +970,15 @@ function formatIsoDate(iso) {
   });
 }
 
+function escapeHtml(raw) {
+  return String(raw ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 /* Publication items — data source: PUBLICATIONS (data/publications.js) */
 function renderPublications() {
   const list = document.getElementById('publications-list');
@@ -945,14 +986,14 @@ function renderPublications() {
 
   list.innerHTML = PUBLICATIONS.map((pub, i) => `
     <div class="pub-item" role="listitem" data-animate data-delay="${i * 70}">
-      <div class="pub-year">${pub.year}</div>
+      <div class="pub-year">${escapeHtml(pub.year)}</div>
       <div>
-        <div class="pub-title">${pub.title}</div>
+        <div class="pub-title">${escapeHtml(pub.title)}</div>
         <div class="pub-meta">
-          ${pub.authors} &nbsp;·&nbsp;
-          <span class="pub-venue">${pub.venue}</span>
+          ${escapeHtml(pub.authors)} &nbsp;·&nbsp;
+          <span class="pub-venue">${escapeHtml(pub.venue)}</span>
         </div>
-        ${pub.url ? `<a href="${pub.url}" target="_blank" rel="noopener" class="pub-link">Read paper</a>` : ''}
+        ${pub.url ? `<a href="${escapeHtml(pub.url)}" target="_blank" rel="noopener" class="pub-link">Read paper</a>` : ''}
       </div>
     </div>
   `).join('');
@@ -977,16 +1018,16 @@ function renderBlog() {
     const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
     const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
     return `
-      <a href="${post.url}" class="blog-card" data-animate data-delay="${i * 80}">
+      <a href="${escapeHtml(post.url)}" class="blog-card" data-animate data-delay="${i * 80}">
         <div class="blog-card-accent blog-accent-${tagSlug}"></div>
         <div class="blog-card-body">
-          <span class="blog-tag">${post.tag || 'Post'}</span>
-          <span class="blog-title">${post.title}</span>
-          <span class="blog-excerpt">${post.excerpt}</span>
+          <span class="blog-tag">${escapeHtml(post.tag || 'Post')}</span>
+          <span class="blog-title">${escapeHtml(post.title)}</span>
+          <span class="blog-excerpt">${escapeHtml(post.excerpt)}</span>
         </div>
         <div class="blog-card-foot">
-          <span class="blog-date">${date}</span>
-          <span class="blog-read">${readStr}</span>
+          <span class="blog-date">${escapeHtml(date)}</span>
+          <span class="blog-read">${escapeHtml(readStr)}</span>
         </div>
       </a>
     `;

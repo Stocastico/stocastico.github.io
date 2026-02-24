@@ -1,6 +1,11 @@
 /* ============================================================
-   GLOBE LOCATIONS  —  THIS IS THE ONLY FILE YOU NEED TO EDIT
+   GLOBE LOCATIONS (GENERATED FILE)
    ============================================================
+   Source of truth: data/locations.yaml
+   Generate with:   ./scripts/update-locations.sh
+
+   You can still edit this file manually, but it is intended to be
+   generated from YAML so you do not need to manage coordinates/colors.
 
    TWO-COLOUR SYSTEM
    ──────────────────
