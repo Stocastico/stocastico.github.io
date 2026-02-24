@@ -3,8 +3,14 @@
 
 pins:
   - type: lived
-    name: Crema, Italy
+    name: Brescia, Italy
     info: Home town
+  - type: lived
+    name: Berlin, Germany
+    info: Worked there for 6 years
+  - type: lived
+    name: Frankfurt, Germany
+    info: Worked there for 3 years
   - type: lived
     name: San Sebastián, Spain
     info: Current home

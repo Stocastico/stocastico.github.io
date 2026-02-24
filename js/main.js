@@ -27,6 +27,24 @@ function isLowPowerDevice() {
   return coarsePointer || narrowViewport || cores <= 4;
 }
 
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+let _webglSupportCache = null;
+function hasWebGLSupport() {
+  if (_webglSupportCache != null) return _webglSupportCache;
+  if (typeof document === 'undefined') return false;
+  const c = document.createElement('canvas');
+  _webglSupportCache = !!(
+    c.getContext('webgl', { failIfMajorPerformanceCaveat: true })
+    || c.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: true })
+  );
+  return _webglSupportCache;
+}
+
 /* ═══════════════════════════════════════════════════════════
    THREE.JS NEURAL NETWORK ANIMATION
    ═══════════════════════════════════════════════════════════ */
@@ -51,7 +69,12 @@ class NeuralNetwork {
     this.lineFrameStep = this._isLowPower ? 2 : 1;
     this._lineTick = 0;
 
-    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: !this._isLowPower,
+      powerPreference: this._isLowPower ? 'low-power' : 'high-performance',
+    });
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 2000);
     this.camera.position.z = 600;
@@ -59,6 +82,17 @@ class NeuralNetwork {
     this._initParticles();
     this._initLines();
     this._onResize();
+
+    if (typeof canvas.addEventListener === 'function') {
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        this.frameId = null;
+      }, false);
+      canvas.addEventListener('webglcontextrestored', () => {
+        this._onResize();
+        if (!this.frameId) this._animate();
+      }, false);
+    }
 
     window.addEventListener('resize', () => this._onResize());
     window.addEventListener('mousemove', e => {
@@ -271,6 +305,130 @@ class NeuralNetwork {
   }
 }
 
+/* CPU fallback for the hero background when WebGL is unavailable */
+class NeuralNetwork2D {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: true });
+    if (!this.ctx) return;
+    this.mouse = { x: 0, y: 0 };
+    this.frameId = null;
+    this._visible = true;
+    this._isLowPower = isLowPowerDevice();
+    this.count = this._isLowPower ? 52 : 80;
+    this.maxDist = this._isLowPower ? 120 : 150;
+    this.maxDist2 = this.maxDist * this.maxDist;
+    this.points = [];
+
+    this._onResize();
+    for (let i = 0; i < this.count; i++) this.points.push(this._newPoint());
+
+    window.addEventListener('resize', () => this._onResize());
+    window.addEventListener('mousemove', (e) => {
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (!e.touches[0]) return;
+      this.mouse.x = e.touches[0].clientX;
+      this.mouse.y = e.touches[0].clientY;
+    }, { passive: true });
+
+    const io = new IntersectionObserver(([entry]) => {
+      this._visible = entry.isIntersecting;
+      if (this._visible && !this.frameId) this._animate();
+    }, { threshold: 0 });
+    io.observe(canvas);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !this.frameId) this._animate();
+    });
+
+    this._animate();
+  }
+
+  _newPoint() {
+    return {
+      x: Math.random() * this.w,
+      y: Math.random() * this.h,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      z: Math.random(),
+    };
+  }
+
+  _onResize() {
+    this.w = window.innerWidth;
+    this.h = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, this._isLowPower ? 1.25 : 1.75);
+    this.canvas.width = Math.round(this.w * dpr);
+    this.canvas.height = Math.round(this.h * dpr);
+    this.canvas.style.width = this.w + 'px';
+    this.canvas.style.height = this.h + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  _draw() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.w, this.h);
+
+    for (let i = 0; i < this.points.length; i++) {
+      const p = this.points[i];
+      const mx = this.mouse.x - p.x;
+      const my = this.mouse.y - p.y;
+      const md2 = mx * mx + my * my;
+      if (md2 < 28000 && md2 > 1) {
+        p.vx += mx * 0.00001;
+        p.vy += my * 0.00001;
+      }
+      p.vx *= 0.995;
+      p.vy *= 0.995;
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -40) p.x = this.w + 40;
+      else if (p.x > this.w + 40) p.x = -40;
+      if (p.y < -40) p.y = this.h + 40;
+      else if (p.y > this.h + 40) p.y = -40;
+    }
+
+    for (let i = 0; i < this.points.length; i++) {
+      const a = this.points[i];
+      for (let j = i + 1; j < this.points.length; j++) {
+        const b = this.points[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= this.maxDist2) continue;
+        const alpha = 1 - (d2 / this.maxDist2);
+        ctx.strokeStyle = `rgba(120,130,255,${0.22 * alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+
+    for (let i = 0; i < this.points.length; i++) {
+      const p = this.points[i];
+      const r = 1.7 + p.z * 2.2;
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3);
+      g.addColorStop(0, 'rgba(180,190,255,0.95)');
+      g.addColorStop(0.5, 'rgba(85,210,255,0.35)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  _animate() {
+    if (document.hidden || !this._visible) { this.frameId = null; return; }
+    this.frameId = requestAnimationFrame(() => this._animate());
+    this._draw();
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    GEOCODING  (OpenStreetMap Nominatim — free, no key needed)
    Fills lat/lon for any LOCATIONS entry that omits them.
@@ -406,15 +564,31 @@ class Globe3D {
     this.camera = new THREE.PerspectiveCamera(42, this.w / this.h, 0.01, 100);
     this.camera.position.z = 2.75;
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      antialias: !this._isLowPower,
+      alpha: true,
+      powerPreference: this._isLowPower ? 'low-power' : 'high-performance',
+    });
     this.renderer.setPixelRatio(Math.min((typeof devicePixelRatio === 'number' ? devicePixelRatio : 1), this._pixelRatioCap));
     this.renderer.setSize(this.w, this.h);
     this.renderer.setClearColor(0x000000, 0);
 
+    if (typeof this.canvas.addEventListener === 'function') {
+      this.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        this._rafId = null;
+      }, false);
+      this.canvas.addEventListener('webglcontextrestored', () => {
+        this.renderer.setSize(this.w, this.h);
+        if (!this._rafId) this._animate();
+      }, false);
+    }
+
     /* Ambient: enough fill to see the night side without washing out the day side */
     this.scene.add(new THREE.AmbientLight(0x223355, 0.9));
     /* Sun: warm directional — high intensity for vivid textures */
-    const sun = new THREE.DirectionalLight(0xfff5d6, 3.2);
+    const sun = new THREE.DirectionalLight(0xfff5d6, 1.35);
     sun.position.set(5, 3, 4);
     this.scene.add(sun);
     /* Cyan rim on the opposite side — keeps the look on-brand */
@@ -429,16 +603,16 @@ class Globe3D {
   }
 
   _buildGlobe() {
-    /* ── Earth textures (Three.js r134 via jsDelivr CDN) ─────────────────────
+    /* ── Earth textures (hosted by threejs.org) ───────────────────────────────
        Loaded asynchronously; a fallback dark-ocean material is shown
        immediately and swapped once the texture arrives. */
-    const CDN = 'https://cdn.jsdelivr.net/npm/three@0.134.0/examples/textures/planets/';
+    const CDN = 'https://threejs.org/examples/textures/planets/';
     const ldr = new THREE.TextureLoader();
     const mat = new THREE.MeshPhongMaterial({
       color: 0x0a1628,   /* shown before texture loads */
       emissive: 0x050c1a,
-      specular: new THREE.Color(0x555555),
-      shininess: 25,
+      specular: new THREE.Color(0x1b2230),
+      shininess: 8,
     });
     const globe = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat);
     this.pivot.add(globe);
@@ -449,10 +623,7 @@ class Globe3D {
       undefined,
       () => console.warn('[Globe] earth day texture failed to load — using fallback colour'),
     );
-    /* Specular map (oceans bright, land dull) */
-    ldr.load(CDN + 'earth_specular_2048.jpg',
-      tex => { mat.specularMap = tex; mat.needsUpdate = true; },
-    );
+    /* Keep highlights subtle: avoid strong specular hotspots on modern displays */
   }
 
   _buildAtmosphere() {
@@ -846,6 +1017,167 @@ class Globe3D {
   }
 }
 
+/* CPU fallback when WebGL is unavailable: 2D orthographic globe */
+class GlobeFallback2D {
+  static PIN_COLORS = { lived: '#00d4ff', work: '#86e8ff', travel: '#ff8c42', region: '#ffb280' };
+
+  constructor(canvasEl) {
+    this.canvas = canvasEl;
+    this.parent = canvasEl.parentElement;
+    this.ctx = canvasEl.getContext('2d', { alpha: true });
+    if (!this.ctx) return;
+    this._visible = true;
+    this._rafId = null;
+    this._isLowPower = isLowPowerDevice();
+    this._rot = -1.55;
+    this._spin = this._isLowPower ? 0.001 : 0.0016;
+    this._drag = false;
+    this._prevX = 0;
+    this._points = [];
+
+    this._collectPoints();
+    this._resize();
+    this._bindEvents();
+    this._animate();
+
+    const io = new IntersectionObserver(([entry]) => {
+      this._visible = entry.isIntersecting;
+      if (this._visible && !this._rafId) this._animate();
+    }, { threshold: 0 });
+    io.observe(canvasEl);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !this._rafId) this._animate();
+    });
+  }
+
+  _collectPoints() {
+    this._points.length = 0;
+    (LOCATIONS.regions || []).forEach((r) => {
+      if (r._skip) return;
+      this._points.push({ lat: r.lat, lon: r.lon, type: 'region' });
+    });
+    (LOCATIONS.pins || []).forEach((p) => {
+      if (p._skip) return;
+      this._points.push({ lat: p.lat, lon: p.lon, type: p.type });
+    });
+  }
+
+  _resize() {
+    this.w = this.parent?.clientWidth || 800;
+    this.h = this.parent?.clientHeight || 500;
+    const dpr = Math.min(window.devicePixelRatio || 1, this._isLowPower ? 1.2 : 1.7);
+    this.canvas.width = Math.round(this.w * dpr);
+    this.canvas.height = Math.round(this.h * dpr);
+    this.canvas.style.width = this.w + 'px';
+    this.canvas.style.height = this.h + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.cx = this.w * 0.5;
+    this.cy = this.h * 0.52;
+    this.r = Math.min(this.w, this.h) * 0.3;
+  }
+
+  _bindEvents() {
+    this.canvas.addEventListener('mousedown', (e) => { this._drag = true; this._prevX = e.clientX; });
+    window.addEventListener('mousemove', (e) => {
+      if (!this._drag) return;
+      const dx = e.clientX - this._prevX;
+      this._rot += dx * 0.0045;
+      this._prevX = e.clientX;
+    });
+    window.addEventListener('mouseup', () => { this._drag = false; });
+    this.canvas.addEventListener('touchstart', (e) => { if (e.touches[0]) { this._drag = true; this._prevX = e.touches[0].clientX; } }, { passive: true });
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (!this._drag || !e.touches[0]) return;
+      const dx = e.touches[0].clientX - this._prevX;
+      this._rot += dx * 0.0045;
+      this._prevX = e.touches[0].clientX;
+    }, { passive: true });
+    this.canvas.addEventListener('touchend', () => { this._drag = false; });
+    window.addEventListener('resize', () => this._resize());
+  }
+
+  _project(lat, lon) {
+    const phi = (lat * Math.PI) / 180;
+    const lam = (lon * Math.PI) / 180 + this._rot;
+    const cosPhi = Math.cos(phi);
+    const x = cosPhi * Math.sin(lam);
+    const y = Math.sin(phi);
+    const z = cosPhi * Math.cos(lam);
+    return { x: this.cx + this.r * x, y: this.cy - this.r * y, z };
+  }
+
+  _drawGrid() {
+    const ctx = this.ctx;
+    ctx.strokeStyle = 'rgba(210,220,255,0.14)';
+    ctx.lineWidth = 1;
+    for (let lat = -60; lat <= 60; lat += 30) {
+      let open = false;
+      ctx.beginPath();
+      for (let lon = -180; lon <= 180; lon += 4) {
+        const p = this._project(lat, lon);
+        if (p.z <= 0) { open = false; continue; }
+        if (!open) { ctx.moveTo(p.x, p.y); open = true; } else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    }
+    for (let lon = -150; lon <= 150; lon += 30) {
+      let open = false;
+      ctx.beginPath();
+      for (let lat = -85; lat <= 85; lat += 3) {
+        const p = this._project(lat, lon);
+        if (p.z <= 0) { open = false; continue; }
+        if (!open) { ctx.moveTo(p.x, p.y); open = true; } else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  _draw() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.w, this.h);
+
+    const bg = ctx.createRadialGradient(this.cx - this.r * 0.25, this.cy - this.r * 0.35, this.r * 0.2, this.cx, this.cy, this.r * 1.25);
+    bg.addColorStop(0, 'rgba(56,96,170,0.9)');
+    bg.addColorStop(0.55, 'rgba(16,34,70,0.92)');
+    bg.addColorStop(1, 'rgba(5,14,34,0.96)');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(this.cx, this.cy, this.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    this._drawGrid();
+
+    this._points.forEach((pt) => {
+      const p = this._project(pt.lat, pt.lon);
+      if (p.z <= 0.02) return;
+      const col = GlobeFallback2D.PIN_COLORS[pt.type] || '#e8edf8';
+      const rr = pt.type === 'lived' ? 4.6 : pt.type === 'region' ? 3.8 : 3.2;
+      ctx.fillStyle = col;
+      ctx.globalAlpha = Math.max(0.22, p.z);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    const halo = ctx.createRadialGradient(this.cx, this.cy, this.r * 0.86, this.cx, this.cy, this.r * 1.35);
+    halo.addColorStop(0, 'rgba(108,99,255,0)');
+    halo.addColorStop(1, 'rgba(108,99,255,0.24)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(this.cx, this.cy, this.r * 1.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  _animate() {
+    if (document.hidden || !this._visible) { this._rafId = null; return; }
+    this._rafId = requestAnimationFrame(() => this._animate());
+    if (!this._drag) this._rot += this._spin;
+    this._draw();
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    SCROLL-TRIGGERED REVEAL
    ═══════════════════════════════════════════════════════════ */
@@ -1092,6 +1424,17 @@ class HeroNameShader {
       || canvasEl.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
     if (!gl) { console.warn('[HeroName] WebGL unavailable — CSS fallback active'); return; }
     this.gl = gl;
+    if (typeof this.canvas.addEventListener === 'function') {
+      this.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        this.raf = null;
+      }, false);
+      this.canvas.addEventListener('webglcontextrestored', () => {
+        if (!this._setupGL()) return;
+        this._resize();
+        if (!this.raf && !document.hidden && this._visible) this._animate();
+      }, false);
+    }
 
     /* Wait for web-fonts before measuring / drawing text */
     const boot = () => {
@@ -1291,8 +1634,20 @@ class HeroNameShader {
   _resize() {
     const gl = this.gl;
     const dpr = Math.min(devicePixelRatio || 1, this._pixelRatioCap);
-    const w = this.h1.offsetWidth || 400;
+    const fallbackW = this.h1.offsetWidth || 400;
     const h = this.h1.offsetHeight || 200;
+    const fs = parseFloat(getComputedStyle(this.h1).fontSize) || 64;
+    if (!this._measureCanvas) this._measureCanvas = document.createElement('canvas');
+    const measureCtx = this._measureCanvas.getContext('2d');
+    let textW = fallbackW;
+    if (measureCtx && typeof measureCtx.measureText === 'function') {
+      measureCtx.font = `700 ${fs}px 'Inter', system-ui, sans-serif`;
+      const l1 = measureCtx.measureText('Stefano').width;
+      measureCtx.font = `italic 700 ${fs}px 'Playfair Display', Georgia, serif`;
+      const l2 = measureCtx.measureText('Masneri').width;
+      textW = Math.max(fallbackW, l1, l2) + fs * 0.28;
+    }
+    const w = Math.round(textW);
 
     this.canvas.width = Math.round(w * dpr);
     this.canvas.height = Math.round(h * dpr);
@@ -1368,7 +1723,9 @@ if (typeof module !== 'undefined' && module.exports) {
     initCounters,
     animateCounter,
     NeuralNetwork,
+    NeuralNetwork2D,
     HeroNameShader,
+    GlobeFallback2D,
   };
 }
 
@@ -1393,28 +1750,34 @@ if (typeof document !== 'undefined') {
 
   /* Three.js neural network — only when THREE is loaded */
   const canvas = document.getElementById('neural-canvas');
-  if (canvas && typeof THREE !== 'undefined') {
-    /* Disable on reduced-motion preference */
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!prefersReducedMotion) {
+  if (canvas) {
+    if (prefersReducedMotion()) {
+      canvas.style.display = 'none';
+    } else if (typeof THREE !== 'undefined' && hasWebGLSupport()) {
       new NeuralNetwork(canvas);
     } else {
-      canvas.style.display = 'none';
+      new NeuralNetwork2D(canvas);
     }
   }
 
   /* Three.js Globe — geocode any entries missing lat/lon, then build */
   const globeCanvas = document.getElementById('globe-canvas');
-  if (globeCanvas && typeof THREE !== 'undefined' && typeof LOCATIONS !== 'undefined') {
-    geocodeLocations(LOCATIONS).then(() => new Globe3D(globeCanvas));
+  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+    geocodeLocations(LOCATIONS).then(() => {
+      if (prefersReducedMotion()) {
+        new GlobeFallback2D(globeCanvas);
+        return;
+      }
+      if (typeof THREE !== 'undefined' && hasWebGLSupport()) new Globe3D(globeCanvas);
+      else new GlobeFallback2D(globeCanvas);
+    });
   }
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');
   const nameCanvas = document.getElementById('name-canvas');
   if (nameH1 && nameCanvas) {
-    const pref = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!pref) new HeroNameShader(nameH1, nameCanvas);
+    if (!prefersReducedMotion() && hasWebGLSupport()) new HeroNameShader(nameH1, nameCanvas);
   }
 
   });
