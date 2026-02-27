@@ -28,6 +28,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <!-- dns-prefetch: fallback for browsers that do not support preconnect -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
   <!-- Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
@@ -574,6 +578,19 @@
       <p>© <span id="footer-year"></span> Stefano Masneri &nbsp;·&nbsp; Built with care in San Sebastián</p>
     </div>
   </footer>
+
+  <!-- Speculation Rules API — prerender blog pages on hover so navigation
+       feels instant.  The browser auto-skips this on slow connections or
+       low battery, so no JS guard is needed.  Gracefully ignored by
+       browsers that do not support the API (all content still loads).   -->
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": { "href_matches": "/blog/*" },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
 
   <!-- All scripts are deferred: downloaded in parallel during HTML parsing,
        executed in order after parsing completes, before DOMContentLoaded.

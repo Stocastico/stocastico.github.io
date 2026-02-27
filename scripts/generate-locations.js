@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('node:fs');
+const fs   = require('node:fs');
 const path = require('node:path');
+
+/* Shared YAML parser — also used by scripts/generate-cv.js */
+const { parseYaml } = require('./lib/yaml');
 
 const DEFAULT_TRIP_COLORS = ['#ff6b6b', '#c084fc', '#22c55e', '#38bdf8', '#f59e0b', '#fb7185'];
 const DEFAULT_REGION_COLOR = '#ff8c42';
@@ -43,120 +46,7 @@ Options:
 `);
 }
 
-function stripYamlComments(line) {
-  let out = '';
-  let inSingle = false;
-  let inDouble = false;
-  for (let i = 0; i < line.length; i += 1) {
-    const ch = line[i];
-    if (ch === "'" && !inDouble) inSingle = !inSingle;
-    if (ch === '"' && !inSingle) inDouble = !inDouble;
-    if (ch === '#' && !inSingle && !inDouble) break;
-    out += ch;
-  }
-  return out.replace(/\s+$/, '');
-}
-
-function parseScalar(raw) {
-  const s = raw.trim();
-  if (s === '') return '';
-  if (s === 'null' || s === '~') return null;
-  if (s === 'true') return true;
-  if (s === 'false') return false;
-  if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
-  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-    return s.slice(1, -1);
-  }
-  return s;
-}
-
-function parseYaml(yamlText) {
-  const lines = yamlText
-    .split('\n')
-    .map(stripYamlComments)
-    .filter((line) => line.trim() !== '');
-  let i = 0;
-
-  function getIndent(line) {
-    const m = line.match(/^ */);
-    return m ? m[0].length : 0;
-  }
-
-  function parseBlock(indent) {
-    if (i >= lines.length) return null;
-    const line = lines[i];
-    const currentIndent = getIndent(line);
-    if (currentIndent < indent) return null;
-    if (line.trim().startsWith('- ')) return parseSequence(indent);
-    return parseMap(indent);
-  }
-
-  function parseMap(indent) {
-    const obj = {};
-    while (i < lines.length) {
-      const line = lines[i];
-      const currentIndent = getIndent(line);
-      if (currentIndent < indent) break;
-      if (currentIndent > indent) throw new Error(`Invalid indentation near: "${line}"`);
-      if (line.trim().startsWith('- ')) break;
-      const trimmed = line.trim();
-      const colonAt = trimmed.indexOf(':');
-      if (colonAt === -1) throw new Error(`Missing ':' in YAML line: "${line}"`);
-      const key = trimmed.slice(0, colonAt).trim();
-      const rest = trimmed.slice(colonAt + 1).trim();
-      i += 1;
-      obj[key] = rest === '' ? parseBlock(indent + 2) : parseScalar(rest);
-    }
-    return obj;
-  }
-
-  function parseInlineMap(text, indent) {
-    const obj = {};
-    const colonAt = text.indexOf(':');
-    if (colonAt === -1) return parseScalar(text);
-    const key = text.slice(0, colonAt).trim();
-    const rest = text.slice(colonAt + 1).trim();
-    obj[key] = rest === '' ? parseBlock(indent + 2) : parseScalar(rest);
-
-    while (i < lines.length) {
-      const line = lines[i];
-      const currentIndent = getIndent(line);
-      if (currentIndent < indent + 2) break;
-      if (currentIndent > indent + 2) throw new Error(`Invalid indentation near: "${line}"`);
-      if (line.trim().startsWith('- ')) break;
-      const trimmed = line.trim();
-      const nextColon = trimmed.indexOf(':');
-      if (nextColon === -1) throw new Error(`Missing ':' in YAML line: "${line}"`);
-      const nextKey = trimmed.slice(0, nextColon).trim();
-      const nextRest = trimmed.slice(nextColon + 1).trim();
-      i += 1;
-      obj[nextKey] = nextRest === '' ? parseBlock(indent + 4) : parseScalar(nextRest);
-    }
-    return obj;
-  }
-
-  function parseSequence(indent) {
-    const arr = [];
-    while (i < lines.length) {
-      const line = lines[i];
-      const currentIndent = getIndent(line);
-      if (currentIndent < indent) break;
-      if (currentIndent !== indent || !line.trim().startsWith('- ')) break;
-      const trimmed = line.trim().slice(2).trim();
-      i += 1;
-      if (trimmed === '') arr.push(parseBlock(indent + 2));
-      else if (trimmed.includes(':')) arr.push(parseInlineMap(trimmed, indent));
-      else arr.push(parseScalar(trimmed));
-    }
-    return arr;
-  }
-
-  const parsed = parseBlock(0);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('YAML root must be an object');
-  }
-  return parsed;
-}
+/* parseYaml imported from ./lib/yaml above */
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

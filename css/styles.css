@@ -1619,9 +1619,14 @@ h3 {
 }
 
 /* ─── 17. Performance: content-visibility ───────────────────
-   Skips rendering of below-fold sections until they approach
-   the viewport. contain-intrinsic-block-size gives the browser
-   an estimated height so scroll-bar proportions stay correct.
+   Skips layout, style, and paint for off-screen sections —
+   up to 7× faster initial render on content-heavy pages.
+
+   contain-intrinsic-block-size: auto <N>
+     The 'auto' keyword (Chrome 108+, Baseline 2025) remembers
+     the last measured height, eliminating scroll-bar jumps on
+     repeat visits.  The fallback (650 px) applies until the
+     section has been rendered at least once.
 ──────────────────────────────────────────────────────────── */
 #research,
 #publications,
@@ -1630,7 +1635,7 @@ h3 {
 #blog,
 #contact {
   content-visibility: auto;
-  contain-intrinsic-block-size: 650px;
+  contain-intrinsic-block-size: auto 650px;
 }
 
 /* ─── 18. Responsive ────────────────────────────────────── */
