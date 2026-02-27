@@ -1,16 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
   <meta charset="UTF-8" />
+  <!-- Apply saved colour theme before first paint to prevent flash -->
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
     content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <title>Stefano Masneri · Senior AI Engineer</title>
+  <link rel="canonical" href="https://stocastico.github.io/" />
 
-  <!-- Fonts -->
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://stocastico.github.io/" />
+  <meta property="og:title"       content="Stefano Masneri · Senior AI Engineer" />
+  <meta property="og:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta name="twitter:card"        content="summary" />
+  <meta name="twitter:title"       content="Stefano Masneri · Senior AI Engineer" />
+  <meta name="twitter:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+
+  <!-- Theme colour for browser chrome (Android, Safari PWA) -->
+  <meta name="theme-color" content="#080c14" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)" />
+
+  <!-- Resource hints — pre-warm connections before the browser needs them -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <!-- dns-prefetch: fallback for browsers that do not support preconnect -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+  <!-- Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet" />
@@ -34,16 +56,33 @@
         <li><a href="#about">About</a></li>
         <li><a href="#research">Research</a></li>
         <li><a href="#publications">Publications</a></li>
+        <li><a href="#cv">CV</a></li>
         <li><a href="#skills">Skills</a></li>
         <li><a href="#blog">Blog</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
+      <!-- Theme toggle -->
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle colour theme">
+        <!-- Sun icon — visible in dark mode -->
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <!-- Moon icon — visible in light mode -->
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
     </div>
   </nav>
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section id="hero" aria-label="Introduction">
-    <!-- Three.js canvas lives here -->
+    <!-- GLSL noise-gradient background (z-index 0, lowest layer) -->
+    <canvas id="noise-canvas" aria-hidden="true"></canvas>
+    <!-- Three.js neural-network particles (z-index 1, above noise gradient) -->
     <canvas id="neural-canvas" aria-hidden="true"></canvas>
 
     <!-- Gradient orbs for extra depth -->
@@ -310,6 +349,60 @@
     </div>
   </section>
 
+  <!-- ═══════════════ CURRICULUM VITAE ═══════════════ -->
+  <!--
+    HOW TO UPDATE THE CV
+    ─────────────────────
+    Edit data/cv.js:
+      CV_CAREER     work history (newest first)
+      CV_EDUCATION  academic history (newest first)
+      CV_SKILLS     { technical, leadership, languages } progress data
+    The timeline and skills panels render automatically.
+  -->
+  <section id="cv" class="section section-alt" aria-label="Curriculum Vitae">
+    <div class="container">
+
+      <header class="section-header" data-animate>
+        <span class="section-tag">CV</span>
+        <h2 class="section-title">Experience &amp; Education</h2>
+      </header>
+
+      <!-- ── 3D perspective timeline stage ────────────────── -->
+      <div class="timeline-stage" id="timeline-stage">
+
+        <!-- Column header labels -->
+        <div class="timeline-headers" aria-hidden="true">
+          <div class="tl-col-label tl-col-label--career">Career</div>
+          <div></div>
+          <div class="tl-col-label tl-col-label--edu">Education</div>
+        </div>
+
+        <!-- grid: career | spine | education -->
+        <div class="timeline-track">
+
+          <!-- Career entries — injected by renderCV() from data/cv.js -->
+          <div class="timeline-col timeline-col--career"
+               id="cv-career-list"
+               aria-label="Career history"></div>
+
+          <!-- Glowing vertical spine line -->
+          <div class="timeline-spine" aria-hidden="true"></div>
+
+          <!-- Education entries — injected by renderCV() from data/cv.js -->
+          <div class="timeline-col timeline-col--edu"
+               id="cv-edu-list"
+               aria-label="Education history"></div>
+
+        </div><!-- /.timeline-track -->
+      </div><!-- /.timeline-stage -->
+
+      <!-- ── Skills breakdown ─────────────────────────────── -->
+      <!-- Injected by renderSkills() from data/cv.js → CV_SKILLS -->
+      <div id="cv-skills" class="cv-skills-section"></div>
+
+    </div><!-- /.container -->
+  </section>
+
   <!-- ═══════════════ SKILLS ═══════════════ -->
   <section id="skills" class="section section-alt" aria-label="Skills">
     <div class="container">
@@ -486,18 +579,36 @@
     </div>
   </footer>
 
-  <!-- Three.js from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <!-- Speculation Rules API — prerender blog pages on hover so navigation
+       feels instant.  The browser auto-skips this on slow connections or
+       low battery, so no JS guard is needed.  Gracefully ignored by
+       browsers that do not support the API (all content still loads).   -->
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": { "href_matches": "/blog/*" },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
+
+  <!-- All scripts are deferred: downloaded in parallel during HTML parsing,
+       executed in order after parsing completes, before DOMContentLoaded.
+       This keeps the critical rendering path clear of blocking JS.       -->
+  <!-- Three.js from CDN (deferred so it downloads in parallel with data files) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <!-- ── Content data files ──────────────────────────────────────────────
        Edit these files to update frequently-changing content:
          data/locations.js    — 3D globe pins, trips, regions
          data/publications.js — selected papers list
          data/blog.js         — blog post cards (leave BLOG_POSTS=[] for "Coming soon")
+         data/cv.js           — CV timeline + skills (CV_CAREER, CV_EDUCATION, CV_SKILLS)
   ───────────────────────────────────────────────────────────────────── -->
-  <script src="data/locations.js"></script>
-  <script src="data/publications.js"></script>
-  <script src="data/blog.js"></script>
-  <script src="js/main.js"></script>
+  <script defer src="data/locations.js"></script>
+  <script defer src="data/publications.js"></script>
+  <script defer src="data/blog.js"></script>
+  <script defer src="data/cv.js"></script>
+  <script defer src="js/main.js"></script>
 </body>
 
 </html>

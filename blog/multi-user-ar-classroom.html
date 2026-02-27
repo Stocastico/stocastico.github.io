@@ -1,53 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Why Multi-user AR Belongs in Every Classroom - article by Stefano Masneri." />
   <title>Why Multi-user AR Belongs in Every Classroom</title>
+  <link rel="canonical" href="https://stocastico.github.io/blog/multi-user-ar-classroom.html" />
+
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/blog/multi-user-ar-classroom.html" />
+  <meta property="og:title"       content="Why Multi-user AR Belongs in Every Classroom" />
+  <meta property="og:description" content="After four large-scale pilots and hundreds of students, here is what we learned about designing collaborative XR experiences that genuinely improve learning outcomes." />
+  <meta name="twitter:card"        content="summary" />
+  <meta name="twitter:title"       content="Why Multi-user AR Belongs in Every Classroom" />
+  <meta name="twitter:description" content="After four large-scale pilots and hundreds of students, here is what we learned about designing collaborative XR experiences that genuinely improve learning outcomes." />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="../css/styles.css" />
-  <style>
-    .post {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 5vw, 2rem) 5rem;
-    }
-    .post-meta {
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent2);
-      margin-bottom: 0.9rem;
-    }
-    .post-title {
-      font-family: var(--font-serif);
-      font-size: clamp(2rem, 5vw, 3rem);
-      line-height: 1.2;
-      margin-bottom: 1rem;
-    }
-    .post-lead {
-      color: var(--text);
-      font-size: 1.06rem;
-      margin-bottom: 1.5rem;
-    }
-    .post p {
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-    }
-    .post h2 {
-      font-size: 1.22rem;
-      margin: 2rem 0 0.75rem;
-    }
-  </style>
 </head>
 <body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <main class="post">
-    <a href="../index.html#blog" class="btn btn-ghost">Back to blog</a>
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
+      <a href="../index.html#blog" class="btn btn-ghost">← Back to blog</a>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle colour theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
     <p class="post-meta">20 November 2024 · Research · 7 min read</p>
     <h1 class="post-title">Why Multi-user AR Belongs in Every Classroom</h1>
     <p class="post-lead">
@@ -79,5 +72,21 @@
       not isolated tech demos.
     </p>
   </main>
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var curr = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
+      var bar = document.getElementById('reading-progress');
+      if (bar) window.addEventListener('scroll', function () {
+        var total = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+      }, { passive: true });
+    }());
+  </script>
 </body>
 </html>

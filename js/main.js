@@ -24,7 +24,11 @@ function isLowPowerDevice() {
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(pointer: coarse)').matches;
   const narrowViewport = typeof window !== 'undefined' && window.innerWidth < 760;
-  return coarsePointer || narrowViewport || cores <= 4;
+  /* Data-saver mode or non-4G connection: skip heavy effects to save bandwidth */
+  const savesData     = !!nav?.connection?.saveData;
+  const slowNetwork   = !!(nav?.connection?.effectiveType
+    && nav.connection.effectiveType !== '4g');
+  return coarsePointer || narrowViewport || cores <= 4 || savesData || slowNetwork;
 }
 
 function prefersReducedMotion() {
@@ -1236,6 +1240,17 @@ function animateCounter(el, target) {
 /* ═══════════════════════════════════════════════════════════
    NAVBAR SCROLL BEHAVIOUR
    ═══════════════════════════════════════════════════════════ */
+function initTheme() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+}
+
 function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
@@ -1395,6 +1410,464 @@ function renderBlog() {
 function setFooterYear() {
   const el = document.getElementById('footer-year');
   if (el) el.textContent = new Date().getFullYear();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3-D CARD TILT + SPECULAR GLOSS
+   ═══════════════════════════════════════════════════════════ */
+function initCardTilt() {
+  if (prefersReducedMotion()) return;
+  if (typeof window === 'undefined') return;
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) return;
+
+  const MAX_RX = 10;   /* max degrees rotateX */
+  const MAX_RY = 12;   /* max degrees rotateY */
+  const SPRING  = 0.10; /* lerp factor per frame */
+
+  Array.from(document.querySelectorAll('.research-card, .blog-card, .contact-card, .skill-group'))
+    .forEach((card) => {
+      let targetRX = 0, targetRY = 0, targetZ = 0;
+      let currentRX = 0, currentRY = 0, currentZ = 0;
+      let raf = null;
+      let isHovered = false;
+
+      card.style.setProperty('--gloss-x', '50%');
+      card.style.setProperty('--gloss-y', '50%');
+      card.classList.add('tilt-ready');
+
+      function loop() {
+        currentRX += (targetRX - currentRX) * SPRING;
+        currentRY += (targetRY - currentRY) * SPRING;
+        currentZ  += (targetZ  - currentZ)  * SPRING;
+
+        card.style.transform = `perspective(900px) rotateX(${currentRX.toFixed(3)}deg) rotateY(${currentRY.toFixed(3)}deg) translateZ(${currentZ.toFixed(2)}px)`;
+
+        const done = !isHovered
+          && Math.abs(targetRX - currentRX) < 0.05
+          && Math.abs(targetRY - currentRY) < 0.05
+          && Math.abs(targetZ  - currentZ)  < 0.1;
+
+        if (done) {
+          raf = null;
+          card.style.transform  = '';
+          card.style.transition = '';  /* restore CSS transitions (needed for 3D entrance) */
+          return;
+        }
+        raf = requestAnimationFrame(loop);
+      }
+
+      card.addEventListener('mouseenter', () => {
+        isHovered = true;
+        targetZ   = 8;
+        /* Suppress the CSS transform-transition while the spring runs */
+        card.style.transition = `border-color var(--t-med), background var(--t-med), box-shadow var(--t-med)`;
+        if (!raf) raf = requestAnimationFrame(loop);
+      });
+
+      card.addEventListener('mousemove', (e) => {
+        const r  = card.getBoundingClientRect();
+        const cx = (e.clientX - r.left) / r.width;
+        const cy = (e.clientY - r.top)  / r.height;
+        targetRY =  (cx - 0.5) * MAX_RY * 2;
+        targetRX = -(cy - 0.5) * MAX_RX * 2;
+        card.style.setProperty('--gloss-x', `${(cx * 100).toFixed(1)}%`);
+        card.style.setProperty('--gloss-y', `${(cy * 100).toFixed(1)}%`);
+      });
+
+      card.addEventListener('mouseleave', () => {
+        isHovered = false;
+        targetRX = 0;
+        targetRY = 0;
+        targetZ  = 0;
+        card.style.setProperty('--gloss-x', '50%');
+        card.style.setProperty('--gloss-y', '50%');
+        if (!raf) raf = requestAnimationFrame(loop);
+      });
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAGNETIC BUTTONS
+   ═══════════════════════════════════════════════════════════ */
+function initMagneticButtons() {
+  if (prefersReducedMotion()) return;
+  if (typeof window === 'undefined') return;
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) return;
+
+  const RADIUS   = 80;   /* px — proximity trigger distance */
+  const STRENGTH = 0.35; /* fraction of offset to apply     */
+  const SPRING   = 0.14; /* lerp factor per frame           */
+
+  const magnets = Array.from(
+    document.querySelectorAll('.btn-primary, .btn-ghost, .social-btn')
+  ).map(el => ({ el, tx: 0, ty: 0, cx: 0, cy: 0, active: false, raf: null }));
+
+  if (!magnets.length) return;
+
+  function tick(m) {
+    m.cx += (m.tx - m.cx) * SPRING;
+    m.cy += (m.ty - m.cy) * SPRING;
+    const done = !m.active && Math.abs(m.tx - m.cx) < 0.05 && Math.abs(m.ty - m.cy) < 0.05;
+    if (done) {
+      m.cx = 0; m.cy = 0;
+      m.el.style.transform = '';
+      m.raf = null;
+    } else {
+      m.el.style.transform = `translate(${m.cx.toFixed(2)}px,${m.cy.toFixed(2)}px)`;
+      m.raf = requestAnimationFrame(() => tick(m));
+    }
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    magnets.forEach((m) => {
+      const rect = m.el.getBoundingClientRect();
+      const dx   = e.clientX - (rect.left + rect.width  / 2);
+      const dy   = e.clientY - (rect.top  + rect.height / 2);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < RADIUS) {
+        m.active = true;
+        m.tx = dx * STRENGTH;
+        m.ty = dy * STRENGTH;
+        if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
+      } else if (m.active) {
+        m.active = false;
+        m.tx = 0;
+        m.ty = 0;
+        if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
+      }
+    });
+  }, { passive: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLL-DRIVEN 3-D TRANSFORMS
+   ═══════════════════════════════════════════════════════════ */
+function initScroll3D() {
+  if (prefersReducedMotion()) return;
+  if (typeof document === 'undefined') return;
+
+  /* Alternate entrance angles: even cards lean right, odd lean left */
+  Array.from(document.querySelectorAll('.research-card[data-animate]'))
+    .forEach((card, i) => card.style.setProperty('--card-init-ry', `${i % 2 === 0 ? '14' : '-14'}deg`));
+
+  /* Hero parallax — skip on touch devices to prevent scroll jank on mobile */
+  if (typeof window === 'undefined') return;
+  if (window.matchMedia?.('(pointer: coarse)').matches) return;
+
+  const heroContent = document.querySelector('.hero-content');
+  const heroSection = document.getElementById('hero');
+  const orb1 = document.querySelector('.orb-1');
+  const orb2 = document.querySelector('.orb-2');
+
+  /* Wait for the hero entrance animation to finish before taking over transforms */
+  let ready = false;
+  if (heroContent) {
+    heroContent.addEventListener('animationend', () => { ready = true; }, { once: true });
+    setTimeout(() => { ready = true; }, 1400); /* fallback */
+  } else {
+    ready = true;
+  }
+
+  let rafId = null;
+
+  function update() {
+    rafId = null;
+    if (!ready) return;
+    const scrollY = window.scrollY;
+    const heroH   = heroSection ? heroSection.offsetHeight : 0;
+
+    /* Apply parallax only while the hero section is still in or near view */
+    if (scrollY < heroH * 1.1) {
+      if (heroContent) heroContent.style.transform = `translateY(${scrollY * 0.28}px)`;
+      if (orb1) orb1.style.transform = `translateY(${scrollY * 0.12}px)`;
+      if (orb2) orb2.style.transform = `translateY(${scrollY * 0.20}px)`;
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!rafId) rafId = requestAnimationFrame(update);
+  }, { passive: true });
+
+  update(); /* initial — scrollY is 0 so transforms are no-ops */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CURRICULUM VITAE — TIMELINE RENDERING
+   Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   ═══════════════════════════════════════════════════════════ */
+function renderCV() {
+  if (typeof document === 'undefined') return;
+  const careerList = document.getElementById('cv-career-list');
+  const eduList    = document.getElementById('cv-edu-list');
+  if (!careerList && !eduList) return;
+  if (typeof CV_CAREER    === 'undefined') return;
+  if (typeof CV_EDUCATION === 'undefined') return;
+
+  function entryHtml(entry, side) {
+    const isCareer = side === 'career';
+    const titleKey = isCareer ? 'role'    : 'degree';
+    const subKey   = isCareer ? 'company' : 'institution';
+    const locHtml  = entry.location
+      ? ` <span class="tl-location">· ${escapeHtml(entry.location)}</span>`
+      : '';
+    const descHtml = entry.description
+      ? `<p class="tl-desc">${escapeHtml(entry.description)}</p>`
+      : '';
+    const tagsArr  = entry.tags || [];
+    const tagsHtml = tagsArr.length
+      ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+    return `
+      <div class="tl-entry tl-entry--${side}">
+        <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+        <div class="tl-card">
+          <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
+          <div class="tl-sub">${escapeHtml(entry[subKey] || '')}${locHtml}</div>
+          ${descHtml}${tagsHtml}
+        </div>
+      </div>`;
+  }
+
+  if (careerList) {
+    careerList.innerHTML = (CV_CAREER || []).map(e => entryHtml(e, 'career')).join('');
+  }
+  if (eduList) {
+    eduList.innerHTML = (CV_EDUCATION || []).map(e => entryHtml(e, 'education')).join('');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CURRICULUM VITAE — SKILLS PANELS
+   Reads CV_SKILLS global from data/cv.js.
+   ═══════════════════════════════════════════════════════════ */
+function renderSkills() {
+  if (typeof document === 'undefined') return;
+  const container = document.getElementById('cv-skills');
+  if (!container) return;
+  if (typeof CV_SKILLS === 'undefined') return;
+
+  const { technical = [], leadership = [], languages = [] } = CV_SKILLS;
+
+  /* Progress-bar panel for technical / leadership */
+  function barPanel(items, label) {
+    if (!items.length) return '';
+    return `
+      <div class="skill-panel" data-animate>
+        <h3 class="skill-panel-title">${escapeHtml(label)}</h3>
+        <ul class="skill-bars">
+          ${items.map(s => `
+            <li class="skill-bar-item">
+              <span class="skill-bar-name">${escapeHtml(s.name)}</span>
+              <div class="skill-bar-track">
+                <div class="skill-bar-fill" style="--pct:${parseInt(s.level, 10)}%"></div>
+              </div>
+            </li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  /* Language proficiency pill panel */
+  function langPanel(items) {
+    if (!items.length) return '';
+    return `
+      <div class="skill-panel" data-animate>
+        <h3 class="skill-panel-title">Languages</h3>
+        <ul class="lang-list">
+          ${items.map(l => `
+            <li class="lang-item">
+              <span class="lang-name">${escapeHtml(l.name)}</span>
+              <span class="lang-prof">${escapeHtml(l.proficiency)}</span>
+            </li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  const panels = [
+    barPanel(technical,  'Technical'),
+    barPanel(leadership, 'Leadership'),
+    langPanel(languages),
+  ].filter(Boolean).join('');
+
+  container.innerHTML = panels
+    ? `<div class="skill-panels">${panels}</div>`
+    : '';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SKILL BAR FILL ANIMATION
+   Triggers the CSS width transition on .skill-bar-fill when
+   the bar enters the viewport (IntersectionObserver).
+   ═══════════════════════════════════════════════════════════ */
+function initSkillBars() {
+  if (typeof document === 'undefined') return;
+  const bars = Array.from(document.querySelectorAll('.skill-bar-fill'));
+  if (!bars.length) return;
+
+  if (prefersReducedMotion()) {
+    /* Show instantly for reduced-motion users */
+    bars.forEach(b => b.classList.add('animated'));
+    return;
+  }
+
+  if (typeof IntersectionObserver === 'undefined') {
+    bars.forEach(b => b.classList.add('animated'));
+    return;
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('animated');
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.3 });
+
+  bars.forEach(bar => io.observe(bar));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TIMELINE 3-D SCROLL EFFECT
+   Two behaviours wired together:
+   1. Opacity-only entrance (via IntersectionObserver) — timeline
+      entries fade in as they enter the viewport.
+   2. Scroll-driven rotateX — each entry tilts ±MAX_ANGLE degrees
+      based on its distance from the viewport midpoint, giving the
+      "curved conveyor belt" perspective illusion.
+   ═══════════════════════════════════════════════════════════ */
+function initTimelineScroll3D() {
+  if (typeof document === 'undefined') return;
+  if (typeof window   === 'undefined') return;
+
+  const stage = document.getElementById('timeline-stage');
+  if (!stage) return;
+
+  const entries = Array.from(stage.querySelectorAll('.tl-entry'));
+  if (!entries.length) return;
+
+  /* ── Entrance fade-in — runs on all devices unless reduced motion ─
+     Staggered opacity reveal; no transform so it doesn't clash with
+     the scroll-driven rotateX that follows.                          */
+  if (!prefersReducedMotion() && typeof IntersectionObserver !== 'undefined') {
+    const io = new IntersectionObserver((obs) => {
+      obs.forEach(ob => {
+        if (!ob.isIntersecting) return;
+        const el    = ob.target;
+        const delay = (entries.indexOf(el) % 4) * 70; /* stagger within each batch */
+        setTimeout(() => {
+          el.style.opacity    = '1';
+          el.style.transition = 'opacity 600ms var(--ease)';
+        }, delay);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
+
+    entries.forEach(el => {
+      el.style.opacity = '0';
+      io.observe(el);
+    });
+  }
+
+  /* ── Scroll-driven rotateX ─────────────────────────────────────────
+     Skipped on mobile/low-power: isLowPowerDevice() returns true for
+     touch screens and narrow viewports, avoiding scroll jank.        */
+  if (prefersReducedMotion() || isLowPowerDevice()) return;
+
+  const MAX_ANGLE = 8; /* degrees — subtle, not nauseating */
+  let raf = null;
+
+  function update() {
+    raf = null;
+    const vh = window.innerHeight;
+    entries.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.bottom < -100 || rect.top > vh + 100) return; /* off-screen */
+      const cy = rect.top + rect.height / 2;
+      const t  = (cy / vh - 0.5) * 2; /* –1 (top) → +1 (bottom) */
+      el.style.transform = `rotateX(${(t * MAX_ANGLE).toFixed(2)}deg)`;
+    });
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!raf) raf = requestAnimationFrame(update);
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (!raf) raf = requestAnimationFrame(update);
+  }, { passive: true });
+
+  update(); /* initial positioning */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATED FAVICON — rotating 3-D capital "S"
+   Simulates y-axis rotation by scaling the canvas x-axis with
+   cos(angle).  Runs at ≤30 fps; pauses when the tab is hidden.
+   ═══════════════════════════════════════════════════════════ */
+function initAnimatedFavicon() {
+  if (typeof document       === 'undefined') return;
+  if (typeof HTMLCanvasElement === 'undefined') return; /* Node / SSR */
+
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+
+  const S   = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
+  const TAU = Math.PI * 2;
+  const RADS_PER_MS = TAU / 4000; /* one full rotation every 4 s */
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  let angle    = 0;
+  let prevMs   = 0;
+  let lastDraw = -1;
+
+  function frame(ms) {
+    requestAnimationFrame(frame);
+
+    /* Throttle to ~30 fps — favicon is tiny; 60 fps wastes CPU */
+    if (ms - lastDraw < 33) return;
+    lastDraw = ms;
+
+    /* Pause rendering while tab is hidden */
+    if (document.hidden) { prevMs = ms; return; }
+
+    const dt = prevMs ? Math.min(ms - prevMs, 150) : 0; /* cap big deltas */
+    prevMs   = ms;
+    angle    = (angle + RADS_PER_MS * dt) % TAU;
+
+    /* ── Background: dark rounded square ── */
+    ctx.clearRect(0, 0, S, S);
+    ctx.fillStyle = '#080c14';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(0, 0, S, S, 13);
+    else               ctx.rect(0, 0, S, S);
+    ctx.fill();
+
+    /* ── Rotating "S": front face = accent purple, back = accent2 cyan ── */
+    const cosA = Math.cos(angle);
+    ctx.save();
+    ctx.translate(S / 2, S / 2);
+    ctx.scale(cosA, 1); /* horizontal squeeze simulates 3-D y-axis spin */
+    ctx.shadowBlur  = 10;
+    ctx.shadowColor = cosA >= 0 ? '#6c63ffbb' : '#00d4ffbb';
+    ctx.fillStyle   = cosA >= 0 ? '#6c63ff'   : '#00d4ff';
+    ctx.font        = 'bold 44px "Playfair Display", Georgia, serif';
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('S', 0, 2); /* +2 px optical centre correction */
+    ctx.restore();
+
+    link.href = canvas.toDataURL('image/png');
+  }
+
+  /* Start after fonts are loaded so Playfair Display is available */
+  const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
+    ? document.fonts.ready
+    : Promise.resolve();
+  whenReady.then(() => requestAnimationFrame(frame));
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1708,6 +2181,132 @@ class HeroNameShader {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   HERO BACKGROUND — GLSL NOISE GRADIENT
+   Domain-warped fBm shader: indigo-violet ↔ cyan ↔ deep dark.
+   ═══════════════════════════════════════════════════════════ */
+class NoiseGradient {
+  constructor(canvas) {
+    this.canvas = canvas;
+    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
+             || canvas.getContext('experimental-webgl', { alpha: false, depth: false });
+    if (!gl) { canvas.style.display = 'none'; return; }
+    this.gl = gl;
+    this._setup();
+    this._resize();
+    window.addEventListener('resize', () => this._resize(), { passive: true });
+    this._startTime = performance.now();
+    this._lastT     = 0;
+    this._targetFps = 20; /* background; 20fps is plenty */
+    this._tick      = this._tick.bind(this);
+    this._raf       = requestAnimationFrame(this._tick);
+  }
+
+  _compileShader(type, src) {
+    const s = this.gl.createShader(type);
+    this.gl.shaderSource(s, src);
+    this.gl.compileShader(s);
+    return s;
+  }
+
+  _setup() {
+    const gl = this.gl;
+
+    const vert = this._compileShader(gl.VERTEX_SHADER,
+      `attribute vec2 a_pos;
+       void main(){gl_Position=vec4(a_pos,0.0,1.0);}`);
+
+    /* Domain-warped fBm fragment shader */
+    const frag = this._compileShader(gl.FRAGMENT_SHADER,
+      `precision mediump float;
+       uniform float u_t;
+       uniform vec2  u_res;
+
+       float hash(vec2 p){
+         p=fract(p*vec2(127.1,311.7));
+         p+=dot(p,p+17.5);
+         return fract(p.x*p.y);
+       }
+       float noise(vec2 p){
+         vec2 i=floor(p),f=fract(p);
+         vec2 u=f*f*(3.0-2.0*f);
+         return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),
+                    mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);
+       }
+       float fbm(vec2 p){
+         float v=0.0,a=0.5;
+         for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.1+vec2(0.13,-0.07);a*=0.5;}
+         return v;
+       }
+       void main(){
+         vec2 uv=gl_FragCoord.xy/u_res;
+         uv.y=1.0-uv.y;
+         float t=u_t*0.06;
+         /* First warp pass */
+         vec2 q=vec2(fbm(uv*1.4+t),
+                     fbm(uv*1.4+vec2(1.3,1.7)+t));
+         /* Second warp pass — creates the folded turbulence */
+         vec2 r=vec2(fbm(uv*1.4+2.0*q+vec2(1.7,9.2)+0.15*t),
+                     fbm(uv*1.4+2.0*q+vec2(8.3,2.8)+0.126*t));
+         float f=fbm(uv*1.4+2.5*r);
+         /* Palette: deep dark → indigo-violet → cyan */
+         vec3 col=mix(vec3(0.047,0.063,0.102),
+                      vec3(0.424,0.392,1.000),
+                      clamp(f*2.0-0.15,0.0,1.0));
+         col=mix(col,
+                 vec3(0.000,0.831,1.000),
+                 clamp(f*f*4.0-0.4,0.0,1.0));
+         col*=f*1.35+0.12;
+         gl_FragColor=vec4(col,1.0);
+       }`);
+
+    this.prog = gl.createProgram();
+    gl.attachShader(this.prog, vert);
+    gl.attachShader(this.prog, frag);
+    gl.linkProgram(this.prog);
+    gl.useProgram(this.prog);
+
+    /* Full-screen quad */
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(this.prog, 'a_pos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    this._uTime = gl.getUniformLocation(this.prog, 'u_t');
+    this._uRes  = gl.getUniformLocation(this.prog, 'u_res');
+  }
+
+  _resize() {
+    /* Intentionally cap at 1× DPR — noise looks great at lower res */
+    const scale = Math.min(window.devicePixelRatio || 1, 1.0);
+    const w = Math.round(this.canvas.clientWidth  * scale);
+    const h = Math.round(this.canvas.clientHeight * scale);
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width  = w;
+      this.canvas.height = h;
+      this.gl.viewport(0, 0, w, h);
+    }
+  }
+
+  _tick(now) {
+    this._raf = requestAnimationFrame(this._tick);
+    if (document.hidden) return;
+    if (now - this._lastT < 1000 / this._targetFps) return;
+    this._lastT = now;
+    const t = (now - this._startTime) / 1000;
+    const { gl } = this;
+    gl.uniform1f(this._uTime, t);
+    gl.uniform2f(this._uRes, this.canvas.width, this.canvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  destroy() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+  }
+}
+
 /* Expose a minimal test surface in Node without affecting browser usage */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -1716,7 +2315,16 @@ if (typeof module !== 'undefined' && module.exports) {
     Globe3D,
     renderPublications,
     renderBlog,
+    renderCV,
+    renderSkills,
     setFooterYear,
+    initTheme,
+    initCardTilt,
+    initSkillBars,
+    initTimelineScroll3D,
+    initAnimatedFavicon,
+    initMagneticButtons,
+    initScroll3D,
     initNavbar,
     initMobileMenu,
     initScrollReveal,
@@ -1725,6 +2333,7 @@ if (typeof module !== 'undefined' && module.exports) {
     NeuralNetwork,
     NeuralNetwork2D,
     HeroNameShader,
+    NoiseGradient,
     GlobeFallback2D,
   };
 }
@@ -1738,15 +2347,48 @@ if (typeof document !== 'undefined') {
   /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
   renderBlog();
+  renderCV();      /* timeline entries from data/cv.js */
+  renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
   setFooterYear();
 
   /* UI behaviours */
+  initTheme();
   initNavbar();
   initMobileMenu();
 
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
   initCounters();
+
+  /* Scroll-driven effects: start immediately (lightweight, needed at any scroll pos) */
+  initScroll3D();
+
+  /* Pointer-only enhancements (card tilt, magnetic buttons) — deferred to idle time
+     so they do not compete with content rendering on the main thread.
+     requestIdleCallback fires within milliseconds on a quiet page; the 2 s timeout
+     guarantees they still initialise on heavily loaded devices.                     */
+  const whenIdle = typeof requestIdleCallback !== 'undefined'
+    ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
+    : (fn) => setTimeout(fn, 0);
+  whenIdle(() => {
+    initCardTilt();
+    initMagneticButtons();
+  });
+
+  /* CV timeline and skill bars */
+  initTimelineScroll3D();
+  initSkillBars();
+
+  /* Animated favicon — starts after fonts load (async, non-blocking) */
+  initAnimatedFavicon();
+
+  /* Noise gradient — raw WebGL, runs on devices that support it */
+  const noiseCanvas = document.getElementById('noise-canvas');
+  if (noiseCanvas && !prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
+    new NoiseGradient(noiseCanvas);
+  } else if (noiseCanvas) {
+    noiseCanvas.style.display = 'none';
+  }
 
   /* Three.js neural network — only when THREE is loaded */
   const canvas = document.getElementById('neural-canvas');
