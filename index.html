@@ -46,6 +46,7 @@
         <li><a href="#about">About</a></li>
         <li><a href="#research">Research</a></li>
         <li><a href="#publications">Publications</a></li>
+        <li><a href="#cv">CV</a></li>
         <li><a href="#skills">Skills</a></li>
         <li><a href="#blog">Blog</a></li>
         <li><a href="#contact">Contact</a></li>
@@ -338,6 +339,60 @@
     </div>
   </section>
 
+  <!-- ═══════════════ CURRICULUM VITAE ═══════════════ -->
+  <!--
+    HOW TO UPDATE THE CV
+    ─────────────────────
+    Edit data/cv.js:
+      CV_CAREER     work history (newest first)
+      CV_EDUCATION  academic history (newest first)
+      CV_SKILLS     { technical, leadership, languages } progress data
+    The timeline and skills panels render automatically.
+  -->
+  <section id="cv" class="section section-alt" aria-label="Curriculum Vitae">
+    <div class="container">
+
+      <header class="section-header" data-animate>
+        <span class="section-tag">CV</span>
+        <h2 class="section-title">Experience &amp; Education</h2>
+      </header>
+
+      <!-- ── 3D perspective timeline stage ────────────────── -->
+      <div class="timeline-stage" id="timeline-stage">
+
+        <!-- Column header labels -->
+        <div class="timeline-headers" aria-hidden="true">
+          <div class="tl-col-label tl-col-label--career">Career</div>
+          <div></div>
+          <div class="tl-col-label tl-col-label--edu">Education</div>
+        </div>
+
+        <!-- grid: career | spine | education -->
+        <div class="timeline-track">
+
+          <!-- Career entries — injected by renderCV() from data/cv.js -->
+          <div class="timeline-col timeline-col--career"
+               id="cv-career-list"
+               aria-label="Career history"></div>
+
+          <!-- Glowing vertical spine line -->
+          <div class="timeline-spine" aria-hidden="true"></div>
+
+          <!-- Education entries — injected by renderCV() from data/cv.js -->
+          <div class="timeline-col timeline-col--edu"
+               id="cv-edu-list"
+               aria-label="Education history"></div>
+
+        </div><!-- /.timeline-track -->
+      </div><!-- /.timeline-stage -->
+
+      <!-- ── Skills breakdown ─────────────────────────────── -->
+      <!-- Injected by renderSkills() from data/cv.js → CV_SKILLS -->
+      <div id="cv-skills" class="cv-skills-section"></div>
+
+    </div><!-- /.container -->
+  </section>
+
   <!-- ═══════════════ SKILLS ═══════════════ -->
   <section id="skills" class="section section-alt" aria-label="Skills">
     <div class="container">
@@ -525,6 +580,7 @@
   <script src="data/locations.js"></script>
   <script src="data/publications.js"></script>
   <script src="data/blog.js"></script>
+  <script src="data/cv.js"></script>
   <script src="js/main.js"></script>
 </body>
 

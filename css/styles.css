@@ -1226,6 +1226,375 @@ h3 {
   transform: none;
 }
 
+/* ─── 16c. Curriculum Vitae — timeline & skills ─────────────
+
+   Layout: 3-column CSS Grid
+     [career column] | [40px spine] | [education column]
+
+   3D perspective is set on .timeline-stage; JS (initTimelineScroll3D)
+   applies rotateX() to each .tl-entry based on its viewport position,
+   creating a "curved conveyor" depth effect on scroll.
+──────────────────────────────────────────────────────────── */
+
+/* Stage — provides the perspective context for child 3D transforms */
+.timeline-stage {
+  perspective:        1800px;
+  perspective-origin: 50% 35%;
+  overflow:           visible;
+}
+
+/* Three-column grid: career | spine | education */
+.timeline-track {
+  display:               grid;
+  grid-template-columns: 1fr 44px 1fr;
+  align-items:           start;
+}
+
+/* Vertical glowing spine */
+.timeline-spine {
+  position:   relative;
+  align-self: stretch;
+  min-height: 100%;
+}
+
+.timeline-spine::before {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  bottom:     0;
+  left:       50%;
+  width:      2px;
+  transform:  translateX(-50%);
+  background: linear-gradient(
+    to bottom,
+    var(--accent),
+    var(--accent2) 70%,
+    transparent
+  );
+  box-shadow: 0 0 12px var(--accent-glow);
+  border-radius: 1px;
+}
+
+/* Career and education column wrappers */
+.timeline-col {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.75rem;
+  padding-bottom: 2rem;
+}
+
+.timeline-col--career { padding-right: 1.5rem; }
+.timeline-col--edu    { padding-left:  1.5rem; }
+
+/* Column header labels */
+.timeline-headers {
+  display:               grid;
+  grid-template-columns: 1fr 44px 1fr;
+  margin-bottom:         1.75rem;
+}
+
+.tl-col-label {
+  display:     flex;
+  align-items: center;
+  gap:         0.5rem;
+  font-size:   0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color:       var(--text-muted);
+}
+
+.tl-col-label::before {
+  content:       '';
+  display:       inline-block;
+  width:         8px;
+  height:        8px;
+  border-radius: 50%;
+  flex-shrink:   0;
+}
+
+.tl-col-label--career {
+  justify-content: flex-end;
+  flex-direction:  row-reverse; /* dot on the right, facing spine */
+}
+
+.tl-col-label--career::before {
+  background:  var(--accent);
+  box-shadow:  0 0 6px var(--accent-glow);
+}
+
+.tl-col-label--edu::before {
+  background:  var(--accent2);
+  box-shadow:  0 0 6px var(--accent2-glow);
+}
+
+/* ── Individual timeline entry ──────────────────────────── */
+
+.tl-entry {
+  will-change:      transform;
+  transform-origin: center center;
+  position:         relative;
+  /* opacity set to 0 by initTimelineScroll3D; fades in on intersection */
+}
+
+/* Glowing connector dot — floats at the spine-facing edge of each card */
+.tl-entry::before {
+  content:       '';
+  position:      absolute;
+  top:           1.8rem;
+  width:         10px;
+  height:        10px;
+  border-radius: 50%;
+  border:        2px solid;
+  background:    var(--bg);
+  z-index:       1;
+}
+
+.tl-entry--career::before {
+  right:        -2rem;          /* extends right toward spine */
+  border-color: var(--accent);
+  box-shadow:   0 0 8px var(--accent-glow);
+}
+
+.tl-entry--edu::before {
+  left:         -2rem;          /* extends left toward spine */
+  border-color: var(--accent2);
+  box-shadow:   0 0 8px var(--accent2-glow);
+}
+
+/* ── Card ──────────────────────────────────────────────── */
+
+.tl-card {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding:       1.4rem 1.5rem;
+  position:      relative;
+  overflow:      hidden;
+  transition:    border-color var(--t-med),
+                 background   var(--t-med),
+                 box-shadow   var(--t-med);
+}
+
+/* Colored side accent — career: right edge (faces spine), edu: left edge */
+.tl-entry--career .tl-card { border-right: 3px solid var(--accent);  }
+.tl-entry--edu    .tl-card { border-left:  3px solid var(--accent2); }
+
+.tl-card:hover {
+  border-color: var(--border-hov);
+  background:   var(--bg-card-hov);
+  box-shadow:   0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Top highlight shimmer on hover */
+.tl-card::before {
+  content:    '';
+  position:   absolute;
+  inset:      0;
+  background: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 60%);
+  opacity:    0;
+  transition: opacity var(--t-med);
+  pointer-events: none;
+}
+
+.tl-card:hover::before { opacity: 1; }
+
+/* ── Card typography ──────────────────────────────────── */
+
+.tl-year {
+  display:        block;
+  font-size:      0.68rem;
+  font-weight:    700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom:  0.4rem;
+}
+
+.tl-entry--career .tl-year { color: var(--accent);  }
+.tl-entry--edu    .tl-year { color: var(--accent2); }
+
+.tl-title {
+  font-size:    0.98rem;
+  font-weight:  600;
+  color:        var(--text);
+  margin:       0 0 0.3rem;
+  line-height:  1.35;
+}
+
+.tl-sub {
+  font-size:     0.80rem;
+  color:         var(--text-muted);
+  margin-bottom: 0.65rem;
+  line-height:   1.4;
+}
+
+.tl-location { color: var(--text-faint); }
+
+.tl-desc {
+  font-size:     0.80rem;
+  color:         var(--text-muted);
+  line-height:   1.65;
+  margin:        0 0 0.75rem;
+}
+
+.tl-tags {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       0.35rem;
+}
+
+.tl-tag {
+  font-size:   0.67rem;
+  font-weight: 600;
+  padding:     0.2em 0.65em;
+  border-radius: 999px;
+  background:  rgba(108 99 255 / 0.11);
+  color:       var(--accent);
+  border:      1px solid rgba(108 99 255 / 0.22);
+  letter-spacing: 0.02em;
+}
+
+/* ── CV skills section ─────────────────────────────────── */
+
+.cv-skills-section {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--border);
+}
+
+.cv-skills-header {
+  text-align:    center;
+  margin-bottom: 2.5rem;
+}
+
+.cv-skills-header h3 {
+  font-size:      1.1rem;
+  font-weight:    600;
+  color:          var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size:      0.75rem;
+}
+
+.skill-panels {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap:                   1.75rem;
+}
+
+.skill-panel {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding:       1.75rem;
+  transition:    border-color var(--t-med), box-shadow var(--t-med);
+}
+
+.skill-panel:hover {
+  border-color: var(--border-hov);
+  box-shadow:   0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.skill-panel-title {
+  font-size:      0.68rem;
+  font-weight:    700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color:          var(--accent);
+  margin:         0 0 1.25rem;
+}
+
+/* Horizontal progress bars */
+.skill-bars {
+  list-style:     none;
+  margin:         0;
+  padding:        0;
+  display:        flex;
+  flex-direction: column;
+  gap:            0.9rem;
+}
+
+.skill-bar-name {
+  display:       block;
+  font-size:     0.79rem;
+  font-weight:   500;
+  color:         var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.skill-bar-track {
+  height:        5px;
+  background:    var(--border);
+  border-radius: 999px;
+  overflow:      hidden;
+}
+
+.skill-bar-fill {
+  height:        100%;
+  width:         0;                          /* starts at 0 */
+  border-radius: 999px;
+  background:    linear-gradient(to right, var(--accent), var(--accent2));
+  transition:    width 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change:   width;
+}
+
+/* Trigger fill animation when .animated class is added by initSkillBars() */
+.skill-bar-fill.animated { width: var(--pct); }
+
+/* Instant fill when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .skill-bar-fill { transition: none; width: var(--pct) !important; }
+}
+
+/* Language pills */
+.lang-list {
+  list-style:     none;
+  margin:         0;
+  padding:        0;
+  display:        flex;
+  flex-direction: column;
+  gap:            0.6rem;
+}
+
+.lang-item {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         0.55rem 0.9rem;
+  background:      var(--bg);
+  border-radius:   var(--r-md);
+  border:          1px solid var(--border);
+}
+
+.lang-name {
+  font-size:   0.86rem;
+  font-weight: 600;
+  color:       var(--text);
+}
+
+.lang-prof {
+  font-size:   0.72rem;
+  font-weight: 500;
+  color:       var(--accent2);
+  letter-spacing: 0.01em;
+}
+
+/* ── Responsive: stack timeline to single column on mobile ── */
+@media (max-width: 760px) {
+  .timeline-track {
+    grid-template-columns: 0 40px 1fr; /* collapse career column */
+  }
+
+  .timeline-col--career { display: none; }
+
+  .timeline-col--edu {
+    padding-left: 1.25rem;
+    grid-column:  3;
+  }
+
+  .tl-col-label--career { display: none; }
+}
+
 /* ─── 17. Responsive ────────────────────────────────────── */
 @media (max-width: 900px) {
   .about-grid {

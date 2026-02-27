@@ -1585,6 +1585,212 @@ function initScroll3D() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   CURRICULUM VITAE — TIMELINE RENDERING
+   Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   ═══════════════════════════════════════════════════════════ */
+function renderCV() {
+  if (typeof document === 'undefined') return;
+  const careerList = document.getElementById('cv-career-list');
+  const eduList    = document.getElementById('cv-edu-list');
+  if (!careerList && !eduList) return;
+  if (typeof CV_CAREER    === 'undefined') return;
+  if (typeof CV_EDUCATION === 'undefined') return;
+
+  function entryHtml(entry, side) {
+    const isCareer = side === 'career';
+    const titleKey = isCareer ? 'role'    : 'degree';
+    const subKey   = isCareer ? 'company' : 'institution';
+    const locHtml  = entry.location
+      ? ` <span class="tl-location">· ${escapeHtml(entry.location)}</span>`
+      : '';
+    const descHtml = entry.description
+      ? `<p class="tl-desc">${escapeHtml(entry.description)}</p>`
+      : '';
+    const tagsArr  = entry.tags || [];
+    const tagsHtml = tagsArr.length
+      ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+    return `
+      <div class="tl-entry tl-entry--${side}">
+        <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+        <div class="tl-card">
+          <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
+          <div class="tl-sub">${escapeHtml(entry[subKey] || '')}${locHtml}</div>
+          ${descHtml}${tagsHtml}
+        </div>
+      </div>`;
+  }
+
+  if (careerList) {
+    careerList.innerHTML = (CV_CAREER || []).map(e => entryHtml(e, 'career')).join('');
+  }
+  if (eduList) {
+    eduList.innerHTML = (CV_EDUCATION || []).map(e => entryHtml(e, 'education')).join('');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CURRICULUM VITAE — SKILLS PANELS
+   Reads CV_SKILLS global from data/cv.js.
+   ═══════════════════════════════════════════════════════════ */
+function renderSkills() {
+  if (typeof document === 'undefined') return;
+  const container = document.getElementById('cv-skills');
+  if (!container) return;
+  if (typeof CV_SKILLS === 'undefined') return;
+
+  const { technical = [], leadership = [], languages = [] } = CV_SKILLS;
+
+  /* Progress-bar panel for technical / leadership */
+  function barPanel(items, label) {
+    if (!items.length) return '';
+    return `
+      <div class="skill-panel" data-animate>
+        <h3 class="skill-panel-title">${escapeHtml(label)}</h3>
+        <ul class="skill-bars">
+          ${items.map(s => `
+            <li class="skill-bar-item">
+              <span class="skill-bar-name">${escapeHtml(s.name)}</span>
+              <div class="skill-bar-track">
+                <div class="skill-bar-fill" style="--pct:${parseInt(s.level, 10)}%"></div>
+              </div>
+            </li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  /* Language proficiency pill panel */
+  function langPanel(items) {
+    if (!items.length) return '';
+    return `
+      <div class="skill-panel" data-animate>
+        <h3 class="skill-panel-title">Languages</h3>
+        <ul class="lang-list">
+          ${items.map(l => `
+            <li class="lang-item">
+              <span class="lang-name">${escapeHtml(l.name)}</span>
+              <span class="lang-prof">${escapeHtml(l.proficiency)}</span>
+            </li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  const panels = [
+    barPanel(technical,  'Technical'),
+    barPanel(leadership, 'Leadership'),
+    langPanel(languages),
+  ].filter(Boolean).join('');
+
+  container.innerHTML = panels
+    ? `<div class="skill-panels">${panels}</div>`
+    : '';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SKILL BAR FILL ANIMATION
+   Triggers the CSS width transition on .skill-bar-fill when
+   the bar enters the viewport (IntersectionObserver).
+   ═══════════════════════════════════════════════════════════ */
+function initSkillBars() {
+  if (typeof document === 'undefined') return;
+  const bars = Array.from(document.querySelectorAll('.skill-bar-fill'));
+  if (!bars.length) return;
+
+  if (prefersReducedMotion()) {
+    /* Show instantly for reduced-motion users */
+    bars.forEach(b => b.classList.add('animated'));
+    return;
+  }
+
+  if (typeof IntersectionObserver === 'undefined') {
+    bars.forEach(b => b.classList.add('animated'));
+    return;
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('animated');
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.3 });
+
+  bars.forEach(bar => io.observe(bar));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TIMELINE 3-D SCROLL EFFECT
+   Two behaviours wired together:
+   1. Opacity-only entrance (via IntersectionObserver) — timeline
+      entries fade in as they enter the viewport.
+   2. Scroll-driven rotateX — each entry tilts ±MAX_ANGLE degrees
+      based on its distance from the viewport midpoint, giving the
+      "curved conveyor belt" perspective illusion.
+   ═══════════════════════════════════════════════════════════ */
+function initTimelineScroll3D() {
+  if (prefersReducedMotion()) return;
+  if (typeof document === 'undefined') return;
+  if (typeof window   === 'undefined') return;
+
+  const stage = document.getElementById('timeline-stage');
+  if (!stage) return;
+
+  const entries = Array.from(stage.querySelectorAll('.tl-entry'));
+  if (!entries.length) return;
+
+  const MAX_ANGLE = 8; /* degrees — subtle, not nauseating */
+
+  /* ── Entrance fade-in (opacity only, no transform clash) ─ */
+  if (typeof IntersectionObserver !== 'undefined') {
+    const io = new IntersectionObserver((obs) => {
+      obs.forEach((ob, i) => {
+        if (!ob.isIntersecting) return;
+        const el = ob.target;
+        /* Stagger entries that arrive in the same batch */
+        const delay = (Array.from(entries).indexOf(el) % 4) * 70;
+        setTimeout(() => {
+          el.style.opacity    = '1';
+          el.style.transition = `opacity 600ms var(--ease)`;
+        }, delay);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
+
+    entries.forEach(el => {
+      el.style.opacity = '0';
+      io.observe(el);
+    });
+  }
+
+  /* ── Scroll-driven rotateX ──────────────────────────────── */
+  let raf = null;
+
+  function update() {
+    raf = null;
+    const vh = window.innerHeight;
+    entries.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      /* Skip fully off-screen entries */
+      if (rect.bottom < -100 || rect.top > vh + 100) return;
+      const cy    = rect.top + rect.height / 2;
+      const t     = (cy / vh - 0.5) * 2;        /* –1 top → +1 bottom */
+      const angle = (t * MAX_ANGLE).toFixed(2);
+      el.style.transform = `rotateX(${angle}deg)`;
+    });
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!raf) raf = requestAnimationFrame(update);
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (!raf) raf = requestAnimationFrame(update);
+  }, { passive: true });
+
+  update(); /* initial positioning */
+}
+
+/* ═══════════════════════════════════════════════════════════
    HERO NAME SHADER
    Renders "Stefano / Masneri" with iridescent chromatic
    aberration on a WebGL canvas overlay.  Falls back to the
@@ -2029,9 +2235,13 @@ if (typeof module !== 'undefined' && module.exports) {
     Globe3D,
     renderPublications,
     renderBlog,
+    renderCV,
+    renderSkills,
     setFooterYear,
     initTheme,
     initCardTilt,
+    initSkillBars,
+    initTimelineScroll3D,
     initMagneticButtons,
     initScroll3D,
     initNavbar,
@@ -2056,6 +2266,8 @@ if (typeof document !== 'undefined') {
   /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
   renderBlog();
+  renderCV();      /* timeline entries from data/cv.js */
+  renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
   setFooterYear();
 
   /* UI behaviours */
@@ -2071,6 +2283,10 @@ if (typeof document !== 'undefined') {
   initCardTilt();
   initMagneticButtons();
   initScroll3D();
+
+  /* CV timeline and skill bars */
+  initTimelineScroll3D();
+  initSkillBars();
 
   /* Noise gradient — raw WebGL, runs on devices that support it */
   const noiseCanvas = document.getElementById('noise-canvas');
