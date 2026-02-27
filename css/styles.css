@@ -1581,21 +1581,59 @@ h3 {
 
 /* ── Responsive: stack timeline to single column on mobile ── */
 @media (max-width: 760px) {
+  /* No 3-D perspective without a proper depth view */
+  .timeline-stage { perspective: none; }
+
+  /* Hide column headers — layout is self-explanatory when stacked */
+  .timeline-headers { display: none; }
+
+  /* Stack career above education in one vertical flow */
   .timeline-track {
-    grid-template-columns: 0 40px 1fr; /* collapse career column */
+    display:        flex;
+    flex-direction: column;
+    gap:            0;
   }
 
-  .timeline-col--career { display: none; }
+  /* Hide the center spine (nothing to span between two stacked cols) */
+  .timeline-spine { display: none; }
 
+  .timeline-col--career,
   .timeline-col--edu {
-    padding-left: 1.25rem;
-    grid-column:  3;
+    padding: 0;
+    gap:     1.25rem;
   }
 
-  .tl-col-label--career { display: none; }
+  /* Visual separator between career and education groups */
+  .timeline-col--edu {
+    margin-top:  2rem;
+    padding-top: 2rem;
+    border-top:  1px solid var(--border);
+  }
+
+  /* Uniform left-border direction for both types on mobile */
+  .tl-entry--career .tl-card { border-right: none; border-left: 3px solid var(--accent);  }
+  .tl-entry--edu    .tl-card { border-right: none; border-left: 3px solid var(--accent2); }
+
+  /* Hide connector dots — they pointed toward the (now absent) spine */
+  .tl-entry::before { display: none; }
 }
 
-/* ─── 17. Responsive ────────────────────────────────────── */
+/* ─── 17. Performance: content-visibility ───────────────────
+   Skips rendering of below-fold sections until they approach
+   the viewport. contain-intrinsic-block-size gives the browser
+   an estimated height so scroll-bar proportions stay correct.
+──────────────────────────────────────────────────────────── */
+#research,
+#publications,
+#cv,
+#skills,
+#blog,
+#contact {
+  content-visibility: auto;
+  contain-intrinsic-block-size: 650px;
+}
+
+/* ─── 18. Responsive ────────────────────────────────────── */
 @media (max-width: 900px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1653,6 +1691,22 @@ h3 {
     width: 100%;
     justify-content: center;
   }
+
+  /* 3-column stat row is too cramped below 480 px */
+  .stats-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Touch targets: ensure interactive elements meet 44 px minimum (WCAG 2.5.5) */
+@media (pointer: coarse) {
+  .btn        { min-height: 48px; }
+  .theme-btn,
+  .nav-toggle { min-width: 44px; min-height: 44px; }
+  .nav-links a { padding-block: 0.55rem; }
+  .tl-tag,
+  .skill-tag  { padding: 0.35em 0.75em; }
 }
 
 /* ─── 18. Globe (About section) ─────────────────────────── */

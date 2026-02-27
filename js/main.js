@@ -1547,6 +1547,10 @@ function initScroll3D() {
   Array.from(document.querySelectorAll('.research-card[data-animate]'))
     .forEach((card, i) => card.style.setProperty('--card-init-ry', `${i % 2 === 0 ? '14' : '-14'}deg`));
 
+  /* Hero parallax — skip on touch devices to prevent scroll jank on mobile */
+  if (typeof window === 'undefined') return;
+  if (window.matchMedia?.('(pointer: coarse)').matches) return;
+
   const heroContent = document.querySelector('.hero-content');
   const heroSection = document.getElementById('hero');
   const orb1 = document.querySelector('.orb-1');
@@ -1728,7 +1732,6 @@ function initSkillBars() {
       "curved conveyor belt" perspective illusion.
    ═══════════════════════════════════════════════════════════ */
 function initTimelineScroll3D() {
-  if (prefersReducedMotion()) return;
   if (typeof document === 'undefined') return;
   if (typeof window   === 'undefined') return;
 
@@ -1738,19 +1741,18 @@ function initTimelineScroll3D() {
   const entries = Array.from(stage.querySelectorAll('.tl-entry'));
   if (!entries.length) return;
 
-  const MAX_ANGLE = 8; /* degrees — subtle, not nauseating */
-
-  /* ── Entrance fade-in (opacity only, no transform clash) ─ */
-  if (typeof IntersectionObserver !== 'undefined') {
+  /* ── Entrance fade-in — runs on all devices unless reduced motion ─
+     Staggered opacity reveal; no transform so it doesn't clash with
+     the scroll-driven rotateX that follows.                          */
+  if (!prefersReducedMotion() && typeof IntersectionObserver !== 'undefined') {
     const io = new IntersectionObserver((obs) => {
-      obs.forEach((ob, i) => {
+      obs.forEach(ob => {
         if (!ob.isIntersecting) return;
-        const el = ob.target;
-        /* Stagger entries that arrive in the same batch */
-        const delay = (Array.from(entries).indexOf(el) % 4) * 70;
+        const el    = ob.target;
+        const delay = (entries.indexOf(el) % 4) * 70; /* stagger within each batch */
         setTimeout(() => {
           el.style.opacity    = '1';
-          el.style.transition = `opacity 600ms var(--ease)`;
+          el.style.transition = 'opacity 600ms var(--ease)';
         }, delay);
         io.unobserve(el);
       });
@@ -1762,7 +1764,12 @@ function initTimelineScroll3D() {
     });
   }
 
-  /* ── Scroll-driven rotateX ──────────────────────────────── */
+  /* ── Scroll-driven rotateX ─────────────────────────────────────────
+     Skipped on mobile/low-power: isLowPowerDevice() returns true for
+     touch screens and narrow viewports, avoiding scroll jank.        */
+  if (prefersReducedMotion() || isLowPowerDevice()) return;
+
+  const MAX_ANGLE = 8; /* degrees — subtle, not nauseating */
   let raf = null;
 
   function update() {
@@ -1770,12 +1777,10 @@ function initTimelineScroll3D() {
     const vh = window.innerHeight;
     entries.forEach(el => {
       const rect = el.getBoundingClientRect();
-      /* Skip fully off-screen entries */
-      if (rect.bottom < -100 || rect.top > vh + 100) return;
-      const cy    = rect.top + rect.height / 2;
-      const t     = (cy / vh - 0.5) * 2;        /* –1 top → +1 bottom */
-      const angle = (t * MAX_ANGLE).toFixed(2);
-      el.style.transform = `rotateX(${angle}deg)`;
+      if (rect.bottom < -100 || rect.top > vh + 100) return; /* off-screen */
+      const cy = rect.top + rect.height / 2;
+      const t  = (cy / vh - 0.5) * 2; /* –1 (top) → +1 (bottom) */
+      el.style.transform = `rotateX(${(t * MAX_ANGLE).toFixed(2)}deg)`;
     });
   }
 
@@ -1788,6 +1793,77 @@ function initTimelineScroll3D() {
   }, { passive: true });
 
   update(); /* initial positioning */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATED FAVICON — rotating 3-D capital "S"
+   Simulates y-axis rotation by scaling the canvas x-axis with
+   cos(angle).  Runs at ≤30 fps; pauses when the tab is hidden.
+   ═══════════════════════════════════════════════════════════ */
+function initAnimatedFavicon() {
+  if (typeof document       === 'undefined') return;
+  if (typeof HTMLCanvasElement === 'undefined') return; /* Node / SSR */
+
+  const link = document.querySelector('link[rel="icon"]');
+  if (!link) return;
+
+  const S   = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
+  const TAU = Math.PI * 2;
+  const RADS_PER_MS = TAU / 4000; /* one full rotation every 4 s */
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  let angle    = 0;
+  let prevMs   = 0;
+  let lastDraw = -1;
+
+  function frame(ms) {
+    requestAnimationFrame(frame);
+
+    /* Throttle to ~30 fps — favicon is tiny; 60 fps wastes CPU */
+    if (ms - lastDraw < 33) return;
+    lastDraw = ms;
+
+    /* Pause rendering while tab is hidden */
+    if (document.hidden) { prevMs = ms; return; }
+
+    const dt = prevMs ? Math.min(ms - prevMs, 150) : 0; /* cap big deltas */
+    prevMs   = ms;
+    angle    = (angle + RADS_PER_MS * dt) % TAU;
+
+    /* ── Background: dark rounded square ── */
+    ctx.clearRect(0, 0, S, S);
+    ctx.fillStyle = '#080c14';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(0, 0, S, S, 13);
+    else               ctx.rect(0, 0, S, S);
+    ctx.fill();
+
+    /* ── Rotating "S": front face = accent purple, back = accent2 cyan ── */
+    const cosA = Math.cos(angle);
+    ctx.save();
+    ctx.translate(S / 2, S / 2);
+    ctx.scale(cosA, 1); /* horizontal squeeze simulates 3-D y-axis spin */
+    ctx.shadowBlur  = 10;
+    ctx.shadowColor = cosA >= 0 ? '#6c63ffbb' : '#00d4ffbb';
+    ctx.fillStyle   = cosA >= 0 ? '#6c63ff'   : '#00d4ff';
+    ctx.font        = 'bold 44px "Playfair Display", Georgia, serif';
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('S', 0, 2); /* +2 px optical centre correction */
+    ctx.restore();
+
+    link.href = canvas.toDataURL('image/png');
+  }
+
+  /* Start after fonts are loaded so Playfair Display is available */
+  const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
+    ? document.fonts.ready
+    : Promise.resolve();
+  whenReady.then(() => requestAnimationFrame(frame));
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2242,6 +2318,7 @@ if (typeof module !== 'undefined' && module.exports) {
     initCardTilt,
     initSkillBars,
     initTimelineScroll3D,
+    initAnimatedFavicon,
     initMagneticButtons,
     initScroll3D,
     initNavbar,
@@ -2287,6 +2364,9 @@ if (typeof document !== 'undefined') {
   /* CV timeline and skill bars */
   initTimelineScroll3D();
   initSkillBars();
+
+  /* Animated favicon — starts after fonts load (async, non-blocking) */
+  initAnimatedFavicon();
 
   /* Noise gradient — raw WebGL, runs on devices that support it */
   const noiseCanvas = document.getElementById('noise-canvas');

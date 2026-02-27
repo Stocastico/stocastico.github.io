@@ -1,7 +1,8 @@
 'use strict';
 /* ─────────────────────────────────────────────────────────────────────────────
-   Tests for renderCV, renderSkills, initSkillBars, initTimelineScroll3D
-   TDD: these tests are written before the implementation.
+   Tests for renderCV, renderSkills, initSkillBars, initTimelineScroll3D,
+   and initAnimatedFavicon.
+   TDD: these tests are written before (or alongside) the implementation.
    Run:  npm run test:cv
 ──────────────────────────────────────────────────────────────────────────────*/
 const test   = require('node:test');
@@ -12,6 +13,7 @@ const {
   renderSkills,
   initSkillBars,
   initTimelineScroll3D,
+  initAnimatedFavicon,
 } = require('../js/main.js');
 
 /* ── DOM helpers ─────────────────────────────────────────────────────────── */
@@ -301,4 +303,40 @@ test('initTimelineScroll3D: returns without throwing when timeline-stage absent'
   const { restore } = setupDom([]); // getElementById returns null for any id
   assert.doesNotThrow(() => initTimelineScroll3D());
   restore();
+});
+
+/* ── initAnimatedFavicon ─────────────────────────────────────────────────── */
+
+test('initAnimatedFavicon: exported as a function', () => {
+  assert.strictEqual(typeof initAnimatedFavicon, 'function');
+});
+
+test('initAnimatedFavicon: returns without throwing when document is undefined', () => {
+  const prev = global.document;
+  global.document = undefined;
+  assert.doesNotThrow(() => initAnimatedFavicon());
+  global.document = prev;
+});
+
+test('initAnimatedFavicon: returns without throwing when HTMLCanvasElement is absent (Node env)', () => {
+  /* In Node, HTMLCanvasElement is undefined — the function must bail gracefully */
+  const prev = global.HTMLCanvasElement;
+  global.HTMLCanvasElement = undefined;
+  const prevDoc = global.document;
+  global.document = { querySelector: () => null };
+  assert.doesNotThrow(() => initAnimatedFavicon());
+  global.HTMLCanvasElement = prev;
+  global.document = prevDoc;
+});
+
+test('initAnimatedFavicon: returns without throwing when icon link is absent', () => {
+  /* querySelector returns null — no favicon link in the page */
+  const prev = global.document;
+  global.document = {
+    querySelector: () => null,
+    fonts: { ready: { then() {} } },
+    hidden: false,
+  };
+  assert.doesNotThrow(() => initAnimatedFavicon());
+  global.document = prev;
 });
