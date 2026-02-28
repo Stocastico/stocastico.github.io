@@ -1,0 +1,111 @@
+# robots.txt — stocastico.github.io
+# Last updated: 2026-02-28
+
+# ── Standard search engine bots (allowed) ─────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# ── AI / LLM training crawlers (blocked) ──────────────────────────────────────
+
+# OpenAI
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+# Anthropic
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+# Common Crawl (used as training data by many LLMs)
+User-agent: CCBot
+Disallow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Disallow: /
+
+# Cohere
+User-agent: cohere-ai
+Disallow: /
+
+# ByteDance / TikTok
+User-agent: Bytespider
+Disallow: /
+
+# Meta AI
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+# Amazon
+User-agent: Amazonbot
+Disallow: /
+
+# Allen Institute for AI
+User-agent: AI2Bot
+Disallow: /
+
+# Diffbot (commercial data extraction)
+User-agent: Diffbot
+Disallow: /
+
+# ImagesiftBot (image harvesting)
+User-agent: ImagesiftBot
+Disallow: /
+
+# Apple Intelligence
+User-agent: Applebot-Extended
+Disallow: /
+
+# You.com
+User-agent: YouBot
+Disallow: /
+
+# Scrapy (generic scraping framework often used for training datasets)
+User-agent: Scrapy
+Disallow: /
+
+# DataForSeo
+User-agent: DataForSeoBot
+Disallow: /
+
+# Omgili / Webz.io (web data for AI)
+User-agent: omgili
+Disallow: /
+
+User-agent: omgilibot
+Disallow: /
+
+# ── Sitemap ────────────────────────────────────────────────────────────────────
+Sitemap: https://stocastico.github.io/sitemap.xml
