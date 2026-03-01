@@ -316,9 +316,39 @@ function buildHtml(fm, bodyHtml) {
   <meta property="og:url"         content="${escapeHtml(postUrl)}" />
   <meta property="og:title"       content="${escapeHtml(fm.title)}" />
   <meta property="og:description" content="${escapeHtml(fm.excerpt)}" />
-  <meta name="twitter:card"        content="summary" />
+  <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+  <meta property="og:image:alt"   content="${escapeHtml(fm.title)}" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta property="og:locale"      content="en_GB" />
+  <meta property="article:author" content="Stefano Masneri" />
+  <meta property="article:published_time" content="${escapeHtml(fm.date)}" />
+  <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${escapeHtml(fm.title)}" />
-  <meta name="twitter:description" content="${escapeHtml(fm.excerpt)}" />` : '';
+  <meta name="twitter:description" content="${escapeHtml(fm.excerpt)}" />
+  <meta name="twitter:image"       content="https://stocastico.github.io/screenshot-hero.png" />` : '';
+
+  const jsonLd = `
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "${escapeHtml(fm.title)}",
+    "description": "${escapeHtml(fm.excerpt)}",
+    "url": "${escapeHtml(postUrl)}",
+    "datePublished": "${escapeHtml(fm.date)}",
+    "author": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    }
+  }
+  <\/script>`;
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -326,7 +356,9 @@ function buildHtml(fm, bodyHtml) {
   <meta charset="UTF-8" />
   <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="${escapeHtml(fm.excerpt)}" />${canonicalHtml}${ogHtml}
+  <meta name="description" content="${escapeHtml(fm.excerpt)}" />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />${canonicalHtml}${ogHtml}${jsonLd}
   <title>${escapeHtml(fm.title)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
