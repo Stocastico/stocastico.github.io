@@ -16,7 +16,8 @@
     "generate-cv": "node scripts/generate-cv.js",
     "generate-locations": "node scripts/generate-locations.js",
     "generate-rss": "node scripts/generate-rss.js",
-    "generate-sitemap": "node scripts/generate-sitemap.js"
+    "generate-sitemap": "node scripts/generate-sitemap.js",
+    "minify": "npx terser js/main.js -o js/main.min.js --compress --mangle"
   },
   "engines": {
     "node": ">=18"
