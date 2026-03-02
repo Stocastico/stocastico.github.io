@@ -454,20 +454,6 @@ h3 {
   }
 }
 
-.hero-eyebrow {
-  display: inline-block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  padding: 0.3em 1.1em;
-  margin-bottom: 1.75rem;
-  background: rgba(108, 99, 255, 0.08);
-}
-
 /* ── Hero name: wrapper + WebGL canvas overlay ───────────── */
 .hero-name-wrap {
   position: relative;
@@ -484,20 +470,13 @@ h3 {
   letter-spacing: -0.02em;
   margin-bottom: 0;
   /* spacing now on .hero-name-wrap */
-  background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+  background: linear-gradient(135deg, #c8e8ff 30%, #00d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-align: center;
   /* ensure text is still selectable / readable before shader loads */
   user-select: text;
-}
-
-.hero-name em {
-  font-style: italic;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* JS adds this class once the WebGL canvas is live */

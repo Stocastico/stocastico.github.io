@@ -2090,13 +2090,9 @@ class HeroNameShader {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
 
-    /* Line 1: "Stefano" — Inter Bold */
-    ctx.font = `700 ${fs}px 'Inter', system-ui, sans-serif`;
+    /* Line 1 & 2: Playfair Display Bold — consistent elegant serif */
+    ctx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
     ctx.fillText('Stefano', w / 2, 0);
-
-    /* Line 2: "Masneri" — Playfair Display Bold Italic
-       line-height: 1 → second line starts at exactly fs */
-    ctx.font = `italic 700 ${fs}px 'Playfair Display', Georgia, serif`;
     ctx.fillText('Masneri', w / 2, fs);
 
     gl.bindTexture(gl.TEXTURE_2D, this.tex);
@@ -2114,9 +2110,8 @@ class HeroNameShader {
     const measureCtx = this._measureCanvas.getContext('2d');
     let textW = fallbackW;
     if (measureCtx && typeof measureCtx.measureText === 'function') {
-      measureCtx.font = `700 ${fs}px 'Inter', system-ui, sans-serif`;
+      measureCtx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
       const l1 = measureCtx.measureText('Stefano').width;
-      measureCtx.font = `italic 700 ${fs}px 'Playfair Display', Georgia, serif`;
       const l2 = measureCtx.measureText('Masneri').width;
       textW = Math.max(fallbackW, l1, l2) + fs * 0.28;
     }
