@@ -1728,13 +1728,21 @@ function renderCV() {
     const tagsHtml = tagsArr.length
       ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';
+    const hasBack = !!(entry.description || tagsArr.length);
     return `
       <div class="tl-entry tl-entry--${side}">
-        <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-        <div class="tl-card">
-          <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-          <div class="tl-sub">${escapeHtml(entry[subKey] || '')}${locHtml}</div>
-          ${descHtml}${tagsHtml}
+        <div class="tl-card${hasBack ? ' tl-card--flippable' : ''}" ${hasBack ? 'tabindex="0"' : ''}>
+          <div class="tl-card-front">
+            <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
+            <p class="tl-sub">${escapeHtml(entry[subKey] || '')}${locHtml}</p>
+            ${hasBack ? '<span class="tl-flip-hint" aria-hidden="true">↻ details</span>' : ''}
+          </div>
+          ${hasBack ? `
+          <div class="tl-card-back">
+            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
+            ${descHtml}${tagsHtml}
+          </div>` : ''}
         </div>
       </div>`;
   }
@@ -1837,17 +1845,15 @@ function initSkillBars() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TIMELINE 3-D SCROLL EFFECT
-   Two behaviours wired together:
-   1. Opacity-only entrance (via IntersectionObserver) — timeline
-      entries fade in as they enter the viewport.
-   2. Scroll-driven rotateX — each entry tilts ±MAX_ANGLE degrees
-      based on its distance from the viewport midpoint, giving the
-      "curved conveyor belt" perspective illusion.
+   TIMELINE ENTRANCE ANIMATION
+   Staggered opacity fade-in as entries scroll into view.
+   The old scroll-driven rotateX has been removed — it shared
+   a perspective context between both columns, which caused
+   hover repaints to trigger cross-column z-fighting flicker.
+   Per-card hover flipping is handled entirely in CSS now.
    ═══════════════════════════════════════════════════════════ */
 function initTimelineScroll3D() {
   if (typeof document === 'undefined') return;
-  if (typeof window   === 'undefined') return;
 
   const stage = document.getElementById('timeline-stage');
   if (!stage) return;
@@ -1855,58 +1861,25 @@ function initTimelineScroll3D() {
   const entries = Array.from(stage.querySelectorAll('.tl-entry'));
   if (!entries.length) return;
 
-  /* ── Entrance fade-in — runs on all devices unless reduced motion ─
-     Staggered opacity reveal; no transform so it doesn't clash with
-     the scroll-driven rotateX that follows.                          */
-  if (!prefersReducedMotion() && typeof IntersectionObserver !== 'undefined') {
-    const io = new IntersectionObserver((obs) => {
-      obs.forEach(ob => {
-        if (!ob.isIntersecting) return;
-        const el    = ob.target;
-        const delay = (entries.indexOf(el) % 4) * 70; /* stagger within each batch */
-        setTimeout(() => {
-          el.style.opacity    = '1';
-          el.style.transition = 'opacity 600ms var(--ease)';
-        }, delay);
-        io.unobserve(el);
-      });
-    }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
+  if (prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
 
-    entries.forEach(el => {
-      el.style.opacity = '0';
-      io.observe(el);
+  const io = new IntersectionObserver((obs) => {
+    obs.forEach(ob => {
+      if (!ob.isIntersecting) return;
+      const el    = ob.target;
+      const delay = (entries.indexOf(el) % 4) * 70;
+      setTimeout(() => {
+        el.style.transition = 'opacity 600ms var(--ease)';
+        el.style.opacity    = '1';
+      }, delay);
+      io.unobserve(el);
     });
-  }
+  }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
 
-  /* ── Scroll-driven rotateX ─────────────────────────────────────────
-     Skipped on mobile/low-power: isLowPowerDevice() returns true for
-     touch screens and narrow viewports, avoiding scroll jank.        */
-  if (prefersReducedMotion() || isLowPowerDevice()) return;
-
-  const MAX_ANGLE = 8; /* degrees — subtle, not nauseating */
-  let raf = null;
-
-  function update() {
-    raf = null;
-    const vh = window.innerHeight;
-    entries.forEach(el => {
-      const rect = el.getBoundingClientRect();
-      if (rect.bottom < -100 || rect.top > vh + 100) return; /* off-screen */
-      const cy = rect.top + rect.height / 2;
-      const t  = (cy / vh - 0.5) * 2; /* –1 (top) → +1 (bottom) */
-      el.style.transform = `rotateX(${(t * MAX_ANGLE).toFixed(2)}deg)`;
-    });
-  }
-
-  window.addEventListener('scroll', () => {
-    if (!raf) raf = requestAnimationFrame(update);
-  }, { passive: true });
-
-  window.addEventListener('resize', () => {
-    if (!raf) raf = requestAnimationFrame(update);
-  }, { passive: true });
-
-  update(); /* initial positioning */
+  entries.forEach(el => {
+    el.style.opacity = '0';
+    io.observe(el);
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════
