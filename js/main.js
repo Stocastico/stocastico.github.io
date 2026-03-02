@@ -469,6 +469,69 @@ async function geocodeLocations(locs) {
   }
 }
 
+/* ── Simplified continent polygon data ───────────────────────────────────────
+   Each element: [[lat, lon], …] — closed polygon in geographic coordinates.
+   Accuracy ≈ 150 km; fine for a decorative stylised globe.
+──────────────────────────────────────────────────────────────────────────────*/
+const GLOBE_CONTINENTS = [
+  /* North America */
+  [[71,-164],[66,-168],[61,-150],[57,-136],[49,-124],[42,-124],[37,-122],
+   [32,-117],[29,-110],[23,-106],[15,-90],[9,-84],[8,-77],[11,-61],[17,-62],
+   [21,-74],[26,-80],[30,-81],[35,-76],[41,-70],[45,-64],[47,-53],[52,-56],
+   [57,-62],[63,-78],[68,-84],[72,-79],[76,-93],[73,-124],[71,-164]],
+  /* Greenland */
+  [[83,-34],[76,-14],[72,-22],[65,-37],[60,-44],[60,-48],[64,-52],[68,-54],
+   [74,-57],[76,-68],[82,-72],[83,-34]],
+  /* South America */
+  [[12,-71],[8,-60],[2,-51],[-5,-35],[-10,-37],[-16,-38],[-23,-43],
+   [-34,-53],[-34,-58],[-52,-60],[-55,-68],[-50,-68],[-47,-65],[-40,-62],
+   [-27,-49],[-22,-43],[-10,-37],[-1,-49],[5,-52],[8,-59],[12,-71]],
+  /* Europe (mainland + Iberia + Scandinavia) */
+  [[36,-9],[43,-9],[44,-8],[48,-4],[51,3],[52,5],[57,8],[65,14],[71,28],
+   [66,25],[60,24],[55,20],[52,24],[46,30],[45,29],[43,23],[42,20],[38,22],
+   [37,22],[38,16],[40,18],[41,14],[44,13],[44,8],[43,3],[43,-2],[36,-6],
+   [36,-9]],
+  /* Italy (peninsula) */
+  [[47,14],[45,13],[44,8],[43,8],[43,11],[41,13],[38,16],[38,15],
+   [39,17],[40,18],[41,15],[44,14],[47,14]],
+  /* UK + Ireland */
+  [[58,-5],[57,-2],[53,-5],[52,-5],[51,-3],[50,0],[51,1],[53,0],[55,-2],[58,-5]],
+  /* Iceland */
+  [[64,-24],[65,-14],[66,-14],[66,-18],[64,-24]],
+  /* Africa */
+  [[37,10],[33,33],[22,37],[12,44],[11,43],[8,50],[2,45],
+   [-5,40],[-11,37],[-22,35],[-26,33],[-34,27],[-35,19],[-34,18],
+   [-29,17],[-15,12],[-11,14],[-5,10],[4,2],[5,3],[5,1],[4,-2],
+   [5,-4],[7,-6],[11,-15],[15,-17],[18,-16],[22,-17],[27,-14],[35,-6],
+   [37,10]],
+  /* Madagascar */
+  [[-13,49],[-16,50],[-21,47],[-25,47],[-26,44],[-20,44],[-14,49],[-13,49]],
+  /* Asia (mainland — Arabian Pen., Indian subcontinent, SE Asia included) */
+  [[73,55],[77,100],[71,140],[68,162],[60,163],[54,142],[50,140],
+   [44,136],[40,124],[32,121],[22,114],[19,109],[10,105],[2,104],
+   [2,101],[4,100],[7,100],[14,100],[17,100],[22,103],[22,93],
+   [21,87],[13,80],[8,77],[22,66],[25,57],[24,58],
+   [23,60],[30,50],[40,50],[44,40],[43,38],[41,34],[39,27],[37,28],
+   [37,22],[41,20],[42,38],[45,38],[56,38],[56,52],[60,59],[67,65],
+   [73,55]],
+  /* Sri Lanka */
+  [[10,80],[9,80],[6,81],[6,80],[8,77],[10,80]],
+  /* Japan (Honshu + Shikoku + Kyushu combined) */
+  [[41,141],[40,140],[36,136],[34,131],[33,130],[34,132],[36,135],
+   [37,137],[40,140],[42,140],[41,141]],
+  /* Hokkaido */
+  [[44,141],[44,143],[43,145],[43,141],[44,141]],
+  /* Australia */
+  [[-14,127],[-14,136],[-10,136],[-13,142],[-16,145],[-21,149],
+   [-26,153],[-32,152],[-34,151],[-38,146],[-38,140],[-38,141],
+   [-32,133],[-35,137],[-34,135],[-31,129],[-23,113],[-21,114],
+   [-17,122],[-14,127]],
+  /* New Zealand — South Island */
+  [[-46,167],[-46,168],[-44,171],[-43,173],[-42,171],[-43,170],[-44,168],[-46,167]],
+  /* New Zealand — North Island */
+  [[-38,174],[-37,175],[-37,176],[-39,176],[-41,175],[-40,172],[-38,174]],
+];
+
 /* ═══════════════════════════════════════════════════════════
    GLOBE 3D — interactive world map in the About section
    Location data lives in  data/locations.js  (edit that file).
@@ -589,16 +652,20 @@ class Globe3D {
       }, false);
     }
 
-    /* Ambient: enough fill to see the night side without washing out the day side */
-    this.scene.add(new THREE.AmbientLight(0x223355, 0.9));
-    /* Sun: warm directional — high intensity for vivid textures */
-    const sun = new THREE.DirectionalLight(0xfff5d6, 1.35);
-    sun.position.set(5, 3, 4);
-    this.scene.add(sun);
-    /* Cyan rim on the opposite side — keeps the look on-brand */
-    const rim = new THREE.PointLight(0x00d4ff, 0.45, 14);
+    /* Ambient: cool fill — keeps the dark ocean dark */
+    this.scene.add(new THREE.AmbientLight(0x0d1f3a, 1.2));
+    /* Cool-blue key light — replaces the warm sun (no longer needed without photo texture) */
+    const key = new THREE.DirectionalLight(0x2255bb, 0.55);
+    key.position.set(4, 2, 3);
+    this.scene.add(key);
+    /* Cyan rim on the opposite side — stronger to complement the neon style */
+    const rim = new THREE.PointLight(0x00d4ff, 0.9, 14);
     rim.position.set(-4, 1, -2);
     this.scene.add(rim);
+    /* Purple fill from below — adds depth */
+    const fill = new THREE.PointLight(0x6c44ff, 0.45, 12);
+    fill.position.set(2, -2, -3);
+    this.scene.add(fill);
 
     this.pivot = new THREE.Group();
     this.pivot.rotation.x = this.rotX;
@@ -606,45 +673,85 @@ class Globe3D {
     this.scene.add(this.pivot);
   }
 
-  _buildGlobe() {
-    /* ── Earth textures (hosted by threejs.org) ───────────────────────────────
-       Loaded asynchronously; a fallback dark-ocean material is shown
-       immediately and swapped once the texture arrives. */
-    const CDN = 'https://threejs.org/examples/textures/planets/';
-    const ldr = new THREE.TextureLoader();
-    const mat = new THREE.MeshPhongMaterial({
-      color: 0x0a1628,   /* shown before texture loads */
-      emissive: 0x050c1a,
-      specular: new THREE.Color(0x1b2230),
-      shininess: 8,
-    });
-    const globe = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat);
-    this.pivot.add(globe);
+  _buildGlobeTexture() {
+    /* ── Neon-continent canvas texture ────────────────────────────────────────
+       Draws simplified continent polygons (neon cyan outlines on dark ocean)
+       into a 2048×1024 equirectangular canvas, then returns a CanvasTexture.
+       No external CDN dependency — generated entirely in JS at init time.    */
+    const W = 2048, H = 1024;
+    const cvs = document.createElement('canvas');
+    cvs.width = W; cvs.height = H;
+    const ctx = cvs.getContext('2d');
 
-    /* Day texture (satellite imagery with clouds) */
-    ldr.load(CDN + 'earth_atmos_2048.jpg',
-      tex => { tex.anisotropy = this.renderer.capabilities.getMaxAnisotropy(); mat.map = tex; mat.color.set(0xffffff); mat.needsUpdate = true; },
-      undefined,
-      () => console.warn('[Globe] earth day texture failed to load — using fallback colour'),
-    );
-    /* Keep highlights subtle: avoid strong specular hotspots on modern displays */
+    /* Deep-ocean background */
+    ctx.fillStyle = '#020b18';
+    ctx.fillRect(0, 0, W, H);
+
+    /* lat/lon → canvas pixel (equirectangular) */
+    const px = (lat, lon) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
+
+    /* Antarctica: filled band at bottom of map */
+    const antY = (90 - (-68)) / 180 * H;
+    ctx.fillStyle = '#081624';
+    ctx.fillRect(0, antY, W, H - antY);
+
+    /* Draw one continent polygon with a multi-pass neon glow stroke */
+    const drawLand = pts => {
+      ctx.beginPath();
+      const [x0, y0] = px(pts[0][0], pts[0][1]);
+      ctx.moveTo(x0, y0);
+      for (let i = 1; i < pts.length; i++) {
+        const [x, y] = px(pts[i][0], pts[i][1]);
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#081624';
+      ctx.fill();
+      /* outer glow halo */ ctx.lineWidth = 4;   ctx.strokeStyle = 'rgba(0,185,235,0.18)'; ctx.stroke();
+      /* mid glow        */ ctx.lineWidth = 2;   ctx.strokeStyle = 'rgba(0,210,255,0.50)'; ctx.stroke();
+      /* bright core     */ ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)'; ctx.stroke();
+    };
+
+    GLOBE_CONTINENTS.forEach(drawLand);
+
+    /* Antarctica border line */
+    ctx.lineWidth = 2;   ctx.strokeStyle = 'rgba(0,210,255,0.50)';
+    ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
+    ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)';
+    ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
+
+    return new THREE.CanvasTexture(cvs);
+  }
+
+  _buildGlobe() {
+    /* ── Procedural neon-continent texture ────────────────────────────────────
+       Continent outlines drawn as neon cyan on dark ocean — no CDN needed.  */
+    const tex = this._buildGlobeTexture();
+    const mat = new THREE.MeshPhongMaterial({
+      map: tex,
+      color: 0xffffff,
+      emissive: 0x010810,
+      specular: new THREE.Color(0x001018),
+      shininess: 3,
+    });
+    this.pivot.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat));
   }
 
   _buildAtmosphere() {
-    /* Inner surface glow */
+    /* Inner surface glow — neon cyan tint */
     this.pivot.add(new THREE.Mesh(
       new THREE.SphereGeometry(1.007, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x1a3a7a, transparent: true, opacity: 0.10, depthWrite: false }),
+      new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.07, depthWrite: false }),
     ));
-    /* Atmosphere shell */
+    /* Atmosphere shell — deep electric blue */
     this.pivot.add(new THREE.Mesh(
       new THREE.SphereGeometry(1.14, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x3355bb, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }),
+      new THREE.MeshBasicMaterial({ color: 0x1166ee, transparent: true, opacity: 0.13, side: THREE.BackSide, depthWrite: false }),
     ));
-    /* Wide outer halo — fixed in world space */
+    /* Wide outer halo — violet, additive */
     this.scene.add(new THREE.Mesh(
       new THREE.SphereGeometry(1.24, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.028, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+      new THREE.MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.055, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending }),
     ));
   }
 
@@ -668,20 +775,23 @@ class Globe3D {
   }
 
   _buildGrid() {
-    /* Very subtle grid — texture already provides geographic context */
-    const mat = (op) => new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: op });
+    /* Neon cyan lat-lon grid with additive blending for glow */
+    const mat = (op, bright) => new THREE.LineBasicMaterial({
+      color: bright ? 0x00ffff : 0x00c8f0,
+      transparent: true, opacity: op,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
     const R = 1.002;
     for (let lat = -80; lat <= 80; lat += 20) {
       const phi = (90 - lat) * Math.PI / 180;
       const r = R * Math.sin(phi), y = R * Math.cos(phi), pts = [];
       for (let i = 0; i <= 64; i++) { const t = (i / 64) * Math.PI * 2; pts.push(new THREE.Vector3(r * Math.cos(t), y, r * Math.sin(t))); }
-      /* Equator and tropics slightly brighter */
-      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(Math.abs(lat) === 0 ? 0.18 : 0.07)));
+      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(lat === 0 ? 0.55 : 0.20, lat === 0)));
     }
     for (let lon = 0; lon < 360; lon += 20) {
       const theta = lon * Math.PI / 180, pts = [];
       for (let i = 0; i <= 64; i++) { const p = (i / 64) * Math.PI; pts.push(new THREE.Vector3(R * Math.sin(p) * Math.cos(theta), R * Math.cos(p), R * Math.sin(p) * Math.sin(theta))); }
-      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.07)));
+      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.20, false)));
     }
   }
 
