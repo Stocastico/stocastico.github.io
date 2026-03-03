@@ -469,10 +469,9 @@ async function geocodeLocations(locs) {
   }
 }
 
-/* ── Simplified continent polygon data ───────────────────────────────────────
-   Each element: [[lat, lon], …] — closed polygon in geographic coordinates.
-   Accuracy ≈ 150 km; fine for a decorative stylised globe.
-──────────────────────────────────────────────────────────────────────────────*/
+/* ── Fallback continent polygon data (used only when data/world-110m.json
+   cannot be fetched, e.g. local file:// dev without a server).
+   Each element: [[lat, lon], …] — closed polygon in geographic coordinates. */
 const GLOBE_CONTINENTS = [
   /* North America */
   [[71,-164],[66,-168],[61,-150],[57,-136],[49,-124],[42,-124],[37,-122],
@@ -545,8 +544,8 @@ class Globe3D {
      work (small, static) even though they share a colour. */
   static PIN_COLORS = { lived: 0x00d4ff, work: 0x00d4ff, travel: 0xff8c42 };
 
-  static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', region: '◉ Region', trip: '➜ Trip stop' };
-  static TT_COLOR = { lived: '#00d4ff', work: '#00d4ff', travel: '#ff8c42', region: '#ff8c42', trip: '#e8edf8' };
+  static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', trip: '➜ Trip stop' };
+  static TT_COLOR = { lived: '#00d4ff', work: '#00d4ff', travel: '#ff8c42', trip: '#e8edf8' };
 
   constructor(canvasEl) {
     if (!canvasEl || typeof THREE === 'undefined') return;
@@ -600,7 +599,6 @@ class Globe3D {
     this._buildAtmosphere();
     this._buildStars();
     this._buildGrid();
-    this._buildRegions();   /* discs first so pins sit on top */
     this._buildMarkers();
     this._buildTrips();
     this._bindEvents();
@@ -673,13 +671,43 @@ class Globe3D {
     this.scene.add(this.pivot);
   }
 
-  _buildGlobeTexture() {
-    /* ── Neon-continent canvas texture ────────────────────────────────────────
-       Draws simplified continent polygons (neon cyan outlines on dark ocean)
-       into a 2048×1024 equirectangular canvas, then returns a CanvasTexture.
-       No external CDN dependency — generated entirely in JS at init time.    */
+  /* ── TopoJSON decoder ──────────────────────────────────────────────────────
+     Converts a Natural-Earth land TopoJSON (data/world-110m.json) into an
+     array of rings, each ring being an array of [lon, lat] pairs.            */
+  _decodeTopoJSON(topo) {
+    const { scale, translate } = topo.transform;
+
+    /* Decode one arc (delta-encoded integers → geographic [lon, lat]) */
+    const decodeArc = (idx) => {
+      const rev = idx < 0;
+      const raw = topo.arcs[rev ? ~idx : idx];
+      let cx = 0, cy = 0;
+      const pts = raw.map(([dx, dy]) => {
+        cx += dx; cy += dy;
+        return [cx * scale[0] + translate[0], cy * scale[1] + translate[1]];
+      });
+      return rev ? pts.reverse() : pts;
+    };
+
+    const rings = [];
+    for (const geom of topo.objects.land.geometries) {
+      const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
+      for (const poly of polys) {
+        /* Join all arc segments that form the outer ring (index 0); skip holes */
+        const ring = [];
+        for (const arcIdx of poly[0]) ring.push(...decodeArc(arcIdx));
+        rings.push(ring);
+      }
+    }
+    return rings;
+  }
+
+  /* rings: array of [[lon, lat], …] polygons (GeoJSON coordinate order).
+     cvs and _THREE are captured synchronously before any await so that the
+     async completion in _buildGlobe() never reads from globals after they
+     may have been restored (e.g. in test teardown).                         */
+  _buildGlobeTexture(rings, cvs, _THREE) {
     const W = 2048, H = 1024;
-    const cvs = document.createElement('canvas');
     cvs.width = W; cvs.height = H;
     const ctx = cvs.getContext('2d');
 
@@ -687,21 +715,21 @@ class Globe3D {
     ctx.fillStyle = '#020b18';
     ctx.fillRect(0, 0, W, H);
 
-    /* lat/lon → canvas pixel (equirectangular) */
-    const px = (lat, lon) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
+    /* lon, lat → canvas pixel (equirectangular) */
+    const px = (lon, lat) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
 
     /* Antarctica: filled band at bottom of map */
     const antY = (90 - (-68)) / 180 * H;
     ctx.fillStyle = '#081624';
     ctx.fillRect(0, antY, W, H - antY);
 
-    /* Draw one continent polygon with a multi-pass neon glow stroke */
-    const drawLand = pts => {
+    /* Draw one ring with a multi-pass neon glow stroke */
+    const drawRing = ring => {
       ctx.beginPath();
-      const [x0, y0] = px(pts[0][0], pts[0][1]);
+      const [x0, y0] = px(ring[0][0], ring[0][1]);
       ctx.moveTo(x0, y0);
-      for (let i = 1; i < pts.length; i++) {
-        const [x, y] = px(pts[i][0], pts[i][1]);
+      for (let i = 1; i < ring.length; i++) {
+        const [x, y] = px(ring[i][0], ring[i][1]);
         ctx.lineTo(x, y);
       }
       ctx.closePath();
@@ -712,7 +740,7 @@ class Globe3D {
       /* bright core     */ ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)'; ctx.stroke();
     };
 
-    GLOBE_CONTINENTS.forEach(drawLand);
+    rings.forEach(drawRing);
 
     /* Antarctica border line */
     ctx.lineWidth = 2;   ctx.strokeStyle = 'rgba(0,210,255,0.50)';
@@ -720,21 +748,44 @@ class Globe3D {
     ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)';
     ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
 
-    return new THREE.CanvasTexture(cvs);
+    return new _THREE.CanvasTexture(cvs);
   }
 
-  _buildGlobe() {
+  async _buildGlobe() {
     /* ── Procedural neon-continent texture ────────────────────────────────────
-       Continent outlines drawn as neon cyan on dark ocean — no CDN needed.  */
-    const tex = this._buildGlobeTexture();
-    const mat = new THREE.MeshPhongMaterial({
-      map: tex,
+       Fetches data/world-110m.json (Natural Earth 110m TopoJSON, 54 KB),
+       decodes it inline, draws 125 precise land rings on a neon-cyan canvas
+       texture, and maps it onto the sphere.  Falls back to the simplified
+       GLOBE_CONTINENTS polygons if the fetch fails (e.g. file:// dev).
+
+       THREE and cvs are captured synchronously before any await so that the
+       async continuation never reads globals after test teardown restores them. */
+    const _THREE = THREE; /* eslint-disable-line no-undef */
+    const cvs = document.createElement('canvas');
+
+    const mat = new _THREE.MeshPhongMaterial({
       color: 0xffffff,
       emissive: 0x010810,
-      specular: new THREE.Color(0x001018),
+      specular: new _THREE.Color(0x001018),
       shininess: 3,
     });
-    this.pivot.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat));
+    this.pivot.add(new _THREE.Mesh(new _THREE.SphereGeometry(1, 64, 64), mat));
+
+    try {
+      const resp = await fetch('./data/world-110m.json');
+      if (!resp.ok) throw new Error(resp.status);
+      const topo  = await resp.json();
+      const rings = this._decodeTopoJSON(topo);
+      const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
+      mat.map = tex;
+      mat.needsUpdate = true;
+    } catch (_) {
+      /* Fallback: hand-drawn polygons (stored as [lat,lon] — swap to [lon,lat]) */
+      const rings = GLOBE_CONTINENTS.map(pts => pts.map(([lat, lon]) => [lon, lat]));
+      const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
+      mat.map = tex;
+      mat.needsUpdate = true;
+    }
   }
 
   _buildAtmosphere() {
@@ -806,44 +857,6 @@ class Globe3D {
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
   }
 
-  /* ── Region discs (islands, countries) ─────────────────── */
-  _buildRegions() {
-    (LOCATIONS.regions || []).filter(reg => !reg._skip).forEach(reg => {
-      const color = new THREE.Color(reg.color || '#ff8c42');
-      const pos = this._ll(reg.lat, reg.lon, 1.003);
-      /* radius: degrees of arc → 3D chord length on unit sphere */
-      const R = Math.sin((reg.radius * Math.PI) / 180);
-
-      /* Filled translucent disc */
-      const disc = new THREE.Mesh(
-        new THREE.CircleGeometry(R, 48),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
-      );
-      disc.position.copy(pos);
-      this._faceOut(disc, pos);
-      this.pivot.add(disc);
-
-      /* Crisp outline ring */
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(R * 0.88, R, 48),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
-      );
-      ring.position.copy(pos);
-      this._faceOut(ring, pos);
-      this.pivot.add(ring);
-
-      /* Tiny centre dot — holds tooltip userData */
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.008, 8, 8),
-        new THREE.MeshBasicMaterial({ color }),
-      );
-      dot.position.copy(pos);
-      dot.userData = { name: reg.name, info: reg.info || 'Region', type: 'region' };
-      this.pivot.add(dot);
-      this.markerMeshes.push(dot);
-    });
-  }
-
   /* ── Standard pins (lived / work / travel) ──────────────── */
   _buildMarkers() {
     (LOCATIONS.pins || []).filter(loc => !loc._skip).forEach(loc => {
@@ -856,12 +869,12 @@ class Globe3D {
       /* Spike — thin line from globe surface up to the dot */
       this.pivot.add(new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([surf, pos]),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.85 : 0.5 }),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.80 : 0.45 }),
       ));
 
       /* Dot — lived pins are larger and more prominent */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.016 : 0.011, 12, 12),
+        new THREE.SphereGeometry(isHome ? 0.012 : 0.008, 12, 12),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
@@ -870,7 +883,7 @@ class Globe3D {
       this.markerMeshes.push(dot);
 
       /* Static halo — thicker for lived, thinner for work/travel */
-      const [rIn, rOut, op] = isHome ? [0.022, 0.028, 0.6] : [0.015, 0.019, 0.35];
+      const [rIn, rOut, op] = isHome ? [0.016, 0.021, 0.55] : [0.011, 0.014, 0.30];
       const halo = new THREE.Mesh(
         new THREE.RingGeometry(rIn, rOut, 40),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }),
@@ -883,7 +896,7 @@ class Globe3D {
       if (isHome) {
         [0, Math.PI].forEach(phaseOffset => {
           const pulse = new THREE.Mesh(
-            new THREE.RingGeometry(0.014, 0.020, 40),
+            new THREE.RingGeometry(0.010, 0.015, 40),
             new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
           );
           pulse.position.copy(pos);
@@ -911,12 +924,12 @@ class Globe3D {
         const s = this._ll(cities[i].lat, cities[i].lon, 1.006);
         const e = this._ll(cities[i + 1].lat, cities[i + 1].lon, 1.006);
 
-        /* Adaptive arc height — scales with chord length to avoid
-           catastrophically tall arcs for nearby cities.
+        /* Adaptive arc height — low lift for short hops (typical trips),
+           scales up only for genuinely long-haul segments.
            Guard against near-antipodal pairs (sum ≈ 0) by falling back
            to a perpendicular control point. */
         const chord = s.distanceTo(e);
-        const lift = 1.0 + Math.min(0.48, 0.06 + chord * 0.32);
+        const lift = 1.0 + Math.min(0.28, 0.02 + chord * 0.18);
         const sum = s.clone().add(e);
         if (sum.length() < 0.001) sum.set(1, 0, 0).cross(s).normalize();
         else sum.normalize();
@@ -932,12 +945,12 @@ class Globe3D {
         /* Soft outer glow */
         this.pivot.add(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }),
         ));
         /* Bright core */
         this.pivot.add(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending, depthWrite: false }),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.38, blending: THREE.AdditiveBlending, depthWrite: false }),
         ));
       }
 
@@ -949,8 +962,8 @@ class Globe3D {
         seen.add(key);
         const cpos = this._ll(city.lat, city.lon, 1.010);
         const cdot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.010, 8, 8),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 }),
+          new THREE.SphereGeometry(0.006, 8, 8),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 }),
         );
         cdot.position.copy(cpos);
         cdot.userData = { name: city.name, info: trip.name, type: 'trip' };
@@ -960,7 +973,7 @@ class Globe3D {
 
       /* Traveller dot — explicit opacity:0 to avoid a 1-frame opaque flash */
       const traveller = new THREE.Mesh(
-        new THREE.SphereGeometry(0.013, 12, 12),
+        new THREE.SphereGeometry(0.009, 12, 12),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
       );
       this.pivot.add(traveller);
@@ -971,7 +984,7 @@ class Globe3D {
       for (let ti = 0; ti < TRAIL; ti++) {
         const frac = 1 - ti / TRAIL;
         const td = new THREE.Mesh(
-          new THREE.SphereGeometry(Math.max(0.003, 0.011 * frac * 0.8), 8, 8),
+          new THREE.SphereGeometry(Math.max(0.002, 0.008 * frac * 0.8), 8, 8),
           new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
         );
         this.pivot.add(td);
@@ -1133,7 +1146,7 @@ class Globe3D {
 
 /* CPU fallback when WebGL is unavailable: 2D orthographic globe */
 class GlobeFallback2D {
-  static PIN_COLORS = { lived: '#00d4ff', work: '#86e8ff', travel: '#ff8c42', region: '#ffb280' };
+  static PIN_COLORS = { lived: '#00d4ff', work: '#86e8ff', travel: '#ff8c42' };
 
   constructor(canvasEl) {
     this.canvas = canvasEl;
@@ -1167,10 +1180,6 @@ class GlobeFallback2D {
 
   _collectPoints() {
     this._points.length = 0;
-    (LOCATIONS.regions || []).forEach((r) => {
-      if (r._skip) return;
-      this._points.push({ lat: r.lat, lon: r.lon, type: 'region' });
-    });
     (LOCATIONS.pins || []).forEach((p) => {
       if (p._skip) return;
       this._points.push({ lat: p.lat, lon: p.lon, type: p.type });
@@ -1266,7 +1275,7 @@ class GlobeFallback2D {
       const p = this._project(pt.lat, pt.lon);
       if (p.z <= 0.02) return;
       const col = GlobeFallback2D.PIN_COLORS[pt.type] || '#e8edf8';
-      const rr = pt.type === 'lived' ? 4.6 : pt.type === 'region' ? 3.8 : 3.2;
+      const rr = pt.type === 'lived' ? 3.8 : 2.6;
       ctx.fillStyle = col;
       ctx.globalAlpha = Math.max(0.22, p.z);
       ctx.beginPath();
