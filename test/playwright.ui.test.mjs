@@ -179,9 +179,28 @@ console.log('── Desktop (1280×800) ─────────────�
     assert(text.includes('202'), `Footer text: "${text}"`);
   });
 
-  await test('Theme toggle button exists', async () => {
+  await test('Theme toggle button is removed', async () => {
     const btn = await page.$('.theme-btn');
-    assert(btn !== null, '.theme-btn not found');
+    assert(btn === null, '.theme-btn should not exist');
+  });
+
+  await test('CV timeline shows year markers from current year to 2000', async () => {
+    await page.evaluate(() => document.getElementById('cv')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    const currentYear = new Date().getFullYear();
+    const yearNow = await page.$(`.tl-year-marker[data-year="${currentYear}"]`);
+    const year2000 = await page.$('.tl-year-marker[data-year="2000"]');
+    assert(yearNow !== null, `Missing year marker for ${currentYear}`);
+    assert(year2000 !== null, 'Missing year marker for 2000');
+  });
+
+  await test('CV timeline keeps concurrent career and education in two columns', async () => {
+    const row = await page.$('.tl-year-row:has(.tl-year-marker[data-year="2014"])');
+    assert(row !== null, 'Missing 2014 timeline row');
+    const careerEntries = await row.$$('.tl-year-col--career .tl-entry--career');
+    const eduEntries = await row.$$('.tl-year-col--education .tl-entry--education');
+    assert(careerEntries.length >= 1, 'Missing career entry in 2014 row');
+    assert(eduEntries.length >= 1, 'Missing education entry in 2014 row');
   });
 
   await test('No JS errors at page load', async () => {

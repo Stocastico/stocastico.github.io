@@ -1351,14 +1351,7 @@ function animateCounter(el, target) {
    NAVBAR SCROLL BEHAVIOUR
    ═══════════════════════════════════════════════════════════ */
 function initTheme() {
-  const btn = document.getElementById('theme-toggle');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-  });
+  /* Theme switching intentionally disabled: dark mode is fixed. */
 }
 
 function initNavbar() {
@@ -1708,13 +1701,27 @@ function initScroll3D() {
    ═══════════════════════════════════════════════════════════ */
 function renderCV() {
   if (typeof document === 'undefined') return;
-  const careerList = document.getElementById('cv-career-list');
-  const eduList    = document.getElementById('cv-edu-list');
-  if (!careerList && !eduList) return;
+  const timelineList = document.getElementById('cv-timeline-list');
+  if (!timelineList) return;
   if (typeof CV_CAREER    === 'undefined') return;
   if (typeof CV_EDUCATION === 'undefined') return;
 
-  function entryHtml(entry, side) {
+  function parseYearSpan(raw) {
+    const currentYear = new Date().getFullYear();
+    const txt = String(raw || '').toLowerCase();
+    const years = [...txt.matchAll(/\b(19|20)\d{2}\b/g)].map(m => parseInt(m[0], 10));
+    if (!years.length) return { start: currentYear, end: currentYear };
+    if (years.length === 1) {
+      if (txt.includes('present')) return { start: years[0], end: currentYear };
+      return { start: years[0], end: years[0] };
+    }
+    const start = Math.min(years[0], years[1]);
+    const end = txt.includes('present') ? currentYear : Math.max(years[0], years[1]);
+    return { start, end };
+  }
+
+  function entryHtml(entry, type) {
+    const side = type === 'career' ? 'career' : 'education';
     const isCareer = side === 'career';
     const titleKey = isCareer ? 'role'    : 'degree';
     const subKey   = isCareer ? 'company' : 'institution';
@@ -1747,12 +1754,51 @@ function renderCV() {
       </div>`;
   }
 
-  if (careerList) {
-    careerList.innerHTML = (CV_CAREER || []).map(e => entryHtml(e, 'career')).join('');
-  }
-  if (eduList) {
-    eduList.innerHTML = (CV_EDUCATION || []).map(e => entryHtml(e, 'education')).join('');
-  }
+  const currentYear = new Date().getFullYear();
+  const startYear = 2000;
+  const byYear = new Map();
+  for (let year = currentYear; year >= startYear; year -= 1) byYear.set(year, []);
+
+  const allEntries = [
+    ...(CV_CAREER || []).map(entry => ({ type: 'career', entry })),
+    ...(CV_EDUCATION || []).map(entry => ({ type: 'education', entry })),
+  ];
+
+  allEntries.forEach(({ type, entry }, idx) => {
+    const span = parseYearSpan(entry.year);
+    const from = Math.max(startYear, span.start);
+    const to = Math.min(currentYear, span.end);
+    for (let year = from; year <= to; year += 1) {
+      if (!byYear.has(year)) continue;
+      byYear.get(year).push({ type, entry, idx });
+    }
+  });
+
+  timelineList.innerHTML = Array.from(byYear.entries())
+    .sort((a, b) => b[0] - a[0])
+    .map(([year, items]) => {
+      const careerHtml = items
+        .filter(item => item.type === 'career')
+        .sort((a, b) => a.idx - b.idx)
+        .map(item => entryHtml(item.entry, item.type))
+        .join('');
+      const educationHtml = items
+        .filter(item => item.type === 'education')
+        .sort((a, b) => a.idx - b.idx)
+        .map(item => entryHtml(item.entry, item.type))
+        .join('');
+      const isActive = !!(careerHtml || educationHtml);
+      return `
+        <div class="tl-year-row${isActive ? ' tl-year-row--active' : ''}">
+          <span class="tl-year-marker" data-year="${year}">${year}</span>
+          <div class="tl-year-events">
+            <div class="tl-year-col tl-year-col--career">${careerHtml}</div>
+            <div class="tl-year-col tl-year-col--education">${educationHtml}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2090,16 +2136,13 @@ class HeroNameShader {
 
         if (max(max(aR, aG), aB) < 0.004) discard;
 
-        /* iridescent colour sweep — cycles with time + viewing angle */
-        float ang   = atan((uv.y - 0.45), (uv.x - 0.5) * asp);
-        float sweep = ang + uTime * 0.30 + md * 0.4;
-        vec3 iri = vec3(
-          0.5 + 0.5 * cos(sweep),
-          0.5 + 0.5 * cos(sweep + 2.094),
-          0.5 + 0.5 * cos(sweep + 4.189)
-        );
-        /* bias toward bright blue-white — glass / crystal look */
-        iri = mix(vec3(0.72, 0.88, 1.00), iri * 1.45, 0.55);
+        /* stable dark-theme palette: violet -> cyan, no rainbow cycling */
+        float sweep = uv.x * 1.2 + uv.y * 0.55 + uTime * 0.04 + md * 0.25;
+        vec3 baseA = vec3(0.42, 0.39, 1.00);
+        vec3 baseB = vec3(0.00, 0.83, 1.00);
+        vec3 baseC = vec3(0.78, 0.90, 1.00);
+        vec3 iri = mix(baseA, baseB, clamp(sweep, 0.0, 1.0));
+        iri = mix(iri, baseC, 0.18 + 0.10 * sin(uTime * 0.25));
 
         /* combine per-channel alpha with iridescent colour */
         vec3  col   = vec3(aR, aG, aB) * iri;
