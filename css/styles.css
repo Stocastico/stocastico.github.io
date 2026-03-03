@@ -454,20 +454,6 @@ h3 {
   }
 }
 
-.hero-eyebrow {
-  display: inline-block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  padding: 0.3em 1.1em;
-  margin-bottom: 1.75rem;
-  background: rgba(108, 99, 255, 0.08);
-}
-
 /* ── Hero name: wrapper + WebGL canvas overlay ───────────── */
 .hero-name-wrap {
   position: relative;
@@ -484,20 +470,13 @@ h3 {
   letter-spacing: -0.02em;
   margin-bottom: 0;
   /* spacing now on .hero-name-wrap */
-  background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+  background: linear-gradient(135deg, #c8e8ff 30%, #00d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-align: center;
   /* ensure text is still selectable / readable before shader loads */
   user-select: text;
-}
-
-.hero-name em {
-  font-style: italic;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* JS adds this class once the WebGL canvas is live */
@@ -1236,11 +1215,8 @@ h3 {
    creating a "curved conveyor" depth effect on scroll.
 ──────────────────────────────────────────────────────────── */
 
-/* Stage — provides the perspective context for child 3D transforms */
 .timeline-stage {
-  perspective:        1800px;
-  perspective-origin: 50% 35%;
-  overflow:           visible;
+  overflow: visible;
 }
 
 /* Three-column grid: career | spine | education */
@@ -1331,9 +1307,7 @@ h3 {
 /* ── Individual timeline entry ──────────────────────────── */
 
 .tl-entry {
-  will-change:      transform;
-  transform-origin: center center;
-  position:         relative;
+  position: relative;
   /* opacity set to 0 by initTimelineScroll3D; fades in on intersection */
 }
 
@@ -1362,42 +1336,63 @@ h3 {
   box-shadow:   0 0 8px var(--accent2-glow);
 }
 
-/* ── Card ──────────────────────────────────────────────── */
+/* ── Card — flip container ─────────────────────────────── */
 
+/* Grid stacking: card height = max(front height, back height) automatically.
+   Each card has its own perspective so the flip is isolated — no shared
+   3D context between the two columns (that was the cause of the flicker). */
 .tl-card {
-  background:    var(--bg-card);
-  border:        1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding:       1.4rem 1.5rem;
-  position:      relative;
-  overflow:      hidden;
-  transition:    border-color var(--t-med),
-                 background   var(--t-med),
-                 box-shadow   var(--t-med);
+  display:     grid;
+  perspective: 900px;
 }
 
-/* Colored side accent — career: right edge (faces spine), edu: left edge */
-.tl-entry--career .tl-card { border-right: 3px solid var(--accent);  }
-.tl-entry--edu    .tl-card { border-left:  3px solid var(--accent2); }
+.tl-card--flippable { cursor: pointer; }
 
-.tl-card:hover {
-  border-color: var(--border-hov);
+/* Flip on hover / keyboard focus */
+.tl-card--flippable:hover    .tl-card-front,
+.tl-card--flippable:focus-within .tl-card-front { transform: rotateY(-180deg); }
+
+.tl-card--flippable:hover    .tl-card-back,
+.tl-card--flippable:focus-within .tl-card-back  { transform: rotateY(0deg); }
+
+/* Both faces share the same grid cell */
+.tl-card-front,
+.tl-card-back {
+  grid-area:   1 / 1;
+  padding:     1.4rem 1.5rem;
+  background:  var(--bg-card);
+  border:      1px solid var(--border);
+  border-radius: var(--r-lg);
+  backface-visibility:         hidden;
+  -webkit-backface-visibility: hidden;
+  transition:  transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tl-card-back {
+  transform:    rotateY(180deg);
   background:   var(--bg-card-hov);
+  border-color: var(--border-hov);
   box-shadow:   0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Top highlight shimmer on hover */
-.tl-card::before {
-  content:    '';
-  position:   absolute;
-  inset:      0;
-  background: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 60%);
-  opacity:    0;
-  transition: opacity var(--t-med);
-  pointer-events: none;
-}
+/* Colored spine-side accent on the front face only */
+.tl-entry--career .tl-card-front { border-right: 3px solid var(--accent);  }
+.tl-entry--edu    .tl-card-front { border-left:  3px solid var(--accent2); }
 
-.tl-card:hover::before { opacity: 1; }
+/* Flip hint */
+.tl-flip-hint {
+  display:        block;
+  margin-top:     0.65rem;
+  font-size:      0.63rem;
+  font-weight:    600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity:        0.38;
+  transition:     opacity var(--t-med);
+}
+.tl-card--flippable:hover .tl-flip-hint { opacity: 0.65; }
+.tl-entry--career .tl-flip-hint { color: var(--accent);  }
+.tl-entry--edu    .tl-flip-hint { color: var(--accent2); }
 
 /* ── Card typography ──────────────────────────────────── */
 

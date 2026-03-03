@@ -649,10 +649,19 @@ test('Globe3D constructs with mocked THREE and location data', () => {
     style: {},
     querySelector() { return { textContent: '', style: {} }; },
   };
+  const ctx2d = {
+    fillStyle: '', strokeStyle: '', lineWidth: 0,
+    fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+    closePath() {}, fill() {}, stroke() {},
+  };
   global.document = {
     hidden: false,
     addEventListener() {},
     getElementById(id) { return id === 'globe-tooltip' ? tooltip : null; },
+    createElement(tag) {
+      if (tag === 'canvas') return { width: 0, height: 0, getContext() { return ctx2d; } };
+      return {};
+    },
   };
   global.window = { addEventListener() {} };
   global.performance = { now: () => 1000 };
