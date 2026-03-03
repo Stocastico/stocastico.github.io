@@ -1777,14 +1777,24 @@ function renderCV() {
   timelineList.innerHTML = Array.from(byYear.entries())
     .sort((a, b) => b[0] - a[0])
     .map(([year, items]) => {
-      const rendered = items
-        .sort((a, b) => (a.type === b.type ? a.idx - b.idx : (a.type === 'career' ? -1 : 1)))
+      const careerHtml = items
+        .filter(item => item.type === 'career')
+        .sort((a, b) => a.idx - b.idx)
         .map(item => entryHtml(item.entry, item.type))
         .join('');
+      const educationHtml = items
+        .filter(item => item.type === 'education')
+        .sort((a, b) => a.idx - b.idx)
+        .map(item => entryHtml(item.entry, item.type))
+        .join('');
+      const isActive = !!(careerHtml || educationHtml);
       return `
-        <div class="tl-year-row${rendered ? ' tl-year-row--active' : ''}">
+        <div class="tl-year-row${isActive ? ' tl-year-row--active' : ''}">
           <span class="tl-year-marker" data-year="${year}">${year}</span>
-          <div class="tl-year-events">${rendered}</div>
+          <div class="tl-year-events">
+            <div class="tl-year-col tl-year-col--career">${careerHtml}</div>
+            <div class="tl-year-col tl-year-col--education">${educationHtml}</div>
+          </div>
         </div>
       `;
     })

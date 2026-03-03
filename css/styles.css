@@ -1217,14 +1217,20 @@ h3 {
 }
 
 .tl-year-events {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1rem;
   min-height: 1.85rem;
 }
 
 .tl-year-row:not(.tl-year-row--active) .tl-year-events {
   min-height: 0.6rem;
+}
+
+.tl-year-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .tl-entry {
@@ -1478,6 +1484,10 @@ h3 {
   .tl-year-row {
     grid-template-columns: 70px 1fr;
     gap: 0.8rem;
+  }
+
+  .tl-year-events {
+    gap: 0.65rem;
   }
 
   .tl-card-front,

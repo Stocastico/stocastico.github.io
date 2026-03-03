@@ -194,6 +194,15 @@ console.log('── Desktop (1280×800) ─────────────�
     assert(year2000 !== null, 'Missing year marker for 2000');
   });
 
+  await test('CV timeline keeps concurrent career and education in two columns', async () => {
+    const row = await page.$('.tl-year-row:has(.tl-year-marker[data-year="2014"])');
+    assert(row !== null, 'Missing 2014 timeline row');
+    const careerEntries = await row.$$('.tl-year-col--career .tl-entry--career');
+    const eduEntries = await row.$$('.tl-year-col--education .tl-entry--education');
+    assert(careerEntries.length >= 1, 'Missing career entry in 2014 row');
+    assert(eduEntries.length >= 1, 'Missing education entry in 2014 row');
+  });
+
   await test('No JS errors at page load', async () => {
     const relevant = consoleErrors.filter(e =>
       !e.includes('Failed to load resource')    /* CDN may not resolve in test env */

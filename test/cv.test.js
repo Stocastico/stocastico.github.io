@@ -175,6 +175,19 @@ test('renderCV: renders a long year timeline from current year to 2000', () => {
   restore();
 });
 
+test('renderCV: keeps career and education in separate columns for the same year', () => {
+  const { els, restore } = setupDom(['cv-timeline-list']);
+  global.CV_CAREER = [{ year: '2014 – 2017', role: 'Research Engineer', company: 'Lab', tags: [] }];
+  global.CV_EDUCATION = [{ year: '2014 – 2017', degree: 'PhD', institution: 'Uni' }];
+  renderCV();
+  const html = els['cv-timeline-list'].innerHTML;
+  assert.ok(html.includes('tl-year-col--career'), 'career column wrapper present');
+  assert.ok(html.includes('tl-year-col--education'), 'education column wrapper present');
+  assert.ok(html.includes('Research Engineer'), 'career entry present');
+  assert.ok(html.includes('PhD'), 'education entry present');
+  restore();
+});
+
 /* ── renderSkills ────────────────────────────────────────────────────────── */
 
 test('renderSkills: exported as a function', () => {
