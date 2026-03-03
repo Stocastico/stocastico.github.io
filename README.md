@@ -20,6 +20,8 @@ Personal website of **Stefano Masneri** — Senior AI Engineer specialising in M
 │   ├── main.js                Three.js animations, UI init, renderBlog/Publications
 │   └── locations.js           Globe geocoding helper (browser)
 ├── data/
+│   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
+│   ├── cv.js                  Generated CV data (do not edit manually)
 │   ├── blog.js                BLOG_POSTS array — edit to add/update posts
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
 │   ├── locations.yaml         Source of truth for globe pins/trips/regions
@@ -28,90 +30,148 @@ Personal website of **Stefano Masneri** — Senior AI Engineer specialising in M
 │   └── *.html                 Individual blog post pages
 ├── scripts/
 │   ├── new-post.js            Convert a Markdown file → blog post HTML + update blog.js
+│   ├── generate-cv.js         Build data/cv.js from data/cv.yaml
 │   ├── generate-locations.js  Generate data/locations.js from data/locations.yaml
 │   ├── generate-rss.js        Generate rss.xml from data/blog.js
 │   ├── generate-sitemap.js    Generate sitemap.xml from data/blog.js + static pages
-│   └── update-locations.sh    Convenience wrapper for generate-locations.js
+│   ├── update-locations.sh    Convenience wrapper for generate-locations.js
+│   └── lib/
+│       └── yaml.js            Minimal YAML parser (no external dependencies)
 ├── test/
 │   ├── main.node.test.js           Tests for js/main.js
+│   ├── cv.test.js                  Tests for CV rendering
+│   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
 │   ├── new-post.test.js            Tests for scripts/new-post.js
 │   ├── generate-rss.test.js        Tests for scripts/generate-rss.js
-│   └── generate-sitemap.test.js    Tests for scripts/generate-sitemap.js
+│   ├── generate-sitemap.test.js    Tests for scripts/generate-sitemap.js
+│   ├── globe.test.html             Interactive globe visualisation tests
+│   └── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
+├── .cache/
+│   └── locations-geocode-cache.json  Geocoding cache (auto-created, do not commit)
+├── rss.xml                    Generated RSS feed
+├── sitemap.xml                Generated sitemap
+├── robots.txt                 SEO robot rules
 └── package.json               npm scripts (no runtime dependencies)
 ```
+
+---
 
 ## Running tests
 
 ```bash
-npm test                  # run all tests
-npm run test:main         # js/main.js tests only
-npm run test:locations    # locations generator tests only
-npm run test:post         # new-post.js tests only
-npm run test:rss          # generate-rss.js tests only
-npm run test:sitemap      # generate-sitemap.js tests only
+npm test                       # run all tests
+npm run test:main              # js/main.js tests only
+npm run test:cv                # CV rendering tests only
+npm run test:generate-cv       # generate-cv.js tests only
+npm run test:locations         # locations generator tests only
+npm run test:post              # new-post.js tests only
+npm run test:rss               # generate-rss.js tests only
+npm run test:sitemap           # generate-sitemap.js tests only
 ```
 
-## Visual effects
+No external test dependencies are required — the Node.js built-in test runner (Node ≥ 18) handles everything.
 
-The site uses several layers of real-time rendering, all progressive-enhancement: each effect degrades gracefully on low-power devices, and respects `prefers-reduced-motion`.
+---
 
-### Neural network (hero background)
+## Scripts reference
 
-A Three.js particle system of ~120 glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor within a 220 px radius. Lines are drawn between every pair within 170 px using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the count drops to 84 nodes and line updates are frame-skipped. A Canvas2D fallback renders the same network without WebGL.
+All scripts live in `scripts/` and are wired up as `npm run` commands.
 
-### Interactive 3-D globe (About section)
+### `generate-cv` — rebuild CV data
 
-A Three.js `Phong`-shaded sphere textured with satellite imagery, lit by a warm directional sun and a cyan rim light for branding consistency. On top of the base sphere:
+Reads `data/cv.yaml` and writes `data/cv.js`.
 
-- **Atmospheric shells**: two semi-transparent overlapping spheres simulate atmospheric haze.
-- **Location pins**: cyan pulsing rings (home / work) and coral spikes (travel) rendered as `LineSegments` + `Mesh` geometries with staggered phase-offset animation.
-- **Trip paths**: quadratic Bézier curves with a dual-layer glow (soft outer + bright core via additive blending) and an animated comet traveller with a fading particle trail.
-- **Star field**: 1 400 randomly-distributed points in world space.
-- **Grid lines**: latitude / longitude lines with the equator and tropics brightened.
+```bash
+npm run generate-cv
+# or directly:
+node scripts/generate-cv.js
 
-Mouse dragging rotates the globe with inertia; auto-spin resumes when idle. Raycasting handles pin hover tooltips. A Canvas2D flat-map fallback is used when `prefers-reduced-motion` is set.
+# Options:
+node scripts/generate-cv.js --input my-cv.yaml --output data/cv.js
+node scripts/generate-cv.js --dry-run          # print output, do not write
+node scripts/generate-cv.js --validate         # check YAML structure, exit
+node scripts/generate-cv.js --help
+```
 
-### Hero name iridescence shader
+Run this every time you edit `data/cv.yaml`.
 
-The "Stefano / Masneri" heading is rendered by a raw GLSL fragment shader layered over the accessible `<h1>`. The shader:
+### `generate-locations` — rebuild globe data
 
-1. Rasterises the text into an alpha-only WebGL texture each frame using `Canvas2D`.
-2. Applies **fractional Brownian motion** (three octaves of value noise drifting at different speeds) to compute a per-pixel UV displacement.
-3. Samples the red, green, and blue channels at slightly different offsets to produce **chromatic aberration** (colour fringing).
-4. Applies **mouse-repulsion warping**: the distortion field bends away from the cursor using inverse-square falloff, so moving the mouse visibly deforms the text.
-5. Computes an **iridescent colour sweep** — a cosine-based RGB palette with phase offsets, blended with a bright blue-white bias to give a glass / crystal appearance.
+Reads `data/locations.yaml`, auto-geocodes missing coordinates via OpenStreetMap Nominatim, and writes `data/locations.js`.
 
-### 3-D card tilt with specular gloss
+```bash
+npm run generate-locations
+# or:
+./scripts/update-locations.sh
+# or directly:
+node scripts/generate-locations.js
 
-Cards (research, blog, contact, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices.
+# Options:
+node scripts/generate-locations.js --input data/locations.yaml --output data/locations.js
+node scripts/generate-locations.js --cache .cache/my-cache.json
+node scripts/generate-locations.js --no-geocode   # fail if coordinates missing
+node scripts/generate-locations.js --help
+```
 
-**Why it matters**: even a subtle ±12 ° tilt makes every card feel like a physical object rather than a flat rectangle. Combined with the gloss, it creates the impression of depth and material — a significant perceived-quality jump for zero GPU cost.
+Geocoding results are cached in `.cache/locations-geocode-cache.json` so subsequent runs do not re-query the API. The Nominatim API has a 1-request-per-second rate limit; the script respects this automatically.
 
-### Magnetic button pull
+### `new-post` — create a blog post from Markdown
 
-Interactive buttons (hero CTAs, social links, contact cards) exert a magnetic attraction on the cursor when it enters a configurable proximity radius (~80 px). The button translates toward the cursor by a fraction of the cursor-to-centre offset, producing the feeling that the button is trying to "catch" the pointer. The translation is spring-lerped so motion is smooth and natural. On leave, the button spring-snaps back to its resting position.
+Converts a Markdown file to a styled `blog/<slug>.html` and prepends the entry to `data/blog.js`.
 
-**Why it matters**: magnetic pull elevates buttons from passive targets to active, haptic-feeling elements. It telegraphs interactivity without animation, and the spring-back on leave provides satisfying physical feedback.
+```bash
+npm run new-post -- path/to/my-post.md
+# or directly:
+node scripts/new-post.js path/to/my-post.md
 
-### Animated GLSL noise gradient (hero background)
+# Options:
+node scripts/new-post.js post.md --out-dir blog/
+node scripts/new-post.js post.md --dry-run    # preview without writing
+node scripts/new-post.js --help
+```
 
-A second full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette that cycles smoothly between the site's accent colours (indigo-violet `#6c63ff`, cyan `#00d4ff`) and deep black, so the gradient always feels on-brand. Time evolves slowly (~0.06 units/second) to keep motion calm rather than distracting.
+### `generate-rss` — rebuild RSS feed
 
-**Why it matters**: the noise gradient makes the hero feel alive even before any interaction — it is the ambient "breathing" of the page. It replaces the plain black background behind the particles and gives the section a distinctive, painterly quality that is hard to achieve with CSS gradients.
+Reads `data/blog.js` and writes `rss.xml`.
 
-### Scroll-driven 3-D transforms
+```bash
+npm run generate-rss
+# Options:
+node scripts/generate-rss.js --base-url https://yourdomain.com
+node scripts/generate-rss.js --output dist/rss.xml
+node scripts/generate-rss.js --dry-run
+```
 
-As the user scrolls, elements respond with perspective-correct 3-D transforms calculated from their position in the viewport:
+### `generate-sitemap` — rebuild sitemap
 
-- **Research cards**: each card starts with a `rotateY(18 deg)` slant toward the centre and straightens to 0 ° as it enters the viewport, creating a "deck of cards fanning open" effect.
-- **Section titles**: translate along a subtle Z-axis parallax so headings appear to float at a different depth than the cards beneath them.
-- **Hero parallax**: the hero name and tagline move at 40 % of scroll speed, giving a depth separation between the text and the canvas behind it.
-- **Globe section**: the globe container gets a slight `rotateX` tilt based on scroll position so it appears to pivot toward the viewer.
+Reads `data/blog.js` and writes `sitemap.xml`. External post URLs are skipped automatically.
 
-All transforms are throttled to `requestAnimationFrame`, use `will-change: transform` on participating elements, and are disabled for `prefers-reduced-motion`.
+```bash
+npm run generate-sitemap
+# Options:
+node scripts/generate-sitemap.js --base-url https://yourdomain.com
+node scripts/generate-sitemap.js --dry-run
+```
 
-**Why it matters**: scroll-driven 3-D replaces the generic "fade-up on enter" pattern with spatial storytelling — the page feels like a 3-D environment being explored rather than a document being read.
+### `minify` — minify JavaScript for production
+
+```bash
+npm run minify
+```
+
+Runs `terser` on `js/main.js` → `js/main.min.js` with `--compress --mangle`. See [DEPLOYMENT.md](DEPLOYMENT.md) for how to switch the HTML to use the minified file.
+
+---
+
+## Data formats
+
+Full YAML format reference is in **[DATA-FORMATS.md](DATA-FORMATS.md)**.
+
+Quick summary:
+
+- **`data/cv.yaml`** — career, education, and skills. Edit then run `npm run generate-cv`.
+- **`data/locations.yaml`** — globe pins (`lived` / `work` / `travel`), animated trip routes, and highlighted regions. Edit then run `npm run generate-locations`.
 
 ---
 
@@ -157,6 +217,18 @@ node scripts/new-post.js path/to/my-post.md --dry-run
 
 Prints the generated HTML and the `data/blog.js` entry without writing any files.
 
+### Blog post frontmatter fields
+
+| Field     | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| `title`   | string | Yes      | Post title |
+| `date`    | string | Yes      | ISO date, e.g. `"2025-03-01"` |
+| `excerpt` | string | Yes      | Short summary shown on the index card |
+| `tag`     | string | No       | Badge label, e.g. `"Research"`, `"Engineering"`, `"AI"` |
+| `readMin` | number | No       | Estimated read time in minutes |
+| `lead`    | string | No       | Opening sentence displayed in large type |
+| `url`     | string | No       | Override the output filename / URL path |
+
 ### Supported Markdown syntax
 
 | Syntax | Output |
@@ -173,6 +245,26 @@ Prints the generated HTML and the `data/blog.js` entry without writing any files
 
 ---
 
+## Updating the CV
+
+Edit `data/cv.yaml`, then regenerate:
+
+```bash
+npm run generate-cv
+```
+
+The YAML file has three top-level sections — `career`, `education`, and `skills`. See [DATA-FORMATS.md](DATA-FORMATS.md) for the complete field reference and examples.
+
+### Validate without generating
+
+```bash
+node scripts/generate-cv.js --validate
+```
+
+Reports any structural errors (missing required fields, wrong types) and exits without writing output.
+
+---
+
 ## Updating the globe
 
 Edit `data/locations.yaml`, then regenerate:
@@ -183,7 +275,13 @@ npm run generate-locations
 ./scripts/update-locations.sh
 ```
 
-Missing coordinates are looked up automatically via the Nominatim API (one request per second) and cached in `.cache/locations-geocode-cache.json`.
+The YAML file supports three kinds of content:
+
+- **`pins`** — individual location markers (`lived` / `work` / `travel`)
+- **`trips`** — animated round-trip routes drawn as Bézier curves
+- **`regions`** — circular disc overlays for islands / countries
+
+Missing coordinates are looked up automatically via the Nominatim API (one request per second) and cached in `.cache/locations-geocode-cache.json`. See [DATA-FORMATS.md](DATA-FORMATS.md) for the full field reference.
 
 ---
 
@@ -218,6 +316,61 @@ npm run generate-rss -- -o dist/rss.xml --base-url https://mysite.com
 ```
 
 Both scripts read `data/blog.js` at runtime and skip external post URLs in the sitemap.
+
+---
+
+## Visual effects
+
+The site uses several layers of real-time rendering, all progressive-enhancement: each effect degrades gracefully on low-power devices, and respects `prefers-reduced-motion`.
+
+### Neural network (hero background)
+
+A Three.js particle system of ~120 glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor within a 220 px radius. Lines are drawn between every pair within 170 px using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the count drops to 84 nodes and line updates are frame-skipped. A Canvas2D fallback renders the same network without WebGL.
+
+### Interactive 3-D globe (About section)
+
+A Three.js `Phong`-shaded sphere textured with satellite imagery, lit by a warm directional sun and a cyan rim light for branding consistency. On top of the base sphere:
+
+- **Atmospheric shells**: two semi-transparent overlapping spheres simulate atmospheric haze.
+- **Location pins**: cyan pulsing rings (home / work) and coral spikes (travel) rendered as `LineSegments` + `Mesh` geometries with staggered phase-offset animation.
+- **Trip paths**: quadratic Bézier curves with a dual-layer glow (soft outer + bright core via additive blending) and an animated comet traveller with a fading particle trail.
+- **Star field**: 1 400 randomly-distributed points in world space.
+- **Grid lines**: latitude / longitude lines with the equator and tropics brightened.
+
+Mouse dragging rotates the globe with inertia; auto-spin resumes when idle. Raycasting handles pin hover tooltips. A Canvas2D flat-map fallback is used when `prefers-reduced-motion` is set.
+
+### Hero name iridescence shader
+
+The "Stefano / Masneri" heading is rendered by a raw GLSL fragment shader layered over the accessible `<h1>`. The shader:
+
+1. Rasterises the text into an alpha-only WebGL texture each frame using `Canvas2D`.
+2. Applies **fractional Brownian motion** (three octaves of value noise drifting at different speeds) to compute a per-pixel UV displacement.
+3. Samples the red, green, and blue channels at slightly different offsets to produce **chromatic aberration** (colour fringing).
+4. Applies **mouse-repulsion warping**: the distortion field bends away from the cursor using inverse-square falloff, so moving the mouse visibly deforms the text.
+5. Computes an **iridescent colour sweep** — a cosine-based RGB palette with phase offsets, blended with a bright blue-white bias to give a glass / crystal appearance.
+
+### 3-D card tilt with specular gloss
+
+Cards (research, blog, contact, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices.
+
+### Magnetic button pull
+
+Interactive buttons (hero CTAs, social links, contact cards) exert a magnetic attraction on the cursor when it enters a configurable proximity radius (~80 px). The button translates toward the cursor by a fraction of the cursor-to-centre offset, producing the feeling that the button is trying to "catch" the pointer. The translation is spring-lerped so motion is smooth and natural. On leave, the button spring-snaps back to its resting position.
+
+### Animated GLSL noise gradient (hero background)
+
+A second full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette that cycles smoothly between the site's accent colours (indigo-violet `#6c63ff`, cyan `#00d4ff`) and deep black, so the gradient always feels on-brand. Time evolves slowly (~0.06 units/second) to keep motion calm rather than distracting.
+
+### Scroll-driven 3-D transforms
+
+As the user scrolls, elements respond with perspective-correct 3-D transforms calculated from their position in the viewport:
+
+- **Research cards**: each card starts with a `rotateY(18 deg)` slant toward the centre and straightens to 0 ° as it enters the viewport, creating a "deck of cards fanning open" effect.
+- **Section titles**: translate along a subtle Z-axis parallax so headings appear to float at a different depth than the cards beneath them.
+- **Hero parallax**: the hero name and tagline move at 40 % of scroll speed, giving a depth separation between the text and the canvas behind it.
+- **Globe section**: the globe container gets a slight `rotateX` tilt based on scroll position so it appears to pivot toward the viewer.
+
+All transforms are throttled to `requestAnimationFrame`, use `will-change: transform` on participating elements, and are disabled for `prefers-reduced-motion`.
 
 ---
 
