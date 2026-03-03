@@ -469,10 +469,9 @@ async function geocodeLocations(locs) {
   }
 }
 
-/* ── Simplified continent polygon data ───────────────────────────────────────
-   Each element: [[lat, lon], …] — closed polygon in geographic coordinates.
-   Accuracy ≈ 150 km; fine for a decorative stylised globe.
-──────────────────────────────────────────────────────────────────────────────*/
+/* ── Fallback continent polygon data (used only when data/world-110m.json
+   cannot be fetched, e.g. local file:// dev without a server).
+   Each element: [[lat, lon], …] — closed polygon in geographic coordinates. */
 const GLOBE_CONTINENTS = [
   /* North America */
   [[71,-164],[66,-168],[61,-150],[57,-136],[49,-124],[42,-124],[37,-122],
@@ -673,13 +672,43 @@ class Globe3D {
     this.scene.add(this.pivot);
   }
 
-  _buildGlobeTexture() {
-    /* ── Neon-continent canvas texture ────────────────────────────────────────
-       Draws simplified continent polygons (neon cyan outlines on dark ocean)
-       into a 2048×1024 equirectangular canvas, then returns a CanvasTexture.
-       No external CDN dependency — generated entirely in JS at init time.    */
+  /* ── TopoJSON decoder ──────────────────────────────────────────────────────
+     Converts a Natural-Earth land TopoJSON (data/world-110m.json) into an
+     array of rings, each ring being an array of [lon, lat] pairs.            */
+  _decodeTopoJSON(topo) {
+    const { scale, translate } = topo.transform;
+
+    /* Decode one arc (delta-encoded integers → geographic [lon, lat]) */
+    const decodeArc = (idx) => {
+      const rev = idx < 0;
+      const raw = topo.arcs[rev ? ~idx : idx];
+      let cx = 0, cy = 0;
+      const pts = raw.map(([dx, dy]) => {
+        cx += dx; cy += dy;
+        return [cx * scale[0] + translate[0], cy * scale[1] + translate[1]];
+      });
+      return rev ? pts.reverse() : pts;
+    };
+
+    const rings = [];
+    for (const geom of topo.objects.land.geometries) {
+      const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
+      for (const poly of polys) {
+        /* Join all arc segments that form the outer ring (index 0); skip holes */
+        const ring = [];
+        for (const arcIdx of poly[0]) ring.push(...decodeArc(arcIdx));
+        rings.push(ring);
+      }
+    }
+    return rings;
+  }
+
+  /* rings: array of [[lon, lat], …] polygons (GeoJSON coordinate order).
+     cvs and _THREE are captured synchronously before any await so that the
+     async completion in _buildGlobe() never reads from globals after they
+     may have been restored (e.g. in test teardown).                         */
+  _buildGlobeTexture(rings, cvs, _THREE) {
     const W = 2048, H = 1024;
-    const cvs = document.createElement('canvas');
     cvs.width = W; cvs.height = H;
     const ctx = cvs.getContext('2d');
 
@@ -687,21 +716,21 @@ class Globe3D {
     ctx.fillStyle = '#020b18';
     ctx.fillRect(0, 0, W, H);
 
-    /* lat/lon → canvas pixel (equirectangular) */
-    const px = (lat, lon) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
+    /* lon, lat → canvas pixel (equirectangular) */
+    const px = (lon, lat) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
 
     /* Antarctica: filled band at bottom of map */
     const antY = (90 - (-68)) / 180 * H;
     ctx.fillStyle = '#081624';
     ctx.fillRect(0, antY, W, H - antY);
 
-    /* Draw one continent polygon with a multi-pass neon glow stroke */
-    const drawLand = pts => {
+    /* Draw one ring with a multi-pass neon glow stroke */
+    const drawRing = ring => {
       ctx.beginPath();
-      const [x0, y0] = px(pts[0][0], pts[0][1]);
+      const [x0, y0] = px(ring[0][0], ring[0][1]);
       ctx.moveTo(x0, y0);
-      for (let i = 1; i < pts.length; i++) {
-        const [x, y] = px(pts[i][0], pts[i][1]);
+      for (let i = 1; i < ring.length; i++) {
+        const [x, y] = px(ring[i][0], ring[i][1]);
         ctx.lineTo(x, y);
       }
       ctx.closePath();
@@ -712,7 +741,7 @@ class Globe3D {
       /* bright core     */ ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)'; ctx.stroke();
     };
 
-    GLOBE_CONTINENTS.forEach(drawLand);
+    rings.forEach(drawRing);
 
     /* Antarctica border line */
     ctx.lineWidth = 2;   ctx.strokeStyle = 'rgba(0,210,255,0.50)';
@@ -720,21 +749,44 @@ class Globe3D {
     ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)';
     ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
 
-    return new THREE.CanvasTexture(cvs);
+    return new _THREE.CanvasTexture(cvs);
   }
 
-  _buildGlobe() {
+  async _buildGlobe() {
     /* ── Procedural neon-continent texture ────────────────────────────────────
-       Continent outlines drawn as neon cyan on dark ocean — no CDN needed.  */
-    const tex = this._buildGlobeTexture();
-    const mat = new THREE.MeshPhongMaterial({
-      map: tex,
+       Fetches data/world-110m.json (Natural Earth 110m TopoJSON, 54 KB),
+       decodes it inline, draws 125 precise land rings on a neon-cyan canvas
+       texture, and maps it onto the sphere.  Falls back to the simplified
+       GLOBE_CONTINENTS polygons if the fetch fails (e.g. file:// dev).
+
+       THREE and cvs are captured synchronously before any await so that the
+       async continuation never reads globals after test teardown restores them. */
+    const _THREE = THREE; /* eslint-disable-line no-undef */
+    const cvs = document.createElement('canvas');
+
+    const mat = new _THREE.MeshPhongMaterial({
       color: 0xffffff,
       emissive: 0x010810,
-      specular: new THREE.Color(0x001018),
+      specular: new _THREE.Color(0x001018),
       shininess: 3,
     });
-    this.pivot.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), mat));
+    this.pivot.add(new _THREE.Mesh(new _THREE.SphereGeometry(1, 64, 64), mat));
+
+    try {
+      const resp = await fetch('./data/world-110m.json');
+      if (!resp.ok) throw new Error(resp.status);
+      const topo  = await resp.json();
+      const rings = this._decodeTopoJSON(topo);
+      const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
+      mat.map = tex;
+      mat.needsUpdate = true;
+    } catch (_) {
+      /* Fallback: hand-drawn polygons (stored as [lat,lon] — swap to [lon,lat]) */
+      const rings = GLOBE_CONTINENTS.map(pts => pts.map(([lat, lon]) => [lon, lat]));
+      const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
+      mat.map = tex;
+      mat.needsUpdate = true;
+    }
   }
 
   _buildAtmosphere() {
