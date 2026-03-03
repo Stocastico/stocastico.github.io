@@ -544,8 +544,8 @@ class Globe3D {
      work (small, static) even though they share a colour. */
   static PIN_COLORS = { lived: 0x00d4ff, work: 0x00d4ff, travel: 0xff8c42 };
 
-  static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', region: '◉ Region', trip: '➜ Trip stop' };
-  static TT_COLOR = { lived: '#00d4ff', work: '#00d4ff', travel: '#ff8c42', region: '#ff8c42', trip: '#e8edf8' };
+  static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', trip: '➜ Trip stop' };
+  static TT_COLOR = { lived: '#00d4ff', work: '#00d4ff', travel: '#ff8c42', trip: '#e8edf8' };
 
   constructor(canvasEl) {
     if (!canvasEl || typeof THREE === 'undefined') return;
@@ -599,7 +599,6 @@ class Globe3D {
     this._buildAtmosphere();
     this._buildStars();
     this._buildGrid();
-    this._buildRegions();   /* discs first so pins sit on top */
     this._buildMarkers();
     this._buildTrips();
     this._bindEvents();
@@ -858,44 +857,6 @@ class Globe3D {
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
   }
 
-  /* ── Region discs (islands, countries) ─────────────────── */
-  _buildRegions() {
-    (LOCATIONS.regions || []).filter(reg => !reg._skip).forEach(reg => {
-      const color = new THREE.Color(reg.color || '#ff8c42');
-      const pos = this._ll(reg.lat, reg.lon, 1.003);
-      /* radius: degrees of arc → 3D chord length on unit sphere */
-      const R = Math.sin((reg.radius * Math.PI) / 180);
-
-      /* Filled translucent disc */
-      const disc = new THREE.Mesh(
-        new THREE.CircleGeometry(R, 48),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
-      );
-      disc.position.copy(pos);
-      this._faceOut(disc, pos);
-      this.pivot.add(disc);
-
-      /* Crisp outline ring */
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(R * 0.88, R, 48),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
-      );
-      ring.position.copy(pos);
-      this._faceOut(ring, pos);
-      this.pivot.add(ring);
-
-      /* Tiny centre dot — holds tooltip userData */
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.008, 8, 8),
-        new THREE.MeshBasicMaterial({ color }),
-      );
-      dot.position.copy(pos);
-      dot.userData = { name: reg.name, info: reg.info || 'Region', type: 'region' };
-      this.pivot.add(dot);
-      this.markerMeshes.push(dot);
-    });
-  }
-
   /* ── Standard pins (lived / work / travel) ──────────────── */
   _buildMarkers() {
     (LOCATIONS.pins || []).filter(loc => !loc._skip).forEach(loc => {
@@ -908,12 +869,12 @@ class Globe3D {
       /* Spike — thin line from globe surface up to the dot */
       this.pivot.add(new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([surf, pos]),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.85 : 0.5 }),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.80 : 0.45 }),
       ));
 
       /* Dot — lived pins are larger and more prominent */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.016 : 0.011, 12, 12),
+        new THREE.SphereGeometry(isHome ? 0.012 : 0.008, 12, 12),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
@@ -922,7 +883,7 @@ class Globe3D {
       this.markerMeshes.push(dot);
 
       /* Static halo — thicker for lived, thinner for work/travel */
-      const [rIn, rOut, op] = isHome ? [0.022, 0.028, 0.6] : [0.015, 0.019, 0.35];
+      const [rIn, rOut, op] = isHome ? [0.016, 0.021, 0.55] : [0.011, 0.014, 0.30];
       const halo = new THREE.Mesh(
         new THREE.RingGeometry(rIn, rOut, 40),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }),
@@ -935,7 +896,7 @@ class Globe3D {
       if (isHome) {
         [0, Math.PI].forEach(phaseOffset => {
           const pulse = new THREE.Mesh(
-            new THREE.RingGeometry(0.014, 0.020, 40),
+            new THREE.RingGeometry(0.010, 0.015, 40),
             new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
           );
           pulse.position.copy(pos);
@@ -963,12 +924,12 @@ class Globe3D {
         const s = this._ll(cities[i].lat, cities[i].lon, 1.006);
         const e = this._ll(cities[i + 1].lat, cities[i + 1].lon, 1.006);
 
-        /* Adaptive arc height — scales with chord length to avoid
-           catastrophically tall arcs for nearby cities.
+        /* Adaptive arc height — low lift for short hops (typical trips),
+           scales up only for genuinely long-haul segments.
            Guard against near-antipodal pairs (sum ≈ 0) by falling back
            to a perpendicular control point. */
         const chord = s.distanceTo(e);
-        const lift = 1.0 + Math.min(0.48, 0.06 + chord * 0.32);
+        const lift = 1.0 + Math.min(0.28, 0.02 + chord * 0.18);
         const sum = s.clone().add(e);
         if (sum.length() < 0.001) sum.set(1, 0, 0).cross(s).normalize();
         else sum.normalize();
@@ -984,12 +945,12 @@ class Globe3D {
         /* Soft outer glow */
         this.pivot.add(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }),
         ));
         /* Bright core */
         this.pivot.add(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending, depthWrite: false }),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.38, blending: THREE.AdditiveBlending, depthWrite: false }),
         ));
       }
 
@@ -1001,8 +962,8 @@ class Globe3D {
         seen.add(key);
         const cpos = this._ll(city.lat, city.lon, 1.010);
         const cdot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.010, 8, 8),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 }),
+          new THREE.SphereGeometry(0.006, 8, 8),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 }),
         );
         cdot.position.copy(cpos);
         cdot.userData = { name: city.name, info: trip.name, type: 'trip' };
@@ -1012,7 +973,7 @@ class Globe3D {
 
       /* Traveller dot — explicit opacity:0 to avoid a 1-frame opaque flash */
       const traveller = new THREE.Mesh(
-        new THREE.SphereGeometry(0.013, 12, 12),
+        new THREE.SphereGeometry(0.009, 12, 12),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
       );
       this.pivot.add(traveller);
@@ -1023,7 +984,7 @@ class Globe3D {
       for (let ti = 0; ti < TRAIL; ti++) {
         const frac = 1 - ti / TRAIL;
         const td = new THREE.Mesh(
-          new THREE.SphereGeometry(Math.max(0.003, 0.011 * frac * 0.8), 8, 8),
+          new THREE.SphereGeometry(Math.max(0.002, 0.008 * frac * 0.8), 8, 8),
           new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
         );
         this.pivot.add(td);
@@ -1185,7 +1146,7 @@ class Globe3D {
 
 /* CPU fallback when WebGL is unavailable: 2D orthographic globe */
 class GlobeFallback2D {
-  static PIN_COLORS = { lived: '#00d4ff', work: '#86e8ff', travel: '#ff8c42', region: '#ffb280' };
+  static PIN_COLORS = { lived: '#00d4ff', work: '#86e8ff', travel: '#ff8c42' };
 
   constructor(canvasEl) {
     this.canvas = canvasEl;
@@ -1219,10 +1180,6 @@ class GlobeFallback2D {
 
   _collectPoints() {
     this._points.length = 0;
-    (LOCATIONS.regions || []).forEach((r) => {
-      if (r._skip) return;
-      this._points.push({ lat: r.lat, lon: r.lon, type: 'region' });
-    });
     (LOCATIONS.pins || []).forEach((p) => {
       if (p._skip) return;
       this._points.push({ lat: p.lat, lon: p.lon, type: p.type });
@@ -1318,7 +1275,7 @@ class GlobeFallback2D {
       const p = this._project(pt.lat, pt.lon);
       if (p.z <= 0.02) return;
       const col = GlobeFallback2D.PIN_COLORS[pt.type] || '#e8edf8';
-      const rr = pt.type === 'lived' ? 4.6 : pt.type === 'region' ? 3.8 : 3.2;
+      const rr = pt.type === 'lived' ? 3.8 : 2.6;
       ctx.fillStyle = col;
       ctx.globalAlpha = Math.max(0.22, p.z);
       ctx.beginPath();
