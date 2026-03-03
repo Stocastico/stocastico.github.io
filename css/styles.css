@@ -1324,7 +1324,21 @@ h3 {
   line-height:   1.4;
 }
 
-.tl-location { color: var(--text-faint); }
+.tl-card-header {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     baseline;
+  gap:             0.5rem;
+  margin-bottom:   0.25rem;
+}
+
+.tl-location {
+  color:       var(--text-faint);
+  font-size:   0.72rem;
+  white-space: nowrap;
+  text-align:  right;
+  flex-shrink: 0;
+}
 
 .tl-desc {
   font-size:     0.80rem;

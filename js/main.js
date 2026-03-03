@@ -1735,7 +1735,7 @@ function renderCV() {
     const titleKey = isCareer ? 'role'    : 'degree';
     const subKey   = isCareer ? 'company' : 'institution';
     const locHtml  = entry.location
-      ? ` <span class="tl-location">· ${escapeHtml(entry.location)}</span>`
+      ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
       : '';
     const descHtml = entry.description
       ? `<p class="tl-desc">${escapeHtml(entry.description)}</p>`
@@ -1749,9 +1749,12 @@ function renderCV() {
       <div class="tl-entry tl-entry--${side}">
         <div class="tl-card${hasBack ? ' tl-card--flippable' : ''}" ${hasBack ? 'tabindex="0"' : ''}>
           <div class="tl-card-front">
-            <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+            <div class="tl-card-header">
+              <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+              ${locHtml}
+            </div>
             <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            <p class="tl-sub">${escapeHtml(entry[subKey] || '')}${locHtml}</p>
+            <p class="tl-sub">${escapeHtml(entry[subKey] || '')}</p>
             ${hasBack ? '<span class="tl-flip-hint" aria-hidden="true">↻ details</span>' : ''}
           </div>
           ${hasBack ? `

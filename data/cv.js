@@ -9,50 +9,85 @@
 /* ── Career ───────────────────────────────────────────────── */
 const CV_CAREER = [
   {
-    year:        '2020 – present',
-    role:        'Senior Researcher — AI & Media Technology',
-    company:     'Vicomtech',
-    location:    'San Sebastián, ES',
-    description: 'Leading applied AI research in computer vision, multimodal media analysis, and interactive AR systems within EU-funded projects. Technical lead for the CLEAR multi-user AR platform deployed across schools in five European countries.',
-    tags:        ['PyTorch', 'Computer Vision', 'Augmented Reality', 'EU Projects', 'Team Lead'],
+    year:        '2024 – present',
+    role:        'Senior AI Engineer',
+    company:     'MediaPro',
+    location:    'Donostia, ES',
+    description: 'Designed and deployed GenAI solutions for audiovisual production, including automatic highlight detection in sport events and a chatbot for movie script analysis. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.',
+    tags:        ['GenAI', 'LLMs', 'NeRF', 'Gaussian Splatting', 'Computer Vision', 'Python'],
   },
   {
-    year:        '2017 – 2020',
-    role:        'Research Engineer — Computer Vision',
-    company:     'Vicomtech',
-    location:    'San Sebastián, ES',
-    description: 'Built end-to-end video understanding pipelines for broadcast and educational media: speaker diarisation, lecture segmentation, and audience engagement measurement at scale.',
-    tags:        ['TensorFlow', 'OpenCV', 'Video Analysis', 'Speaker Diarisation'],
+    year:        '2024 – present',
+    role:        'Guest Lecturer',
+    company:     'ISDI Business School',
+    location:    'Barcelona, ES',
+    description: 'Teaching computer vision and AI to MBA and MIB students, covering practical applications of modern AI techniques in industry.',
+    tags:        ['Teaching', 'AI', 'Computer Vision'],
   },
   {
-    year:        '2014 – 2017',
-    role:        'PhD Researcher',
-    company:     'University of the Basque Country (UPV/EHU)',
+    year:        '2022 – 2024',
+    role:        'Technical Manager',
+    company:     'NTT DATA',
     location:    'Bilbao, ES',
-    description: 'Research on real-time 3D scene reconstruction and semantic segmentation using deep learning and RGB-D point-cloud data.',
-    tags:        ['Deep Learning', '3D Vision', 'Point Clouds', 'Keras'],
+    description: 'Led a 9-person team delivering AI and GenAI projects for banking, media, and energy sector clients. Architected enterprise RAG systems using Azure OpenAI. Mentored the team in GenAI technologies through weekly technical sessions.',
+    tags:        ['Team Management', 'RAG', 'Azure OpenAI', 'GenAI', 'LangChain'],
+  },
+  {
+    year:        '2018 – 2022',
+    role:        'Researcher',
+    company:     'Vicomtech',
+    location:    'Donostia, ES',
+    description: 'Coordinated H2020/Horizon Europe projects with international partners, securing 600k€ in funding. Developed a collaborative AR platform using computer vision and web technologies for educational applications.',
+    tags:        ['Computer Vision', 'AR', 'H2020', 'EU Projects', 'WebXR'],
+  },
+  {
+    year:     '2017 – 2018',
+    role:     'Senior Data Scientist',
+    company:  'AGT International',
+    location: 'Darmstadt, DE',
+    tags:     ['Data Science', 'Machine Learning', 'Python'],
+  },
+  {
+    year:     '2015 – 2017',
+    role:     'Scientific Software Developer',
+    company:  'MPI for Brain Research',
+    location: 'Frankfurt, DE',
+    tags:     ['Scientific Computing', 'Python', 'Neuroscience'],
+  },
+  {
+    year:     '2009 – 2015',
+    role:     'Research Associate',
+    company:  'Fraunhofer Heinrich Hertz Institut',
+    location: 'Berlin, DE',
+    tags:     ['Computer Vision', 'Research', 'Video Analysis'],
+  },
+  {
+    year:     '2008 – 2009',
+    role:     'Research Associate',
+    company:  'CNIT',
+    location: 'Brescia, IT',
+    tags:     ['Telecommunications', 'Research'],
   },
 ];
 
 /* ── Education ────────────────────────────────────────────── */
 const CV_EDUCATION = [
   {
-    year:        '2014 – 2017',
-    degree:      'PhD — Computer Vision',
-    institution: 'University of the Basque Country (UPV/EHU)',
+    year:        '2019 – 2024',
+    degree:      'PhD — Computer Science',
+    institution: 'Euskal Herriko Unibertsitatea (UPV/EHU)',
     location:    'Bilbao, ES',
-    description: 'Thesis: "Real-time semantic 3D reconstruction for indoor scene understanding." Graduated with international doctorate mention.',
+    description: 'Thesis: "A Novel Architecture for Collaborative Augmented Reality Experiences for Education." Graduated cum laude.',
   },
   {
     year:        '2005 – 2008',
-    degree:      'MSc — Computer Engineering',
+    degree:      'MSc — Telecommunications Engineering',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
-    description: 'Specialisation in Artificial Intelligence and Robotics. Graduated with honours (110 cum laude / 110).',
   },
   {
     year:        '2000 – 2005',
-    degree:      'BSc — Information Engineering',
+    degree:      'BSc — Information Technology',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
   },
@@ -62,16 +97,20 @@ const CV_EDUCATION = [
 const CV_SKILLS = {
   technical:  [
     {
-      name:  'Python · PyTorch · TensorFlow',
-      level: 95,
-    },
-    {
-      name:  'Computer Vision & 3D Perception',
+      name:  'GenAI & LLMs (RAG · Fine-tuning · LangChain)',
       level: 92,
     },
     {
+      name:  'Python · PyTorch · TensorFlow',
+      level: 90,
+    },
+    {
+      name:  'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats)',
+      level: 88,
+    },
+    {
       name:  'Augmented Reality (ARCore · ARKit · WebXR)',
-      level: 86,
+      level: 82,
     },
     {
       name:  'MLOps · Docker · CI/CD',
@@ -79,16 +118,12 @@ const CV_SKILLS = {
     },
     {
       name:  'C++ · OpenCV · CUDA',
-      level: 72,
-    },
-    {
-      name:  'Web · JavaScript · Three.js · WebGL',
       level: 70,
     },
   ],
   leadership: [
     {
-      name:  'Technical roadmap & system architecture',
+      name:  'Technical team management & mentoring',
       level: 90,
     },
     {
@@ -96,8 +131,8 @@ const CV_SKILLS = {
       level: 88,
     },
     {
-      name:  'Research mentoring & supervision',
-      level: 82,
+      name:  'Technical roadmap & system architecture',
+      level: 87,
     },
     {
       name:  'Stakeholder & partner communication',
