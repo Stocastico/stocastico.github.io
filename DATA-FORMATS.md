@@ -233,7 +233,6 @@ The globe on the About section is driven entirely by this file. The generator au
 ```yaml
 pins:    [...]   # Optional — individual map pins
 trips:   [...]   # Optional — animated round-trip routes
-regions: [...]   # Optional — circular disc overlays
 ```
 
 All three sections are optional; you can use any combination.
@@ -317,38 +316,9 @@ The generator geocodes each city in `cities` using the same Nominatim cache as p
 
 When `color` is omitted, trips are assigned colours from this rotating palette:
 
-```
+```text
 #ff6b6b  #c084fc  #22c55e  #38bdf8  #f59e0b  #fb7185
 ```
-
----
-
-### `regions` — circular area highlights
-
-Regions are semi-transparent discs on the globe surface, useful for marking islands or countries you have visited.
-
-```yaml
-regions:
-  - name:   Sardinia, Italy
-    radius: 1.4          # disc radius in degrees (default: 1.0)
-    color:  "#ff8c42"    # CSS hex color (auto-assigned if omitted)
-    info:   Holiday
-
-  - name:   Tenerife, Spain
-    radius: 1.2
-    info:   Canary Islands
-```
-
-#### Field reference
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `name` | string | Yes | Used as the label and as the geocoding query |
-| `radius` | number | No | Disc radius in degrees. Default: `1.0`. Larger = bigger disc |
-| `color` | string | No | CSS hex colour. Auto-assigned (`#ff8c42`) if omitted |
-| `info` | string | No | Tooltip text |
-| `lat` | number | No | Override geocoded latitude |
-| `lon` | number | No | Override geocoded longitude |
 
 ---
 

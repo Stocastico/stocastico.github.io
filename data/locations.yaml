@@ -2,6 +2,7 @@
 # Run: ./scripts/update-locations.sh
 
 pins:
+# lived there
   - type: lived
     name: Brescia, Italy
     info: Home town
@@ -15,34 +16,53 @@ pins:
     name: San Sebastián, Spain
     info: Current home
 
+# work trips
+# TRACTION (H2020, 2020-2022)
   - type: work
-    name: Bilbao, Spain
-    info: Vicomtech Foundation
+    name: Dublin, Ireland
+    info: TRACTION meeting
   - type: work
-    name: Barcelona, Spain
-    info: GRUP MEDIAPRO HQ
+    name: Leiria, Portugal
+    info: TRACTION meeting
+  # ARETE (H2020, 2019-2023)
   - type: work
-    name: Madrid, Spain
-    info: Conferences
+    name: Brussels, Belgium
+    info: ARETE meeting
+  # inEVENT (FP7, 2011-2014)
   - type: work
-    name: Berlin, Germany
-    info: Fraunhofer HHI
+    name: Martigny, Switzerland
+    info: inEVENT meeting
   - type: work
-    name: Amsterdam, Netherlands
-    info: IBC Show
+    name: Edinburgh, United Kingdom
+    info: inEVENT meeting
+  # RUSHES (FP6, 2007-2009)
   - type: work
-    name: London, UK
-    info: Research visits
+    name: Athens, Greece
+    info: RUSHES meeting
   - type: work
-    name: Milan, Italy
-    info: Conferences
+    name: Oslo, Norway
+    info: RUSHES meeting
+  # business trips
   - type: work
-    name: New York, USA
-    info: Research conference
+    name: Reykjavik, Iceland
+    info: Conference
   - type: work
-    name: Tokyo, Japan
-    info: Research visit
+    name: Glendale, Arizona, USA
+    info: Work with UFC
+  - type: work
+    name: Norfolk, Virginia, USA
+    info: Work with UFC
+  - type: work
+    name: Gdansk, Poland
+    info: Work with UFC
 
+# holidays
+  - type: travel
+    name: Amsterdam, Netherlands
+    info: Visited both for work and leisure
+  - type: travel
+    name: London, UK
+    info: Visited both for work and leisure
   - type: travel
     name: Paris, France
     info: Holiday
@@ -56,10 +76,25 @@ pins:
     name: Vienna, Austria
     info: Holiday
   - type: travel
-    name: Dubrovnik, Croatia
+    name: La Valletta, Malta
     info: Holiday
   - type: travel
-    name: Reykjavik, Iceland
+    name: Bordeaux, France
+    info: Holiday
+  - type: travel
+    name: Toulouse, France
+    info: Holiday
+  - type: travel
+    name: Arles, France
+    info: Holiday
+  - type: travel
+    name: Niza, France
+    info: Holiday
+  - type: travel
+    name: Marseille, France
+    info: Holiday
+  - type: travel
+    name: Bayonne, France
     info: Holiday
 
 trips:
