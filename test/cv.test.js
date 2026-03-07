@@ -149,7 +149,7 @@ test('renderCV: handles empty arrays gracefully', () => {
   global.CV_CAREER    = [];
   global.CV_EDUCATION = [];
   assert.doesNotThrow(() => renderCV());
-  assert.ok(els['cv-timeline-list'].innerHTML.includes('tl-year-marker'), 'year markers still rendered');
+  assert.strictEqual(els['cv-timeline-list'].innerHTML, '', 'no output for empty data');
   restore();
 });
 
@@ -163,26 +163,28 @@ test('renderCV: omits tags div when tags array is empty', () => {
   restore();
 });
 
-test('renderCV: renders a long year timeline from current year to 2000', () => {
+test('renderCV: renders one card per entry (not per year)', () => {
   const { els, restore } = setupDom(['cv-timeline-list']);
   global.CV_CAREER = [{ year: '2020 – present', role: 'Senior', company: 'A', tags: [] }];
   global.CV_EDUCATION = [{ year: '2000 – 2005', degree: 'BSc', institution: 'Uni' }];
   renderCV();
   const html = els['cv-timeline-list'].innerHTML;
-  const currentYear = new Date().getFullYear();
-  assert.ok(html.includes(`tl-year-marker" data-year="${currentYear}">${currentYear}<`), 'current year marker present');
-  assert.ok(html.includes('tl-year-marker" data-year="2000">2000<'), 'year 2000 marker present');
+  assert.ok(html.includes('Senior'), 'career entry present');
+  assert.ok(html.includes('BSc'), 'education entry present');
+  /* Each entry appears exactly once as a tl-entry */
+  const entryCount = (html.match(/tl-entry /g) || []).length;
+  assert.strictEqual(entryCount, 2, 'exactly two entry cards');
   restore();
 });
 
-test('renderCV: keeps career and education in separate columns for the same year', () => {
+test('renderCV: career and education entries both rendered with correct type classes', () => {
   const { els, restore } = setupDom(['cv-timeline-list']);
   global.CV_CAREER = [{ year: '2014 – 2017', role: 'Research Engineer', company: 'Lab', tags: [] }];
   global.CV_EDUCATION = [{ year: '2014 – 2017', degree: 'PhD', institution: 'Uni' }];
   renderCV();
   const html = els['cv-timeline-list'].innerHTML;
-  assert.ok(html.includes('tl-year-col--career'), 'career column wrapper present');
-  assert.ok(html.includes('tl-year-col--education'), 'education column wrapper present');
+  assert.ok(html.includes('tl-entry--career'), 'career type class present');
+  assert.ok(html.includes('tl-entry--education'), 'education type class present');
   assert.ok(html.includes('Research Engineer'), 'career entry present');
   assert.ok(html.includes('PhD'), 'education entry present');
   restore();

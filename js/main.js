@@ -2006,6 +2006,7 @@ function initScroll3D() {
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
    Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   One card per job/degree — all details visible, no flipping.
    ═══════════════════════════════════════════════════════════ */
 function renderCV() {
   if (typeof document === 'undefined') return;
@@ -2014,25 +2015,16 @@ function renderCV() {
   if (typeof CV_CAREER    === 'undefined') return;
   if (typeof CV_EDUCATION === 'undefined') return;
 
-  function parseYearSpan(raw) {
-    const currentYear = new Date().getFullYear();
-    const txt = String(raw || '').toLowerCase();
-    const years = [...txt.matchAll(/\b(19|20)\d{2}\b/g)].map(m => parseInt(m[0], 10));
-    if (!years.length) return { start: currentYear, end: currentYear };
-    if (years.length === 1) {
-      if (txt.includes('present')) return { start: years[0], end: currentYear };
-      return { start: years[0], end: years[0] };
-    }
-    const start = Math.min(years[0], years[1]);
-    const end = txt.includes('present') ? currentYear : Math.max(years[0], years[1]);
-    return { start, end };
+  function parseStartYear(raw) {
+    const txt = String(raw || '');
+    const match = txt.match(/\b(19|20)\d{2}\b/);
+    return match ? parseInt(match[0], 10) : 9999;
   }
 
-  function entryHtml(entry, type) {
-    const side = type === 'career' ? 'career' : 'education';
-    const isCareer = side === 'career';
-    const titleKey = isCareer ? 'role'    : 'degree';
-    const subKey   = isCareer ? 'company' : 'institution';
+  function entryCardHtml(entry, type) {
+    const isCareer = type === 'career';
+    const title  = isCareer ? entry.role   : entry.degree;
+    const sub    = isCareer ? entry.company : entry.institution;
     const locHtml  = entry.location
       ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
       : '';
@@ -2043,72 +2035,30 @@ function renderCV() {
     const tagsHtml = tagsArr.length
       ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';
-    const hasBack = !!(entry.description || tagsArr.length);
+
     return `
-      <div class="tl-entry tl-entry--${side}">
-        <div class="tl-card${hasBack ? ' tl-card--flippable' : ''}" ${hasBack ? 'tabindex="0"' : ''}>
-          <div class="tl-card-front">
-            <div class="tl-card-header">
-              <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-              ${locHtml}
-            </div>
-            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            <p class="tl-sub">${escapeHtml(entry[subKey] || '')}</p>
-            ${hasBack ? '<span class="tl-flip-hint" aria-hidden="true">↻ details</span>' : ''}
+      <div class="tl-entry tl-entry--${type}" data-animate>
+        <div class="tl-dot" aria-hidden="true"></div>
+        <div class="tl-card-single">
+          <div class="tl-card-header">
+            <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+            ${locHtml}
           </div>
-          ${hasBack ? `
-          <div class="tl-card-back">
-            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            ${descHtml}${tagsHtml}
-          </div>` : ''}
+          <h3 class="tl-title">${escapeHtml(title || '')}</h3>
+          <p class="tl-sub">${escapeHtml(sub || '')}</p>
+          ${descHtml}${tagsHtml}
         </div>
       </div>`;
   }
 
-  const currentYear = new Date().getFullYear();
-  const startYear = 2000;
-  const byYear = new Map();
-  for (let year = currentYear; year >= startYear; year -= 1) byYear.set(year, []);
+  /* ── Build interleaved timeline (newest first by start year) ── */
+  const all = [
+    ...(CV_CAREER   || []).map(e => ({ type: 'career',    entry: e })),
+    ...(CV_EDUCATION || []).map(e => ({ type: 'education', entry: e })),
+  ].sort((a, b) => parseStartYear(b.entry.year) - parseStartYear(a.entry.year));
 
-  const allEntries = [
-    ...(CV_CAREER || []).map(entry => ({ type: 'career', entry })),
-    ...(CV_EDUCATION || []).map(entry => ({ type: 'education', entry })),
-  ];
-
-  allEntries.forEach(({ type, entry }, idx) => {
-    const span = parseYearSpan(entry.year);
-    const from = Math.max(startYear, span.start);
-    const to = Math.min(currentYear, span.end);
-    for (let year = from; year <= to; year += 1) {
-      if (!byYear.has(year)) continue;
-      byYear.get(year).push({ type, entry, idx });
-    }
-  });
-
-  timelineList.innerHTML = Array.from(byYear.entries())
-    .sort((a, b) => b[0] - a[0])
-    .map(([year, items]) => {
-      const careerHtml = items
-        .filter(item => item.type === 'career')
-        .sort((a, b) => a.idx - b.idx)
-        .map(item => entryHtml(item.entry, item.type))
-        .join('');
-      const educationHtml = items
-        .filter(item => item.type === 'education')
-        .sort((a, b) => a.idx - b.idx)
-        .map(item => entryHtml(item.entry, item.type))
-        .join('');
-      const isActive = !!(careerHtml || educationHtml);
-      return `
-        <div class="tl-year-row${isActive ? ' tl-year-row--active' : ''}">
-          <span class="tl-year-marker" data-year="${year}">${year}</span>
-          <div class="tl-year-events">
-            <div class="tl-year-col tl-year-col--career">${careerHtml}</div>
-            <div class="tl-year-col tl-year-col--education">${educationHtml}</div>
-          </div>
-        </div>
-      `;
-    })
+  timelineList.innerHTML = all
+    .map(({ type, entry }) => entryCardHtml(entry, type))
     .join('');
 }
 

@@ -1233,131 +1233,75 @@ h3 {
 .timeline-track {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1.5rem;
   position: relative;
-  padding-bottom: 2rem;
+  padding-left: 2rem;
+  padding-bottom: 1rem;
 }
 
+/* Vertical timeline line */
 .timeline-track::before {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 3.6rem;
+  left: 6px;
   width: 2px;
   background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
   box-shadow: 0 0 10px var(--accent-glow);
   border-radius: 2px;
 }
 
-.tl-year-row {
-  display: grid;
-  grid-template-columns: 88px 1fr;
-  gap: 1rem;
-  padding: 0.35rem 0;
-}
-
-.tl-year-marker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.85rem;
-  min-width: 1.85rem;
-  padding: 0 0.55rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(8 12 20 / 0.96);
-  color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  position: relative;
-  z-index: 1;
-}
-
-.tl-year-row--active .tl-year-marker {
-  color: var(--text);
-  border-color: var(--border-hov);
-}
-
-.tl-year-events {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem 1rem;
-  min-height: 1.85rem;
-}
-
-.tl-year-row:not(.tl-year-row--active) .tl-year-events {
-  min-height: 0.6rem;
-}
-
-.tl-year-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
+/* ── Entry — one card per job / degree ────────────────── */
 .tl-entry {
   position: relative;
 }
 
-/* ── Card — flip container ─────────────────────────────── */
-
-/* Grid stacking: card height = max(front height, back height) automatically.
-   Each card has its own perspective so the flip is isolated — no shared
-   3D context between the two columns (that was the cause of the flicker). */
-.tl-card {
-  display:     grid;
-  perspective: 900px;
+/* Dot on the timeline line */
+.tl-dot {
+  position: absolute;
+  left: -2rem;
+  top: 1.6rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-alt);
+  z-index: 1;
+  /* centered on the 2px line: line is at left:6px (from track),
+     dot is 14px wide, so offset = 6px - 7px = -1px from .tl-entry left edge,
+     but .tl-entry is 2rem indented, so: left = -2rem puts us at track start,
+     then we nudge to center on the line */
+  transform: translateX(0px);
 }
 
-.tl-card--flippable { cursor: pointer; }
+.tl-entry--career .tl-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
 
-/* Flip on hover / keyboard focus */
-.tl-card--flippable:hover    .tl-card-front,
-.tl-card--flippable:focus-within .tl-card-front { transform: rotateY(-180deg); }
+.tl-entry--education .tl-dot {
+  background: var(--accent2);
+  box-shadow: 0 0 8px var(--accent2-glow);
+}
 
-.tl-card--flippable:hover    .tl-card-back,
-.tl-card--flippable:focus-within .tl-card-back  { transform: rotateY(0deg); }
-
-/* Both faces share the same grid cell */
-.tl-card-front,
-.tl-card-back {
-  grid-area:   1 / 1;
-  padding:     1.4rem 1.5rem;
-  background:  var(--bg-card);
-  border:      1px solid var(--border);
+/* ── Card — single visible card (no flip) ─────────────── */
+.tl-card-single {
+  padding:       1.5rem 1.75rem;
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
   border-radius: var(--r-lg);
-  backface-visibility:         hidden;
-  -webkit-backface-visibility: hidden;
-  transition:  transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:    border-color var(--t-med), background var(--t-med), box-shadow var(--t-med);
 }
 
-.tl-card-back {
-  transform:    rotateY(180deg);
-  background:   var(--bg-card-hov);
+.tl-card-single:hover {
   border-color: var(--border-hov);
+  background:   var(--bg-card-hov);
   box-shadow:   0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Colored spine-side accent on the front face only */
-.tl-entry--career .tl-card-front { border-right: 3px solid var(--accent);  }
-.tl-entry--education .tl-card-front { border-left: 3px solid var(--accent2); }
-
-/* Flip hint */
-.tl-flip-hint {
-  display:        block;
-  margin-top:     0.65rem;
-  font-size:      0.63rem;
-  font-weight:    600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  opacity:        0.38;
-  transition:     opacity var(--t-med);
-}
-.tl-card--flippable:hover .tl-flip-hint { opacity: 0.65; }
-.tl-entry--career .tl-flip-hint { color: var(--accent);  }
-.tl-entry--education .tl-flip-hint { color: var(--accent2); }
+/* Colored left accent bar */
+.tl-entry--career .tl-card-single    { border-left: 3px solid var(--accent);  }
+.tl-entry--education .tl-card-single { border-left: 3px solid var(--accent2); }
 
 /* ── Card typography ──────────────────────────────────── */
 
@@ -1555,22 +1499,22 @@ h3 {
 
 /* ── Responsive: tighter spacing on small screens ── */
 @media (max-width: 760px) {
+  .timeline-track {
+    padding-left: 1.5rem;
+  }
+
   .timeline-track::before {
-    left: 2.95rem;
+    left: 4px;
   }
 
-  .tl-year-row {
-    grid-template-columns: 70px 1fr;
-    gap: 0.8rem;
+  .tl-dot {
+    left: -1.5rem;
+    width: 10px;
+    height: 10px;
   }
 
-  .tl-year-events {
-    gap: 0.65rem;
-  }
-
-  .tl-card-front,
-  .tl-card-back {
-    padding: 1rem 1.1rem;
+  .tl-card-single {
+    padding: 1.1rem 1.25rem;
   }
 }
 
