@@ -1425,6 +1425,59 @@ function initBackToTop() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SIDE PROGRESS DOTS
+   ═══════════════════════════════════════════════════════════ */
+function initSideDots() {
+  const nav = document.getElementById('side-dots');
+  if (!nav) return;
+
+  /* Only activate on fine-pointer (mouse) viewports — CSS hides on coarse/narrow */
+  if (!window.matchMedia('(pointer: fine) and (min-width: 901px)').matches) return;
+
+  const sections = Array.from(
+    document.querySelectorAll('section[id], div[id="hero"]')
+  ).filter(s => s.id);
+
+  if (!sections.length) return;
+
+  /* Build dots */
+  sections.forEach(section => {
+    const label = section.getAttribute('aria-label') || section.id;
+    const btn = document.createElement('button');
+    btn.className = 'side-dot';
+    btn.dataset.label = label.charAt(0).toUpperCase() + label.slice(1);
+    btn.setAttribute('aria-label', `Go to ${label}`);
+    btn.setAttribute('aria-current', 'false');
+    btn.addEventListener('click', () => {
+      section.scrollIntoView({ behavior: 'smooth' });
+    });
+    nav.appendChild(btn);
+  });
+
+  const dots = Array.from(nav.querySelectorAll('.side-dot'));
+
+  /* Show nav after scrolling past the hero */
+  function onScroll() {
+    const scrolled = window.scrollY > window.innerHeight * 0.5;
+    nav.classList.toggle('visible', scrolled);
+
+    /* Determine the active section (first one whose top is ≤ 60% viewport height) */
+    let active = 0;
+    const threshold = window.innerHeight * 0.5;
+    sections.forEach((sec, i) => {
+      if (sec.getBoundingClientRect().top <= threshold) active = i;
+    });
+
+    dots.forEach((dot, i) => {
+      dot.setAttribute('aria-current', String(i === active));
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); /* run once on init */
+}
+
+/* ═══════════════════════════════════════════════════════════
    STAGGERED HERO TAGLINE REVEAL
    ═══════════════════════════════════════════════════════════ */
 function initTaglineReveal() {
@@ -2562,6 +2615,7 @@ if (typeof document !== 'undefined') {
   initNavbar();
   initMobileMenu();
   initBackToTop();
+  initSideDots();
   initCursorGlow();
   initTaglineReveal();
 
