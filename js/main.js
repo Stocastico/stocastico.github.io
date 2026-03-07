@@ -1367,6 +1367,8 @@ function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
 
+  const progressBar = document.getElementById('reading-progress');
+
   const links = typeof document.querySelectorAll === 'function'
     ? Array.from(document.querySelectorAll('#nav-links a[href^="#"]'))
     : [];
@@ -1387,13 +1389,39 @@ function initNavbar() {
     });
   };
 
+  const updateReadingProgress = () => {
+    if (!progressBar) return;
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+    progressBar.style.width = `${pct}%`;
+  };
+
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     nav.classList.toggle('scrolled', y > 20);
     setActiveLink();
+    updateReadingProgress();
   }, { passive: true });
 
   setActiveLink();
+  updateReadingProgress();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BACK TO TOP BUTTON
+   ═══════════════════════════════════════════════════════════ */
+function initBackToTop() {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > window.innerHeight * 0.6);
+  }, { passive: true });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2460,6 +2488,7 @@ if (typeof module !== 'undefined' && module.exports) {
     initScroll3D,
     initNavbar,
     initMobileMenu,
+    initBackToTop,
     initScrollReveal,
     initCounters,
     animateCounter,
@@ -2488,6 +2517,7 @@ if (typeof document !== 'undefined') {
   initTheme();
   initNavbar();
   initMobileMenu();
+  initBackToTop();
 
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();

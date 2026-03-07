@@ -94,6 +94,8 @@
 </head>
 
 <body>
+  <!-- Reading progress bar — filled by JS on scroll -->
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <a class="skip-link" href="#about">Skip to main content</a>
 
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
@@ -602,6 +604,13 @@
     }]
   }
   </script>
+
+  <!-- Back to top button — shown after scrolling past the hero -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
   <!-- All scripts are deferred: downloaded in parallel during HTML parsing,
        executed in order after parsing completes, before DOMContentLoaded.

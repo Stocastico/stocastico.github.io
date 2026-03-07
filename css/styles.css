@@ -264,6 +264,22 @@ h3 {
 
 .nav-links a[aria-current='true']::after {
   width: 100%;
+  background: var(--accent2);
+}
+
+/* Active section dot above the link */
+.nav-links a[aria-current='true']::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent2);
+  box-shadow: 0 0 6px var(--accent2-glow);
+  transition: opacity var(--t-med);
 }
 
 /* ─── Reading Progress Bar ───────────────────────────── */
@@ -589,6 +605,10 @@ h3 {
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 0.75rem;
+  padding: 0.25em 0.9em;
+  border-radius: 999px;
+  border: 1px solid rgba(108, 99, 255, 0.22);
+  background: rgba(108, 99, 255, 0.07);
 }
 
 .section-title {
@@ -1925,4 +1945,66 @@ h3 {
   margin: 1.5rem 0;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* ─── Back to Top Button ─────────────────────────────────── */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 90;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hov);
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(14px) saturate(1.4);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(12px) scale(0.85);
+  transition: opacity var(--t-med) var(--ease),
+    transform var(--t-med) var(--ease),
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+  pointer-events: none;
+}
+
+.back-to-top svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--accent2);
+  transition: stroke var(--t-fast);
+}
+
+.back-to-top:hover {
+  border-color: var(--accent2);
+  box-shadow: 0 0 18px var(--accent2-glow);
+}
+
+.back-to-top:hover svg {
+  stroke: var(--accent2);
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+@media (max-width: 480px) {
+  .back-to-top {
+    bottom: 1.25rem;
+    right: 1.25rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .back-to-top {
+    width: 48px;
+    height: 48px;
+  }
 }
