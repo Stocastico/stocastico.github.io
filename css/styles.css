@@ -45,7 +45,7 @@
   --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Spacing */
-  --section-py: clamp(5rem, 10vw, 9rem);
+  --section-py: clamp(6rem, 11vw, 10rem);
   --container: 1180px;
   --gap: 1.5rem;
 
@@ -729,6 +729,7 @@ h3 {
 .about-text-col p {
   color: var(--text-muted);
   margin-bottom: 1.1rem;
+  max-width: 60ch;
 }
 
 .about-text-col p strong {
@@ -866,6 +867,7 @@ h3 {
   font-size: 0.875rem;
   color: var(--text-muted);
   line-height: 1.6;
+  max-width: 60ch;
 }
 
 /* ─── 11. Publications Section ──────────────────────────── */
@@ -1085,6 +1087,8 @@ h3 {
   font-size: 1.05rem;
   color: var(--text-muted);
   margin-bottom: 2.5rem;
+  max-width: 60ch;
+  margin-inline: auto;
 }
 
 .contact-grid {
