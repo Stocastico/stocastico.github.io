@@ -1425,6 +1425,180 @@ function initBackToTop() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   COMMAND PALETTE  (⌘K / Ctrl+K)
+   ═══════════════════════════════════════════════════════════ */
+function initCommandPalette() {
+  const overlay  = document.getElementById('cmd-overlay');
+  const input    = document.getElementById('cmd-input');
+  const listEl   = document.getElementById('cmd-list');
+  if (!overlay || !input || !listEl) return;
+
+  /* ── Command definitions ───────────────────────────────── */
+  const SECTIONS = [
+    { id: 'about',        label: 'About',        hint: 'Who I am' },
+    { id: 'research',     label: 'Research',      hint: 'What I work on' },
+    { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education' },
+    { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
+    { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
+    { id: 'blog',         label: 'Blog',          hint: 'Thoughts & Writing' },
+  ];
+
+  const ACTIONS = [
+    {
+      label: 'Open CV PDF',
+      hint: 'Download / view',
+      icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v12M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      action() { window.open('cv.pdf', '_blank'); },
+    },
+    {
+      label: 'Copy email address',
+      hint: 'To clipboard',
+      icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      action() {
+        const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
+        if (email && email !== 'your.email@example.com') {
+          navigator.clipboard?.writeText(email).catch(() => {});
+        }
+      },
+    },
+    {
+      label: 'LinkedIn profile',
+      hint: 'Open in new tab',
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>`,
+      action() { window.open('https://www.linkedin.com/in/stefanomasneri/', '_blank'); },
+    },
+    {
+      label: 'Google Scholar',
+      hint: 'Open in new tab',
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>`,
+      action() { window.open('https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en', '_blank'); },
+    },
+  ];
+
+  const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+  /* ── Build all command items ────────────────────────────── */
+  let allItems = [
+    ...SECTIONS.map(s => ({
+      label: s.label,
+      hint: s.hint,
+      icon: navIcon,
+      action() {
+        const el = document.getElementById(s.id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      },
+      group: 'Navigate',
+    })),
+    ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
+  ];
+
+  let filtered = allItems;
+  let activeIdx = 0;
+
+  /* ── Render list ────────────────────────────────────────── */
+  function render(items) {
+    listEl.innerHTML = '';
+    if (!items.length) {
+      const li = document.createElement('li');
+      li.className = 'cmd-item';
+      li.style.color = 'var(--text-faint)';
+      li.textContent = 'No results';
+      listEl.appendChild(li);
+      return;
+    }
+
+    let lastGroup = null;
+    items.forEach((item, i) => {
+      if (item.group !== lastGroup) {
+        const label = document.createElement('li');
+        label.className = 'cmd-group-label';
+        label.setAttribute('role', 'presentation');
+        label.textContent = item.group;
+        listEl.appendChild(label);
+        lastGroup = item.group;
+      }
+      const li = document.createElement('li');
+      li.className = 'cmd-item';
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(i === activeIdx));
+      li.innerHTML = `
+        <span class="cmd-item-icon">${item.icon}</span>
+        <span class="cmd-item-label">${item.label}</span>
+        <span class="cmd-item-hint">${item.hint || ''}</span>
+      `;
+      li.addEventListener('mouseenter', () => { activeIdx = i; render(filtered); });
+      li.addEventListener('click', () => { execute(item); });
+      listEl.appendChild(li);
+    });
+  }
+
+  /* ── Execute & close ────────────────────────────────────── */
+  function execute(item) {
+    close();
+    item.action();
+  }
+
+  /* ── Filter on input ────────────────────────────────────── */
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    filtered = q
+      ? allItems.filter(it => it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q))
+      : allItems;
+    activeIdx = 0;
+    render(filtered);
+  });
+
+  /* ── Keyboard navigation ────────────────────────────────── */
+  input.addEventListener('keydown', (e) => {
+    const visibleItems = filtered.filter(Boolean); /* same array */
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx + 1, visibleItems.length - 1);
+      render(visibleItems);
+      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx - 1, 0);
+      render(visibleItems);
+      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (visibleItems[activeIdx]) execute(visibleItems[activeIdx]);
+    } else if (e.key === 'Escape') {
+      close();
+    }
+  });
+
+  /* ── Open / close ───────────────────────────────────────── */
+  function open() {
+    filtered = allItems;
+    activeIdx = 0;
+    input.value = '';
+    render(filtered);
+    overlay.hidden = false;
+    requestAnimationFrame(() => input.focus());
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  /* Close on overlay click */
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  /* Global keyboard shortcut — ⌘K or Ctrl+K */
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      overlay.hidden ? open() : close();
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
    SIDE PROGRESS DOTS
    ═══════════════════════════════════════════════════════════ */
 function initSideDots() {
@@ -2616,6 +2790,7 @@ if (typeof document !== 'undefined') {
   initMobileMenu();
   initBackToTop();
   initSideDots();
+  initCommandPalette();
   initCursorGlow();
   initTaglineReveal();
 

@@ -605,6 +605,26 @@
   }
   </script>
 
+  <!-- Command palette — opened with ⌘K / Ctrl+K -->
+  <div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+    <div class="cmd-box">
+      <div class="cmd-search-row">
+        <svg class="cmd-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input
+          class="cmd-input" id="cmd-input"
+          type="text" placeholder="Jump to section, open CV, copy email…"
+          autocomplete="off" spellcheck="false" aria-autocomplete="list"
+          aria-controls="cmd-list"
+        />
+        <kbd class="cmd-esc-hint">Esc</kbd>
+      </div>
+      <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="Commands"></ul>
+    </div>
+  </div>
+
   <!-- Side progress dots — one per section, active = current viewport -->
   <nav class="side-dots" id="side-dots" aria-label="Section progress">
     <!-- Dots injected by JS -->
