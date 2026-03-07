@@ -1425,6 +1425,20 @@ function initBackToTop() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   CURSOR GLOW
+   ═══════════════════════════════════════════════════════════ */
+function initCursorGlow() {
+  /* Skip on touch devices or when the user prefers reduced motion */
+  if (prefersReducedMotion()) return;
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+
+  document.addEventListener('mousemove', (e) => {
+    document.body.style.setProperty('--cursor-x', e.clientX + 'px');
+    document.body.style.setProperty('--cursor-y', e.clientY + 'px');
+  }, { passive: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
    MOBILE MENU TOGGLE
    ═══════════════════════════════════════════════════════════ */
 function initMobileMenu() {
@@ -2518,6 +2532,7 @@ if (typeof document !== 'undefined') {
   initNavbar();
   initMobileMenu();
   initBackToTop();
+  initCursorGlow();
 
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
