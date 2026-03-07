@@ -498,32 +498,6 @@
     </div>
   </section>
 
-  <!-- ═══════════════ BLOG (extensible placeholder) ═══════════════ -->
-  <!--
-    HOW TO ADD A BLOG POST
-    ────────────────────────
-    Open data/blog.js and add an entry to BLOG_POSTS:
-    {
-      title:   "My first post",
-      date:    "2024-12-01",
-      excerpt: "A short summary...",
-      tag:     "Engineering",
-      readMin: 5,
-      url:     "blog/my-first-post.html"   // or a full URL
-    }
-    Cards appear automatically — newest first.
-    Leave BLOG_POSTS = [] to show a "Coming soon" placeholder.
-  -->
-  <section id="blog" class="section" aria-label="Blog">
-    <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Blog</span>
-        <h2 class="section-title">Thoughts &amp; Writing</h2>
-      </header>
-      <div class="blog-grid" id="blog-grid"></div>
-    </div>
-  </section>
-
   <!-- ═══════════════ CONTACT ═══════════════ -->
   <section id="contact" class="section section-alt" aria-label="Contact">
     <div class="container">
@@ -582,6 +556,32 @@
 
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BLOG ═══════════════ -->
+  <!--
+    HOW TO ADD A BLOG POST
+    ────────────────────────
+    Open data/blog.js and add an entry to BLOG_POSTS:
+    {
+      title:   "My first post",
+      date:    "2024-12-01",
+      excerpt: "A short summary...",
+      tag:     "Engineering",
+      readMin: 5,
+      url:     "blog/my-first-post.html"   // or a full URL
+    }
+    Cards appear automatically — newest first.
+    Leave BLOG_POSTS = [] to show a "Coming soon" placeholder.
+  -->
+  <section id="blog" class="section" aria-label="Blog">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Blog</span>
+        <h2 class="section-title">Thoughts &amp; Writing</h2>
+      </header>
+      <div class="blog-grid" id="blog-grid"></div>
     </div>
   </section>
 
