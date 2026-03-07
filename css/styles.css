@@ -586,10 +586,30 @@ h3 {
 /* ─── 8. Section Shared ─────────────────────────────────── */
 .section {
   padding-block: var(--section-py);
+  position: relative;
 }
 
 .section-alt {
   background: var(--bg-alt);
+}
+
+/* Gradient divider lines at section transitions */
+.section + .section-alt::before,
+.section-alt + .section::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-glow) 25%,
+    var(--accent2-glow) 50%,
+    var(--accent-glow) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .section-header {
