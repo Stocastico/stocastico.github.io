@@ -475,6 +475,26 @@ h3 {
   margin-bottom: 1rem;
 }
 
+/* Staggered word reveal — each .tagline-word is set by JS */
+@keyframes tagline-word-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tagline-word {
+  display: inline-block;
+  opacity: 0;
+  animation: tagline-word-up 0.55s var(--ease) forwards;
+}
+
+/* Separator dots keep their original spacing */
+.tagline-sep {
+  display: inline-block;
+  opacity: 0;
+  margin-inline: 0.25em;
+  animation: tagline-word-up 0.55s var(--ease) forwards;
+}
+
 .hero-location {
   display: inline-flex;
   align-items: center;

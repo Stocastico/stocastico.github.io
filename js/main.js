@@ -1425,6 +1425,36 @@ function initBackToTop() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   STAGGERED HERO TAGLINE REVEAL
+   ═══════════════════════════════════════════════════════════ */
+function initTaglineReveal() {
+  if (prefersReducedMotion()) return;
+  const tagline = document.querySelector('.hero-tagline');
+  if (!tagline) return;
+
+  /* Split on the · separator, then further split each phrase into words */
+  const text = tagline.textContent.trim();
+  const parts = text.split('·');
+  let delay = 120; /* ms — start after a brief pause */
+  const STEP = 40;  /* ms per word */
+
+  const spans = [];
+  parts.forEach((phrase, partIdx) => {
+    const words = phrase.trim().split(/\s+/).filter(Boolean);
+    words.forEach(word => {
+      spans.push(`<span class="tagline-word" style="animation-delay:${delay}ms">${word}</span>`);
+      delay += STEP;
+    });
+    if (partIdx < parts.length - 1) {
+      spans.push(`<span class="tagline-sep" style="animation-delay:${delay}ms">·</span>`);
+      delay += STEP;
+    }
+  });
+
+  tagline.innerHTML = spans.join(' ');
+}
+
+/* ═══════════════════════════════════════════════════════════
    CURSOR GLOW
    ═══════════════════════════════════════════════════════════ */
 function initCursorGlow() {
@@ -2533,6 +2563,7 @@ if (typeof document !== 'undefined') {
   initMobileMenu();
   initBackToTop();
   initCursorGlow();
+  initTaglineReveal();
 
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
