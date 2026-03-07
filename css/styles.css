@@ -845,7 +845,12 @@ h3 {
   transition: opacity var(--t-med);
 }
 
-/* hover styles moved to animated-gradient-border block below */
+.research-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-hov);
+  background: var(--bg-card-hov);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
+}
 
 .research-card:hover::before {
   opacity: 1;
@@ -903,35 +908,6 @@ h3 {
   color: var(--text-muted);
   line-height: 1.6;
   max-width: 60ch;
-}
-
-/* ─── Animated gradient border on research cards ─────────── */
-/* Uses @property to animate a conic-gradient angle, clipped to
-   the border-box, while the card background fills padding-box.  */
-@property --card-border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes spin-card-border {
-  to { --card-border-angle: 360deg; }
-}
-
-.research-card:hover {
-  transform: translateY(-6px);
-  border-color: transparent;
-  background:
-    linear-gradient(var(--bg-card-hov), var(--bg-card-hov)) padding-box,
-    conic-gradient(
-      from var(--card-border-angle),
-      var(--accent) 0%,
-      var(--accent2) 40%,
-      var(--accent) 70%,
-      transparent 100%
-    ) border-box;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 30px var(--accent-glow);
-  animation: spin-card-border 3s linear infinite;
 }
 
 /* ─── 11. Publications Section ──────────────────────────── */
