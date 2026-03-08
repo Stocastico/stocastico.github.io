@@ -1012,11 +1012,51 @@ h3 {
   text-align: center;
 }
 
-/* ─── 12. Skills Section ────────────────────────────────── */
+/* ─── 12. Skills Section — sticky header layout ──────────── */
+/* Apple-style sticky storytelling: the header pins in place
+   while skill groups scroll past on the right.               */
+.skills-split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.skills-sticky-header {
+  position: sticky;
+  top: calc(var(--nav-h) + 2rem);
+}
+
+.section-header--left {
+  text-align: left;
+}
+
+.skills-sticky-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  max-width: 26ch;
+  line-height: 1.6;
+}
+
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--gap);
+}
+
+@media (max-width: 900px) {
+  .skills-split {
+    grid-template-columns: 1fr;
+  }
+
+  .skills-sticky-header {
+    position: static;
+  }
+
+  .section-header--left {
+    text-align: center;
+  }
 }
 
 .skill-group {

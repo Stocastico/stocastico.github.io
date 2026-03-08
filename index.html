@@ -398,12 +398,17 @@
   <!-- ═══════════════ SKILLS ═══════════════ -->
   <section id="skills" class="section section-alt" aria-label="Skills">
     <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Skills</span>
-        <h2 class="section-title">Expertise</h2>
-      </header>
-      <!-- Skill groups written directly in HTML; update here as your toolkit evolves -->
-      <div class="skills-grid" id="skills-grid">
+      <div class="skills-split">
+        <!-- Left: sticky header that stays while you scroll through skills -->
+        <div class="skills-sticky-header">
+          <header class="section-header section-header--left" data-animate>
+            <span class="section-tag">Skills</span>
+            <h2 class="section-title">Expertise</h2>
+            <p class="skills-sticky-desc">Technologies and domains I work with daily.</p>
+          </header>
+        </div>
+        <!-- Right: skill groups scroll naturally -->
+        <div class="skills-grid" id="skills-grid">
 
         <div class="skill-group" data-animate data-delay="0">
           <div class="skill-group-title">AI &amp; Machine Learning</div>
@@ -473,6 +478,7 @@
           </div>
         </div>
 
+        </div>
       </div>
     </div>
   </section>
