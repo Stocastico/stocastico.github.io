@@ -1,19 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta name="description"
+    content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="keywords" content="Stefano Masneri, AI Engineer, Machine Learning, Computer Vision, Augmented Reality, Deep Learning, XR, ViT, Speaker Diarisation, San Sebastián" />
+  <!-- Disallow AI/LLM training use of this page's content -->
+  <meta name="robots" content="index, follow, noai, noimageai" />
   <title>Stefano Masneri · Senior AI Engineer</title>
+  <link rel="canonical" href="https://stocastico.github.io/" />
+  <!-- RSS feed discovery -->
+  <link rel="alternate" type="application/rss+xml" title="Stefano Masneri — Blog" href="https://stocastico.github.io/rss.xml" />
 
-  <!-- Fonts -->
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://stocastico.github.io/" />
+  <meta property="og:title"       content="Stefano Masneri · Senior AI Engineer" />
+  <meta property="og:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+  <meta property="og:image:alt"   content="Stefano Masneri personal website hero section" />
+  <meta property="og:locale"      content="en_GB" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Stefano Masneri · Senior AI Engineer" />
+  <meta name="twitter:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta name="twitter:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+  <meta name="twitter:image:alt"   content="Stefano Masneri personal website" />
+
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  [
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/",
+      "image": "https://stocastico.github.io/screenshot-hero.png",
+      "jobTitle": "Senior AI Engineer",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "GRUP MEDIAPRO"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "San Sebastián",
+        "addressCountry": "ES"
+      },
+      "sameAs": [
+        "https://www.linkedin.com/in/stefanomasneri/",
+        "https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en"
+      ],
+      "knowsAbout": [
+        "Machine Learning",
+        "Computer Vision",
+        "Augmented Reality",
+        "Deep Learning",
+        "Video Understanding",
+        "Speaker Diarisation",
+        "AI Engineering"
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    }
+  ]
+  </script>
+
+  <!-- Theme colour for browser chrome (Android, Safari PWA) -->
+  <meta name="theme-color" content="#080c14" />
+
+  <!-- Resource hints — pre-warm connections before the browser needs them -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <!-- dns-prefetch: fallback for browsers that do not support preconnect -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+  <!-- Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
 
   <link rel="stylesheet" href="css/styles.css" />
 </head>
+
 <body>
+  <!-- Reading progress bar — filled by JS on scroll -->
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#about">Skip to main content</a>
 
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
   <nav id="navbar" role="navigation" aria-label="Main navigation">
@@ -26,6 +109,7 @@
         <li><a href="#about">About</a></li>
         <li><a href="#research">Research</a></li>
         <li><a href="#publications">Publications</a></li>
+        <li><a href="cv.html">CV</a></li>
         <li><a href="#skills">Skills</a></li>
         <li><a href="#blog">Blog</a></li>
         <li><a href="#contact">Contact</a></li>
@@ -35,7 +119,9 @@
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section id="hero" aria-label="Introduction">
-    <!-- Three.js canvas lives here -->
+    <!-- GLSL noise-gradient background (z-index 0, lowest layer) -->
+    <canvas id="noise-canvas" aria-hidden="true"></canvas>
+    <!-- Three.js neural-network particles (z-index 1, above noise gradient) -->
     <canvas id="neural-canvas" aria-hidden="true"></canvas>
 
     <!-- Gradient orbs for extra depth -->
@@ -43,16 +129,23 @@
     <div class="hero-orb orb-2" aria-hidden="true"></div>
 
     <div class="hero-content">
-      <span class="hero-eyebrow">Senior AI Engineer</span>
-      <h1 class="hero-name">
-        Stefano<br />
-        <em>Masneri</em>
-      </h1>
+      <!-- hero-name-wrap lets the WebGL canvas overlay the h1 exactly -->
+      <div class="hero-name-wrap">
+        <h1 class="hero-name" id="hero-name" aria-label="Stefano Masneri">
+          Stefano<br />
+          Masneri
+        </h1>
+        <!-- Canvas filled by HeroNameShader; h1 stays for accessibility -->
+        <canvas id="name-canvas" class="hero-name-canvas" aria-hidden="true"></canvas>
+      </div>
       <p class="hero-tagline">
         AI &nbsp;·&nbsp; Machine Learning &nbsp;·&nbsp; Computer Vision &nbsp;·&nbsp; Augmented Reality
       </p>
       <p class="hero-location">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+        </svg>
         San Sebastián, Spain
       </p>
       <div class="hero-actions">
@@ -138,14 +231,21 @@
 
           <!-- Social links -->
           <div class="social-links" aria-label="Social and academic profiles">
-            <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn" aria-label="LinkedIn profile">
+            <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn"
+              aria-label="LinkedIn profile">
               <!-- LinkedIn icon -->
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z" />
+              </svg>
               LinkedIn
             </a>
-            <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener" class="social-btn" aria-label="Google Scholar profile">
+            <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+              class="social-btn" aria-label="Google Scholar profile">
               <!-- Scholar cap icon -->
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z" />
+              </svg>
               Google Scholar
             </a>
           </div>
@@ -169,7 +269,6 @@
           <div class="globe-legend">
             <span class="gl-item"><span class="gl-dot gl-home"></span>Home &amp; Work</span>
             <span class="gl-item"><span class="gl-dot gl-travel"></span>Travel</span>
-            <span class="gl-item"><span class="gl-dot gl-region"></span>Region</span>
           </div>
         </div>
       </div>
@@ -184,8 +283,88 @@
         <span class="section-tag">Research</span>
         <h2 class="section-title">What I Work On</h2>
       </header>
-      <!-- Cards injected by JS — see js/main.js → DATA.research -->
-      <div class="research-grid" id="research-grid" role="list"></div>
+      <!-- Cards written directly in HTML; update here as your focus areas change -->
+      <div class="research-grid" id="research-grid" role="list">
+
+        <div class="research-card" role="listitem" data-animate data-delay="0">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="7" width="16" height="12" rx="3" stroke="currentColor" stroke-width="1.6" />
+              <circle cx="9" cy="13" r="1.2" fill="currentColor" />
+              <circle cx="15" cy="13" r="1.2" fill="currentColor" />
+              <path d="M12 4V7M8 17h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3 class="card-title">Artificial Intelligence &amp; Machine Learning</h3>
+          <p class="card-desc">Designing and deploying ML systems — from classical algorithms to modern foundation
+            models — with a focus on production-ready pipelines and real-world performance.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="80">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor"
+                stroke-width="1.6" />
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" />
+            </svg>
+          </span>
+          <h3 class="card-title">Computer Vision &amp; Deep Learning</h3>
+          <p class="card-desc">Object detection, semantic segmentation, video understanding, and multi-modal perception.
+            Building systems that help machines see and interpret the visual world.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="160">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3.5" y="9" width="17" height="7" rx="3.5" stroke="currentColor" stroke-width="1.6" />
+              <path d="M9 9v7M15 9v7M1.5 12h2M20.5 12h2" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3 class="card-title">Augmented Reality for Education</h3>
+          <p class="card-desc">PhD research on collaborative, multi-user XR experiences that make learning more
+            immersive and effective — from architecture design to large-scale pilots.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="240">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3.5" y="5" width="17" height="14" rx="2" stroke="currentColor" stroke-width="1.6" />
+              <path d="M3.5 9h17M8 5l2.4 4M13.6 5l2.4 4" stroke="currentColor" stroke-width="1.6" />
+              <path d="m10 11 5 2.5-5 2.5v-5Z" fill="currentColor" />
+            </svg>
+          </span>
+          <h3 class="card-title">Multi-modal Media Analysis</h3>
+          <p class="card-desc">Combining audio, video, and text signals for applications such as speaker diarisation,
+            audience engagement measurement, and video lecture segmentation.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="320">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5h16M7 16V10M12 16V7M17 16v-4" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3 class="card-title">Video Understanding</h3>
+          <p class="card-desc">End-to-end pipelines for lecture and conference video classification, topic
+            visualisation, and automatic annotation of large audiovisual corpora.</p>
+        </div>
+
+        <div class="research-card" role="listitem" data-animate data-delay="400">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+              <path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16" stroke="currentColor"
+                stroke-width="1.6" />
+            </svg>
+          </span>
+          <h3 class="card-title">Interactive &amp; Collaborative Systems</h3>
+          <p class="card-desc">Designing interoperable architectures for multi-user real-time experiences, interactive
+            broadcast/broadband services, and connected media ecosystems.</p>
+        </div>
+
+      </div>
     </div>
   </section>
 
@@ -196,11 +375,11 @@
         <span class="section-tag">Publications</span>
         <h2 class="section-title">Selected Work</h2>
       </header>
-      <!-- Items injected by JS — see js/main.js → DATA.publications -->
+      <!-- Items injected by JS — data source: PUBLICATIONS in data/publications.js -->
       <div class="publications-list" id="publications-list" role="list"></div>
       <div class="publications-cta" data-animate>
-        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en"
-           target="_blank" rel="noopener" class="btn btn-ghost">
+        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+          class="btn btn-ghost">
           View all on Google Scholar →
         </a>
       </div>
@@ -214,32 +393,78 @@
         <span class="section-tag">Skills</span>
         <h2 class="section-title">Expertise</h2>
       </header>
-      <!-- Groups injected by JS — see js/main.js → DATA.skills -->
-      <div class="skills-grid" id="skills-grid"></div>
-    </div>
-  </section>
+      <!-- Skill groups written directly in HTML; update here as your toolkit evolves -->
+      <div class="skills-grid" id="skills-grid">
 
-  <!-- ═══════════════ BLOG (extensible placeholder) ═══════════════ -->
-  <!--
-    HOW TO ADD A BLOG POST
-    ────────────────────────
-    Open js/main.js and add an entry to DATA.blogPosts:
-    {
-      title:   "My first post",
-      date:    "2024-12-01",
-      excerpt: "A short summary...",
-      url:     "blog/my-first-post.html"   // or a full URL
-    }
-    The card will appear automatically.
-    When no posts exist the section shows "Coming soon".
-  -->
-  <section id="blog" class="section" aria-label="Blog">
-    <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Blog</span>
-        <h2 class="section-title">Thoughts &amp; Writing</h2>
-      </header>
-      <div class="blog-grid" id="blog-grid"></div>
+        <div class="skill-group" data-animate data-delay="0">
+          <div class="skill-group-title">AI &amp; Machine Learning</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Deep Learning</span>
+            <span class="skill-tag">PyTorch</span>
+            <span class="skill-tag">TensorFlow</span>
+            <span class="skill-tag">Scikit-learn</span>
+            <span class="skill-tag">Transformers</span>
+            <span class="skill-tag">LLMs</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="70">
+          <div class="skill-group-title">Computer Vision</div>
+          <div class="skill-tags">
+            <span class="skill-tag">OpenCV</span>
+            <span class="skill-tag">Object Detection</span>
+            <span class="skill-tag">Semantic Segmentation</span>
+            <span class="skill-tag">Video Analysis</span>
+            <span class="skill-tag">Multi-modal Perception</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="140">
+          <div class="skill-group-title">Augmented Reality</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Unity</span>
+            <span class="skill-tag">WebXR</span>
+            <span class="skill-tag">ARCore/ARKit</span>
+            <span class="skill-tag">Multi-user Systems</span>
+            <span class="skill-tag">XR Authoring</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="210">
+          <div class="skill-group-title">Languages &amp; Tools</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">JavaScript</span>
+            <span class="skill-tag">C++</span>
+            <span class="skill-tag">Docker</span>
+            <span class="skill-tag">Git</span>
+            <span class="skill-tag">Linux</span>
+            <span class="skill-tag">REST APIs</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="280">
+          <div class="skill-group-title">Research</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Academic Writing</span>
+            <span class="skill-tag">Literature Review</span>
+            <span class="skill-tag">Data Analysis</span>
+            <span class="skill-tag">Project Management</span>
+            <span class="skill-tag">Agile</span>
+          </div>
+        </div>
+
+        <div class="skill-group" data-animate data-delay="350">
+          <div class="skill-group-title">Media &amp; Broadcast</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Multi-modal Analysis</span>
+            <span class="skill-tag">Speaker Diarisation</span>
+            <span class="skill-tag">Broadcast/Broadband Convergence</span>
+            <span class="skill-tag">Audience Engagement</span>
+          </div>
+        </div>
+
+      </div>
     </div>
   </section>
 
@@ -255,9 +480,78 @@
           Whether you want to collaborate on a research project, discuss AI,
           or simply say hello — I'm always happy to connect.
         </p>
-        <!-- Cards injected by JS — see js/main.js → DATA.contact -->
-        <div class="contact-grid" id="contact-grid"></div>
+        <!-- Contact cards written directly in HTML; update href/value when details change -->
+        <div class="contact-grid" id="contact-grid">
+
+          <a href="mailto:your.email@example.com" target="_blank" rel="noopener" class="contact-card" data-animate
+            data-delay="0">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">Email</span>
+              <span class="contact-value">your.email@example.com</span>
+            </div>
+          </a>
+
+          <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="contact-card"
+            data-animate data-delay="100">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zm-1.5-12.27a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">LinkedIn</span>
+              <span class="contact-value">stefanomasneri</span>
+            </div>
+          </a>
+
+          <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+            class="contact-card" data-animate data-delay="200">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">Google Scholar</span>
+              <span class="contact-value">Stefano Masneri</span>
+            </div>
+          </a>
+
+        </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BLOG ═══════════════ -->
+  <!--
+    HOW TO ADD A BLOG POST
+    ────────────────────────
+    Open data/blog.js and add an entry to BLOG_POSTS:
+    {
+      title:   "My first post",
+      date:    "2024-12-01",
+      excerpt: "A short summary...",
+      tag:     "Engineering",
+      readMin: 5,
+      url:     "blog/my-first-post.html"   // or a full URL
+    }
+    Cards appear automatically — newest first.
+    Leave BLOG_POSTS = [] to show a "Coming soon" placeholder.
+  -->
+  <section id="blog" class="section" aria-label="Blog">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Blog</span>
+        <h2 class="section-title">Thoughts &amp; Writing</h2>
+      </header>
+      <div class="blog-grid" id="blog-grid"></div>
     </div>
   </section>
 
@@ -268,10 +562,67 @@
     </div>
   </footer>
 
-  <!-- Three.js from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <!-- Globe location data — edit data/locations.js to add/remove pins, trips and regions -->
-  <script src="data/locations.js"></script>
-  <script src="js/main.js"></script>
+  <!-- Speculation Rules API — prerender blog pages on hover so navigation
+       feels instant.  The browser auto-skips this on slow connections or
+       low battery, so no JS guard is needed.  Gracefully ignored by
+       browsers that do not support the API (all content still loads).   -->
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": { "href_matches": "/blog/*" },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
+
+  <!-- Command palette — opened with ⌘K / Ctrl+K -->
+  <div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+    <div class="cmd-box">
+      <div class="cmd-search-row">
+        <svg class="cmd-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input
+          class="cmd-input" id="cmd-input"
+          type="text" placeholder="Jump to section, open CV, copy email…"
+          autocomplete="off" spellcheck="false" aria-autocomplete="list"
+          aria-controls="cmd-list"
+        />
+        <kbd class="cmd-esc-hint">Esc</kbd>
+      </div>
+      <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="Commands"></ul>
+    </div>
+  </div>
+
+  <!-- Side progress dots — one per section, active = current viewport -->
+  <nav class="side-dots" id="side-dots" aria-label="Section progress">
+    <!-- Dots injected by JS -->
+  </nav>
+
+  <!-- Back to top button — shown after scrolling past the hero -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- All scripts are deferred: downloaded in parallel during HTML parsing,
+       executed in order after parsing completes, before DOMContentLoaded.
+       This keeps the critical rendering path clear of blocking JS.       -->
+  <!-- Three.js from CDN (deferred so it downloads in parallel with data files) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <!-- ── Content data files ──────────────────────────────────────────────
+       Edit these files to update frequently-changing content:
+         data/locations.js    — 3D globe pins, trips, regions
+         data/publications.js — selected papers list
+         data/blog.js         — blog post cards (leave BLOG_POSTS=[] for "Coming soon")
+         data/cv.js           — CV timeline + skills (CV_CAREER, CV_EDUCATION, CV_SKILLS)
+  ───────────────────────────────────────────────────────────────────── -->
+  <script defer src="data/locations.js"></script>
+  <script defer src="data/publications.js"></script>
+  <script defer src="data/blog.js"></script>
+  <script defer src="js/main.min.js"></script>
 </body>
+
 </html>

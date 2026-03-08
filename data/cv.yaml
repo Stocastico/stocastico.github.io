@@ -1,0 +1,158 @@
+# cv.yaml — Curriculum Vitae
+# ─────────────────────────────────────────────────────────────────────────────
+# Edit this file, then regenerate data/cv.js by running:
+#
+#   node scripts/generate-cv.js      (or: npm run generate-cv)
+#
+# Supported YAML features: plain/quoted strings, block scalars (| and >),
+# sequences (- item), nested mappings, comments, null / true / false / numbers.
+# Unsupported: anchors (&/*), flow syntax ({ } [ ] with commas).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Career ───────────────────────────────────────────────────────────────────
+# Required:  year, role, company
+# Optional:  location, description, tags
+career:
+  - year: "2024 – present"
+    role: Senior AI Engineer
+    company: MediaPro
+    location: "Donostia, ES"
+    description: >
+      Designed and deployed GenAI solutions for audiovisual production,
+      including automatic detection of commercial in live sport events. Developed computer vision pipelines for
+      3D reconstruction using NeRFs and Gaussian Splats, later adopted by
+      Virtual Production to cut shooting costs. Transitioned research PoCs
+      into production workflows.
+    tags:
+      - GenAI
+      - LLMs
+      - NeRF
+      - Gaussian Splatting
+      - Computer Vision
+      - Python
+
+  - year: "2022 – 2024"
+    role: Technical Manager
+    company: NTT DATA
+    location: "Bilbao, ES"
+    description: >
+      Led a 9-person team delivering AI and GenAI projects for banking,
+      media, and energy sector clients. Architected enterprise RAG systems
+      using Azure OpenAI. Mentored the team in GenAI technologies through
+      weekly technical sessions.
+    tags:
+      - Team Management
+      - RAG
+      - Azure OpenAI
+      - GenAI
+      - LangChain
+
+  - year: "2018 – 2022"
+    role: Researcher
+    company: Vicomtech
+    location: "Donostia, ES"
+    description: >
+      Coordinated H2020/Horizon Europe projects with international partners,
+      securing 600k€ in funding. Developed a collaborative AR platform using
+      computer vision and web technologies for educational applications.
+    tags:
+      - Computer Vision
+      - AR
+      - H2020
+      - EU Projects
+      - WebXR
+
+  - year: "2017 – 2018"
+    role: Senior Data Scientist
+    company: AGT International
+    location: "Darmstadt, DE"
+    tags:
+      - Data Science
+      - Machine Learning
+      - Python
+
+  - year: "2015 – 2017"
+    role: Scientific Software Developer
+    company: MPI for Brain Research
+    location: "Frankfurt, DE"
+    tags:
+      - Scientific Computing
+      - Python
+      - Neuroscience
+
+  - year: "2009 – 2015"
+    role: Research Associate
+    company: Fraunhofer Heinrich Hertz Institut
+    location: "Berlin, DE"
+    tags:
+      - Computer Vision
+      - Research
+      - Video Analysis
+
+  - year: "2008 – 2009"
+    role: Research Associate
+    company: CNIT
+    location: "Brescia, IT"
+    tags:
+      - Telecommunications
+      - Research
+
+# ── Education ─────────────────────────────────────────────────────────────────
+# Required:  year, degree, institution
+# Optional:  location, description
+education:
+  - year: "2019 – 2024"
+    degree: "PhD — Computer Science"
+    institution: "Euskal Herriko Unibertsitatea (UPV/EHU)"
+    location: "Bilbao, ES"
+    description: >
+      Thesis: "A Novel Architecture for Collaborative Augmented Reality
+      Experiences for Education." Graduated cum laude.
+
+  - year: "2005 – 2008"
+    degree: "MSc — Telecommunications Engineering"
+    institution: "Università degli Studi di Brescia"
+    location: "Brescia, IT"
+
+  - year: "2000 – 2005"
+    degree: "BSc — Information Technology"
+    institution: "Università degli Studi di Brescia"
+    location: "Brescia, IT"
+
+# ── Skills ────────────────────────────────────────────────────────────────────
+# technical / leadership: name (string) + level (0–100)
+# languages:              name (string) + proficiency (string)
+skills:
+  technical:
+    - name: "GenAI & LLMs (RAG · Fine-tuning · LangChain)"
+      level: 92
+    - name: "Python · PyTorch · TensorFlow"
+      level: 90
+    - name: "Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats)"
+      level: 88
+    - name: "Augmented Reality (ARCore · ARKit · WebXR)"
+      level: 82
+    - name: "MLOps · Docker · CI/CD"
+      level: 90
+    - name: "C++ · OpenCV · CUDA"
+      level: 85
+
+  leadership:
+    - name: Technical team management & mentoring
+      level: 90
+    - name: EU project management & reporting
+      level: 88
+    - name: Technical roadmap & system architecture
+      level: 87
+    - name: Stakeholder & partner communication
+      level: 85
+
+  languages:
+    - name: Italian
+      proficiency: Native
+    - name: English
+      proficiency: "C2 — Proficient"
+    - name: Spanish
+      proficiency: "B2 — Upper-Intermediate"
+    - name: Basque
+      proficiency: "A2 — Elementary"

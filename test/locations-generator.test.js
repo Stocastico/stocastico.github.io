@@ -1,0 +1,81 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const {
+  parseYaml,
+  compileLocations,
+  toLocationsJs,
+} = require('../scripts/generate-locations.js');
+
+test('parseYaml parses the expected locations schema', () => {
+  const parsed = parseYaml(`
+pins:
+  - type: lived
+    name: Crema, Italy
+    info: Home
+trips:
+  - name: Trip A
+    cycleSec: 22
+    cities:
+      - name: Milan, Italy
+        lat: 45.4642
+        lon: 9.19
+      - name: Rome, Italy
+        lat: 41.9028
+        lon: 12.49
+regions:
+  - name: Sardinia, Italy
+    radius: 1.4
+    lat: 40.12
+    lon: 9.07
+`);
+
+  assert.equal(parsed.pins[0].name, 'Crema, Italy');
+  assert.equal(parsed.trips[0].cities[0].name, 'Milan, Italy');
+  assert.equal(parsed.regions[0].radius, 1.4);
+});
+
+test('compileLocations assigns defaults and keeps explicit coordinates', async () => {
+  const source = {
+    pins: [
+      { type: 'lived', name: 'Crema, Italy', lat: 45.36, lon: 9.68, info: 'Home town' },
+      { type: 'unexpected', name: 'Paris, France', lat: 48.8566, lon: 2.3522, info: 'Holiday' },
+    ],
+    trips: [
+      {
+        name: 'Trip A',
+        cities: [
+          { name: 'Milan, Italy', lat: 45.4642, lon: 9.19 },
+          { name: 'Rome, Italy', lat: 41.9028, lon: 12.49 },
+        ],
+      },
+    ],
+    regions: [
+      { name: 'Sardinia, Italy', lat: 40.12, lon: 9.07, radius: 1.4, info: 'Holiday' },
+    ],
+  };
+
+  const compiled = await compileLocations(source, {
+    geocode: false,
+    cache: '/tmp/stocastico-test-cache.json',
+  });
+
+  assert.equal(compiled.geocodeRequests, 0);
+  assert.equal(compiled.pins[1].type, 'travel');
+  assert.equal(compiled.trips[0].color, '#ff6b6b');
+  assert.equal(compiled.regions[0].color, '#ff8c42');
+});
+
+test('toLocationsJs returns executable JS declaration', () => {
+  const js = toLocationsJs(
+    {
+      pins: [{ type: 'lived', name: 'Crema, Italy', lat: 45.36, lon: 9.68, info: 'Home town' }],
+      trips: [],
+      regions: [],
+    },
+    'data/locations.yaml',
+  );
+
+  assert.match(js, /const LOCATIONS =/);
+  assert.match(js, /Crema, Italy/);
+});

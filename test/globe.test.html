@@ -103,7 +103,7 @@
      ════════════════════════════════════════════════════ */
   const LOCATIONS = {
     pins: [
-      /* lived — 2 pins, should each produce a pulse ring */
+      /* lived — 2 pins, should each produce TWO pulse rings */
       { type: 'lived', name: 'San Sebastián, Spain', lat: 43.32, lon: -1.98, info: 'Current home' },
       { type: 'lived', name: 'Crema, Italy',         lat: 45.36, lon:  9.68, info: 'Home town' },
 
@@ -249,10 +249,10 @@
   });
 
   /* Markers */
-  test('[marker] Pulse rings — exactly 2 (one per "lived" pin)', function(t) {
+  test('[marker] Pulse rings — exactly 4 (two per "lived" pin)', function(t) {
     if (!_globe) return skip(t, 'globe not built');
     const n = _globe.pulseRings.length;
-    n === 2 ? pass(t, `${n} pulse rings found`) : fail(t, `expected 2, got ${n}`);
+    n === 4 ? pass(t, `${n} pulse rings found`) : fail(t, `expected 4, got ${n}`);
   });
   test('[marker] Bogus pin not in markerMeshes', function(t) {
     if (!_globe) return skip(t, 'globe not built');

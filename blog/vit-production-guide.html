@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vision Transformers in Production - practical notes by Stefano Masneri." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>Vision Transformers in Production: A Battle-Tested Guide</title>
+  <link rel="canonical" href="https://stocastico.github.io/blog/vit-production-guide.html" />
+
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/blog/vit-production-guide.html" />
+  <meta property="og:title"       content="Vision Transformers in Production: A Battle-Tested Guide" />
+  <meta property="og:description" content="ViT models are powerful, but shipping them has real gotchas. Here is how we brought inference time from 800 ms down to 45 ms." />
+  <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+  <meta property="og:image:alt"   content="Vision Transformers in Production: A Battle-Tested Guide" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta property="og:locale"      content="en_GB" />
+  <meta property="article:author" content="Stefano Masneri" />
+  <meta property="article:published_time" content="2024-09-10" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Vision Transformers in Production: A Battle-Tested Guide" />
+  <meta name="twitter:description" content="ViT models are powerful, but shipping them has real gotchas. Here is how we brought inference time from 800 ms down to 45 ms." />
+  <meta name="twitter:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Vision Transformers in Production: A Battle-Tested Guide",
+    "description": "ViT models are powerful, but shipping them has real gotchas. Here is how we brought inference time from 800 ms down to 45 ms with quantisation, smart batching, and memory layout.",
+    "url": "https://stocastico.github.io/blog/vit-production-guide.html",
+    "datePublished": "2024-09-10",
+    "author": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    },
+    "keywords": ["Vision Transformers", "ViT", "Machine Learning", "Production AI", "Model Optimisation", "Deep Learning"]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <main class="post">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
+      <a href="../index.html#blog" class="btn btn-ghost">← Back to blog</a>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle colour theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+    <p class="post-meta">10 September 2024 · Engineering · 9 min read</p>
+    <h1 class="post-title">Vision Transformers in Production: A Battle-Tested Guide</h1>
+    <p class="post-lead">
+      The challenge is rarely model quality alone. Production constraints decide whether
+      a ViT system survives real traffic.
+    </p>
+    <p>
+      In our deployments, latency spikes came from memory movement and preprocessing, not
+      transformer layers. We reduced total inference time by attacking batching strategy,
+      tensor layout, and post-processing overhead together.
+    </p>
+    <h2>Practical wins</h2>
+    <p>
+      Quantization helped, but only after calibration with representative data slices from
+      the live distribution. Synthetic calibration gave unstable behavior during peaks.
+    </p>
+    <p>
+      Dynamic batching improved throughput, but strict max-wait thresholds were required to
+      avoid tail latency penalties.
+    </p>
+    <h2>What to monitor</h2>
+    <p>
+      Track not only average latency but p95 and p99 per input class. Also monitor fallback
+      rates when confidence thresholds trigger secondary models.
+    </p>
+    <p>
+      Production ViT systems are successful when model, runtime, and observability are
+      designed as one unit.
+    </p>
+  </main>
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var curr = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
+      var bar = document.getElementById('reading-progress');
+      if (bar) window.addEventListener('scroll', function () {
+        var total = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+      }, { passive: true });
+    }());
+  </script>
+</body>
+</html>

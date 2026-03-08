@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Curriculum Vitae of Stefano Masneri — Senior AI Engineer. Work experience and education." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>CV — Stefano Masneri</title>
+  <link rel="canonical" href="https://stocastico.github.io/cv.html" />
+
+  <!-- Open Graph / Twitter Card -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://stocastico.github.io/cv.html" />
+  <meta property="og:title"       content="CV — Stefano Masneri" />
+  <meta property="og:description" content="Work experience and education of Stefano Masneri, Senior AI Engineer." />
+  <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="CV — Stefano Masneri" />
+  <meta name="twitter:description" content="Work experience and education of Stefano Masneri, Senior AI Engineer." />
+
+  <meta name="theme-color" content="#080c14" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#cv-content">Skip to CV content</a>
+
+  <!-- ═══════════════ NAVIGATION ═══════════════ -->
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a class="nav-logo" href="index.html" aria-label="Back to home">SM</a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#research">Research</a></li>
+        <li><a href="index.html#publications">Publications</a></li>
+        <li><a href="cv.html" class="active">CV</a></li>
+        <li><a href="index.html#skills">Skills</a></li>
+        <li><a href="index.html#blog">Blog</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ CV PAGE CONTENT ═══════════════ -->
+  <main id="cv-content" class="section cv-page" aria-label="Curriculum Vitae">
+    <div class="container">
+
+      <header class="section-header" data-animate>
+        <a href="index.html" class="cv-back-link">&larr; Back to Home</a>
+        <span class="section-tag">Curriculum Vitae</span>
+        <h1 class="section-title">Experience &amp; Education</h1>
+      </header>
+
+      <!-- ── Two-column layout: Work | Education ── -->
+      <div class="cv-columns">
+
+        <!-- Left column: Work Experience -->
+        <div class="cv-column cv-column--career">
+          <h2 class="cv-column-title">
+            <span class="cv-column-icon cv-column-icon--career" aria-hidden="true"></span>
+            Work Experience
+          </h2>
+          <div class="timeline-track" id="cv-career-list" aria-label="Work experience timeline"></div>
+        </div>
+
+        <!-- Right column: Education -->
+        <div class="cv-column cv-column--education">
+          <h2 class="cv-column-title">
+            <span class="cv-column-icon cv-column-icon--education" aria-hidden="true"></span>
+            Education
+          </h2>
+          <div class="timeline-track" id="cv-education-list" aria-label="Education timeline"></div>
+        </div>
+
+      </div><!-- /.cv-columns -->
+
+      <!-- ── Skills breakdown ─────────────────────────────── -->
+      <div id="cv-skills" class="cv-skills-section"></div>
+
+    </div><!-- /.container -->
+  </main>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with care in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <!-- Back to top button -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script defer src="data/cv.js"></script>
+  <script defer src="js/main.min.js"></script>
+</body>
+
+</html>

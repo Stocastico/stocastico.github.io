@@ -1,0 +1,97 @@
+# Source of truth for globe content.
+# Run: ./scripts/update-locations.sh
+
+pins:
+  - type: lived
+    name: Brescia, Italy
+    info: Home town
+  - type: lived
+    name: Berlin, Germany
+    info: Worked there for 6 years
+  - type: lived
+    name: Frankfurt, Germany
+    info: Worked there for 3 years
+  - type: lived
+    name: San Sebastián, Spain
+    info: Current home
+
+  - type: work
+    name: Bilbao, Spain
+    info: Vicomtech Foundation
+  - type: work
+    name: Barcelona, Spain
+    info: GRUP MEDIAPRO HQ
+  - type: work
+    name: Madrid, Spain
+    info: Conferences
+  - type: work
+    name: Berlin, Germany
+    info: Fraunhofer HHI
+  - type: work
+    name: Amsterdam, Netherlands
+    info: IBC Show
+  - type: work
+    name: London, UK
+    info: Research visits
+  - type: work
+    name: Milan, Italy
+    info: Conferences
+  - type: work
+    name: New York, USA
+    info: Research conference
+  - type: work
+    name: Tokyo, Japan
+    info: Research visit
+
+  - type: travel
+    name: Paris, France
+    info: Holiday
+  - type: travel
+    name: Prague, Czechia
+    info: Holiday
+  - type: travel
+    name: Lisbon, Portugal
+    info: Holiday
+  - type: travel
+    name: Vienna, Austria
+    info: Holiday
+  - type: travel
+    name: Dubrovnik, Croatia
+    info: Holiday
+  - type: travel
+    name: Reykjavik, Iceland
+    info: Holiday
+
+trips:
+  - name: Japan 2023
+    cycleSec: 24
+    cities:
+      - Tokyo, Japan
+      - Nikko, Japan
+      - Kyoto, Japan
+      - Osaka, Japan
+      - Hiroshima, Japan
+      - Tokyo, Japan
+
+  - name: East Coast USA 2022
+    cycleSec: 18
+    cities:
+      - New York, USA
+      - Philadelphia, USA
+      - Washington, USA
+      - Boston, USA
+      - New York, USA
+
+regions:
+  - name: Tenerife, Spain
+    radius: 1.2
+    info: Canary Islands - holiday
+  - name: Mallorca, Spain
+    radius: 1.0
+    info: Balearic Islands - holiday
+  - name: Sardinia, Italy
+    radius: 1.4
+    info: Holiday
+  - name: Corsica, France
+    radius: 1.0
+    info: Holiday
