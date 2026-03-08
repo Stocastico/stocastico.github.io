@@ -1957,9 +1957,8 @@ function initScroll3D() {
   if (prefersReducedMotion()) return;
   if (typeof document === 'undefined') return;
 
-  /* Alternate entrance angles: even cards lean right, odd lean left */
-  Array.from(document.querySelectorAll('.research-card[data-animate]'))
-    .forEach((card, i) => card.style.setProperty('--card-init-ry', `${i % 2 === 0 ? '14' : '-14'}deg`));
+  /* Research cards now use a horizontal carousel with translateX entrance,
+     so the old rotateY entrance angles are no longer needed. */
 
   /* Hero parallax — skip on touch devices to prevent scroll jank on mobile */
   if (typeof window === 'undefined') return;

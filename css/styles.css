@@ -65,15 +65,16 @@
   --nav-h: 68px;
 }
 
-/* ─── 1b. 3-D entrance for research cards ───────────────── */
-/* Overrides the generic translateY(30px) entrance with a rotateY slant.
-   --card-init-ry is set per-card by initScroll3D() (+14deg / -14deg alternating). */
+/* ─── 1b. Entrance for research cards ───────────────────── */
+/* Cards slide in from the right when they enter the viewport. */
 .research-card[data-animate]:not(.visible) {
-  transform: perspective(1000px) rotateY(var(--card-init-ry, 14deg)) translateY(20px);
+  opacity: 0;
+  transform: translateX(40px);
 }
 
 .research-card[data-animate].visible {
-  transform: perspective(1000px) rotateY(0deg) translateY(0);
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ─── 2. Reset & Base ────────────────────────────────────── */
@@ -173,6 +174,13 @@ h3 {
 /* ─── 4. Layout Helpers ─────────────────────────────────── */
 .container {
   max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 3rem);
+}
+
+/* Wide container variant — allows carousel to use more horizontal space */
+.container--wide {
+  max-width: calc(var(--container) + 6rem);
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 5vw, 3rem);
 }
@@ -817,11 +825,28 @@ h3 {
   background: rgba(108, 99, 255, 0.08);
 }
 
-/* ─── 10. Research Section ──────────────────────────────── */
+/* ─── 10. Research Section — horizontal carousel ──────── */
+/* Stripe-style horizontal scroll with CSS scroll-snap.
+   No JS animation loop — hardware-accelerated native scroll. */
 .research-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
   gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(1.25rem, 5vw, 3rem);
+  -webkit-overflow-scrolling: touch;
+  /* hide scrollbar but keep scroll behaviour */
+  scrollbar-width: none;
+  padding-bottom: 1rem;  /* space for shadow on hover */
+}
+
+.research-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.research-grid > .research-card {
+  flex: 0 0 clamp(280px, 30vw, 360px);
+  scroll-snap-align: start;
 }
 
 .research-card {
