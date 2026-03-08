@@ -2543,12 +2543,14 @@ class HeroNameShader {
 /* ═══════════════════════════════════════════════════════════
    HERO BACKGROUND — GLSL NOISE GRADIENT
    Domain-warped fBm shader: indigo-violet ↔ cyan ↔ deep dark.
+   Renders a small burst of frames to produce a nice noise
+   pattern, then stops — no continuous animation loop.
    ═══════════════════════════════════════════════════════════ */
 class NoiseGradient {
   constructor(canvas) {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
-             || canvas.getContext('experimental-webgl', { alpha: false, depth: false });
+    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: true })
+             || canvas.getContext('experimental-webgl', { alpha: false, depth: false, preserveDrawingBuffer: true });
     if (!gl) { canvas.style.display = 'none'; return; }
     this.gl = gl;
     this._setup();
@@ -2556,7 +2558,7 @@ class NoiseGradient {
     window.addEventListener('resize', () => this._resize(), { passive: true });
     this._startTime = performance.now();
     this._lastT     = 0;
-    this._targetFps = 20; /* background; 20fps is plenty */
+    this._framesLeft = 3; /* render a few frames then stop */
     this._tick      = this._tick.bind(this);
     this._raf       = requestAnimationFrame(this._tick);
   }
@@ -2650,15 +2652,16 @@ class NoiseGradient {
   }
 
   _tick(now) {
+    if (this._framesLeft <= 0) { this._raf = null; return; }
     this._raf = requestAnimationFrame(this._tick);
     if (document.hidden) return;
-    if (now - this._lastT < 1000 / this._targetFps) return;
     this._lastT = now;
     const t = (now - this._startTime) / 1000;
     const { gl } = this;
     gl.uniform1f(this._uTime, t);
     gl.uniform2f(this._uRes, this.canvas.width, this.canvas.height);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this._framesLeft--;
   }
 
   destroy() {
