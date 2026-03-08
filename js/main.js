@@ -2373,7 +2373,7 @@ class HeroNameShader {
         disp     -= (toM / (md * md + 0.06)) * 0.007;
 
         /* chromatic aberration — 3 wavelengths offset horizontally */
-        float ab = 0.010;
+        float ab = 0.003;
         float aR = texture2D(uTex, clamp(uv + disp + vec2( ab, 0.0), 0.0, 1.0)).a;
         float aG = texture2D(uTex, clamp(uv + disp,                  0.0, 1.0)).a;
         float aB = texture2D(uTex, clamp(uv + disp - vec2( ab, 0.0), 0.0, 1.0)).a;
