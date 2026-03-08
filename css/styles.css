@@ -1518,6 +1518,60 @@ h3 {
   }
 }
 
+/* ─── 16d. CV page — two-column layout ───────────────────── */
+
+.cv-page {
+  padding-top: 7rem; /* clear fixed navbar */
+}
+
+.cv-back-link {
+  display:        inline-block;
+  font-size:      0.82rem;
+  color:          var(--accent);
+  text-decoration: none;
+  margin-bottom:  1.5rem;
+  transition:     color var(--t-fast);
+}
+.cv-back-link:hover { color: var(--accent2); }
+
+.cv-columns {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   3rem;
+  align-items:           start;
+}
+
+.cv-column-title {
+  display:        flex;
+  align-items:    center;
+  gap:            0.5rem;
+  font-size:      0.75rem;
+  font-weight:    700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom:  1.5rem;
+}
+
+.cv-column--career .cv-column-title  { color: var(--accent);  }
+.cv-column--education .cv-column-title { color: var(--accent2); }
+
+.cv-column-icon {
+  display:       inline-block;
+  width:         10px;
+  height:        10px;
+  border-radius: 50%;
+}
+.cv-column-icon--career    { background: var(--accent);  box-shadow: 0 0 8px var(--accent-glow); }
+.cv-column-icon--education { background: var(--accent2); box-shadow: 0 0 8px var(--accent2-glow); }
+
+/* On small screens, stack columns vertically */
+@media (max-width: 760px) {
+  .cv-columns {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
 /* ─── 17. Performance: content-visibility ───────────────────
    Skips layout, style, and paint for off-screen sections —
    up to 7× faster initial render on content-heavy pages.
@@ -1530,7 +1584,6 @@ h3 {
 ──────────────────────────────────────────────────────────── */
 #research,
 #publications,
-#cv,
 #skills,
 #blog,
 #contact {

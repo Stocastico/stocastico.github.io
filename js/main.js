@@ -1438,7 +1438,7 @@ function initCommandPalette() {
     { id: 'about',        label: 'About',        hint: 'Who I am' },
     { id: 'research',     label: 'Research',      hint: 'What I work on' },
     { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
-    { id: 'cv',           label: 'CV',            hint: 'Experience & Education' },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
     { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
     { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
     { id: 'blog',         label: 'Blog',          hint: 'Thoughts & Writing' },
@@ -1485,8 +1485,12 @@ function initCommandPalette() {
       hint: s.hint,
       icon: navIcon,
       action() {
-        const el = document.getElementById(s.id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        if (s.href) {
+          window.location.href = s.href;
+        } else {
+          const el = document.getElementById(s.id);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
       },
       group: 'Navigate',
     })),
@@ -2010,16 +2014,11 @@ function initScroll3D() {
    ═══════════════════════════════════════════════════════════ */
 function renderCV() {
   if (typeof document === 'undefined') return;
-  const timelineList = document.getElementById('cv-timeline-list');
-  if (!timelineList) return;
+  const careerList    = document.getElementById('cv-career-list');
+  const educationList = document.getElementById('cv-education-list');
+  if (!careerList || !educationList) return;
   if (typeof CV_CAREER    === 'undefined') return;
   if (typeof CV_EDUCATION === 'undefined') return;
-
-  function parseStartYear(raw) {
-    const txt = String(raw || '');
-    const match = txt.match(/\b(19|20)\d{2}\b/);
-    return match ? parseInt(match[0], 10) : 9999;
-  }
 
   function entryCardHtml(entry, type) {
     const isCareer = type === 'career';
@@ -2051,14 +2050,13 @@ function renderCV() {
       </div>`;
   }
 
-  /* ── Build interleaved timeline (newest first by start year) ── */
-  const all = [
-    ...(CV_CAREER   || []).map(e => ({ type: 'career',    entry: e })),
-    ...(CV_EDUCATION || []).map(e => ({ type: 'education', entry: e })),
-  ].sort((a, b) => parseStartYear(b.entry.year) - parseStartYear(a.entry.year));
+  /* ── Render career and education into separate columns ── */
+  careerList.innerHTML = (CV_CAREER || [])
+    .map(e => entryCardHtml(e, 'career'))
+    .join('');
 
-  timelineList.innerHTML = all
-    .map(({ type, entry }) => entryCardHtml(entry, type))
+  educationList.innerHTML = (CV_EDUCATION || [])
+    .map(e => entryCardHtml(e, 'education'))
     .join('');
 }
 
