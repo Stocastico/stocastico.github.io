@@ -6,8 +6,9 @@
  * Checks:
  *   • Desktop (1280×800) and Mobile (375×812, iPhone-like) viewports
  *   • Hero section, navigation, all major content sections visible
- *   • CV timeline entries rendered
- *   • Skill bars rendered
+ *   • CV timeline entries rendered (on cv.html)
+ *   • Skill groups rendered (on index.html)
+ *   • Skill bars rendered (on cv.html)
  *   • Blog post cards rendered
  *   • No console errors at page load
  *   • Mobile nav hamburger works
@@ -89,9 +90,9 @@ console.log(`\nPlaywright UI tests — serving from ${BASE}\n`);
 
 const browser = await chromium.launch({ headless: true });
 
-// ─── Desktop tests ────────────────────────────────────────────────────────────
+// ─── Desktop tests (index.html) ──────────────────────────────────────────────
 
-console.log('── Desktop (1280×800) ──────────────────────────────────');
+console.log('── Desktop (1280×800) — index.html ────────────────────');
 {
   const ctx  = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
@@ -133,29 +134,16 @@ console.log('── Desktop (1280×800) ─────────────�
     assert(el !== null, '#about not found');
   });
 
-  await test('CV timeline has career entries', async () => {
-    /* Scroll to the CV section to trigger content-visibility rendering */
-    await page.evaluate(() => document.getElementById('cv')?.scrollIntoView());
-    await page.waitForTimeout(300);
-    const entries = await page.$$('.tl-entry--career');
-    assert(entries.length >= 1, `Career entries: ${entries.length}`);
-  });
-
-  await test('CV timeline has education entries', async () => {
-    const entries = await page.$$('.tl-entry--education');
-    assert(entries.length >= 1, `Education entries: ${entries.length}`);
-  });
-
-  await test('Skill panels are rendered', async () => {
+  await test('Skill groups are rendered', async () => {
     await page.evaluate(() => document.getElementById('skills')?.scrollIntoView());
     await page.waitForTimeout(300);
-    const panels = await page.$$('.skill-panel');
-    assert(panels.length >= 1, `Skill panels: ${panels.length}`);
+    const groups = await page.$$('.skill-group');
+    assert(groups.length >= 1, `Skill groups: ${groups.length}`);
   });
 
-  await test('Skill bars are present', async () => {
-    const bars = await page.$$('.skill-bar-fill');
-    assert(bars.length >= 3, `Skill bars: ${bars.length}`);
+  await test('Skill tags are present', async () => {
+    const tags = await page.$$('.skill-tag');
+    assert(tags.length >= 3, `Skill tags: ${tags.length}`);
   });
 
   await test('Blog section is present', async () => {
@@ -184,28 +172,78 @@ console.log('── Desktop (1280×800) ─────────────�
     assert(btn === null, '.theme-btn should not exist');
   });
 
-  await test('CV timeline shows year markers from current year to 2000', async () => {
-    await page.evaluate(() => document.getElementById('cv')?.scrollIntoView());
-    await page.waitForTimeout(300);
-    const currentYear = new Date().getFullYear();
-    const yearNow = await page.$(`.tl-year-marker[data-year="${currentYear}"]`);
-    const year2000 = await page.$('.tl-year-marker[data-year="2000"]');
-    assert(yearNow !== null, `Missing year marker for ${currentYear}`);
-    assert(year2000 !== null, 'Missing year marker for 2000');
-  });
-
-  await test('CV timeline keeps concurrent career and education in two columns', async () => {
-    const row = await page.$('.tl-year-row:has(.tl-year-marker[data-year="2014"])');
-    assert(row !== null, 'Missing 2014 timeline row');
-    const careerEntries = await row.$$('.tl-year-col--career .tl-entry--career');
-    const eduEntries = await row.$$('.tl-year-col--education .tl-entry--education');
-    assert(careerEntries.length >= 1, 'Missing career entry in 2014 row');
-    assert(eduEntries.length >= 1, 'Missing education entry in 2014 row');
-  });
-
   await test('No JS errors at page load', async () => {
     const relevant = consoleErrors.filter(e =>
       !e.includes('Failed to load resource')    /* CDN may not resolve in test env */
+      && !e.includes('net::ERR')
+      && !e.includes('favicon')
+    );
+    assert(relevant.length === 0, `JS errors:\n  ${relevant.join('\n  ')}`);
+  });
+
+  await ctx.close();
+}
+
+// ─── Desktop tests (cv.html) ─────────────────────────────────────────────────
+
+console.log('\n── Desktop (1280×800) — cv.html ────────────────────────');
+{
+  const ctx  = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+
+  const consoleErrors = [];
+  page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+  page.on('pageerror', err => consoleErrors.push(err.message));
+
+  await page.goto(`${BASE}/cv.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+
+  await test('CV page title contains "CV"', async () => {
+    const title = await page.title();
+    assert(title.includes('CV'), `Got title: "${title}"`);
+  });
+
+  await test('CV timeline has career entries', async () => {
+    const entries = await page.$$('.tl-row--career');
+    assert(entries.length >= 1, `Career entries: ${entries.length}`);
+  });
+
+  await test('CV timeline has education entries', async () => {
+    const entries = await page.$$('.tl-row--education');
+    assert(entries.length >= 1, `Education entries: ${entries.length}`);
+  });
+
+  await test('CV timeline uses two-column layout', async () => {
+    const row = await page.$('.tl-row--career');
+    assert(row !== null, 'No career row found');
+    const left = await row.$('.tl-left');
+    const right = await row.$('.tl-right');
+    const spine = await row.$('.tl-spine');
+    assert(left !== null, 'Missing .tl-left column');
+    assert(right !== null, 'Missing .tl-right column');
+    assert(spine !== null, 'Missing .tl-spine');
+  });
+
+  await test('CV timeline shows year labels', async () => {
+    const years = await page.$$('.tl-year');
+    assert(years.length >= 2, `Year labels found: ${years.length}`);
+  });
+
+  await test('Skill panels are rendered on CV page', async () => {
+    await page.evaluate(() => document.getElementById('cv-skills')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    const panels = await page.$$('.skill-panel');
+    assert(panels.length >= 1, `Skill panels: ${panels.length}`);
+  });
+
+  await test('Skill bars are present on CV page', async () => {
+    const bars = await page.$$('.skill-bar-fill');
+    assert(bars.length >= 3, `Skill bars: ${bars.length}`);
+  });
+
+  await test('No JS errors on CV page', async () => {
+    const relevant = consoleErrors.filter(e =>
+      !e.includes('Failed to load resource')
       && !e.includes('net::ERR')
       && !e.includes('favicon')
     );
@@ -264,25 +302,28 @@ console.log('\n── Mobile (375×812, touch) ───────────
     await page.waitForTimeout(200);
   });
 
-  await test('CV timeline visible on mobile', async () => {
-    await page.evaluate(() => document.getElementById('cv')?.scrollIntoView());
-    await page.waitForTimeout(400);
-    const entries = await page.$$('.tl-entry--career');
-    assert(entries.length >= 1, `Career entries on mobile: ${entries.length}`);
-  });
-
-  await test('Timeline shows both career and education on mobile', async () => {
-    const career = await page.$$('.tl-entry--career');
-    const edu    = await page.$$('.tl-entry--education');
-    assert(career.length >= 1, `No career entries on mobile`);
-    assert(edu.length >= 1,    `No education entries on mobile`);
-  });
-
   await test('No JS errors on mobile', async () => {
     const relevant = mobileErrors.filter(e =>
       !e.includes('Failed to load resource') && !e.includes('net::ERR') && !e.includes('favicon')
     );
     assert(relevant.length === 0, `Mobile JS errors:\n  ${relevant.join('\n  ')}`);
+  });
+
+  // ── Mobile CV page tests ──────────────────────────────────────────────────
+
+  await page.goto(`${BASE}/cv.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+
+  await test('CV timeline visible on mobile', async () => {
+    const entries = await page.$$('.tl-row--career');
+    assert(entries.length >= 1, `Career entries on mobile: ${entries.length}`);
+  });
+
+  await test('Timeline shows both career and education on mobile', async () => {
+    const career = await page.$$('.tl-row--career');
+    const edu    = await page.$$('.tl-row--education');
+    assert(career.length >= 1, `No career entries on mobile`);
+    assert(edu.length >= 1,    `No education entries on mobile`);
   });
 
   await ctx.close();
