@@ -1967,8 +1967,6 @@ function initScroll3D() {
 
   const heroContent = document.querySelector('.hero-content');
   const heroSection = document.getElementById('hero');
-  const orb1 = document.querySelector('.orb-1');
-  const orb2 = document.querySelector('.orb-2');
 
   /* Wait for the hero entrance animation to finish before taking over transforms */
   let ready = false;
@@ -1987,11 +1985,10 @@ function initScroll3D() {
     const scrollY = window.scrollY;
     const heroH   = heroSection ? heroSection.offsetHeight : 0;
 
-    /* Apply parallax only while the hero section is still in or near view */
+    /* Apply parallax only while the hero section is still in or near view.
+       Orb parallax removed — orbs are now static for battery savings. */
     if (scrollY < heroH * 1.1) {
       if (heroContent) heroContent.style.transform = `translateY(${scrollY * 0.28}px)`;
-      if (orb1) orb1.style.transform = `translateY(${scrollY * 0.12}px)`;
-      if (orb2) orb2.style.transform = `translateY(${scrollY * 0.20}px)`;
     }
   }
 
