@@ -665,21 +665,24 @@ h3 {
   height: clamp(280px, 42vw, 440px);
 }
 
-/* Inside the left column: photo + stats beside the bio text */
+/* Inside the left column: photo + stats stacked above the bio text
+   so the bio gets the full width of the column.                     */
 .about-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1.5rem 2rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-/* Stats row spans full width below photo + bio */
+/* Photo card + stats sit side by side in a compact row */
 .about-photo-col {
-  grid-row: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
 }
 
-.about-text-col {
-  grid-row: 1;
+.about-photo-col .stats-row {
+  flex: 1;
+  margin-top: 0;
 }
 
 .photo-card {
