@@ -219,18 +219,7 @@ h3 {
   justify-content: space-between;
 }
 
-.nav-logo {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.02em;
-  transition: color var(--t-fast);
-}
-
-.nav-logo:hover {
-  color: var(--accent);
-}
+/* nav-logo removed — no SM branding in the top bar */
 
 .nav-links {
   display: flex;
@@ -656,7 +645,7 @@ h3 {
 /* Asymmetric layout: bio on the left, globe filling the right half */
 .about-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
   gap: 3rem;
   align-items: start;
 }
@@ -668,14 +657,29 @@ h3 {
 
 .about-right .globe-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
+/* Shrink the globe scene in the split layout */
+.about-right .globe-scene {
+  height: clamp(280px, 42vw, 440px);
+}
+
+/* Inside the left column: photo + stats beside the bio text */
 .about-grid {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 2.5rem;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem 2rem;
   align-items: start;
+}
+
+/* Stats row spans full width below photo + bio */
+.about-photo-col {
+  grid-row: 1;
+}
+
+.about-text-col {
+  grid-row: 1;
 }
 
 .photo-card {
@@ -684,6 +688,7 @@ h3 {
   border: 1px solid var(--border);
   background: var(--bg-card);
   aspect-ratio: 4/5;
+  max-width: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
