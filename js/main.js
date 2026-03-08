@@ -2248,7 +2248,7 @@ class HeroNameShader {
     this._io = null;
     this._isLowPower = isLowPowerDevice();
     this._pixelRatioCap = this._isLowPower ? 1.4 : 2;
-    this._targetFps = this._isLowPower ? 30 : 45;
+    this._targetFps = this._isLowPower ? 20 : 30;
     this._minFrameTime = 1 / this._targetFps;
     this._lastDrawTime = 0;
 
