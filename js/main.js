@@ -1425,6 +1425,281 @@ function initBackToTop() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   COMMAND PALETTE  (⌘K / Ctrl+K)
+   ═══════════════════════════════════════════════════════════ */
+function initCommandPalette() {
+  const overlay  = document.getElementById('cmd-overlay');
+  const input    = document.getElementById('cmd-input');
+  const listEl   = document.getElementById('cmd-list');
+  if (!overlay || !input || !listEl) return;
+
+  /* ── Command definitions ───────────────────────────────── */
+  const SECTIONS = [
+    { id: 'about',        label: 'About',        hint: 'Who I am' },
+    { id: 'research',     label: 'Research',      hint: 'What I work on' },
+    { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
+    { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
+    { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
+    { id: 'blog',         label: 'Blog',          hint: 'Thoughts & Writing' },
+  ];
+
+  const ACTIONS = [
+    {
+      label: 'Open CV PDF',
+      hint: 'Download / view',
+      icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v12M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      action() { window.open('cv.pdf', '_blank'); },
+    },
+    {
+      label: 'Copy email address',
+      hint: 'To clipboard',
+      icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      action() {
+        const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
+        if (email && email !== 'your.email@example.com') {
+          navigator.clipboard?.writeText(email).catch(() => {});
+        }
+      },
+    },
+    {
+      label: 'LinkedIn profile',
+      hint: 'Open in new tab',
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>`,
+      action() { window.open('https://www.linkedin.com/in/stefanomasneri/', '_blank'); },
+    },
+    {
+      label: 'Google Scholar',
+      hint: 'Open in new tab',
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>`,
+      action() { window.open('https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en', '_blank'); },
+    },
+  ];
+
+  const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+  /* ── Build all command items ────────────────────────────── */
+  let allItems = [
+    ...SECTIONS.map(s => ({
+      label: s.label,
+      hint: s.hint,
+      icon: navIcon,
+      action() {
+        if (s.href) {
+          window.location.href = s.href;
+        } else {
+          const el = document.getElementById(s.id);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+      },
+      group: 'Navigate',
+    })),
+    ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
+  ];
+
+  let filtered = allItems;
+  let activeIdx = 0;
+
+  /* ── Render list ────────────────────────────────────────── */
+  function render(items) {
+    listEl.innerHTML = '';
+    if (!items.length) {
+      const li = document.createElement('li');
+      li.className = 'cmd-item';
+      li.style.color = 'var(--text-faint)';
+      li.textContent = 'No results';
+      listEl.appendChild(li);
+      return;
+    }
+
+    let lastGroup = null;
+    items.forEach((item, i) => {
+      if (item.group !== lastGroup) {
+        const label = document.createElement('li');
+        label.className = 'cmd-group-label';
+        label.setAttribute('role', 'presentation');
+        label.textContent = item.group;
+        listEl.appendChild(label);
+        lastGroup = item.group;
+      }
+      const li = document.createElement('li');
+      li.className = 'cmd-item';
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(i === activeIdx));
+      li.innerHTML = `
+        <span class="cmd-item-icon">${item.icon}</span>
+        <span class="cmd-item-label">${item.label}</span>
+        <span class="cmd-item-hint">${item.hint || ''}</span>
+      `;
+      li.addEventListener('mouseenter', () => { activeIdx = i; render(filtered); });
+      li.addEventListener('click', () => { execute(item); });
+      listEl.appendChild(li);
+    });
+  }
+
+  /* ── Execute & close ────────────────────────────────────── */
+  function execute(item) {
+    close();
+    item.action();
+  }
+
+  /* ── Filter on input ────────────────────────────────────── */
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    filtered = q
+      ? allItems.filter(it => it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q))
+      : allItems;
+    activeIdx = 0;
+    render(filtered);
+  });
+
+  /* ── Keyboard navigation ────────────────────────────────── */
+  input.addEventListener('keydown', (e) => {
+    const visibleItems = filtered.filter(Boolean); /* same array */
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx + 1, visibleItems.length - 1);
+      render(visibleItems);
+      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx - 1, 0);
+      render(visibleItems);
+      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (visibleItems[activeIdx]) execute(visibleItems[activeIdx]);
+    } else if (e.key === 'Escape') {
+      close();
+    }
+  });
+
+  /* ── Open / close ───────────────────────────────────────── */
+  function open() {
+    filtered = allItems;
+    activeIdx = 0;
+    input.value = '';
+    render(filtered);
+    overlay.hidden = false;
+    requestAnimationFrame(() => input.focus());
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  /* Close on overlay click */
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  /* Global keyboard shortcut — ⌘K or Ctrl+K */
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      overlay.hidden ? open() : close();
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDE PROGRESS DOTS
+   ═══════════════════════════════════════════════════════════ */
+function initSideDots() {
+  const nav = document.getElementById('side-dots');
+  if (!nav) return;
+
+  /* Only activate on fine-pointer (mouse) viewports — CSS hides on coarse/narrow */
+  if (!window.matchMedia('(pointer: fine) and (min-width: 901px)').matches) return;
+
+  const sections = Array.from(
+    document.querySelectorAll('section[id], div[id="hero"]')
+  ).filter(s => s.id);
+
+  if (!sections.length) return;
+
+  /* Build dots */
+  sections.forEach(section => {
+    const label = section.getAttribute('aria-label') || section.id;
+    const btn = document.createElement('button');
+    btn.className = 'side-dot';
+    btn.dataset.label = label.charAt(0).toUpperCase() + label.slice(1);
+    btn.setAttribute('aria-label', `Go to ${label}`);
+    btn.setAttribute('aria-current', 'false');
+    btn.addEventListener('click', () => {
+      section.scrollIntoView({ behavior: 'smooth' });
+    });
+    nav.appendChild(btn);
+  });
+
+  const dots = Array.from(nav.querySelectorAll('.side-dot'));
+
+  /* Show nav after scrolling past the hero */
+  function onScroll() {
+    const scrolled = window.scrollY > window.innerHeight * 0.5;
+    nav.classList.toggle('visible', scrolled);
+
+    /* Determine the active section (first one whose top is ≤ 60% viewport height) */
+    let active = 0;
+    const threshold = window.innerHeight * 0.5;
+    sections.forEach((sec, i) => {
+      if (sec.getBoundingClientRect().top <= threshold) active = i;
+    });
+
+    dots.forEach((dot, i) => {
+      dot.setAttribute('aria-current', String(i === active));
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); /* run once on init */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STAGGERED HERO TAGLINE REVEAL
+   ═══════════════════════════════════════════════════════════ */
+function initTaglineReveal() {
+  if (prefersReducedMotion()) return;
+  const tagline = document.querySelector('.hero-tagline');
+  if (!tagline) return;
+
+  /* Split on the · separator, then further split each phrase into words */
+  const text = tagline.textContent.trim();
+  const parts = text.split('·');
+  let delay = 120; /* ms — start after a brief pause */
+  const STEP = 40;  /* ms per word */
+
+  const spans = [];
+  parts.forEach((phrase, partIdx) => {
+    const words = phrase.trim().split(/\s+/).filter(Boolean);
+    words.forEach(word => {
+      spans.push(`<span class="tagline-word" style="animation-delay:${delay}ms">${word}</span>`);
+      delay += STEP;
+    });
+    if (partIdx < parts.length - 1) {
+      spans.push(`<span class="tagline-sep" style="animation-delay:${delay}ms">·</span>`);
+      delay += STEP;
+    }
+  });
+
+  tagline.innerHTML = spans.join(' ');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CURSOR GLOW
+   ═══════════════════════════════════════════════════════════ */
+function initCursorGlow() {
+  /* Skip on touch devices or when the user prefers reduced motion */
+  if (prefersReducedMotion()) return;
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+
+  document.addEventListener('mousemove', (e) => {
+    document.body.style.setProperty('--cursor-x', e.clientX + 'px');
+    document.body.style.setProperty('--cursor-y', e.clientY + 'px');
+  }, { passive: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
    MOBILE MENU TOGGLE
    ═══════════════════════════════════════════════════════════ */
 function initMobileMenu() {
@@ -1735,33 +2010,20 @@ function initScroll3D() {
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
    Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   One card per job/degree — all details visible, no flipping.
    ═══════════════════════════════════════════════════════════ */
 function renderCV() {
   if (typeof document === 'undefined') return;
-  const timelineList = document.getElementById('cv-timeline-list');
-  if (!timelineList) return;
+  const careerList    = document.getElementById('cv-career-list');
+  const educationList = document.getElementById('cv-education-list');
+  if (!careerList || !educationList) return;
   if (typeof CV_CAREER    === 'undefined') return;
   if (typeof CV_EDUCATION === 'undefined') return;
 
-  function parseYearSpan(raw) {
-    const currentYear = new Date().getFullYear();
-    const txt = String(raw || '').toLowerCase();
-    const years = [...txt.matchAll(/\b(19|20)\d{2}\b/g)].map(m => parseInt(m[0], 10));
-    if (!years.length) return { start: currentYear, end: currentYear };
-    if (years.length === 1) {
-      if (txt.includes('present')) return { start: years[0], end: currentYear };
-      return { start: years[0], end: years[0] };
-    }
-    const start = Math.min(years[0], years[1]);
-    const end = txt.includes('present') ? currentYear : Math.max(years[0], years[1]);
-    return { start, end };
-  }
-
-  function entryHtml(entry, type) {
-    const side = type === 'career' ? 'career' : 'education';
-    const isCareer = side === 'career';
-    const titleKey = isCareer ? 'role'    : 'degree';
-    const subKey   = isCareer ? 'company' : 'institution';
+  function entryCardHtml(entry, type) {
+    const isCareer = type === 'career';
+    const title  = isCareer ? entry.role   : entry.degree;
+    const sub    = isCareer ? entry.company : entry.institution;
     const locHtml  = entry.location
       ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
       : '';
@@ -1772,72 +2034,29 @@ function renderCV() {
     const tagsHtml = tagsArr.length
       ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';
-    const hasBack = !!(entry.description || tagsArr.length);
+
     return `
-      <div class="tl-entry tl-entry--${side}">
-        <div class="tl-card${hasBack ? ' tl-card--flippable' : ''}" ${hasBack ? 'tabindex="0"' : ''}>
-          <div class="tl-card-front">
-            <div class="tl-card-header">
-              <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-              ${locHtml}
-            </div>
-            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            <p class="tl-sub">${escapeHtml(entry[subKey] || '')}</p>
-            ${hasBack ? '<span class="tl-flip-hint" aria-hidden="true">↻ details</span>' : ''}
+      <div class="tl-entry tl-entry--${type}" data-animate>
+        <div class="tl-dot" aria-hidden="true"></div>
+        <div class="tl-card-single">
+          <div class="tl-card-header">
+            <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+            ${locHtml}
           </div>
-          ${hasBack ? `
-          <div class="tl-card-back">
-            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            ${descHtml}${tagsHtml}
-          </div>` : ''}
+          <h3 class="tl-title">${escapeHtml(title || '')}</h3>
+          <p class="tl-sub">${escapeHtml(sub || '')}</p>
+          ${descHtml}${tagsHtml}
         </div>
       </div>`;
   }
 
-  const currentYear = new Date().getFullYear();
-  const startYear = 2000;
-  const byYear = new Map();
-  for (let year = currentYear; year >= startYear; year -= 1) byYear.set(year, []);
+  /* ── Render career and education into separate columns ── */
+  careerList.innerHTML = (CV_CAREER || [])
+    .map(e => entryCardHtml(e, 'career'))
+    .join('');
 
-  const allEntries = [
-    ...(CV_CAREER || []).map(entry => ({ type: 'career', entry })),
-    ...(CV_EDUCATION || []).map(entry => ({ type: 'education', entry })),
-  ];
-
-  allEntries.forEach(({ type, entry }, idx) => {
-    const span = parseYearSpan(entry.year);
-    const from = Math.max(startYear, span.start);
-    const to = Math.min(currentYear, span.end);
-    for (let year = from; year <= to; year += 1) {
-      if (!byYear.has(year)) continue;
-      byYear.get(year).push({ type, entry, idx });
-    }
-  });
-
-  timelineList.innerHTML = Array.from(byYear.entries())
-    .sort((a, b) => b[0] - a[0])
-    .map(([year, items]) => {
-      const careerHtml = items
-        .filter(item => item.type === 'career')
-        .sort((a, b) => a.idx - b.idx)
-        .map(item => entryHtml(item.entry, item.type))
-        .join('');
-      const educationHtml = items
-        .filter(item => item.type === 'education')
-        .sort((a, b) => a.idx - b.idx)
-        .map(item => entryHtml(item.entry, item.type))
-        .join('');
-      const isActive = !!(careerHtml || educationHtml);
-      return `
-        <div class="tl-year-row${isActive ? ' tl-year-row--active' : ''}">
-          <span class="tl-year-marker" data-year="${year}">${year}</span>
-          <div class="tl-year-events">
-            <div class="tl-year-col tl-year-col--career">${careerHtml}</div>
-            <div class="tl-year-col tl-year-col--education">${educationHtml}</div>
-          </div>
-        </div>
-      `;
-    })
+  educationList.innerHTML = (CV_EDUCATION || [])
+    .map(e => entryCardHtml(e, 'education'))
     .join('');
 }
 
@@ -2518,6 +2737,10 @@ if (typeof document !== 'undefined') {
   initNavbar();
   initMobileMenu();
   initBackToTop();
+  initSideDots();
+  initCommandPalette();
+  initCursorGlow();
+  initTaglineReveal();
 
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
