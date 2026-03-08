@@ -2289,23 +2289,6 @@ h3 {
   }
 }
 
-/* ─── Cursor Glow ────────────────────────────────────────── */
-/* A soft radial gradient that tracks the mouse pointer.
-   Only shown on fine-pointer (mouse) devices and when the
-   user has not requested reduced motion.                      */
-@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    background: radial-gradient(
-      600px circle at var(--cursor-x, -9999px) var(--cursor-y, -9999px),
-      rgba(108, 99, 255, 0.07) 0%,
-      rgba(0, 212, 255, 0.04) 30%,
-      transparent 70%
-    );
-    transition: background 0.1s ease;
-  }
-}
+/* ─── Cursor Glow — removed for performance ──────────────── */
+/* The body::after radial gradient forced full-page repaints
+   on every mousemove, draining battery on older hardware.     */

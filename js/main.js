@@ -1686,17 +1686,12 @@ function initTaglineReveal() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CURSOR GLOW
+   CURSOR GLOW — disabled for performance
+   The body::after radial gradient forced full-page repaints
+   on every mousemove. CSS rule also removed.
    ═══════════════════════════════════════════════════════════ */
 function initCursorGlow() {
-  /* Skip on touch devices or when the user prefers reduced motion */
-  if (prefersReducedMotion()) return;
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-
-  document.addEventListener('mousemove', (e) => {
-    document.body.style.setProperty('--cursor-x', e.clientX + 'px');
-    document.body.style.setProperty('--cursor-y', e.clientY + 'px');
-  }, { passive: true });
+  /* intentionally empty — effect removed to save battery */
 }
 
 /* ═══════════════════════════════════════════════════════════
