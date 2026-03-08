@@ -1299,67 +1299,110 @@ h3 {
   transform: none;
 }
 
-/* ─── 16c. Curriculum Vitae — timeline & skills ───────────── */
+/* ─── 16c. Curriculum Vitae — unified timeline ────────────── */
 
-.timeline-stage {
-  position: relative;
+/* ── Header actions (PDF button + legend) ─────────────── */
+.cv-header-actions {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             1.5rem;
+  margin-top:      1rem;
+  flex-wrap:       wrap;
 }
 
-.timeline-track {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: relative;
-  padding-left: 2rem;
-  padding-bottom: 1rem;
+.cv-pdf-btn {
+  display:     inline-flex;
+  align-items: center;
+  gap:         0.4rem;
+  font-size:   0.82rem;
 }
 
-/* Vertical timeline line */
-.timeline-track::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 6px;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
-  box-shadow: 0 0 10px var(--accent-glow);
+.cv-legend {
+  display:     flex;
+  align-items: center;
+  gap:         1.25rem;
+  font-size:   0.75rem;
+  color:       var(--text-muted);
+}
+
+.cv-legend-item {
+  display:     flex;
+  align-items: center;
+  gap:         0.35rem;
+}
+
+.cv-legend-dot {
+  display:       inline-block;
+  width:         10px;
+  height:        10px;
+  border-radius: 50%;
+}
+
+.cv-legend-dot--career    { background: var(--accent);  box-shadow: 0 0 6px var(--accent-glow); }
+.cv-legend-dot--education { background: var(--accent2); box-shadow: 0 0 6px var(--accent2-glow); }
+
+/* ── Unified timeline container ───────────────────────── */
+.cv-timeline {
+  position:  relative;
+  max-width: 900px;
+  margin:    0 auto;
+  padding:   2rem 0;
+}
+
+/* Central vertical spine */
+.cv-timeline::before {
+  content:       '';
+  position:      absolute;
+  top:           0;
+  bottom:        0;
+  left:          50%;
+  width:         2px;
+  transform:     translateX(-50%);
+  background:    linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
+  box-shadow:    0 0 10px var(--accent-glow);
   border-radius: 2px;
 }
 
-/* ── Entry — one card per job / degree ────────────────── */
-.tl-entry {
-  position: relative;
+/* ── Timeline row — one per entry ─────────────────────── */
+.tl-row {
+  display:               grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap:                   0;
+  align-items:           start;
+  margin-bottom:         1.5rem;
+  position:              relative;
 }
 
-/* Dot on the timeline line */
+/* ── Year marker on the spine ─────────────────────────── */
+.tl-spine {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  position:        relative;
+  width:           52px;
+  z-index:         2;
+}
+
 .tl-dot {
-  position: absolute;
-  left: -2rem;
-  top: 1.6rem;
-  width: 14px;
-  height: 14px;
+  width:         14px;
+  height:        14px;
   border-radius: 50%;
-  border: 2px solid var(--bg-alt);
-  z-index: 1;
-  /* centered on the 2px line: line is at left:6px (from track),
-     dot is 14px wide, so offset = 6px - 7px = -1px from .tl-entry left edge,
-     but .tl-entry is 2rem indented, so: left = -2rem puts us at track start,
-     then we nudge to center on the line */
-  transform: translateX(0px);
+  border:        2px solid var(--bg-alt);
+  flex-shrink:   0;
 }
 
-.tl-entry--career .tl-dot {
+.tl-row--career .tl-dot {
   background: var(--accent);
   box-shadow: 0 0 8px var(--accent-glow);
 }
 
-.tl-entry--education .tl-dot {
+.tl-row--education .tl-dot {
   background: var(--accent2);
   box-shadow: 0 0 8px var(--accent2-glow);
 }
 
-/* ── Card — single visible card (no flip) ─────────────── */
+/* ── Card — sits on left or right side ────────────────── */
 .tl-card-single {
   padding:       1.5rem 1.75rem;
   background:    var(--bg-card);
@@ -1374,9 +1417,31 @@ h3 {
   box-shadow:   0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Colored left accent bar */
-.tl-entry--career .tl-card-single    { border-left: 3px solid var(--accent);  }
-.tl-entry--education .tl-card-single { border-left: 3px solid var(--accent2); }
+/* Career cards: left side — accent bar on right edge (toward spine) */
+.tl-row--career .tl-card-single {
+  border-right: 3px solid var(--accent);
+}
+
+/* Education cards: right side — accent bar on left edge (toward spine) */
+.tl-row--education .tl-card-single {
+  border-left: 3px solid var(--accent2);
+}
+
+/* Left cell (career) */
+.tl-left {
+  padding-right: 1rem;
+  text-align:    right;
+}
+
+/* Right cell (education) */
+.tl-right {
+  padding-left: 1rem;
+}
+
+/* Empty side placeholder */
+.tl-empty {
+  /* intentionally blank — keeps grid structure */
+}
 
 /* ── Card typography ──────────────────────────────────── */
 
@@ -1389,8 +1454,8 @@ h3 {
   margin-bottom:  0.4rem;
 }
 
-.tl-entry--career .tl-year { color: var(--accent);  }
-.tl-entry--education .tl-year { color: var(--accent2); }
+.tl-row--career .tl-year    { color: var(--accent);  }
+.tl-row--education .tl-year { color: var(--accent2); }
 
 .tl-title {
   font-size:    0.98rem;
@@ -1415,6 +1480,15 @@ h3 {
   margin-bottom:   0.25rem;
 }
 
+/* On career (left) cards, reverse header so location is on the left */
+.tl-left .tl-card-header {
+  flex-direction: row-reverse;
+}
+
+.tl-left .tl-location {
+  text-align: left;
+}
+
 .tl-location {
   color:       var(--text-faint);
   font-size:   0.72rem;
@@ -1436,14 +1510,19 @@ h3 {
   gap:       0.35rem;
 }
 
+/* On career (left) cards, align tags to the right */
+.tl-left .tl-tags {
+  justify-content: flex-end;
+}
+
 .tl-tag {
-  font-size:   0.67rem;
-  font-weight: 600;
-  padding:     0.2em 0.65em;
-  border-radius: 999px;
-  background:  rgba(108 99 255 / 0.11);
-  color:       var(--accent);
-  border:      1px solid rgba(108 99 255 / 0.22);
+  font-size:      0.67rem;
+  font-weight:    600;
+  padding:        0.2em 0.65em;
+  border-radius:  999px;
+  background:     rgba(108 99 255 / 0.11);
+  color:          var(--accent);
+  border:         1px solid rgba(108 99 255 / 0.22);
   letter-spacing: 0.02em;
 }
 
@@ -1572,20 +1651,56 @@ h3 {
   letter-spacing: 0.01em;
 }
 
-/* ── Responsive: tighter spacing on small screens ── */
+/* ── Responsive: single-column timeline on small screens ── */
 @media (max-width: 760px) {
-  .timeline-track {
-    padding-left: 1.5rem;
+  .cv-timeline::before {
+    left: 6px;
   }
 
-  .timeline-track::before {
-    left: 4px;
+  .tl-row {
+    display: block;
+    padding-left: 2rem;
+    position: relative;
+  }
+
+  .tl-spine {
+    position: absolute;
+    left:     0;
+    top:      1.2rem;
+    width:    auto;
   }
 
   .tl-dot {
-    left: -1.5rem;
-    width: 10px;
+    width:  10px;
     height: 10px;
+  }
+
+  .tl-left,
+  .tl-right {
+    padding: 0;
+    text-align: left;
+  }
+
+  .tl-left .tl-card-header {
+    flex-direction: row;
+  }
+
+  .tl-left .tl-location {
+    text-align: right;
+  }
+
+  .tl-left .tl-tags {
+    justify-content: flex-start;
+  }
+
+  .tl-empty {
+    display: none;
+  }
+
+  /* On mobile, accent bar always on left */
+  .tl-row--career .tl-card-single {
+    border-right: none;
+    border-left: 3px solid var(--accent);
   }
 
   .tl-card-single {
@@ -1593,59 +1708,21 @@ h3 {
   }
 }
 
-/* ─── 16d. CV page — two-column layout ───────────────────── */
+/* ─── 16d. CV page layout ────────────────────────────────── */
 
 .cv-page {
   padding-top: 7rem; /* clear fixed navbar */
 }
 
 .cv-back-link {
-  display:        inline-block;
-  font-size:      0.82rem;
-  color:          var(--accent);
+  display:         inline-block;
+  font-size:       0.82rem;
+  color:           var(--accent);
   text-decoration: none;
-  margin-bottom:  1.5rem;
-  transition:     color var(--t-fast);
+  margin-bottom:   1.5rem;
+  transition:      color var(--t-fast);
 }
 .cv-back-link:hover { color: var(--accent2); }
-
-.cv-columns {
-  display:               grid;
-  grid-template-columns: 1fr 1fr;
-  gap:                   3rem;
-  align-items:           start;
-}
-
-.cv-column-title {
-  display:        flex;
-  align-items:    center;
-  gap:            0.5rem;
-  font-size:      0.75rem;
-  font-weight:    700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-bottom:  1.5rem;
-}
-
-.cv-column--career .cv-column-title  { color: var(--accent);  }
-.cv-column--education .cv-column-title { color: var(--accent2); }
-
-.cv-column-icon {
-  display:       inline-block;
-  width:         10px;
-  height:        10px;
-  border-radius: 50%;
-}
-.cv-column-icon--career    { background: var(--accent);  box-shadow: 0 0 8px var(--accent-glow); }
-.cv-column-icon--education { background: var(--accent2); box-shadow: 0 0 8px var(--accent2-glow); }
-
-/* On small screens, stack columns vertically */
-@media (max-width: 760px) {
-  .cv-columns {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
 
 /* ─── 17. Performance: content-visibility ───────────────────
    Skips layout, style, and paint for off-screen sections —

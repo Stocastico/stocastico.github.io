@@ -67,7 +67,7 @@ test('renderCV: returns without throwing when document is undefined', () => {
   global.document = prev;
 });
 
-test('renderCV: returns without throwing when career container is absent', () => {
+test('renderCV: returns without throwing when timeline container is absent', () => {
   const { restore } = setupDom([]); // no containers registered
   global.CV_CAREER    = [];
   global.CV_EDUCATION = [];
@@ -75,8 +75,8 @@ test('renderCV: returns without throwing when career container is absent', () =>
   restore();
 });
 
-test('renderCV: injects career role, company and year into #cv-career-list', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+test('renderCV: injects career role, company and year into unified timeline', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER = [{
     year: '2022 – present',
     role: 'Senior AI Engineer',
@@ -87,7 +87,7 @@ test('renderCV: injects career role, company and year into #cv-career-list', () 
   }];
   global.CV_EDUCATION = [];
   renderCV();
-  const html = els['cv-career-list'].innerHTML;
+  const html = els['cv-timeline'].innerHTML;
   assert.ok(html.includes('Senior AI Engineer'), 'role injected');
   assert.ok(html.includes('Vicomtech'),          'company injected');
   assert.ok(html.includes('2022'),               'year injected');
@@ -95,18 +95,18 @@ test('renderCV: injects career role, company and year into #cv-career-list', () 
 });
 
 test('renderCV: injects career tags', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [{ year: '2023', role: 'Dev', company: 'Co', tags: ['JS', 'Python'] }];
   global.CV_EDUCATION = [];
   renderCV();
-  const html = els['cv-career-list'].innerHTML;
+  const html = els['cv-timeline'].innerHTML;
   assert.ok(html.includes('JS'),     'first tag injected');
   assert.ok(html.includes('Python'), 'second tag injected');
   restore();
 });
 
-test('renderCV: injects education degree, institution and year into #cv-education-list', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+test('renderCV: injects education degree, institution and year', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [];
   global.CV_EDUCATION = [{
     year: '2014 – 2017',
@@ -116,105 +116,106 @@ test('renderCV: injects education degree, institution and year into #cv-educatio
     description: 'Thesis on 3D reconstruction.',
   }];
   renderCV();
-  const html = els['cv-education-list'].innerHTML;
+  const html = els['cv-timeline'].innerHTML;
   assert.ok(html.includes('PhD — Computer Vision'), 'degree injected');
   assert.ok(html.includes('UPV/EHU'),               'institution injected');
   assert.ok(html.includes('2014'),                  'year injected');
   restore();
 });
 
-test('renderCV: career entries go to career column, not education column', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+test('renderCV: career entries use tl-row--career class, education uses tl-row--education', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [{ year: '2023', role: 'Engineer', company: 'ACME', tags: [] }];
-  global.CV_EDUCATION = [];
+  global.CV_EDUCATION = [{ year: '2020', degree: 'MSc', institution: 'MIT' }];
   renderCV();
-  assert.ok(els['cv-career-list'].innerHTML.includes('Engineer'), 'career in career column');
-  assert.ok(!els['cv-education-list'].innerHTML.includes('Engineer'), 'career NOT in education column');
+  const html = els['cv-timeline'].innerHTML;
+  assert.ok(html.includes('tl-row--career'), 'career row class present');
+  assert.ok(html.includes('tl-row--education'), 'education row class present');
   restore();
 });
 
-test('renderCV: education entries go to education column, not career column', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
-  global.CV_CAREER    = [];
+test('renderCV: career cards rendered in tl-left, education in tl-right', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
+  global.CV_CAREER    = [{ year: '2023', role: 'Engineer', company: 'ACME', tags: [] }];
   global.CV_EDUCATION = [{ year: '2020', degree: 'MSc', institution: 'MIT' }];
   renderCV();
-  assert.ok(els['cv-education-list'].innerHTML.includes('MSc'), 'education in education column');
-  assert.ok(!els['cv-career-list'].innerHTML.includes('MSc'), 'education NOT in career column');
+  const html = els['cv-timeline'].innerHTML;
+  // Career card content should be inside tl-left
+  assert.ok(html.includes('tl-left'), 'tl-left present');
+  assert.ok(html.includes('tl-right'), 'tl-right present');
   restore();
 });
 
 test('renderCV: escapes HTML in career role to prevent XSS', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [{ year: '2023', role: '<script>alert(1)</script>', company: 'X', tags: [] }];
   global.CV_EDUCATION = [];
   renderCV();
-  const html = els['cv-career-list'].innerHTML;
+  const html = els['cv-timeline'].innerHTML;
   assert.ok(!html.includes('<script>'),      '<script> tag must not appear raw');
   assert.ok(html.includes('&lt;script&gt;'), 'must be HTML-escaped');
   restore();
 });
 
 test('renderCV: escapes HTML in education degree to prevent XSS', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [];
   global.CV_EDUCATION = [{ year: '2020', degree: '<img src=x onerror=xss()>', institution: 'U', tags: [] }];
   renderCV();
-  const html = els['cv-education-list'].innerHTML;
+  const html = els['cv-timeline'].innerHTML;
   assert.ok(!html.includes('<img'), 'raw <img> must not appear');
   restore();
 });
 
 test('renderCV: handles empty arrays gracefully', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [];
   global.CV_EDUCATION = [];
   assert.doesNotThrow(() => renderCV());
-  assert.strictEqual(els['cv-career-list'].innerHTML, '', 'no career output for empty data');
-  assert.strictEqual(els['cv-education-list'].innerHTML, '', 'no education output for empty data');
+  assert.strictEqual(els['cv-timeline'].innerHTML, '', 'no output for empty data');
   restore();
 });
 
 test('renderCV: omits tags div when tags array is empty', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER    = [{ year: '2023', role: 'Dev', company: 'Co', tags: [] }];
   global.CV_EDUCATION = [];
   renderCV();
-  assert.ok(!els['cv-career-list'].innerHTML.includes('tl-tags'), 'tl-tags absent for empty tags');
+  assert.ok(!els['cv-timeline'].innerHTML.includes('tl-tags'), 'tl-tags absent for empty tags');
   restore();
 });
 
-test('renderCV: renders one card per entry (not per year)', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+test('renderCV: renders one row per entry', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER = [{ year: '2020 – present', role: 'Senior', company: 'A', tags: [] }];
   global.CV_EDUCATION = [{ year: '2000 – 2005', degree: 'BSc', institution: 'Uni' }];
   renderCV();
-  const careerHtml = els['cv-career-list'].innerHTML;
-  const eduHtml    = els['cv-education-list'].innerHTML;
-  assert.ok(careerHtml.includes('Senior'), 'career entry present');
-  assert.ok(eduHtml.includes('BSc'), 'education entry present');
-  const careerCount = (careerHtml.match(/tl-entry /g) || []).length;
-  const eduCount    = (eduHtml.match(/tl-entry /g) || []).length;
-  assert.strictEqual(careerCount, 1, 'exactly one career card');
-  assert.strictEqual(eduCount, 1, 'exactly one education card');
+  const html = els['cv-timeline'].innerHTML;
+  assert.ok(html.includes('Senior'), 'career entry present');
+  assert.ok(html.includes('BSc'), 'education entry present');
+  const rowCount = (html.match(/tl-row /g) || []).length;
+  assert.strictEqual(rowCount, 2, 'exactly two timeline rows');
   restore();
 });
 
-test('renderCV: career and education entries rendered with correct type classes', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
-  global.CV_CAREER = [{ year: '2014 – 2017', role: 'Research Engineer', company: 'Lab', tags: [] }];
-  global.CV_EDUCATION = [{ year: '2014 – 2017', degree: 'PhD', institution: 'Uni' }];
+test('renderCV: entries sorted by start year descending', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
+  global.CV_CAREER = [{ year: '2015 – 2018', role: 'Dev', company: 'A', tags: [] }];
+  global.CV_EDUCATION = [{ year: '2020 – 2024', degree: 'PhD', institution: 'Uni' }];
   renderCV();
-  assert.ok(els['cv-career-list'].innerHTML.includes('tl-entry--career'), 'career type class present');
-  assert.ok(els['cv-education-list'].innerHTML.includes('tl-entry--education'), 'education type class present');
+  const html = els['cv-timeline'].innerHTML;
+  const phdIdx = html.indexOf('PhD');
+  const devIdx = html.indexOf('Dev');
+  assert.ok(phdIdx < devIdx, 'newer entry (PhD 2020) appears before older (Dev 2015)');
   restore();
 });
 
 test('renderCV: multi-year career entry appears exactly once', () => {
-  const { els, restore } = setupDom(['cv-career-list', 'cv-education-list']);
+  const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER = [{ year: '2009 – 2015', role: 'Research Associate', company: 'Fraunhofer', tags: [] }];
   global.CV_EDUCATION = [];
   renderCV();
-  const matches = els['cv-career-list'].innerHTML.match(/Research Associate/g) || [];
+  const matches = els['cv-timeline'].innerHTML.match(/Research Associate/g) || [];
   assert.strictEqual(matches.length, 1, 'multi-year job appears exactly once');
   restore();
 });

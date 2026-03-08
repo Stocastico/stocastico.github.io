@@ -2005,13 +2005,13 @@ function initScroll3D() {
    ═══════════════════════════════════════════════════════════ */
 function renderCV() {
   if (typeof document === 'undefined') return;
-  const careerList    = document.getElementById('cv-career-list');
-  const educationList = document.getElementById('cv-education-list');
-  if (!careerList || !educationList) return;
+  const timeline = document.getElementById('cv-timeline');
+  if (!timeline) return;
   if (typeof CV_CAREER    === 'undefined') return;
   if (typeof CV_EDUCATION === 'undefined') return;
 
-  function entryCardHtml(entry, type) {
+  /* ── Build card HTML ────────────────────────────────── */
+  function cardHtml(entry, type) {
     const isCareer = type === 'career';
     const title  = isCareer ? entry.role   : entry.degree;
     const sub    = isCareer ? entry.company : entry.institution;
@@ -2027,28 +2027,43 @@ function renderCV() {
       : '';
 
     return `
-      <div class="tl-entry tl-entry--${type}" data-animate>
-        <div class="tl-dot" aria-hidden="true"></div>
-        <div class="tl-card-single">
-          <div class="tl-card-header">
-            <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-            ${locHtml}
-          </div>
-          <h3 class="tl-title">${escapeHtml(title || '')}</h3>
-          <p class="tl-sub">${escapeHtml(sub || '')}</p>
-          ${descHtml}${tagsHtml}
+      <div class="tl-card-single">
+        <div class="tl-card-header">
+          <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+          ${locHtml}
         </div>
+        <h3 class="tl-title">${escapeHtml(title || '')}</h3>
+        <p class="tl-sub">${escapeHtml(sub || '')}</p>
+        ${descHtml}${tagsHtml}
       </div>`;
   }
 
-  /* ── Render career and education into separate columns ── */
-  careerList.innerHTML = (CV_CAREER || [])
-    .map(e => entryCardHtml(e, 'career'))
-    .join('');
+  /* ── Merge & sort entries by start year (newest first) ─ */
+  function startYear(yearStr) {
+    var m = String(yearStr).match(/\d{4}/);
+    return m ? parseInt(m[0], 10) : 0;
+  }
 
-  educationList.innerHTML = (CV_EDUCATION || [])
-    .map(e => entryCardHtml(e, 'education'))
-    .join('');
+  var allEntries = []
+    .concat((CV_CAREER    || []).map(function(e) { return Object.assign({}, e, { _type: 'career' }); }))
+    .concat((CV_EDUCATION || []).map(function(e) { return Object.assign({}, e, { _type: 'education' }); }))
+    .sort(function(a, b) { return startYear(b.year) - startYear(a.year); });
+
+  /* ── Render unified timeline rows ──────────────────── */
+  timeline.innerHTML = allEntries.map(function(entry) {
+    var type = entry._type;
+    var card = cardHtml(entry, type);
+    var left  = type === 'career'    ? card : '';
+    var right = type === 'education' ? card : '';
+    var emptyLeft  = type === 'education' ? '<div class="tl-empty"></div>' : '';
+    var emptyRight = type === 'career'    ? '<div class="tl-empty"></div>' : '';
+
+    return '<div class="tl-row tl-row--' + type + '" data-animate>'
+      + '<div class="tl-left">' + emptyLeft + left + '</div>'
+      + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
+      + '<div class="tl-right">' + emptyRight + right + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════

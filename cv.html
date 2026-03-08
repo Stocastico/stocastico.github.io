@@ -42,17 +42,13 @@
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
   <nav id="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a class="nav-logo" href="index.html" aria-label="Back to home">SM</a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
       <ul class="nav-links" id="nav-links">
         <li><a href="index.html#about">About</a></li>
-        <li><a href="index.html#research">Research</a></li>
-        <li><a href="index.html#publications">Publications</a></li>
-        <li><a href="cv.html" class="active">CV</a></li>
-        <li><a href="index.html#skills">Skills</a></li>
-        <li><a href="index.html#blog">Blog</a></li>
+        <li><a href="index.html#research">Work</a></li>
+        <li><a href="index.html#blog">Writing</a></li>
         <li><a href="index.html#contact">Contact</a></li>
       </ul>
     </div>
@@ -66,30 +62,22 @@
         <a href="index.html" class="cv-back-link">&larr; Back to Home</a>
         <span class="section-tag">Curriculum Vitae</span>
         <h1 class="section-title">Experience &amp; Education</h1>
+        <div class="cv-header-actions">
+          <a href="docs/cv.pdf" class="btn btn-ghost cv-pdf-btn" target="_blank" rel="noopener" aria-label="Download CV as PDF">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="16" height="16">
+              <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Download PDF
+          </a>
+          <div class="cv-legend">
+            <span class="cv-legend-item"><span class="cv-legend-dot cv-legend-dot--career"></span>Career</span>
+            <span class="cv-legend-item"><span class="cv-legend-dot cv-legend-dot--education"></span>Education</span>
+          </div>
+        </div>
       </header>
 
-      <!-- ── Two-column layout: Work | Education ── -->
-      <div class="cv-columns">
-
-        <!-- Left column: Work Experience -->
-        <div class="cv-column cv-column--career">
-          <h2 class="cv-column-title">
-            <span class="cv-column-icon cv-column-icon--career" aria-hidden="true"></span>
-            Work Experience
-          </h2>
-          <div class="timeline-track" id="cv-career-list" aria-label="Work experience timeline"></div>
-        </div>
-
-        <!-- Right column: Education -->
-        <div class="cv-column cv-column--education">
-          <h2 class="cv-column-title">
-            <span class="cv-column-icon cv-column-icon--education" aria-hidden="true"></span>
-            Education
-          </h2>
-          <div class="timeline-track" id="cv-education-list" aria-label="Education timeline"></div>
-        </div>
-
-      </div><!-- /.cv-columns -->
+      <!-- ── Unified timeline: career left, education right ── -->
+      <div class="cv-timeline" id="cv-timeline" aria-label="Career and education timeline"></div>
 
       <!-- ── Skills breakdown ─────────────────────────────── -->
       <div id="cv-skills" class="cv-skills-section"></div>
