@@ -328,13 +328,15 @@ h3 {
 }
 
 /* ─── 6. Hero Section ───────────────────────────────────── */
+/* Linear-style left-aligned hero: text sits in the left column,
+   neural-network canvas fills the entire background.           */
 #hero {
   position: relative;
   height: 100svh;
   min-height: 600px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;        /* left-align content */
   overflow: hidden;
 }
 
@@ -390,9 +392,9 @@ h3 {
 .hero-content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  max-width: 800px;
-  padding: 1rem;
+  text-align: left;
+  max-width: 620px;
+  padding: 1rem clamp(1.5rem, 5vw, 4rem);
   animation: heroFadeUp 1.2s var(--ease) both;
 }
 
@@ -428,7 +430,7 @@ h3 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-align: center;
+  text-align: left;
   /* ensure text is still selectable / readable before shader loads */
   user-select: text;
 }
@@ -443,8 +445,7 @@ h3 {
 .hero-name-canvas {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   pointer-events: none;
   display: block;
   will-change: transform;
@@ -496,7 +497,7 @@ h3 {
 .hero-actions {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -1620,6 +1621,15 @@ h3 {
   .pub-year {
     font-size: 0.8rem;
   }
+}
+
+@media (max-width: 680px) {
+  /* On mobile, re-centre the hero for a balanced look */
+  #hero { justify-content: center; }
+  .hero-content { text-align: center; padding-inline: 1rem; }
+  .hero-name { text-align: center; }
+  .hero-name-canvas { left: 50%; transform: translateX(-50%); }
+  .hero-actions { justify-content: center; }
 }
 
 @media (max-width: 480px) {
