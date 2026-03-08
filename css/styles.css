@@ -65,15 +65,16 @@
   --nav-h: 68px;
 }
 
-/* ─── 1b. 3-D entrance for research cards ───────────────── */
-/* Overrides the generic translateY(30px) entrance with a rotateY slant.
-   --card-init-ry is set per-card by initScroll3D() (+14deg / -14deg alternating). */
+/* ─── 1b. Entrance for research cards ───────────────────── */
+/* Cards slide in from the right when they enter the viewport. */
 .research-card[data-animate]:not(.visible) {
-  transform: perspective(1000px) rotateY(var(--card-init-ry, 14deg)) translateY(20px);
+  opacity: 0;
+  transform: translateX(40px);
 }
 
 .research-card[data-animate].visible {
-  transform: perspective(1000px) rotateY(0deg) translateY(0);
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ─── 2. Reset & Base ────────────────────────────────────── */
@@ -177,6 +178,13 @@ h3 {
   padding-inline: clamp(1.25rem, 5vw, 3rem);
 }
 
+/* Wide container variant — allows carousel to use more horizontal space */
+.container--wide {
+  max-width: calc(var(--container) + 6rem);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 3rem);
+}
+
 /* ─── 5. Navigation ─────────────────────────────────────── */
 #navbar {
   position: fixed;
@@ -211,18 +219,7 @@ h3 {
   justify-content: space-between;
 }
 
-.nav-logo {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.02em;
-  transition: color var(--t-fast);
-}
-
-.nav-logo:hover {
-  color: var(--accent);
-}
+/* nav-logo removed — no SM branding in the top bar */
 
 .nav-links {
   display: flex;
@@ -328,13 +325,15 @@ h3 {
 }
 
 /* ─── 6. Hero Section ───────────────────────────────────── */
+/* Linear-style left-aligned hero: text sits in the left column,
+   neural-network canvas fills the entire background.           */
 #hero {
   position: relative;
   height: 100svh;
   min-height: 600px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;        /* left-align content */
   overflow: hidden;
 }
 
@@ -359,15 +358,16 @@ h3 {
   pointer-events: none;
 }
 
-/* Gradient orbs */
+/* Gradient orbs — static, reduced blur for battery savings.
+   blur(100px) on 650px elements is very GPU-expensive.
+   The radial-gradient already provides a soft edge, so 40px
+   is enough for a nice glow without the compositing cost.    */
 .hero-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
+  filter: blur(40px);
   pointer-events: none;
   z-index: 1;
-  will-change: transform;
-  /* animated float — separate layer */
 }
 
 .orb-1 {
@@ -376,7 +376,6 @@ h3 {
   top: -200px;
   left: -150px;
   background: radial-gradient(circle, rgba(108, 99, 255, 0.18) 0%, transparent 70%);
-  animation: orbFloat 18s ease-in-out infinite;
 }
 
 .orb-2 {
@@ -385,31 +384,14 @@ h3 {
   bottom: -100px;
   right: -100px;
   background: radial-gradient(circle, rgba(0, 212, 255, 0.13) 0%, transparent 70%);
-  animation: orbFloat 22s ease-in-out infinite reverse;
-}
-
-@keyframes orbFloat {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  33% {
-    transform: translate(30px, -40px) scale(1.05);
-  }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.97);
-  }
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  max-width: 800px;
-  padding: 1rem;
+  text-align: left;
+  max-width: 620px;
+  padding: 1rem clamp(1.5rem, 5vw, 4rem);
   animation: heroFadeUp 1.2s var(--ease) both;
 }
 
@@ -445,7 +427,7 @@ h3 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-align: center;
+  text-align: left;
   /* ensure text is still selectable / readable before shader loads */
   user-select: text;
 }
@@ -460,8 +442,7 @@ h3 {
 .hero-name-canvas {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   pointer-events: none;
   display: block;
   will-change: transform;
@@ -513,7 +494,7 @@ h3 {
 .hero-actions {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -661,11 +642,47 @@ h3 {
 }
 
 /* ─── 9. About Section ──────────────────────────────────── */
-.about-grid {
+/* Asymmetric layout: bio on the left, globe filling the right half */
+.about-split {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 4rem;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
   align-items: start;
+}
+
+.about-right {
+  position: sticky;
+  top: calc(var(--nav-h) + 1.5rem);
+}
+
+.about-right .globe-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Shrink the globe scene in the split layout */
+.about-right .globe-scene {
+  height: clamp(280px, 42vw, 440px);
+}
+
+/* Inside the left column: photo + stats stacked above the bio text
+   so the bio gets the full width of the column.                     */
+.about-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Photo card + stats sit side by side in a compact row */
+.about-photo-col {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.about-photo-col .stats-row {
+  flex: 1;
+  margin-top: 0;
 }
 
 .photo-card {
@@ -674,6 +691,7 @@ h3 {
   border: 1px solid var(--border);
   background: var(--bg-card);
   aspect-ratio: 4/5;
+  max-width: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -815,11 +833,28 @@ h3 {
   background: rgba(108, 99, 255, 0.08);
 }
 
-/* ─── 10. Research Section ──────────────────────────────── */
+/* ─── 10. Research Section — horizontal carousel ──────── */
+/* Stripe-style horizontal scroll with CSS scroll-snap.
+   No JS animation loop — hardware-accelerated native scroll. */
 .research-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
   gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(1.25rem, 5vw, 3rem);
+  -webkit-overflow-scrolling: touch;
+  /* hide scrollbar but keep scroll behaviour */
+  scrollbar-width: none;
+  padding-bottom: 1rem;  /* space for shadow on hover */
+}
+
+.research-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.research-grid > .research-card {
+  flex: 0 0 clamp(280px, 30vw, 360px);
+  scroll-snap-align: start;
 }
 
 .research-card {
@@ -985,11 +1020,51 @@ h3 {
   text-align: center;
 }
 
-/* ─── 12. Skills Section ────────────────────────────────── */
+/* ─── 12. Skills Section — sticky header layout ──────────── */
+/* Apple-style sticky storytelling: the header pins in place
+   while skill groups scroll past on the right.               */
+.skills-split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.skills-sticky-header {
+  position: sticky;
+  top: calc(var(--nav-h) + 2rem);
+}
+
+.section-header--left {
+  text-align: left;
+}
+
+.skills-sticky-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  max-width: 26ch;
+  line-height: 1.6;
+}
+
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--gap);
+}
+
+@media (max-width: 900px) {
+  .skills-split {
+    grid-template-columns: 1fr;
+  }
+
+  .skills-sticky-header {
+    position: static;
+  }
+
+  .section-header--left {
+    text-align: center;
+  }
 }
 
 .skill-group {
@@ -1592,6 +1667,16 @@ h3 {
 }
 
 /* ─── 18. Responsive ────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .about-split {
+    grid-template-columns: 1fr;
+  }
+
+  .about-right {
+    position: static;
+  }
+}
+
 @media (max-width: 900px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1639,6 +1724,15 @@ h3 {
   }
 }
 
+@media (max-width: 680px) {
+  /* On mobile, re-centre the hero for a balanced look */
+  #hero { justify-content: center; }
+  .hero-content { text-align: center; padding-inline: 1rem; }
+  .hero-name { text-align: center; }
+  .hero-name-canvas { left: 50%; transform: translateX(-50%); }
+  .hero-actions { justify-content: center; }
+}
+
 @media (max-width: 480px) {
   .hero-actions {
     flex-direction: column;
@@ -1667,11 +1761,6 @@ h3 {
 }
 
 /* ─── 18. Globe (About section) ─────────────────────────── */
-.about-globe {
-  margin-top: clamp(3.5rem, 7vw, 5.5rem);
-  text-align: center;
-}
-
 .globe-header {
   margin-bottom: 2rem;
 }
@@ -2289,23 +2378,6 @@ h3 {
   }
 }
 
-/* ─── Cursor Glow ────────────────────────────────────────── */
-/* A soft radial gradient that tracks the mouse pointer.
-   Only shown on fine-pointer (mouse) devices and when the
-   user has not requested reduced motion.                      */
-@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    background: radial-gradient(
-      600px circle at var(--cursor-x, -9999px) var(--cursor-y, -9999px),
-      rgba(108, 99, 255, 0.07) 0%,
-      rgba(0, 212, 255, 0.04) 30%,
-      transparent 70%
-    );
-    transition: background 0.1s ease;
-  }
-}
+/* ─── Cursor Glow — removed for performance ──────────────── */
+/* The body::after radial gradient forced full-page repaints
+   on every mousemove, draining battery on older hardware.     */

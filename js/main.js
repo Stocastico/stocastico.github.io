@@ -1686,17 +1686,12 @@ function initTaglineReveal() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CURSOR GLOW
+   CURSOR GLOW — disabled for performance
+   The body::after radial gradient forced full-page repaints
+   on every mousemove. CSS rule also removed.
    ═══════════════════════════════════════════════════════════ */
 function initCursorGlow() {
-  /* Skip on touch devices or when the user prefers reduced motion */
-  if (prefersReducedMotion()) return;
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-
-  document.addEventListener('mousemove', (e) => {
-    document.body.style.setProperty('--cursor-x', e.clientX + 'px');
-    document.body.style.setProperty('--cursor-y', e.clientY + 'px');
-  }, { passive: true });
+  /* intentionally empty — effect removed to save battery */
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1962,9 +1957,8 @@ function initScroll3D() {
   if (prefersReducedMotion()) return;
   if (typeof document === 'undefined') return;
 
-  /* Alternate entrance angles: even cards lean right, odd lean left */
-  Array.from(document.querySelectorAll('.research-card[data-animate]'))
-    .forEach((card, i) => card.style.setProperty('--card-init-ry', `${i % 2 === 0 ? '14' : '-14'}deg`));
+  /* Research cards now use a horizontal carousel with translateX entrance,
+     so the old rotateY entrance angles are no longer needed. */
 
   /* Hero parallax — skip on touch devices to prevent scroll jank on mobile */
   if (typeof window === 'undefined') return;
@@ -1972,8 +1966,6 @@ function initScroll3D() {
 
   const heroContent = document.querySelector('.hero-content');
   const heroSection = document.getElementById('hero');
-  const orb1 = document.querySelector('.orb-1');
-  const orb2 = document.querySelector('.orb-2');
 
   /* Wait for the hero entrance animation to finish before taking over transforms */
   let ready = false;
@@ -1992,11 +1984,10 @@ function initScroll3D() {
     const scrollY = window.scrollY;
     const heroH   = heroSection ? heroSection.offsetHeight : 0;
 
-    /* Apply parallax only while the hero section is still in or near view */
+    /* Apply parallax only while the hero section is still in or near view.
+       Orb parallax removed — orbs are now static for battery savings. */
     if (scrollY < heroH * 1.1) {
       if (heroContent) heroContent.style.transform = `translateY(${scrollY * 0.28}px)`;
-      if (orb1) orb1.style.transform = `translateY(${scrollY * 0.12}px)`;
-      if (orb2) orb2.style.transform = `translateY(${scrollY * 0.20}px)`;
     }
   }
 
@@ -2188,9 +2179,9 @@ function initTimelineScroll3D() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ANIMATED FAVICON — rotating 3-D capital "S"
-   Simulates y-axis rotation by scaling the canvas x-axis with
-   cos(angle).  Runs at ≤30 fps; pauses when the tab is hidden.
+   STATIC FAVICON — capital "S" rendered once
+   Draws a single frame and sets it as the favicon.
+   No animation loop — saves continuous CPU / PNG-encode cost.
    ═══════════════════════════════════════════════════════════ */
 function initAnimatedFavicon() {
   if (typeof document       === 'undefined') return;
@@ -2199,33 +2190,14 @@ function initAnimatedFavicon() {
   const link = document.querySelector('link[rel="icon"]');
   if (!link) return;
 
-  const S   = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
-  const TAU = Math.PI * 2;
-  const RADS_PER_MS = TAU / 4000; /* one full rotation every 4 s */
+  const S = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
 
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = S;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  let angle    = 0;
-  let prevMs   = 0;
-  let lastDraw = -1;
-
-  function frame(ms) {
-    requestAnimationFrame(frame);
-
-    /* Throttle to ~30 fps — favicon is tiny; 60 fps wastes CPU */
-    if (ms - lastDraw < 33) return;
-    lastDraw = ms;
-
-    /* Pause rendering while tab is hidden */
-    if (document.hidden) { prevMs = ms; return; }
-
-    const dt = prevMs ? Math.min(ms - prevMs, 150) : 0; /* cap big deltas */
-    prevMs   = ms;
-    angle    = (angle + RADS_PER_MS * dt) % TAU;
-
+  function render() {
     /* ── Background: dark rounded square ── */
     ctx.clearRect(0, 0, S, S);
     ctx.fillStyle = '#080c14';
@@ -2234,14 +2206,12 @@ function initAnimatedFavicon() {
     else               ctx.rect(0, 0, S, S);
     ctx.fill();
 
-    /* ── Rotating "S": front face = accent purple, back = accent2 cyan ── */
-    const cosA = Math.cos(angle);
+    /* ── Static "S" in accent purple ── */
     ctx.save();
     ctx.translate(S / 2, S / 2);
-    ctx.scale(cosA, 1); /* horizontal squeeze simulates 3-D y-axis spin */
     ctx.shadowBlur  = 10;
-    ctx.shadowColor = cosA >= 0 ? '#6c63ffbb' : '#00d4ffbb';
-    ctx.fillStyle   = cosA >= 0 ? '#6c63ff'   : '#00d4ff';
+    ctx.shadowColor = '#6c63ffbb';
+    ctx.fillStyle   = '#6c63ff';
     ctx.font        = 'bold 44px "Playfair Display", Georgia, serif';
     ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
@@ -2251,11 +2221,11 @@ function initAnimatedFavicon() {
     link.href = canvas.toDataURL('image/png');
   }
 
-  /* Start after fonts are loaded so Playfair Display is available */
+  /* Render after fonts are loaded so Playfair Display is available */
   const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
     ? document.fonts.ready
     : Promise.resolve();
-  whenReady.then(() => requestAnimationFrame(frame));
+  whenReady.then(render);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2277,7 +2247,7 @@ class HeroNameShader {
     this._io = null;
     this._isLowPower = isLowPowerDevice();
     this._pixelRatioCap = this._isLowPower ? 1.4 : 2;
-    this._targetFps = this._isLowPower ? 30 : 45;
+    this._targetFps = this._isLowPower ? 20 : 30;
     this._minFrameTime = 1 / this._targetFps;
     this._lastDrawTime = 0;
 
@@ -2472,13 +2442,13 @@ class HeroNameShader {
     /* read the live font-size from the h1 (respects clamp() / viewport) */
     const fs = parseFloat(getComputedStyle(this.h1).fontSize);
     ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
     /* Line 1 & 2: Playfair Display Bold — consistent elegant serif */
     ctx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
-    ctx.fillText('Stefano', w / 2, 0);
-    ctx.fillText('Masneri', w / 2, fs);
+    ctx.fillText('Stefano', 0, 0);
+    ctx.fillText('Masneri', 0, fs);
 
     gl.bindTexture(gl.TEXTURE_2D, this.tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
@@ -2564,12 +2534,14 @@ class HeroNameShader {
 /* ═══════════════════════════════════════════════════════════
    HERO BACKGROUND — GLSL NOISE GRADIENT
    Domain-warped fBm shader: indigo-violet ↔ cyan ↔ deep dark.
+   Renders a small burst of frames to produce a nice noise
+   pattern, then stops — no continuous animation loop.
    ═══════════════════════════════════════════════════════════ */
 class NoiseGradient {
   constructor(canvas) {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
-             || canvas.getContext('experimental-webgl', { alpha: false, depth: false });
+    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: true })
+             || canvas.getContext('experimental-webgl', { alpha: false, depth: false, preserveDrawingBuffer: true });
     if (!gl) { canvas.style.display = 'none'; return; }
     this.gl = gl;
     this._setup();
@@ -2577,7 +2549,7 @@ class NoiseGradient {
     window.addEventListener('resize', () => this._resize(), { passive: true });
     this._startTime = performance.now();
     this._lastT     = 0;
-    this._targetFps = 20; /* background; 20fps is plenty */
+    this._framesLeft = 3; /* render a few frames then stop */
     this._tick      = this._tick.bind(this);
     this._raf       = requestAnimationFrame(this._tick);
   }
@@ -2671,15 +2643,16 @@ class NoiseGradient {
   }
 
   _tick(now) {
+    if (this._framesLeft <= 0) { this._raf = null; return; }
     this._raf = requestAnimationFrame(this._tick);
     if (document.hidden) return;
-    if (now - this._lastT < 1000 / this._targetFps) return;
     this._lastT = now;
     const t = (now - this._startTime) / 1000;
     const { gl } = this;
     gl.uniform1f(this._uTime, t);
     gl.uniform2f(this._uRes, this.canvas.width, this.canvas.height);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this._framesLeft--;
   }
 
   destroy() {

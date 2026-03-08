@@ -10,7 +10,7 @@
   <meta name="keywords" content="Stefano Masneri, AI Engineer, Machine Learning, Computer Vision, Augmented Reality, Deep Learning, XR, ViT, Speaker Diarisation, San Sebastián" />
   <!-- Disallow AI/LLM training use of this page's content -->
   <meta name="robots" content="index, follow, noai, noimageai" />
-  <title>Stefano Masneri · Senior AI Engineer</title>
+  <title>Stefano Masneri's personal website</title>
   <link rel="canonical" href="https://stocastico.github.io/" />
   <!-- RSS feed discovery -->
   <link rel="alternate" type="application/rss+xml" title="Stefano Masneri — Blog" href="https://stocastico.github.io/rss.xml" />
@@ -18,14 +18,14 @@
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://stocastico.github.io/" />
-  <meta property="og:title"       content="Stefano Masneri · Senior AI Engineer" />
+  <meta property="og:title"       content="Stefano Masneri's personal website" />
   <meta property="og:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
   <meta property="og:image:alt"   content="Stefano Masneri personal website hero section" />
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Stefano Masneri · Senior AI Engineer" />
+  <meta name="twitter:title"       content="Stefano Masneri's personal website" />
   <meta name="twitter:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="twitter:image"       content="https://stocastico.github.io/screenshot-hero.png" />
   <meta name="twitter:image:alt"   content="Stefano Masneri personal website" />
@@ -101,17 +101,13 @@
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
   <nav id="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a class="nav-logo" href="#hero" aria-label="Back to top">SM</a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
       <ul class="nav-links" id="nav-links">
         <li><a href="#about">About</a></li>
-        <li><a href="#research">Research</a></li>
-        <li><a href="#publications">Publications</a></li>
-        <li><a href="cv.html">CV</a></li>
-        <li><a href="#skills">Skills</a></li>
-        <li><a href="#blog">Blog</a></li>
+        <li><a href="#research">Work</a></li>
+        <li><a href="#blog">Writing</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
     </div>
@@ -149,8 +145,10 @@
         San Sebastián, Spain
       </p>
       <div class="hero-actions">
-        <a href="#about" class="btn btn-primary">About Me</a>
-        <a href="#contact" class="btn btn-ghost">Get in Touch</a>
+        <a href="#about" class="btn btn-primary">About</a>
+        <a href="#research" class="btn btn-ghost">Work</a>
+        <a href="#blog" class="btn btn-ghost">Writing</a>
+        <a href="#contact" class="btn btn-ghost">Contact</a>
       </div>
     </div>
 
@@ -159,6 +157,8 @@
       <span>Scroll</span>
     </div>
   </section>
+  <!-- hero-split: neural canvas fills the right half on wide screens
+       via CSS, no extra markup needed -->
 
   <!-- ═══════════════ ABOUT ═══════════════ -->
   <section id="about" class="section" aria-label="About me">
@@ -168,111 +168,116 @@
         <h2 class="section-title">Who I Am</h2>
       </header>
 
-      <div class="about-grid">
-        <!-- Photo -->
-        <div class="about-photo-col" data-animate data-delay="100">
-          <div class="photo-card">
-            <!--
-              ╔══════════════════════════════╗
-              ║  REPLACE THIS PLACEHOLDER    ║
-              ║  with your photo:            ║
-              ║  <img src="img/photo.jpg"    ║
-              ║       alt="Stefano Masneri"  ║
-              ║       class="photo-img" />   ║
-              ╚══════════════════════════════╝
-            -->
-            <div class="photo-placeholder" role="img" aria-label="Photo placeholder — add your own image">
-              <span class="photo-initials">SM</span>
-              <span class="photo-hint">Add your photo here</span>
-            </div>
-          </div>
+      <!-- Asymmetric 2-column: bio left, globe right -->
+      <div class="about-split">
 
-          <!-- Quick stats -->
-          <div class="stats-row">
-            <div class="stat-item">
-              <span class="stat-number" data-count="271">0</span><span class="stat-suffix">+</span>
-              <span class="stat-label">Citations</span>
+        <!-- Left column: photo + bio -->
+        <div class="about-left">
+          <div class="about-grid">
+            <!-- Photo -->
+            <div class="about-photo-col" data-animate data-delay="100">
+              <div class="photo-card">
+                <!--
+                  ╔══════════════════════════════╗
+                  ║  REPLACE THIS PLACEHOLDER    ║
+                  ║  with your photo:            ║
+                  ║  <img src="img/photo.jpg"    ║
+                  ║       alt="Stefano Masneri"  ║
+                  ║       class="photo-img" />   ║
+                  ╚══════════════════════════════╝
+                -->
+                <div class="photo-placeholder" role="img" aria-label="Photo placeholder — add your own image">
+                  <span class="photo-initials">SM</span>
+                  <span class="photo-hint">Add your photo here</span>
+                </div>
+              </div>
+
+              <!-- Quick stats -->
+              <div class="stats-row">
+                <div class="stat-item">
+                  <span class="stat-number" data-count="271">0</span><span class="stat-suffix">+</span>
+                  <span class="stat-label">Citations</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number" data-count="20">0</span><span class="stat-suffix">+</span>
+                  <span class="stat-label">Publications</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number" data-count="15">0</span><span class="stat-suffix">+</span>
+                  <span class="stat-label">Years Exp.</span>
+                </div>
+              </div>
             </div>
-            <div class="stat-item">
-              <span class="stat-number" data-count="20">0</span><span class="stat-suffix">+</span>
-              <span class="stat-label">Publications</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number" data-count="15">0</span><span class="stat-suffix">+</span>
-              <span class="stat-label">Years Exp.</span>
+
+            <!-- Bio -->
+            <div class="about-text-col" data-animate data-delay="200">
+              <p class="about-lead">
+                I'm a Senior AI Engineer at <strong>GRUP MEDIAPRO</strong>, passionate about
+                building intelligent systems that bridge cutting-edge research and real-world impact.
+              </p>
+              <p>
+                My work spans <strong>computer vision</strong>, <strong>deep learning</strong>,
+                <strong>augmented reality</strong>, and multi-modal media analysis. I hold a
+                <strong>PhD from the University of the Basque Country (UPV/EHU)</strong>, where I
+                researched collaborative, multi-user augmented reality experiences for education — a
+                field that merges my love for technology with its transformative power in learning.
+              </p>
+              <p>
+                Previously I contributed to research at <strong>Vicomtech Foundation</strong>
+                (Basque Research and Technology Alliance) and the
+                <strong>Fraunhofer Institute for Telecommunications</strong>, working on projects
+                ranging from automated psycholinguistics video annotation to audience engagement
+                measurement and multi-modal speaker diarisation.
+              </p>
+              <p>
+                I'm driven by curiosity, open collaboration, and a belief that AI should serve
+                people — making everyday experiences smarter, more accessible, and more human.
+              </p>
+
+              <!-- Social links -->
+              <div class="social-links" aria-label="Social and academic profiles">
+                <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn"
+                  aria-label="LinkedIn profile">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path
+                      d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z" />
+                  </svg>
+                  LinkedIn
+                </a>
+                <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+                  class="social-btn" aria-label="Google Scholar profile">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z" />
+                  </svg>
+                  Google Scholar
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Bio -->
-        <div class="about-text-col" data-animate data-delay="200">
-          <p class="about-lead">
-            I'm a Senior AI Engineer at <strong>GRUP MEDIAPRO</strong>, passionate about
-            building intelligent systems that bridge cutting-edge research and real-world impact.
-          </p>
-          <p>
-            My work spans <strong>computer vision</strong>, <strong>deep learning</strong>,
-            <strong>augmented reality</strong>, and multi-modal media analysis. I hold a
-            <strong>PhD from the University of the Basque Country (UPV/EHU)</strong>, where I
-            researched collaborative, multi-user augmented reality experiences for education — a
-            field that merges my love for technology with its transformative power in learning.
-          </p>
-          <p>
-            Previously I contributed to research at <strong>Vicomtech Foundation</strong>
-            (Basque Research and Technology Alliance) and the
-            <strong>Fraunhofer Institute for Telecommunications</strong>, working on projects
-            ranging from automated psycholinguistics video annotation to audience engagement
-            measurement and multi-modal speaker diarisation.
-          </p>
-          <p>
-            I'm driven by curiosity, open collaboration, and a belief that AI should serve
-            people — making everyday experiences smarter, more accessible, and more human.
-          </p>
-
-          <!-- Social links -->
-          <div class="social-links" aria-label="Social and academic profiles">
-            <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn"
-              aria-label="LinkedIn profile">
-              <!-- LinkedIn icon -->
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path
-                  d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z" />
-              </svg>
-              LinkedIn
-            </a>
-            <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
-              class="social-btn" aria-label="Google Scholar profile">
-              <!-- Scholar cap icon -->
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z" />
-              </svg>
-              Google Scholar
-            </a>
+        <!-- Right column: 3D Globe -->
+        <div class="about-right" data-animate data-delay="300">
+          <div class="globe-header">
+            <span class="section-tag">Places</span>
+            <h3 class="globe-title">Where I've Been</h3>
+            <p class="globe-subtitle">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
+          </div>
+          <div class="globe-scene">
+            <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
+            <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
+              <span class="gt-type"></span>
+              <strong class="gt-name"></strong>
+              <span class="gt-info"></span>
+            </div>
+            <div class="globe-legend">
+              <span class="gl-item"><span class="gl-dot gl-home"></span>Home &amp; Work</span>
+              <span class="gl-item"><span class="gl-dot gl-travel"></span>Travel</span>
+            </div>
           </div>
         </div>
+
       </div>
-
-      <!-- ─── 3D Globe ─────────────────────────────────────── -->
-      <div class="about-globe" data-animate data-delay="300">
-        <div class="globe-header">
-          <span class="section-tag" style="display:block;text-align:center;margin-bottom:0.5rem">Places</span>
-          <h3 class="globe-title">Where I've Been</h3>
-          <p class="globe-subtitle">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
-        </div>
-        <div class="globe-scene">
-          <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
-          <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
-            <span class="gt-type"></span>
-            <strong class="gt-name"></strong>
-            <span class="gt-info"></span>
-          </div>
-          <div class="globe-legend">
-            <span class="gl-item"><span class="gl-dot gl-home"></span>Home &amp; Work</span>
-            <span class="gl-item"><span class="gl-dot gl-travel"></span>Travel</span>
-          </div>
-        </div>
-      </div>
-
     </div>
   </section>
 
@@ -283,7 +288,9 @@
         <span class="section-tag">Research</span>
         <h2 class="section-title">What I Work On</h2>
       </header>
-      <!-- Cards written directly in HTML; update here as your focus areas change -->
+    </div>
+    <!-- Carousel breaks out of container for full-width horizontal scroll -->
+    <div class="container container--wide">
       <div class="research-grid" id="research-grid" role="list">
 
         <div class="research-card" role="listitem" data-animate data-delay="0">
@@ -389,12 +396,17 @@
   <!-- ═══════════════ SKILLS ═══════════════ -->
   <section id="skills" class="section section-alt" aria-label="Skills">
     <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Skills</span>
-        <h2 class="section-title">Expertise</h2>
-      </header>
-      <!-- Skill groups written directly in HTML; update here as your toolkit evolves -->
-      <div class="skills-grid" id="skills-grid">
+      <div class="skills-split">
+        <!-- Left: sticky header that stays while you scroll through skills -->
+        <div class="skills-sticky-header">
+          <header class="section-header section-header--left" data-animate>
+            <span class="section-tag">Skills</span>
+            <h2 class="section-title">Expertise</h2>
+            <p class="skills-sticky-desc">Technologies and domains I work with daily.</p>
+          </header>
+        </div>
+        <!-- Right: skill groups scroll naturally -->
+        <div class="skills-grid" id="skills-grid">
 
         <div class="skill-group" data-animate data-delay="0">
           <div class="skill-group-title">AI &amp; Machine Learning</div>
@@ -464,6 +476,7 @@
           </div>
         </div>
 
+        </div>
       </div>
     </div>
   </section>
