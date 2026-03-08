@@ -2188,9 +2188,9 @@ function initTimelineScroll3D() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ANIMATED FAVICON — rotating 3-D capital "S"
-   Simulates y-axis rotation by scaling the canvas x-axis with
-   cos(angle).  Runs at ≤30 fps; pauses when the tab is hidden.
+   STATIC FAVICON — capital "S" rendered once
+   Draws a single frame and sets it as the favicon.
+   No animation loop — saves continuous CPU / PNG-encode cost.
    ═══════════════════════════════════════════════════════════ */
 function initAnimatedFavicon() {
   if (typeof document       === 'undefined') return;
@@ -2199,33 +2199,14 @@ function initAnimatedFavicon() {
   const link = document.querySelector('link[rel="icon"]');
   if (!link) return;
 
-  const S   = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
-  const TAU = Math.PI * 2;
-  const RADS_PER_MS = TAU / 4000; /* one full rotation every 4 s */
+  const S = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
 
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = S;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  let angle    = 0;
-  let prevMs   = 0;
-  let lastDraw = -1;
-
-  function frame(ms) {
-    requestAnimationFrame(frame);
-
-    /* Throttle to ~30 fps — favicon is tiny; 60 fps wastes CPU */
-    if (ms - lastDraw < 33) return;
-    lastDraw = ms;
-
-    /* Pause rendering while tab is hidden */
-    if (document.hidden) { prevMs = ms; return; }
-
-    const dt = prevMs ? Math.min(ms - prevMs, 150) : 0; /* cap big deltas */
-    prevMs   = ms;
-    angle    = (angle + RADS_PER_MS * dt) % TAU;
-
+  function render() {
     /* ── Background: dark rounded square ── */
     ctx.clearRect(0, 0, S, S);
     ctx.fillStyle = '#080c14';
@@ -2234,14 +2215,12 @@ function initAnimatedFavicon() {
     else               ctx.rect(0, 0, S, S);
     ctx.fill();
 
-    /* ── Rotating "S": front face = accent purple, back = accent2 cyan ── */
-    const cosA = Math.cos(angle);
+    /* ── Static "S" in accent purple ── */
     ctx.save();
     ctx.translate(S / 2, S / 2);
-    ctx.scale(cosA, 1); /* horizontal squeeze simulates 3-D y-axis spin */
     ctx.shadowBlur  = 10;
-    ctx.shadowColor = cosA >= 0 ? '#6c63ffbb' : '#00d4ffbb';
-    ctx.fillStyle   = cosA >= 0 ? '#6c63ff'   : '#00d4ff';
+    ctx.shadowColor = '#6c63ffbb';
+    ctx.fillStyle   = '#6c63ff';
     ctx.font        = 'bold 44px "Playfair Display", Georgia, serif';
     ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
@@ -2251,11 +2230,11 @@ function initAnimatedFavicon() {
     link.href = canvas.toDataURL('image/png');
   }
 
-  /* Start after fonts are loaded so Playfair Display is available */
+  /* Render after fonts are loaded so Playfair Display is available */
   const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
     ? document.fonts.ready
     : Promise.resolve();
-  whenReady.then(() => requestAnimationFrame(frame));
+  whenReady.then(render);
 }
 
 /* ═══════════════════════════════════════════════════════════
