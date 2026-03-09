@@ -1841,15 +1841,14 @@ function renderPublications() {
   if (!list) return;
 
   list.innerHTML = PUBLICATIONS.slice(0, 3).map((pub, i) => `
-    <div class="pub-item research-card" role="listitem" data-animate data-delay="${i * 70}">
+    <a href="${escapeHtml(pub.url || '#')}" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="${i * 70}" aria-label="Open paper: ${escapeHtml(pub.title)}">
       <div class="pub-year">${escapeHtml(pub.year)}</div>
       <div class="pub-title">${escapeHtml(pub.title)}</div>
       <div class="pub-meta">
         ${escapeHtml(pub.authors)} &nbsp;·&nbsp;
         <span class="pub-venue">${escapeHtml(pub.venue)}</span>
       </div>
-      ${pub.url ? `<a href="${escapeHtml(pub.url)}" target="_blank" rel="noopener" class="pub-link">Read paper</a>` : ''}
-    </div>
+    </a>
   `).join('');
 }
 
