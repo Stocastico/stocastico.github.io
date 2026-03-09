@@ -1835,6 +1835,51 @@ function escapeHtml(raw) {
     .replaceAll("'", '&#39;');
 }
 
+function decodeBase64(raw) {
+  try {
+    return atob(raw || '');
+  } catch (_) {
+    return '';
+  }
+}
+
+function getObfuscatedContactEmail() {
+  const card = document.querySelector('.contact-email-obfuscated');
+  if (!card) return '';
+  const user = decodeBase64(card.dataset.emailUser || '');
+  const domain = decodeBase64(card.dataset.emailDomain || '');
+  if (!user || !domain) return '';
+  return `${user}@${domain}`;
+}
+
+function initEmailObfuscation() {
+  const card = document.querySelector('.contact-email-obfuscated');
+  if (!card) return;
+  const valueEl = card.querySelector('.contact-value');
+  const email = getObfuscatedContactEmail();
+  if (!email) return;
+
+  const revealEmail = () => {
+    card.dataset.emailRevealed = 'true';
+    card.setAttribute('href', `mailto:${email}`);
+    card.setAttribute('aria-label', `Send email to ${email}`);
+    if (valueEl) valueEl.textContent = email;
+  };
+
+  card.addEventListener('click', (e) => {
+    if (card.dataset.emailRevealed === 'true') return;
+    e.preventDefault();
+    revealEmail();
+  });
+
+  card.addEventListener('keydown', (e) => {
+    if (card.dataset.emailRevealed === 'true') return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    revealEmail();
+  });
+}
+
 /* Publication items — data source: PUBLICATIONS (data/publications.js) */
 function renderPublications() {
   const list = document.getElementById('publications-list');
@@ -1948,7 +1993,9 @@ function initCardTilt() {
       card.addEventListener('mousemove', (e) => {
         const r  = card.getBoundingClientRect();
         const cx = (e.clientX - r.left) / r.width;
-        const cy = (e.clientY - r.top)  / r.height;
+          const email = getObfuscatedContactEmail()
+            || document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '')
+            || '';
         targetRY =  (cx - 0.5) * MAX_RY * 2;
         targetRX = -(cy - 0.5) * MAX_RX * 2;
         card.style.setProperty('--gloss-x', `${(cx * 100).toFixed(1)}%`);
@@ -2798,6 +2845,7 @@ if (typeof document !== 'undefined') {
   initTheme();
   initNavbar();
   initMobileMenu();
+  initEmailObfuscation();
   initBackToTop();
   initSideDots();
   initCommandPalette();

@@ -1300,6 +1300,11 @@ h3 {
   margin-top: 0.15rem;
 }
 
+.contact-email-obfuscated[data-email-revealed='false'] .contact-value {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
 /* ─── 15. Footer ────────────────────────────────────────── */
 .site-footer {
   padding-block: 2rem;
