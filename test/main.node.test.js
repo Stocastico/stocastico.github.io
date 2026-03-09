@@ -19,6 +19,9 @@ const {
   animateCounter,
   NeuralNetwork,
   HeroNameShader,
+  decodeBase64,
+  getObfuscatedContactEmail,
+  initEmailObfuscation,
 } = require('../js/main.js');
 
 function makeClassList(initial = []) {
@@ -912,5 +915,155 @@ test('HeroNameShader boots with mocked WebGL context', async () => {
     global.getComputedStyle = prevGetComputed;
     global.setTimeout = prevSetTimeout;
     global.devicePixelRatio = prevDpr;
+  }
+});
+
+/* ─── Email obfuscation / blur-reveal tests ─────────────── */
+
+test('decodeBase64 decodes valid Base64 strings', () => {
+  assert.equal(decodeBase64(btoa('hello')), 'hello');
+  assert.equal(decodeBase64(btoa('user@example.com')), 'user@example.com');
+});
+
+test('decodeBase64 returns empty string for invalid input', () => {
+  assert.equal(decodeBase64('!!!'), '');
+  assert.equal(decodeBase64(''), '');
+  assert.equal(decodeBase64(null), '');
+  assert.equal(decodeBase64(undefined), '');
+});
+
+test('getObfuscatedContactEmail reconstructs email from DOM data attributes', () => {
+  const prevDoc = global.document;
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') {
+        return {
+          dataset: {
+            emailUser: btoa('stefano'),
+            emailDomain: btoa('example.com'),
+          },
+        };
+      }
+      return null;
+    },
+  };
+  try {
+    assert.equal(getObfuscatedContactEmail(), 'stefano@example.com');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('getObfuscatedContactEmail returns empty string when card is missing', () => {
+  const prevDoc = global.document;
+  global.document = { querySelector() { return null; } };
+  try {
+    assert.equal(getObfuscatedContactEmail(), '');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initEmailObfuscation sets blurred email text on load', () => {
+  const prevDoc = global.document;
+  const valueEl = { textContent: 'placeholder' };
+  const listeners = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('test'),
+      emailDomain: btoa('example.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) {
+      if (sel === '.contact-value') return valueEl;
+      return null;
+    },
+    setAttribute() {},
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') return card;
+      return null;
+    },
+  };
+  try {
+    initEmailObfuscation();
+    /* Email text should be set immediately (shown blurred via CSS) */
+    assert.equal(valueEl.textContent, 'test@example.com');
+    /* Card should still be in unrevealed state */
+    assert.equal(card.dataset.emailRevealed, 'false');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initEmailObfuscation reveals email and sets mailto on click', () => {
+  const prevDoc = global.document;
+  const valueEl = { textContent: 'placeholder' };
+  const listeners = {};
+  const attrs = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('click'),
+      emailDomain: btoa('test.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) {
+      if (sel === '.contact-value') return valueEl;
+      return null;
+    },
+    setAttribute(k, v) { attrs[k] = v; },
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') return card;
+      return null;
+    },
+  };
+  try {
+    initEmailObfuscation();
+    /* Simulate click */
+    listeners.click({ preventDefault() {} });
+    assert.equal(card.dataset.emailRevealed, 'true');
+    assert.equal(attrs.href, 'mailto:click@test.com');
+    assert.match(attrs['aria-label'], /click@test\.com/);
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initEmailObfuscation reveals email on Enter key', () => {
+  const prevDoc = global.document;
+  const valueEl = { textContent: '' };
+  const listeners = {};
+  const attrs = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('key'),
+      emailDomain: btoa('test.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) {
+      if (sel === '.contact-value') return valueEl;
+      return null;
+    },
+    setAttribute(k, v) { attrs[k] = v; },
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') return card;
+      return null;
+    },
+  };
+  try {
+    initEmailObfuscation();
+    listeners.keydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(card.dataset.emailRevealed, 'true');
+    assert.equal(attrs.href, 'mailto:key@test.com');
+  } finally {
+    global.document = prevDoc;
   }
 });
