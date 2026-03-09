@@ -36,25 +36,4 @@ const PUBLICATIONS = [
         venue: 'IEEE Transactions on Multimedia, Vol. 25',
         url: 'https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en',
     },
-    {
-        year: '2022',
-        title: 'Collaborative Multi-user Augmented Reality Solutions in the Classroom',
-        authors: 'S. Masneri et al.',
-        venue: 'International Conference on Immersive Learning',
-        url: 'https://link.springer.com/chapter/10.1007/978-3-030-93907-6_106',
-    },
-    {
-        year: '2021',
-        title: 'A Multi-modal Audience Engagement Measurement System',
-        authors: 'S. Masneri et al.',
-        venue: 'Agents and Artificial Intelligence (Springer)',
-        url: 'https://link.springer.com/chapter/10.1007/978-3-030-71158-0_17',
-    },
-    {
-        year: '2014',
-        title: 'SVM-based Video Segmentation and Annotation of Lectures and Conferences',
-        authors: 'S. Masneri, O. Schreer',
-        venue: 'VISAPP 2014',
-        url: 'https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en',
-    },
 ];
