@@ -19,6 +19,22 @@ const {
   animateCounter,
   NeuralNetwork,
   HeroNameShader,
+  decodeBase64,
+  getObfuscatedContactEmail,
+  initEmailObfuscation,
+  renderCV,
+  renderSkills,
+  initTheme,
+  initCardTilt,
+  initSkillBars,
+  initTimelineScroll3D,
+  initAnimatedFavicon,
+  initMagneticButtons,
+  initScroll3D,
+  initBackToTop,
+  NeuralNetwork2D,
+  NoiseGradient,
+  GlobeFallback2D,
 } = require('../js/main.js');
 
 function makeClassList(initial = []) {
@@ -174,7 +190,7 @@ test('renderPublications injects publication cards into the container', () => {
   try {
     renderPublications();
     assert.match(list.innerHTML, /Paper title/);
-    assert.match(list.innerHTML, /Read paper/);
+    assert.match(list.innerHTML, /Open paper: Paper title/);
   } finally {
     global.document = prevDocument;
     global.PUBLICATIONS = prevPublications;
@@ -912,5 +928,973 @@ test('HeroNameShader boots with mocked WebGL context', async () => {
     global.getComputedStyle = prevGetComputed;
     global.setTimeout = prevSetTimeout;
     global.devicePixelRatio = prevDpr;
+  }
+});
+
+/* ─── Email obfuscation / blur-reveal tests ─────────────── */
+
+test('decodeBase64 decodes valid Base64 strings', () => {
+  assert.equal(decodeBase64(btoa('hello')), 'hello');
+  assert.equal(decodeBase64(btoa('user@example.com')), 'user@example.com');
+});
+
+test('decodeBase64 returns empty string for invalid input', () => {
+  assert.equal(decodeBase64('!!!'), '');
+  assert.equal(decodeBase64(''), '');
+  assert.equal(decodeBase64(null), '');
+  assert.equal(decodeBase64(undefined), '');
+});
+
+test('getObfuscatedContactEmail reconstructs email from DOM data attributes', () => {
+  const prevDoc = global.document;
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') {
+        return {
+          dataset: {
+            emailUser: btoa('stefano'),
+            emailDomain: btoa('example.com'),
+          },
+        };
+      }
+      return null;
+    },
+  };
+  try {
+    assert.equal(getObfuscatedContactEmail(), 'stefano@example.com');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('getObfuscatedContactEmail returns empty string when card is missing', () => {
+  const prevDoc = global.document;
+  global.document = { querySelector() { return null; } };
+  try {
+    assert.equal(getObfuscatedContactEmail(), '');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initEmailObfuscation sets blurred email text on load', () => {
+  const prevDoc = global.document;
+  const valueEl = { textContent: 'placeholder' };
+  const listeners = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('test'),
+      emailDomain: btoa('example.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) {
+      if (sel === '.contact-value') return valueEl;
+      return null;
+    },
+    setAttribute() {},
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') return card;
+      return null;
+    },
+  };
+  try {
+    initEmailObfuscation();
+    /* Email text should be set immediately (shown blurred via CSS) */
+    assert.equal(valueEl.textContent, 'test@example.com');
+    /* Card should still be in unrevealed state */
+    assert.equal(card.dataset.emailRevealed, 'false');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initEmailObfuscation reveals email and sets mailto on click', () => {
+  const prevDoc = global.document;
+  const valueEl = { textContent: 'placeholder' };
+  const listeners = {};
+  const attrs = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('click'),
+      emailDomain: btoa('test.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) {
+      if (sel === '.contact-value') return valueEl;
+      return null;
+    },
+    setAttribute(k, v) { attrs[k] = v; },
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') return card;
+      return null;
+    },
+  };
+  try {
+    initEmailObfuscation();
+    /* Simulate click */
+    listeners.click({ preventDefault() {} });
+    assert.equal(card.dataset.emailRevealed, 'true');
+    assert.equal(attrs.href, 'mailto:click@test.com');
+    assert.match(attrs['aria-label'], /click@test\.com/);
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initEmailObfuscation reveals email on Enter key', () => {
+  const prevDoc = global.document;
+  const valueEl = { textContent: '' };
+  const listeners = {};
+  const attrs = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('key'),
+      emailDomain: btoa('test.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) {
+      if (sel === '.contact-value') return valueEl;
+      return null;
+    },
+    setAttribute(k, v) { attrs[k] = v; },
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) {
+      if (sel === '.contact-email-obfuscated') return card;
+      return null;
+    },
+  };
+  try {
+    initEmailObfuscation();
+    listeners.keydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(card.dataset.emailRevealed, 'true');
+    assert.equal(attrs.href, 'mailto:key@test.com');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+/* ─── renderCV tests ─────────────────────────────────────── */
+
+test('renderCV renders merged career and education entries sorted by year', () => {
+  const timeline = { innerHTML: '' };
+  const prevDoc = global.document;
+  const prevCareer = global.CV_CAREER;
+  const prevEdu = global.CV_EDUCATION;
+  global.document = {
+    getElementById(id) { return id === 'cv-timeline' ? timeline : null; },
+  };
+  global.CV_CAREER = [{
+    year: '2020–2023',
+    role: 'Engineer',
+    company: 'Acme',
+    location: 'Berlin',
+    description: 'Built things',
+    tags: ['Python', 'ML'],
+  }];
+  global.CV_EDUCATION = [{
+    year: '2018',
+    degree: 'MSc CS',
+    institution: 'MIT',
+    location: 'Boston',
+  }];
+  try {
+    renderCV();
+    /* Career entry should appear first (2020 > 2018) */
+    assert.match(timeline.innerHTML, /Engineer/);
+    assert.match(timeline.innerHTML, /Acme/);
+    assert.match(timeline.innerHTML, /Berlin/);
+    assert.match(timeline.innerHTML, /Built things/);
+    assert.match(timeline.innerHTML, /Python/);
+    assert.match(timeline.innerHTML, /MSc CS/);
+    assert.match(timeline.innerHTML, /MIT/);
+    /* Career row should come before education row */
+    const careerIdx = timeline.innerHTML.indexOf('tl-row--career');
+    const eduIdx = timeline.innerHTML.indexOf('tl-row--education');
+    assert.ok(careerIdx < eduIdx, 'Career (2020) should be before education (2018)');
+  } finally {
+    global.document = prevDoc;
+    global.CV_CAREER = prevCareer;
+    global.CV_EDUCATION = prevEdu;
+  }
+});
+
+test('renderCV does nothing when timeline element is missing', () => {
+  const prevDoc = global.document;
+  global.document = { getElementById() { return null; } };
+  try {
+    renderCV(); /* should not throw */
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('renderCV does nothing when CV_CAREER is undefined', () => {
+  const timeline = { innerHTML: '' };
+  const prevDoc = global.document;
+  const prevCareer = global.CV_CAREER;
+  const prevEdu = global.CV_EDUCATION;
+  global.document = {
+    getElementById(id) { return id === 'cv-timeline' ? timeline : null; },
+  };
+  delete global.CV_CAREER;
+  global.CV_EDUCATION = [];
+  try {
+    renderCV();
+    assert.equal(timeline.innerHTML, '');
+  } finally {
+    global.document = prevDoc;
+    global.CV_CAREER = prevCareer;
+    global.CV_EDUCATION = prevEdu;
+  }
+});
+
+/* ─── renderSkills tests ─────────────────────────────────── */
+
+test('renderSkills renders technical bars and language pills', () => {
+  const container = { innerHTML: '' };
+  const prevDoc = global.document;
+  const prevSkills = global.CV_SKILLS;
+  global.document = {
+    getElementById(id) { return id === 'cv-skills' ? container : null; },
+  };
+  global.CV_SKILLS = {
+    technical: [{ name: 'Python', level: 90 }],
+    leadership: [{ name: 'Mentoring', level: 75 }],
+    languages: [{ name: 'English', proficiency: 'Native' }],
+  };
+  try {
+    renderSkills();
+    assert.match(container.innerHTML, /Python/);
+    assert.match(container.innerHTML, /skill-bar-fill/);
+    assert.match(container.innerHTML, /--pct:90%/);
+    assert.match(container.innerHTML, /Mentoring/);
+    assert.match(container.innerHTML, /English/);
+    assert.match(container.innerHTML, /Native/);
+    assert.match(container.innerHTML, /lang-item/);
+  } finally {
+    global.document = prevDoc;
+    global.CV_SKILLS = prevSkills;
+  }
+});
+
+test('renderSkills does nothing when container is missing', () => {
+  const prevDoc = global.document;
+  global.document = { getElementById() { return null; } };
+  try {
+    renderSkills(); /* should not throw */
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('renderSkills renders empty when CV_SKILLS has no entries', () => {
+  const container = { innerHTML: 'old' };
+  const prevDoc = global.document;
+  const prevSkills = global.CV_SKILLS;
+  global.document = {
+    getElementById(id) { return id === 'cv-skills' ? container : null; },
+  };
+  global.CV_SKILLS = { technical: [], leadership: [], languages: [] };
+  try {
+    renderSkills();
+    assert.equal(container.innerHTML, '');
+  } finally {
+    global.document = prevDoc;
+    global.CV_SKILLS = prevSkills;
+  }
+});
+
+/* ─── initTheme tests ─────────────────────────────────────── */
+
+test('initTheme is a no-op stub that does not throw', () => {
+  initTheme(); /* should simply return without error */
+});
+
+/* ─── initBackToTop tests ─────────────────────────────────── */
+
+test('initBackToTop toggles visible class on scroll', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const btn = { classList: makeClassList(), addEventListener() {} };
+  const listeners = {};
+  global.document = {
+    getElementById(id) { return id === 'back-to-top' ? btn : null; },
+  };
+  global.window = {
+    scrollY: 0,
+    innerHeight: 1000,
+    addEventListener(type, fn) { listeners[type] = fn; },
+    scrollTo() {},
+  };
+  try {
+    initBackToTop();
+    /* Simulate scroll below threshold */
+    global.window.scrollY = 100;
+    listeners.scroll();
+    assert.ok(!btn.classList.contains('visible'), 'Should not be visible at low scroll');
+    /* Simulate scroll past 60% of viewport */
+    global.window.scrollY = 700;
+    listeners.scroll();
+    assert.ok(btn.classList.contains('visible'), 'Should be visible at high scroll');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+  }
+});
+
+test('initBackToTop does nothing when button is missing', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  global.document = { getElementById() { return null; } };
+  global.window = { addEventListener() {} };
+  try {
+    initBackToTop(); /* should not throw */
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+  }
+});
+
+/* ─── initSkillBars tests ─────────────────────────────────── */
+
+test('initSkillBars adds animated class to bars when IntersectionObserver fires', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevIO = global.IntersectionObserver;
+  let observedCb = null;
+  const bar1 = { classList: makeClassList() };
+  const bar2 = { classList: makeClassList() };
+  global.document = {
+    querySelectorAll(sel) {
+      if (sel === '.skill-bar-fill') return [bar1, bar2];
+      return [];
+    },
+  };
+  global.window = {
+    matchMedia() { return { matches: false }; },
+  };
+  global.IntersectionObserver = class {
+    constructor(cb) { observedCb = cb; }
+    observe() {}
+    unobserve() {}
+  };
+  try {
+    initSkillBars();
+    /* Simulate intersection */
+    observedCb([{ isIntersecting: true, target: bar1 }]);
+    assert.ok(bar1.classList.contains('animated'));
+    assert.ok(!bar2.classList.contains('animated'), 'bar2 not yet intersected');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.IntersectionObserver = prevIO;
+  }
+});
+
+test('initSkillBars adds animated class immediately when no bars exist', () => {
+  const prevDoc = global.document;
+  global.document = {
+    querySelectorAll() { return []; },
+  };
+  try {
+    initSkillBars(); /* early return, no throw */
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+/* ─── initTimelineScroll3D tests ──────────────────────────── */
+
+test('initTimelineScroll3D sets initial opacity to 0 on entries', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevIO = global.IntersectionObserver;
+  const entry1 = { style: {}, querySelectorAll() { return []; } };
+  const entry2 = { style: {}, querySelectorAll() { return []; } };
+  const stage = {
+    querySelectorAll(sel) {
+      if (sel === '.tl-entry') return [entry1, entry2];
+      return [];
+    },
+  };
+  global.document = {
+    getElementById(id) { return id === 'timeline-stage' ? stage : null; },
+  };
+  global.window = {
+    matchMedia() { return { matches: false }; },
+  };
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+    unobserve() {}
+  };
+  try {
+    initTimelineScroll3D();
+    assert.equal(entry1.style.opacity, '0');
+    assert.equal(entry2.style.opacity, '0');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.IntersectionObserver = prevIO;
+  }
+});
+
+test('initTimelineScroll3D does nothing when stage is missing', () => {
+  const prevDoc = global.document;
+  global.document = { getElementById() { return null; } };
+  try {
+    initTimelineScroll3D(); /* should not throw */
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+/* ─── initAnimatedFavicon tests ───────────────────────────── */
+
+test('initAnimatedFavicon renders favicon via canvas and sets link href', () => {
+  const prevDoc = global.document;
+  const prevHTML = global.HTMLCanvasElement;
+  let faviconHref = '';
+  const ctx = {
+    clearRect() {}, fillStyle: '', beginPath() {},
+    rect() {}, fill() {}, save() {}, restore() {},
+    translate() {}, font: '', textAlign: '', textBaseline: '',
+    shadowBlur: 0, shadowColor: '', fillText() {},
+  };
+  const canvas = {
+    width: 0, height: 0,
+    getContext() { return ctx; },
+    toDataURL() { return 'data:image/png;base64,FAKE'; },
+  };
+  const link = {
+    get href() { return faviconHref; },
+    set href(v) { faviconHref = v; },
+  };
+  global.HTMLCanvasElement = class {};
+  global.document = {
+    querySelector(sel) {
+      if (sel === 'link[rel="icon"]') return link;
+      return null;
+    },
+    createElement(tag) {
+      if (tag === 'canvas') return canvas;
+      return {};
+    },
+    fonts: { ready: Promise.resolve() },
+  };
+  try {
+    initAnimatedFavicon();
+    /* fonts.ready is a microtask, need to flush promises */
+    return global.document.fonts.ready.then(() => {
+      assert.equal(faviconHref, 'data:image/png;base64,FAKE');
+    });
+  } finally {
+    global.document = prevDoc;
+    global.HTMLCanvasElement = prevHTML;
+  }
+});
+
+test('initAnimatedFavicon does nothing when favicon link is missing', () => {
+  const prevDoc = global.document;
+  const prevHTML = global.HTMLCanvasElement;
+  global.HTMLCanvasElement = class {};
+  global.document = {
+    querySelector() { return null; },
+    createElement() { return {}; },
+  };
+  try {
+    initAnimatedFavicon(); /* should not throw */
+  } finally {
+    global.document = prevDoc;
+    global.HTMLCanvasElement = prevHTML;
+  }
+});
+
+/* ─── initCardTilt tests ──────────────────────────────────── */
+
+test('initCardTilt adds tilt-ready class to cards', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const card = {
+    classList: makeClassList(),
+    style: { setProperty() {}, transform: '', transition: '' },
+    addEventListener() {},
+    getBoundingClientRect() { return { left: 0, top: 0, width: 200, height: 100 }; },
+  };
+  global.document = {
+    querySelectorAll() { return [card]; },
+  };
+  global.window = {
+    matchMedia() { return { matches: false }; },
+  };
+  global.requestAnimationFrame = () => 1;
+  try {
+    initCardTilt();
+    assert.ok(card.classList.contains('tilt-ready'));
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+  }
+});
+
+test('initCardTilt skips when prefers-reduced-motion is set', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  let queryCalled = false;
+  global.document = {
+    querySelectorAll() { queryCalled = true; return []; },
+  };
+  global.window = {
+    matchMedia(q) {
+      if (q === '(prefers-reduced-motion: reduce)') return { matches: true };
+      return { matches: false };
+    },
+  };
+  try {
+    initCardTilt();
+    assert.ok(!queryCalled, 'Should skip card setup when reduced motion is preferred');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+  }
+});
+
+/* ─── initMagneticButtons tests ───────────────────────────── */
+
+test('initMagneticButtons registers mousemove listener for magnetic effect', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const btn = {
+    style: { transform: '' },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 40 }; },
+  };
+  const docListeners = {};
+  global.document = {
+    querySelectorAll() { return [btn]; },
+    querySelector() { return null; },  /* no .hero-actions */
+    addEventListener(type, fn) { docListeners[type] = fn; },
+  };
+  global.window = {
+    matchMedia() { return { matches: false }; },
+  };
+  global.requestAnimationFrame = (fn) => { fn(); return 1; };
+  try {
+    initMagneticButtons();
+    assert.ok(docListeners.mousemove, 'Should register mousemove listener');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+  }
+});
+
+test('initMagneticButtons skips on coarse pointer devices', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  let queryCalled = false;
+  global.document = {
+    querySelectorAll() { queryCalled = true; return []; },
+    querySelector() { return null; },
+    addEventListener() {},
+  };
+  global.window = {
+    matchMedia(q) {
+      if (q === '(pointer: coarse)') return { matches: true };
+      return { matches: false };
+    },
+  };
+  try {
+    initMagneticButtons();
+    assert.ok(!queryCalled, 'Should skip on touch devices');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+  }
+});
+
+/* ─── initScroll3D tests ──────────────────────────────────── */
+
+test('initScroll3D registers scroll listener for hero parallax', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const heroContent = {
+    style: { transform: '' },
+    addEventListener(type, fn, opts) {
+      if (type === 'animationend') fn(); /* fire immediately */
+    },
+  };
+  const winListeners = {};
+  global.document = {
+    querySelector(sel) { return sel === '.hero-content' ? heroContent : null; },
+    getElementById(id) { return id === 'hero' ? { offsetHeight: 800 } : null; },
+  };
+  global.window = {
+    scrollY: 0,
+    matchMedia() { return { matches: false }; },
+    addEventListener(type, fn) { winListeners[type] = fn; },
+  };
+  global.requestAnimationFrame = (fn) => { fn(); return 1; };
+  try {
+    initScroll3D();
+    assert.ok(winListeners.scroll, 'Should register scroll listener');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+  }
+});
+
+test('initScroll3D skips on coarse pointer devices', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  let scrollRegistered = false;
+  global.document = {
+    querySelector() { return null; },
+    getElementById() { return null; },
+  };
+  global.window = {
+    matchMedia(q) {
+      if (q === '(pointer: coarse)') return { matches: true };
+      return { matches: false };
+    },
+    addEventListener(type) { if (type === 'scroll') scrollRegistered = true; },
+  };
+  try {
+    initScroll3D();
+    assert.ok(!scrollRegistered, 'Should not register scroll on touch devices');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+  }
+});
+
+/* ─── NeuralNetwork2D tests ───────────────────────────────── */
+
+test('NeuralNetwork2D constructs with particles and starts animation', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevIO = global.IntersectionObserver;
+  const prevDpr = global.devicePixelRatio;
+  const prevNav = global.navigator;
+
+  const ctx = {
+    clearRect() {}, strokeStyle: '', lineWidth: 0,
+    beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+    fillStyle: '', fill() {}, arc() {},
+    createRadialGradient() {
+      return { addColorStop() {} };
+    },
+    setTransform() {},
+  };
+  const canvas = {
+    width: 0, height: 0,
+    getContext() { return ctx; },
+    style: { width: '', height: '' },
+    parentElement: { clientWidth: 800, clientHeight: 600 },
+  };
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+  };
+  global.window = {
+    innerWidth: 1200,
+    innerHeight: 800,
+    devicePixelRatio: 1,
+    addEventListener() {},
+    matchMedia() { return { matches: false }; },
+  };
+  global.devicePixelRatio = 1;
+  global.navigator = { hardwareConcurrency: 8 };
+  let rafCalled = false;
+  global.requestAnimationFrame = () => { rafCalled = true; return 1; };
+  global.IntersectionObserver = class {
+    constructor(cb) { cb([{ isIntersecting: true }]); }
+    observe() {}
+  };
+  try {
+    const nn = new NeuralNetwork2D(canvas);
+    assert.ok(nn.points.length > 0, 'Should create particles');
+    assert.ok(nn.ctx === ctx, 'Should store canvas context');
+    assert.ok(rafCalled, 'Should start animation loop');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.IntersectionObserver = prevIO;
+    global.devicePixelRatio = prevDpr;
+    global.navigator = prevNav;
+  }
+});
+
+/* ─── NoiseGradient tests ─────────────────────────────────── */
+
+test('NoiseGradient sets up WebGL program and renders frames', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevPerf = global.performance;
+
+  let drawCalled = 0;
+  const gl = {
+    VERTEX_SHADER: 35633,
+    FRAGMENT_SHADER: 35632,
+    ARRAY_BUFFER: 34962,
+    STATIC_DRAW: 35044,
+    FLOAT: 5126,
+    TRIANGLE_STRIP: 5,
+    createShader() { return {}; },
+    shaderSource() {},
+    compileShader() {},
+    createProgram() { return {}; },
+    attachShader() {},
+    linkProgram() {},
+    useProgram() {},
+    createBuffer() { return {}; },
+    bindBuffer() {},
+    bufferData() {},
+    getAttribLocation() { return 0; },
+    enableVertexAttribArray() {},
+    vertexAttribPointer() {},
+    getUniformLocation() { return {}; },
+    uniform1f() {},
+    uniform2f() {},
+    viewport() {},
+    drawArrays() { drawCalled++; },
+  };
+  const canvas = {
+    width: 0, height: 0,
+    clientWidth: 800, clientHeight: 600,
+    style: { display: '' },
+    getContext() { return gl; },
+  };
+  global.document = { hidden: false };
+  global.window = {
+    devicePixelRatio: 1,
+    addEventListener() {},
+  };
+  global.performance = { now: () => 1000 };
+
+  let rafFn = null;
+  global.requestAnimationFrame = (fn) => { rafFn = fn; return 1; };
+
+  try {
+    const ng = new NoiseGradient(canvas);
+    assert.ok(ng.gl === gl, 'Should store WebGL context');
+    /* Simulate 3 frames (framesLeft starts at 3) */
+    if (rafFn) rafFn(1016);  /* frame 1 */
+    if (rafFn) rafFn(1032);  /* frame 2 */
+    if (rafFn) rafFn(1048);  /* frame 3 */
+    assert.ok(drawCalled >= 1, 'Should draw at least one frame');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.performance = prevPerf;
+  }
+});
+
+test('NoiseGradient hides canvas when WebGL is unavailable', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevPerf = global.performance;
+  const canvas = {
+    width: 0, height: 0,
+    clientWidth: 800, clientHeight: 600,
+    style: { display: '' },
+    getContext() { return null; },
+  };
+  global.document = { hidden: false };
+  global.window = { addEventListener() {} };
+  global.performance = { now: () => 0 };
+  global.requestAnimationFrame = () => 1;
+  try {
+    const ng = new NoiseGradient(canvas);
+    assert.equal(canvas.style.display, 'none', 'Should hide canvas when no WebGL');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.performance = prevPerf;
+  }
+});
+
+test('NoiseGradient destroy cancels animation frame', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCAF = global.cancelAnimationFrame;
+  const prevPerf = global.performance;
+  let cancelledId = null;
+  const gl = {
+    VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632,
+    ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, FLOAT: 5126, TRIANGLE_STRIP: 5,
+    createShader() { return {}; }, shaderSource() {}, compileShader() {},
+    createProgram() { return {}; }, attachShader() {}, linkProgram() {},
+    useProgram() {}, createBuffer() { return {}; }, bindBuffer() {},
+    bufferData() {}, getAttribLocation() { return 0; },
+    enableVertexAttribArray() {}, vertexAttribPointer() {},
+    getUniformLocation() { return {}; }, uniform1f() {}, uniform2f() {},
+    viewport() {}, drawArrays() {},
+  };
+  const canvas = {
+    width: 0, height: 0, clientWidth: 800, clientHeight: 600,
+    style: {}, getContext() { return gl; },
+  };
+  global.document = { hidden: false };
+  global.window = { devicePixelRatio: 1, addEventListener() {} };
+  global.performance = { now: () => 1000 };
+  global.requestAnimationFrame = () => 42;
+  global.cancelAnimationFrame = (id) => { cancelledId = id; };
+  try {
+    const ng = new NoiseGradient(canvas);
+    ng.destroy();
+    assert.equal(cancelledId, 42, 'Should cancel the animation frame');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCAF;
+    global.performance = prevPerf;
+  }
+});
+
+/* ─── GlobeFallback2D tests ───────────────────────────────── */
+
+test('GlobeFallback2D constructs with pins and starts animation', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevIO = global.IntersectionObserver;
+  const prevDpr = global.devicePixelRatio;
+  const prevNav = global.navigator;
+  const prevLoc = global.LOCATIONS;
+
+  const ctx = {
+    clearRect() {}, strokeStyle: '', lineWidth: 0, fillStyle: '',
+    globalAlpha: 1,
+    beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fill() {},
+    arc() {}, setTransform() {},
+    createRadialGradient() { return { addColorStop() {} }; },
+  };
+  const canvas = {
+    width: 0, height: 0,
+    style: { width: '', height: '' },
+    getContext() { return ctx; },
+    parentElement: { clientWidth: 800, clientHeight: 500 },
+    addEventListener() {},
+    getBoundingClientRect() { return { left: 0, top: 0, width: 800, height: 500 }; },
+  };
+  global.LOCATIONS = {
+    pins: [
+      { type: 'lived', name: 'Rome', lat: 41.9, lon: 12.5 },
+      { type: 'current', name: 'Berlin', lat: 52.5, lon: 13.4 },
+    ],
+    regions: [],
+    trips: [],
+  };
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+  };
+  global.window = {
+    innerWidth: 1200,
+    innerHeight: 800,
+    devicePixelRatio: 1,
+    addEventListener() {},
+    matchMedia() { return { matches: false }; },
+  };
+  global.devicePixelRatio = 1;
+  global.navigator = { hardwareConcurrency: 8 };
+  let rafCalled = false;
+  global.requestAnimationFrame = () => { rafCalled = true; return 1; };
+  global.IntersectionObserver = class {
+    constructor(cb) { cb([{ isIntersecting: true }]); }
+    observe() {}
+  };
+  try {
+    const globe = new GlobeFallback2D(canvas);
+    assert.ok(globe._points.length === 2, 'Should collect 2 pins');
+    assert.ok(rafCalled, 'Should start animation loop');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.IntersectionObserver = prevIO;
+    global.devicePixelRatio = prevDpr;
+    global.navigator = prevNav;
+    global.LOCATIONS = prevLoc;
+  }
+});
+
+test('GlobeFallback2D skips pins marked with _skip', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevIO = global.IntersectionObserver;
+  const prevDpr = global.devicePixelRatio;
+  const prevNav = global.navigator;
+  const prevLoc = global.LOCATIONS;
+
+  const ctx = {
+    clearRect() {}, strokeStyle: '', lineWidth: 0, fillStyle: '',
+    globalAlpha: 1,
+    beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fill() {},
+    arc() {}, setTransform() {},
+    createRadialGradient() { return { addColorStop() {} }; },
+  };
+  const canvas = {
+    width: 0, height: 0,
+    style: { width: '', height: '' },
+    getContext() { return ctx; },
+    parentElement: { clientWidth: 800, clientHeight: 500 },
+    addEventListener() {},
+  };
+  global.LOCATIONS = {
+    pins: [
+      { type: 'lived', name: 'Rome', lat: 41.9, lon: 12.5 },
+      { type: 'holiday', name: 'Hidden', lat: 0, lon: 0, _skip: true },
+    ],
+    regions: [],
+    trips: [],
+  };
+  global.document = { hidden: false, addEventListener() {} };
+  global.window = {
+    innerWidth: 1200, innerHeight: 800, devicePixelRatio: 1,
+    addEventListener() {},
+    matchMedia() { return { matches: false }; },
+  };
+  global.devicePixelRatio = 1;
+  global.navigator = { hardwareConcurrency: 8 };
+  global.requestAnimationFrame = () => 1;
+  global.IntersectionObserver = class {
+    constructor(cb) { cb([{ isIntersecting: true }]); }
+    observe() {}
+  };
+  try {
+    const globe = new GlobeFallback2D(canvas);
+    assert.equal(globe._points.length, 1, 'Should skip _skip pins');
+    assert.equal(globe._points[0].type, 'lived');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.IntersectionObserver = prevIO;
+    global.devicePixelRatio = prevDpr;
+    global.navigator = prevNav;
+    global.LOCATIONS = prevLoc;
   }
 });

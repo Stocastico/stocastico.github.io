@@ -135,7 +135,7 @@ async function compileLocations(source, options) {
   const pins = [];
   for (const rawPin of source.pins) {
     const pin = { ...rawPin };
-    pin.type = ['lived', 'work', 'travel'].includes(pin.type) ? pin.type : 'travel';
+    pin.type = ['lived', 'current', 'worktrip', 'holiday'].includes(pin.type) ? pin.type : 'lived';
     await fillCoords(pin, pin.name);
     pins.push({
       type: pin.type,

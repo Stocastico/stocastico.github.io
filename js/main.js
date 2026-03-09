@@ -1859,11 +1859,13 @@ function initEmailObfuscation() {
   const email = getObfuscatedContactEmail();
   if (!email) return;
 
+  /* Show the email text immediately (CSS blur hides it visually) */
+  if (valueEl) valueEl.textContent = email;
+
   const revealEmail = () => {
     card.dataset.emailRevealed = 'true';
     card.setAttribute('href', `mailto:${email}`);
     card.setAttribute('aria-label', `Send email to ${email}`);
-    if (valueEl) valueEl.textContent = email;
   };
 
   card.addEventListener('click', (e) => {
@@ -2825,6 +2827,9 @@ if (typeof module !== 'undefined' && module.exports) {
     HeroNameShader,
     NoiseGradient,
     GlobeFallback2D,
+    decodeBase64,
+    getObfuscatedContactEmail,
+    initEmailObfuscation,
   };
 }
 
