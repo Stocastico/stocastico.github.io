@@ -61,9 +61,27 @@ test('compileLocations assigns defaults and keeps explicit coordinates', async (
   });
 
   assert.equal(compiled.geocodeRequests, 0);
-  assert.equal(compiled.pins[1].type, 'travel');
+  assert.equal(compiled.pins[1].type, 'lived');
   assert.equal(compiled.trips[0].color, '#ff6b6b');
   assert.equal(compiled.regions[0].color, '#ff8c42');
+});
+
+test('compileLocations preserves all valid pin types', async () => {
+  const source = {
+    pins: [
+      { type: 'lived', name: 'A', lat: 1, lon: 1, info: '' },
+      { type: 'current', name: 'B', lat: 2, lon: 2, info: '' },
+      { type: 'worktrip', name: 'C', lat: 3, lon: 3, info: '' },
+      { type: 'holiday', name: 'D', lat: 4, lon: 4, info: '' },
+    ],
+    trips: [],
+    regions: [],
+  };
+  const compiled = await compileLocations(source, { geocode: false, cache: '/tmp/stocastico-test-types.json' });
+  assert.equal(compiled.pins[0].type, 'lived');
+  assert.equal(compiled.pins[1].type, 'current');
+  assert.equal(compiled.pins[2].type, 'worktrip');
+  assert.equal(compiled.pins[3].type, 'holiday');
 });
 
 test('toLocationsJs returns executable JS declaration', () => {
