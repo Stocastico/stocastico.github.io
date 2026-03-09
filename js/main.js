@@ -1841,7 +1841,7 @@ function renderPublications() {
   if (!list) return;
 
   list.innerHTML = PUBLICATIONS.slice(0, 3).map((pub, i) => `
-    <div class="pub-item" role="listitem" data-animate data-delay="${i * 70}">
+    <div class="pub-item research-card" role="listitem" data-animate data-delay="${i * 70}">
       <div class="pub-year">${escapeHtml(pub.year)}</div>
       <div class="pub-title">${escapeHtml(pub.title)}</div>
       <div class="pub-meta">

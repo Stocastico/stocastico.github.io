@@ -993,40 +993,11 @@ h3 {
 }
 
 .pub-item {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
   padding: 1.45rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   align-items: start;
-  transition: transform var(--t-med) var(--ease),
-    border-color var(--t-med),
-    background var(--t-med),
-    box-shadow var(--t-med);
-  position: relative;
-  overflow: hidden;
-}
-
-.pub-item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 65%);
-  opacity: 0;
-  transition: opacity var(--t-med);
-}
-
-.pub-item:hover {
-  border-color: var(--border-hov);
-  background: var(--bg-card-hov);
-  transform: translateY(-6px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
-}
-
-.pub-item:hover::before {
-  opacity: 1;
 }
 
 .pub-year {
