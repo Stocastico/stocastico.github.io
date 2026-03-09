@@ -261,8 +261,8 @@
           <div class="globe-header">
             <span class="section-tag">Places</span>
             <h3 class="globe-title">Where I've Been</h3>
-            <p class="globe-subtitle">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
           </div>
+
           <div class="globe-scene">
             <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
             <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
@@ -271,8 +271,40 @@
               <span class="gt-info"></span>
             </div>
             <div class="globe-legend">
-              <span class="gl-item"><span class="gl-dot gl-home"></span>Home &amp; Work</span>
-              <span class="gl-item"><span class="gl-dot gl-travel"></span>Travel</span>
+              <span class="gl-item"><span class="gl-dot gl-lived"></span>Lived</span>
+              <span class="gl-item"><span class="gl-dot gl-current"></span>Current</span>
+              <span class="gl-item"><span class="gl-dot gl-worktrip"></span>Worktrip</span>
+              <span class="gl-item"><span class="gl-dot gl-holiday"></span>Holiday</span>
+            </div>
+          </div>
+
+          <p class="globe-subtitle">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
+
+          <!-- Filter controls for location types -->
+          <div class="location-filters">
+            <button class="filter-btn active" data-type="lived" title="Toggle 'Lived' locations">
+              <span class="filter-dot gl-lived"></span>Lived
+            </button>
+            <button class="filter-btn active" data-type="current" title="Toggle 'Current' location">
+              <span class="filter-dot gl-current"></span>Current
+            </button>
+            <button class="filter-btn active" data-type="worktrip" title="Toggle 'Worktrip' locations">
+              <span class="filter-dot gl-worktrip"></span>Worktrips
+            </button>
+            <button class="filter-btn active" data-type="holiday" title="Toggle 'Holiday' locations">
+              <span class="filter-dot gl-holiday"></span>Holidays
+            </button>
+          </div>
+
+          <!-- 2D Europe Map section -->
+          <div class="europe-section">
+            <div class="europe-scene">
+              <canvas id="europe-canvas" aria-label="2D map of Europe showing location details"></canvas>
+              <div class="europe-tooltip" id="europe-tooltip" aria-live="polite">
+                <span class="et-type"></span>
+                <strong class="et-name"></strong>
+                <span class="et-info"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -635,6 +667,7 @@
   <script defer src="data/locations.js"></script>
   <script defer src="data/publications.js"></script>
   <script defer src="data/blog.js"></script>
+  <script defer src="js/europe-map.js"></script>
   <script defer src="js/main.min.js"></script>
 </body>
 

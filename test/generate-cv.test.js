@@ -219,6 +219,37 @@ test('parseYaml: location with comma and unicode', () => {
   assert.deepEqual(parseYaml(yaml), { location: 'San Sebastián, ES' });
 });
 
+test('parseYaml: CRLF top-level keys ending with colon are parsed', () => {
+  const yaml = [
+    'career:',
+    '  - year: "2024"',
+    '    role: Engineer',
+    '    company: Acme',
+    'education:',
+    '  - year: "2020"',
+    '    degree: MSc',
+    '    institution: Uni',
+  ].join('\r\n');
+
+  const result = parseYaml(yaml);
+  assert.ok(Array.isArray(result.career));
+  assert.ok(Array.isArray(result.education));
+  assert.equal(result.career[0].company, 'Acme');
+  assert.equal(result.education[0].institution, 'Uni');
+});
+
+test('parseYaml: CRLF nested keys with trailing colon are parsed', () => {
+  const yaml = [
+    'skills:',
+    '  technical:',
+    '    - name: Python',
+    '      level: 90',
+  ].join('\r\n');
+
+  const result = parseYaml(yaml);
+  assert.deepEqual(result.skills.technical, [{ name: 'Python', level: 90 }]);
+});
+
 // ─── validateCv ───────────────────────────────────────────────────────────────
 
 const minimalValid = {

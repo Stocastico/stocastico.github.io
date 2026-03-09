@@ -7,14 +7,19 @@
    You can still edit this file manually, but it is intended to be
    generated from YAML so you do not need to manage coordinates/colors.
 
-   TWO-COLOUR SYSTEM
-   ──────────────────
-   Cyan  #00d4ff — "places you belong to"
-     "lived"  — the city was / is your home (large pulsing pin)
-     "work"   — you worked or did research here (small static pin)
+   FOUR-COLOUR SYSTEM
+   ───────────────────
+   Cyan  #00d4ff — "lived here" (past)
+     "lived" — the city was your home (large pulsing pin)
 
-   Coral #ff8c42 — "places you explored"
-     "travel" — holidays, tourism (small static pin)
+   Yellow #ffeb00 — "living now"
+     "current" — your current home (large pulsing pin)
+
+   Blue #0099ff — "work trips"
+     "worktrip" — you worked or did research here (small static pin)
+
+   Coral #ff8c42 — "holidays & exploration"
+     "holiday" — holidays, tourism (small static pin)
      trips    — your colour is set per trip, defaults to coral
      regions  — island / country discs, also default coral
 
@@ -52,28 +57,30 @@ const LOCATIONS = {
 
     // ─ Lived — cyan, large pulsing pin ──────────────────────
     { type: 'lived', name: 'Crema, Italy', lat: 45.36, lon: 9.68, info: 'Home town' },
-    { type: 'lived', name: 'San Sebastián, Spain', lat: 43.32, lon: -1.98, info: 'Current home' },
 
-    // ─ Work — cyan, small static pin ────────────────────────
-    { type: 'work', name: 'Bilbao, Spain', lat: 43.26, lon: -2.93, info: 'Vicomtech Foundation' },
-    { type: 'work', name: 'Barcelona, Spain', lat: 41.38, lon: 2.17, info: 'GRUP MEDIAPRO HQ' },
-    { type: 'work', name: 'Madrid, Spain', lat: 40.42, lon: -3.70, info: 'Conferences' },
-    { type: 'work', name: 'Berlin, Germany', lat: 52.52, lon: 13.40, info: 'Fraunhofer HHI' },
-    { type: 'work', name: 'Amsterdam, Netherlands', lat: 52.37, lon: 4.90, info: 'IBC Show' },
-    { type: 'work', name: 'London, UK', lat: 51.50, lon: -0.12, info: 'Research visits' },
-    { type: 'work', name: 'Milan, Italy', lat: 45.46, lon: 9.19, info: 'Conferences' },
-    { type: 'work', name: 'New York, USA', lat: 40.71, lon: -74.01, info: 'Research conference' },
-    { type: 'work', name: 'Tokyo, Japan', lat: 35.68, lon: 139.69, info: 'Research visit' },
+    // ─ Current — yellow, large pulsing pin ────────────────
+    { type: 'current', name: 'San Sebastián, Spain', lat: 43.32, lon: -1.98, info: 'Current home' },
 
-    // ─ Travel — coral, small static pin ─────────────────────
-    { type: 'travel', name: 'Paris, France', lat: 48.86, lon: 2.35, info: 'Holiday' },
-    { type: 'travel', name: 'Prague, Czechia', lat: 50.07, lon: 14.43, info: 'Holiday' },
-    { type: 'travel', name: 'Lisbon, Portugal', lat: 38.72, lon: -9.14, info: 'Holiday' },
-    { type: 'travel', name: 'Vienna, Austria', lat: 48.21, lon: 16.37, info: 'Holiday' },
-    { type: 'travel', name: 'Dubrovnik, Croatia', lat: 42.64, lon: 18.11, info: 'Holiday' },
+    // ─ Work trips — blue, small static pin ────────────────
+    { type: 'worktrip', name: 'Bilbao, Spain', lat: 43.26, lon: -2.93, info: 'Vicomtech Foundation' },
+    { type: 'worktrip', name: 'Barcelona, Spain', lat: 41.38, lon: 2.17, info: 'GRUP MEDIAPRO HQ' },
+    { type: 'worktrip', name: 'Madrid, Spain', lat: 40.42, lon: -3.70, info: 'Conferences' },
+    { type: 'worktrip', name: 'Berlin, Germany', lat: 52.52, lon: 13.40, info: 'Fraunhofer HHI' },
+    { type: 'worktrip', name: 'Amsterdam, Netherlands', lat: 52.37, lon: 4.90, info: 'IBC Show' },
+    { type: 'worktrip', name: 'London, UK', lat: 51.50, lon: -0.12, info: 'Research visits' },
+    { type: 'worktrip', name: 'Milan, Italy', lat: 45.46, lon: 9.19, info: 'Conferences' },
+    { type: 'worktrip', name: 'New York, USA', lat: 40.71, lon: -74.01, info: 'Research conference' },
+    { type: 'worktrip', name: 'Tokyo, Japan', lat: 35.68, lon: 139.69, info: 'Research visit' },
 
-    // ─ Travel with explicit coordinates (no geocoding request needed) ─
-    { type: 'travel', name: 'Reykjavik, Iceland', lat: 64.1466, lon: -21.9426, info: 'Holiday' },
+    // ─ Holidays — coral, small static pin ─────────────────────
+    { type: 'holiday', name: 'Paris, France', lat: 48.86, lon: 2.35, info: 'Holiday' },
+    { type: 'holiday', name: 'Prague, Czechia', lat: 50.07, lon: 14.43, info: 'Holiday' },
+    { type: 'holiday', name: 'Lisbon, Portugal', lat: 38.72, lon: -9.14, info: 'Holiday' },
+    { type: 'holiday', name: 'Vienna, Austria', lat: 48.21, lon: 16.37, info: 'Holiday' },
+    { type: 'holiday', name: 'Dubrovnik, Croatia', lat: 42.64, lon: 18.11, info: 'Holiday' },
+
+    // ─ Holidays with explicit coordinates (no geocoding request needed) ─
+    { type: 'holiday', name: 'Reykjavik, Iceland', lat: 64.1466, lon: -21.9426, info: 'Holiday' },
 
   ],
 

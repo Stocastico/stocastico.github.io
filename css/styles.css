@@ -1839,7 +1839,7 @@ h3 {
 
 /* ─── 18. Globe (About section) ─────────────────────────── */
 .globe-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .globe-title {
@@ -1849,13 +1849,58 @@ h3 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0;
 }
 
 .globe-subtitle {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   color: var(--text-faint);
   letter-spacing: 0.07em;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Location type filter controls */
+.location-filters {
+  display: none;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+  margin-bottom: 1.5rem;
+  justify-content: flex-start;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(8, 12, 20, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(8, 12, 20, 0.8);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+.filter-btn.active {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.6);
+  color: #00d4ff;
+}
+
+.filter-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .globe-scene {
@@ -1966,17 +2011,114 @@ h3 {
   flex-shrink: 0;
 }
 
-.gl-dot.gl-home {
+.gl-dot.gl-lived {
   background: #00d4ff;
   box-shadow: 0 0 7px #00d4ff;
 }
 
-.gl-dot.gl-travel {
+.gl-dot.gl-current {
+  background: #ffeb00;
+  box-shadow: 0 0 7px #ffeb00;
+}
+
+.gl-dot.gl-worktrip {
+  background: #0099ff;
+  box-shadow: 0 0 7px #0099ff;
+}
+
+.gl-dot.gl-holiday {
   background: #ff8c42;
   box-shadow: 0 0 7px rgba(255, 140, 66, 0.9);
 }
 
+/* ─── 18b. Europe 2D Map (About section) ───────────────────────── */
+.europe-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 1rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  contain: layout style paint;
+}
 
+.europe-header {
+  display: none;
+}
+
+.europe-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.europe-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.europe-scene {
+  position: relative;
+  width: 100%;
+  background: #020b18;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  overflow: hidden;
+}
+
+#europe-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+#europe-canvas:active {
+  cursor: grabbing;
+}
+
+.europe-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(8, 12, 20, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.europe-tooltip.visible {
+  opacity: 1;
+}
+
+.europe-tooltip > span {
+  display: inline;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: 0.4rem;
+}
+
+.europe-tooltip > strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.europe-tooltip > span:last-child {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-left: 0.4rem;
+}
 
 /* ─── 19. Enhanced Blog Cards ────────────────────────────── */
 /* Override base card to remove top-padding — header accent bar takes its place */

@@ -537,15 +537,17 @@ const GLOBE_CONTINENTS = [
    ═══════════════════════════════════════════════════════════ */
 class Globe3D {
 
-  /* Two-colour scheme:
-       cyan  (#00d4ff) — lived + work  (places you belong to)
-       coral (#ff8c42) — travel + trips + regions  (places you explored)
-     Visual weight still differentiates lived (large, pulsing) from
-     work (small, static) even though they share a colour. */
-  static PIN_COLORS = { lived: 0x00d4ff, work: 0x00d4ff, travel: 0xff8c42 };
+  /* Four-colour scheme:
+       cyan   (#00d4ff) — lived places (past homes)
+       yellow (#ffeb00) — current home
+       blue   (#0099ff) — worktrips (work locations)
+       coral  (#ff8c42) — holidays + trips + regions (exploration)
+     Visual weight still differentiates lived/current (large, pulsing)
+     from worktrip/holiday (small, static) even within colour groups. */
+  static PIN_COLORS = { lived: 0x00d4ff, current: 0xffeb00, worktrip: 0x0099ff, holiday: 0xff8c42 };
 
-  static TT_LABEL = { lived: '● Home', work: '◆ Work', travel: '✦ Travel', trip: '➜ Trip stop' };
-  static TT_COLOR = { lived: '#00d4ff', work: '#00d4ff', travel: '#ff8c42', trip: '#e8edf8' };
+  static TT_LABEL = { lived: '● Lived', current: '● Current', worktrip: '◆ Worktrip', holiday: '✦ Holiday', trip: '➜ Trip stop' };
+  static TT_COLOR = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42', trip: '#e8edf8' };
 
   constructor(canvasEl) {
     if (!canvasEl || typeof THREE === 'undefined') return;
@@ -593,6 +595,9 @@ class Globe3D {
     this._frameStep = this._isLowPower ? 2 : 1;
     this._frameTick = 0;
 
+    /* Filtered pins — initially all types visible */
+    this.visibleTypes = new Set(['lived', 'current', 'worktrip', 'holiday']);
+
     this._resize();
     this._initScene();
     this._buildGlobe();
@@ -603,6 +608,9 @@ class Globe3D {
     this._buildTrips();
     this._bindEvents();
     this._animate();
+
+    /* Store reference on canvas for external access (filtering) */
+    this.canvas._globe = this;
 
     /* Pause when canvas is out of the viewport */
     const _ioGlobe = new IntersectionObserver(([e]) => {
@@ -615,6 +623,17 @@ class Globe3D {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && !this._rafId) this._animate();
     });
+  }
+
+  /* ── Public API for filtering ──────────────────────────────────────── */
+
+  setFilteredTypes(typeSet) {
+    this.visibleTypes = new Set(typeSet);
+    /* Update marker mesh visibility based on filter */
+    for (const mesh of this.markerMeshes) {
+      const type = mesh.userData?.type;
+      mesh.visible = type && this.visibleTypes.has(type);
+    }
   }
 
   /* ── Internals ──────────────────────────────────────────── */
@@ -740,6 +759,50 @@ class Globe3D {
       /* bright core     */ ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)'; ctx.stroke();
     };
 
+    /* Paint European land with dark neon violet BEFORE the neon coastlines
+       so that the glow strokes are visible on top of the fill.
+       Clip to each land polygon individually (not the rectangle) so that
+       only actual land areas receive the fill — avoids purple bleeding into sea. */
+    const europeMinLon = -10; const europeMaxLon = 40;
+    const europeMinLat = 35;  const europeMaxLat = 71;
+    const [clipX0, clipY0] = px(europeMinLon, europeMaxLat);
+    const [clipX1, clipY1] = px(europeMaxLon, europeMinLat);
+
+    const overlapsEuropeBounds = (ring) => {
+      for (let i = 0; i < ring.length; i++) {
+        const lon = ring[i][0];
+        const lat = ring[i][1];
+        if (lon >= europeMinLon && lon <= europeMaxLon && lat >= europeMinLat && lat <= europeMaxLat) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    rings.forEach((ring) => {
+      if (!overlapsEuropeBounds(ring)) return;
+      ctx.save();
+      /* Clip to the Europe rectangle first */
+      ctx.beginPath();
+      ctx.rect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
+      ctx.clip();
+      /* Then clip to the land polygon — intersection = land within Europe */
+      ctx.beginPath();
+      const [x0, y0] = px(ring[0][0], ring[0][1]);
+      ctx.moveTo(x0, y0);
+      for (let i = 1; i < ring.length; i++) {
+        const [x, y] = px(ring[i][0], ring[i][1]);
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.clip();
+      /* Fill — only visible where both clips overlap (land in Europe) */
+      ctx.fillStyle = '#3d1f5c';
+      ctx.fillRect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
+      ctx.restore();
+    });
+
+    /* Draw all land rings with neon glow (on top of the Europe violet fill) */
     rings.forEach(drawRing);
 
     /* Antarctica border line */
@@ -859,12 +922,23 @@ class Globe3D {
 
   /* ── Standard pins (lived / work / travel) ──────────────── */
   _buildMarkers() {
-    (LOCATIONS.pins || []).filter(loc => !loc._skip).forEach(loc => {
+    (LOCATIONS.pins || [])
+      .filter(loc => {
+        if (loc._skip) return false;
+        /* Hide European worktrips and holidays on globe — show only on 2D map */
+        if ((loc.type === 'worktrip' || loc.type === 'holiday') && 
+            loc.lat >= 35 && loc.lat <= 71 && 
+            loc.lon >= -10 && loc.lon <= 40) {
+          return false;
+        }
+        return true;
+      })
+      .forEach(loc => {
       const hex = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
       const color = new THREE.Color(hex);
       const pos = this._ll(loc.lat, loc.lon, 1.008);
       const surf = this._ll(loc.lat, loc.lon, 1.001);
-      const isHome = (loc.type === 'lived');   /* bigger, pulsing — "I live/lived here" */
+      const isHome = (loc.type === 'lived' || loc.type === 'current');   /* bigger, pulsing — "I live/lived here" */
 
       /* Spike — thin line from globe surface up to the dot */
       this.pivot.add(new THREE.Line(
@@ -1146,7 +1220,7 @@ class Globe3D {
 
 /* CPU fallback when WebGL is unavailable: 2D orthographic globe */
 class GlobeFallback2D {
-  static PIN_COLORS = { lived: '#00d4ff', work: '#86e8ff', travel: '#ff8c42' };
+  static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
 
   constructor(canvasEl) {
     this.canvas = canvasEl;
@@ -1275,7 +1349,7 @@ class GlobeFallback2D {
       const p = this._project(pt.lat, pt.lon);
       if (p.z <= 0.02) return;
       const col = GlobeFallback2D.PIN_COLORS[pt.type] || '#e8edf8';
-      const rr = pt.type === 'lived' ? 3.8 : 2.6;
+      const rr = (pt.type === 'lived' || pt.type === 'current') ? 3.8 : 2.6;
       ctx.fillStyle = col;
       ctx.globalAlpha = Math.max(0.22, p.z);
       ctx.beginPath();
@@ -2788,6 +2862,37 @@ if (typeof document !== 'undefined') {
       else new GlobeFallback2D(globeCanvas);
     });
   }
+
+  /* 2D Europe Map — Canvas-based representation of European locations */
+  const europeCanvas = document.getElementById('europe-canvas');
+  if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
+    new EuropeMap2D(europeCanvas);
+  }
+
+  /* Location type filtering — toggle location type visibility */
+  document.addEventListener('click', (e) => {
+    if (!e.target.matches('.filter-btn')) return;
+    const type = e.target.dataset.type;
+    if (!type) return;
+
+    e.target.classList.toggle('active');
+
+    /* Collect all active filter types */
+    const activeFilters = Array.from(document.querySelectorAll('.filter-btn.active'))
+      .map(btn => btn.dataset.type);
+
+    /* Update Globe3D — if it exists, filter its markers */
+    const globeCanvas = document.getElementById('globe-canvas');
+    if (globeCanvas && globeCanvas._globe) {
+      globeCanvas._globe.setFilteredTypes(new Set(activeFilters));
+    }
+
+    /* Update EuropeMap2D — if it exists, filter its pins */
+    const europeCanvasEl = document.getElementById('europe-canvas');
+    if (europeCanvasEl && europeCanvasEl._europe) {
+      europeCanvasEl._europe.setFilteredTypes(new Set(activeFilters));
+    }
+  });
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');

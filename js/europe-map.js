@@ -1,0 +1,421 @@
+/* ============================================================
+   EUROPE 2D MAP
+   ============================================================
+   Interactive 2D map of Europe showing location pins
+   Uses Canvas2D rendering with neon aesthetic matching the 3D globe
+   ============================================================ */
+
+'use strict';
+
+class EuropeMap2D {
+  /* Color scheme matches Globe3D */
+  static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
+  static PIN_SIZE = { lived: 6, current: 6, worktrip: 4, holiday: 4 };
+
+  constructor(canvasEl) {
+    if (!canvasEl || canvasEl.tagName !== 'CANVAS') return;
+    if (typeof LOCATIONS === 'undefined') {
+      console.warn('EuropeMap2D: data/locations.js not loaded — map will not render.');
+      return;
+    }
+
+    this.canvas = canvasEl;
+    this.parent = canvasEl.parentElement;
+    this.tooltip = document.getElementById('europe-tooltip');
+    this.ctx = this.canvas.getContext('2d');
+    
+    this.mouse = { x: -9, y: -9 };
+    this._mouseOver = false;
+    this._hoveredPin = null;
+    this._rect = null;
+    this._rafId = null;
+    this._visible = true;
+
+    /* Performance: cache tooltip refs */
+    this._ttType = this.tooltip?.querySelector('.et-type') || null;
+    this._ttName = this.tooltip?.querySelector('.et-name') || null;
+    this._ttInfo = this.tooltip?.querySelector('.et-info') || null;
+
+    /* Filtered pins — initially all shown */
+    this.visibleTypes = new Set(['lived', 'current', 'worktrip', 'holiday']);
+    this.filteredPins = [];
+
+    /* Europe bounding box (simplified): roughly [lon_min, lat_min, lon_max, lat_max] */
+    this.bounds = { minLon: -10, maxLon: 40, minLat: 35, maxLat: 71 };
+
+    /* TopoJSON-decoded land rings (filled async) */
+    this._europeRings = [];
+
+    this._resize();
+    this._buildFilteredPins();
+    this._bindEvents();
+    this._animate();
+    this._loadTopoJSON();
+
+    /* Pause when canvas is out of viewport */
+    const _ioEurope = new IntersectionObserver(([e]) => {
+      this._visible = e.isIntersecting;
+      if (this._visible && !this._rafId) this._animate();
+    }, { threshold: 0 });
+    _ioEurope.observe(canvasEl);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !this._rafId) this._animate();
+    });
+
+    /* Store reference on canvas for external access (filtering) */
+    this.canvas._europe = this;
+  }
+
+  /* ── Public API for filtering ──────────────────────────────────────── */
+
+  setFilteredTypes(typeSet) {
+    this.visibleTypes = new Set(typeSet);
+    this._buildFilteredPins();
+  }
+
+  toggleType(type) {
+    if (this.visibleTypes.has(type)) {
+      this.visibleTypes.delete(type);
+    } else {
+      this.visibleTypes.add(type);
+    }
+    this._buildFilteredPins();
+  }
+
+  /* ── Internals ──────────────────────────────────────────────────────── */
+
+  _resize() {
+    const lonRange = this.bounds.maxLon - this.bounds.minLon;
+    const latRange = this.bounds.maxLat - this.bounds.minLat;
+    const centerLat = (this.bounds.minLat + this.bounds.maxLat) / 2;
+    this._cosLat = Math.cos(centerLat * Math.PI / 180);
+
+    this.w = this.parent.clientWidth || 800;
+    /* Uniform scale: correct for latitude so shapes aren't stretched */
+    this.h = Math.round(this.w * latRange / (lonRange * this._cosLat));
+    this.canvas.width = this.w;
+    this.canvas.height = this.h;
+
+    this._scale = this.w / (lonRange * this._cosLat);
+
+    this._rect = this.canvas.getBoundingClientRect();
+  }
+
+  _buildFilteredPins() {
+    this.filteredPins = (LOCATIONS.pins || [])
+      .filter(pin => !pin._skip && this.visibleTypes.has(pin.type))
+      .filter(pin => this._isInEurope(pin))
+      .map(pin => ({
+        ...pin,
+        x: this._lonToX(pin.lon),
+        y: this._latToY(pin.lat),
+      }));
+  }
+
+  _isInEurope(pin) {
+    return pin.lat >= this.bounds.minLat && pin.lat <= this.bounds.maxLat &&
+           pin.lon >= this.bounds.minLon && pin.lon <= this.bounds.maxLon;
+  }
+
+  _lonToX(lon) {
+    return (lon - this.bounds.minLon) * this._cosLat * this._scale;
+  }
+
+  _latToY(lat) {
+    return (this.bounds.maxLat - lat) * this._scale;
+  }
+
+  _xyToLonLat(x, y) {
+    const lon = x / (this._cosLat * this._scale) + this.bounds.minLon;
+    const lat = this.bounds.maxLat - y / this._scale;
+    return { lon, lat };
+  }
+
+  _bindEvents() {
+    if (typeof this.canvas.addEventListener !== 'function') return;
+
+    this.canvas.addEventListener('mousemove', (e) => {
+      if (!this._rect) this._rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = e.clientX - this._rect.left;
+      this.mouse.y = e.clientY - this._rect.top;
+      this._mouseOver = true;
+      this._rayhit();
+    }, false);
+
+    this.canvas.addEventListener('mouseleave', () => {
+      this._mouseOver = false;
+      this._hideTooltip();
+    }, false);
+
+    window.addEventListener('resize', () => {
+      this._resize();
+      this._buildFilteredPins();
+      this._rect = null;
+    }, false);
+  }
+
+  _rayhit() {
+    this._hoveredPin = null;
+    const hitDist = 12;  /* px hitbox radius */
+
+    for (const pin of this.filteredPins) {
+      const dx = this.mouse.x - pin.x;
+      const dy = this.mouse.y - pin.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < hitDist) {
+        this._hoveredPin = pin;
+        this._showTooltip(pin);
+        return;
+      }
+    }
+    this._hideTooltip();
+  }
+
+  _showTooltip(pin) {
+    if (!this.tooltip) return;
+    
+    const type = pin.type || 'unknown';
+    
+    /* Ensure we always find and update the elements, even if cached refs are stale */
+    const ttType = this._ttType || this.tooltip.querySelector('.et-type');
+    const ttName = this._ttName || this.tooltip.querySelector('.et-name');
+    const ttInfo = this._ttInfo || this.tooltip.querySelector('.et-info');
+    
+    if (ttType) ttType.textContent = `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
+    if (ttName) ttName.textContent = pin.name;
+    if (ttInfo) ttInfo.textContent = pin.info || '';
+    
+    this.tooltip.classList.add('visible');
+    this.tooltip.style.left = `${this.mouse.x + 10}px`;
+    this.tooltip.style.top = `${this.mouse.y - 20}px`;
+  }
+
+  _hideTooltip() {
+    if (this.tooltip) {
+      this.tooltip.classList.remove('visible');
+    }
+  }
+
+  _animate() {
+    if (!this._visible) {
+      this._rafId = null;
+      return;
+    }
+
+    this._draw();
+    this._rafId = requestAnimationFrame(() => this._animate());
+  }
+
+  _draw() {
+    const ctx = this.ctx;
+
+    /* Clear */
+    ctx.fillStyle = '#020b18';
+    ctx.fillRect(0, 0, this.w, this.h);
+
+    /* Draw continental Europe with neon glow */
+    this._drawEuropeBorders();
+
+    /* Draw location pins */
+    this.filteredPins.forEach(pin => {
+      this._drawPin(pin, pin === this._hoveredPin);
+    });
+
+    /* Draw map border */
+    ctx.strokeStyle = 'rgba(0,210,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(0, 0, this.w, this.h);
+  }
+
+  /* ── TopoJSON loader ───────────────────────────────────────────────── */
+
+  async _loadTopoJSON() {
+    try {
+      const resp = await fetch('./data/world-110m.json');
+      if (!resp.ok) return;
+      const topo = await resp.json();
+      const allRings = this._decodeTopoJSON(topo);
+      /* Keep only rings that have at least one vertex inside Europe bounds */
+      this._europeRings = allRings.filter(ring => {
+        for (let i = 0; i < ring.length; i++) {
+          const lon = ring[i][0], lat = ring[i][1];
+          if (lon >= this.bounds.minLon && lon <= this.bounds.maxLon &&
+              lat >= this.bounds.minLat && lat <= this.bounds.maxLat) {
+            return true;
+          }
+        }
+        return false;
+      });
+    } catch (_) { /* offline / file:// — keep the empty fallback */ }
+  }
+
+  _decodeTopoJSON(topo) {
+    const { scale, translate } = topo.transform;
+    const decodeArc = (idx) => {
+      const rev = idx < 0;
+      const raw = topo.arcs[rev ? ~idx : idx];
+      let cx = 0, cy = 0;
+      const pts = raw.map(([dx, dy]) => {
+        cx += dx; cy += dy;
+        return [cx * scale[0] + translate[0], cy * scale[1] + translate[1]];
+      });
+      return rev ? pts.reverse() : pts;
+    };
+    const rings = [];
+    for (const geom of topo.objects.land.geometries) {
+      const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
+      for (const poly of polys) {
+        const ring = [];
+        for (const arcIdx of poly[0]) ring.push(...decodeArc(arcIdx));
+        rings.push(ring);
+      }
+    }
+    return rings;
+  }
+
+  _drawEuropeBorders() {
+    const ctx = this.ctx;
+
+    /* Draw grid lines (skip exact boundary values to avoid doubling the border) */
+    ctx.strokeStyle = 'rgba(0,210,255,0.08)';
+    ctx.lineWidth = 0.5;
+
+    for (let lon = 0; lon <= 30; lon += 10) {
+      const x = this._lonToX(lon);
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, this.h);
+      ctx.stroke();
+    }
+    for (let lat = 40; lat <= 65; lat += 5) {
+      const y = this._latToY(lat);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.w, y);
+      ctx.stroke();
+    }
+
+    /* Draw TopoJSON land rings clipped to Europe bounds */
+    if (!this._europeRings.length) return;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, this.w, this.h);
+    ctx.clip();
+
+    /* Classify rings: "local" (small islands/countries) vs "global" (continent) */
+    const isLocal = (ring) => {
+      let lo = Infinity, hi = -Infinity;
+      for (const [lon] of ring) { if (lon < lo) lo = lon; if (lon > hi) hi = lon; }
+      return (hi - lo) < 90;
+    };
+
+    /* Padded bounds for segment-filtering large rings */
+    const pad = 8;
+    const nearMinLon = this.bounds.minLon - pad;
+    const nearMaxLon = this.bounds.maxLon + pad;
+    const nearMinLat = this.bounds.minLat - pad;
+    const nearMaxLat = this.bounds.maxLat + pad;
+    const isNear = (lon, lat) =>
+      lon >= nearMinLon && lon <= nearMaxLon &&
+      lat >= nearMinLat && lat <= nearMaxLat;
+
+    /* Pass 1: fill only local rings (small islands that fill correctly) */
+    ctx.fillStyle = '#081624';
+    for (const ring of this._europeRings) {
+      if (!isLocal(ring)) continue;
+      ctx.beginPath();
+      ctx.moveTo(this._lonToX(ring[0][0]), this._latToY(ring[0][1]));
+      for (let i = 1; i < ring.length; i++) {
+        ctx.lineTo(this._lonToX(ring[i][0]), this._latToY(ring[i][1]));
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    /* Pass 2: stroke coastlines.
+       Local rings: draw all segments normally.
+       Global rings: only draw segments near Europe (eliminates cross-map artifacts). */
+    const strokes = [
+      [2.5, 'rgba(0,185,235,0.15)'],
+      [1.5, 'rgba(0,210,255,0.40)'],
+      [0.7, 'rgba(155,242,255,0.85)'],
+    ];
+    for (const [lw, color] of strokes) {
+      ctx.lineWidth = lw;
+      ctx.strokeStyle = color;
+      for (const ring of this._europeRings) {
+        ctx.beginPath();
+        if (isLocal(ring)) {
+          ctx.moveTo(this._lonToX(ring[0][0]), this._latToY(ring[0][1]));
+          for (let i = 1; i < ring.length; i++) {
+            ctx.lineTo(this._lonToX(ring[i][0]), this._latToY(ring[i][1]));
+          }
+        } else {
+          /* Segment-filtered: only draw near-Europe segments */
+          let prevNear = false;
+          for (let i = 0; i < ring.length; i++) {
+            const near = isNear(ring[i][0], ring[i][1]);
+            const x = this._lonToX(ring[i][0]);
+            const y = this._latToY(ring[i][1]);
+            if (near) {
+              if (!prevNear) {
+                if (i > 0) {
+                  ctx.moveTo(this._lonToX(ring[i - 1][0]), this._latToY(ring[i - 1][1]));
+                  ctx.lineTo(x, y);
+                } else {
+                  ctx.moveTo(x, y);
+                }
+              } else {
+                ctx.lineTo(x, y);
+              }
+            } else if (prevNear) {
+              ctx.lineTo(x, y);
+            }
+            prevNear = near;
+          }
+        }
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  _drawPin(pin, isHovered) {
+    const ctx = this.ctx;
+    const color = EuropeMap2D.PIN_COLORS[pin.type] || '#ffffff';
+    const isLarge = pin.type === 'lived' || pin.type === 'current';
+    const size = isHovered ? (isLarge ? 8 : 6) : EuropeMap2D.PIN_SIZE[pin.type];
+
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+
+    /* Outer halo glow */
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
+    ctx.beginPath();
+    ctx.arc(pin.x, pin.y, size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Mid glow */
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.30)`;
+    ctx.beginPath();
+    ctx.arc(pin.x, pin.y, size * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Solid dot */
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(pin.x, pin.y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Bright inner core for emphasis */
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.arc(pin.x, pin.y, size * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}

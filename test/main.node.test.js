@@ -653,6 +653,7 @@ test('Globe3D constructs with mocked THREE and location data', () => {
     fillStyle: '', strokeStyle: '', lineWidth: 0,
     fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
     closePath() {}, fill() {}, stroke() {},
+    save() {}, restore() {}, rect() {}, clip() {},
   };
   global.document = {
     hidden: false,
@@ -693,6 +694,96 @@ test('Globe3D constructs with mocked THREE and location data', () => {
     global.THREE = prevThree;
     global.LOCATIONS = prevLocations;
   }
+});
+
+test('Globe3D: European worktrip/holiday pins are excluded from 3D globe markers', () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevPerf = global.performance;
+  const prevDpr = global.devicePixelRatio;
+  const prevThree = global.THREE;
+  const prevLocations = global.LOCATIONS;
+
+  global.THREE = createMinimalThree();
+  global.LOCATIONS = {
+    pins: [
+      { type: 'lived', name: 'Bilbao', lat: 43.26, lon: -2.93, info: 'home' },
+      { type: 'worktrip', name: 'Berlin', lat: 52.52, lon: 13.40, info: 'eu worktrip' },
+      { type: 'holiday', name: 'Paris', lat: 48.86, lon: 2.35, info: 'eu holiday' },
+      { type: 'worktrip', name: 'Tokyo', lat: 35.68, lon: 139.69, info: 'non-eu worktrip' },
+    ],
+    regions: [],
+    trips: [],
+  };
+
+  const tooltip = {
+    classList: makeClassList(),
+    style: {},
+    querySelector() { return { textContent: '', style: {} }; },
+  };
+  const ctx2d = {
+    fillStyle: '', strokeStyle: '', lineWidth: 0,
+    fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+    closePath() {}, fill() {}, stroke() {}, rect() {}, clip() {}, save() {}, restore() {},
+  };
+
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+    getElementById(id) { return id === 'globe-tooltip' ? tooltip : null; },
+    createElement(tag) {
+      if (tag === 'canvas') return { width: 0, height: 0, getContext() { return ctx2d; } };
+      return {};
+    },
+  };
+  global.window = { addEventListener() {} };
+  global.performance = { now: () => 1000 };
+  global.devicePixelRatio = 2;
+  global.IntersectionObserver = class { observe() {} };
+  global.requestAnimationFrame = () => 1;
+
+  const canvas = {
+    parentElement: { clientWidth: 680, clientHeight: 340 },
+    addEventListener() {},
+    getBoundingClientRect() { return { left: 0, top: 0, width: 680, height: 340 }; },
+  };
+
+  try {
+    const globe = new Globe3D(canvas);
+    const names = globe.markerMeshes.map((m) => m.userData?.name).filter(Boolean);
+    assert.equal(names.includes('Berlin'), false);
+    assert.equal(names.includes('Paris'), false);
+    assert.equal(names.includes('Tokyo'), true);
+    assert.equal(names.includes('Bilbao'), true);
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.performance = prevPerf;
+    global.devicePixelRatio = prevDpr;
+    global.THREE = prevThree;
+    global.LOCATIONS = prevLocations;
+  }
+});
+
+test('Globe3D.setFilteredTypes toggles marker visibility by type', () => {
+  const markerA = { userData: { type: 'lived' }, visible: true };
+  const markerB = { userData: { type: 'holiday' }, visible: true };
+  const markerC = { userData: { type: 'trip' }, visible: true };
+
+  const fakeGlobe = {
+    visibleTypes: new Set(['lived', 'holiday', 'trip']),
+    markerMeshes: [markerA, markerB, markerC],
+  };
+
+  Globe3D.prototype.setFilteredTypes.call(fakeGlobe, new Set(['lived', 'holiday']));
+
+  assert.equal(markerA.visible, true);
+  assert.equal(markerB.visible, true);
+  assert.equal(markerC.visible, false);
 });
 
 test('HeroNameShader boots with mocked WebGL context', async () => {

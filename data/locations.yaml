@@ -12,88 +12,88 @@ pins:
   - type: lived
     name: Frankfurt, Germany
     info: Worked there for 3 years
-  - type: lived
+  - type: current
     name: San Sebastián, Spain
     info: Current home
 
 # work trips
 # TRACTION (H2020, 2020-2022)
-  - type: work
+  - type: worktrip
     name: Dublin, Ireland
     info: TRACTION meeting
-  - type: work
+  - type: worktrip
     name: Leiria, Portugal
     info: TRACTION meeting
   # ARETE (H2020, 2019-2023)
-  - type: work
+  - type: worktrip
     name: Brussels, Belgium
     info: ARETE meeting
   # inEVENT (FP7, 2011-2014)
-  - type: work
+  - type: worktrip
     name: Martigny, Switzerland
     info: inEVENT meeting
-  - type: work
+  - type: worktrip
     name: Edinburgh, United Kingdom
     info: inEVENT meeting
   # RUSHES (FP6, 2007-2009)
-  - type: work
+  - type: worktrip
     name: Athens, Greece
     info: RUSHES meeting
-  - type: work
+  - type: worktrip
     name: Oslo, Norway
     info: RUSHES meeting
   # business trips
-  - type: work
+  - type: worktrip
     name: Reykjavik, Iceland
     info: Conference
-  - type: work
+  - type: worktrip
     name: Glendale, Arizona, USA
     info: Work with UFC
-  - type: work
+  - type: worktrip
     name: Norfolk, Virginia, USA
     info: Work with UFC
-  - type: work
+  - type: worktrip
     name: Gdansk, Poland
     info: Work with UFC
 
 # holidays
-  - type: travel
+  - type: holiday
     name: Amsterdam, Netherlands
     info: Visited both for work and leisure
-  - type: travel
+  - type: holiday
     name: London, UK
     info: Visited both for work and leisure
-  - type: travel
+  - type: holiday
     name: Paris, France
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Prague, Czechia
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Lisbon, Portugal
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Vienna, Austria
     info: Holiday
-  - type: travel
+  - type: holiday
     name: La Valletta, Malta
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Bordeaux, France
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Toulouse, France
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Arles, France
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Niza, France
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Marseille, France
     info: Holiday
-  - type: travel
+  - type: holiday
     name: Bayonne, France
     info: Holiday
 

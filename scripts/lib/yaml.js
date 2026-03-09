@@ -70,7 +70,9 @@ function findMappingColon(str) {
 function parseYaml(text) {
   if (!text || !text.trim()) return {};
 
-  const rawLines = text.split('\n');
+  /* Normalize CRLF/CR to LF so ':' at end-of-line is parsed correctly on Windows-origin files. */
+  const normalized = text.replace(/\r\n?/g, '\n');
+  const rawLines = normalized.split('\n');
   let pos = 0;
 
   /** Return parsed line info at index idx, or null if out of range. */

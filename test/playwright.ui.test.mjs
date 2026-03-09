@@ -17,13 +17,19 @@
 
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
+let chromium;
+try {
+  ({ chromium } = require('playwright'));
+} catch {
+  ({ chromium } = require('playwright-core'));
+}
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // ─── Minimal static file server ──────────────────────────────────────────────
 
@@ -139,6 +145,51 @@ console.log('── Desktop (1280×800) — index.html ────────�
     await page.waitForTimeout(300);
     const groups = await page.$$('.skill-group');
     assert(groups.length >= 1, `Skill groups: ${groups.length}`);
+  });
+
+  await test('2D Europe canvas is present and sized', async () => {
+    await page.evaluate(() => document.getElementById('about')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    const metrics = await page.evaluate(() => {
+      const canvas = document.getElementById('europe-canvas');
+      if (!canvas) return null;
+      return { width: canvas.width, height: canvas.height };
+    });
+    assert(metrics !== null, '#europe-canvas not found');
+    assert(metrics.width > 0 && metrics.height > 0, `Invalid Europe canvas size: ${JSON.stringify(metrics)}`);
+  });
+
+  await test('2D Europe hover displays tooltip content', async () => {
+    const state = await page.evaluate(() => {
+      const canvas = document.getElementById('europe-canvas');
+      const tooltip = document.getElementById('europe-tooltip');
+      const map = canvas?._europe;
+      if (!canvas || !tooltip || !map) return null;
+      const pin = map.filteredPins?.[0];
+      if (!pin) return null;
+      map.mouse = { x: pin.x, y: pin.y };
+      map._rayhit();
+
+      const tt = tooltip;
+      return {
+        visible: tt.classList.contains('visible'),
+        name: tt.querySelector('.et-name')?.textContent?.trim() || '',
+      };
+    });
+
+    assert(state !== null, 'Could not evaluate Europe tooltip state');
+    assert(state.visible, 'Europe tooltip did not become visible');
+    assert(state.name.length > 0, 'Europe tooltip name is empty');
+  });
+
+  await test('Location filter controls are hidden', async () => {
+    const hidden = await page.evaluate(() => {
+      const filters = document.querySelector('.location-filters');
+      if (!filters) return true;
+      const style = window.getComputedStyle(filters);
+      return style.display === 'none';
+    });
+    assert(hidden, 'Location filter controls should be hidden');
   });
 
   await test('Skill tags are present', async () => {
