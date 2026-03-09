@@ -320,6 +320,10 @@
         <span class="section-tag">Research</span>
         <h2 class="section-title">What I Work On</h2>
       </header>
+      <div class="research-cv-callout" data-animate data-delay="60">
+        <span class="research-cv-copy">Want the full journey behind these projects?</span>
+        <a href="cv.html" class="research-cv-link">Dive into my full CV</a>
+      </div>
     </div>
     <!-- Carousel breaks out of container for full-width horizontal scroll -->
     <div class="container container--wide">
@@ -403,24 +407,6 @@
             broadcast/broadband services, and connected media ecosystems.</p>
         </div>
 
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════ PUBLICATIONS ═══════════════ -->
-  <section id="publications" class="section" aria-label="Publications">
-    <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Publications</span>
-        <h2 class="section-title">Selected Work</h2>
-      </header>
-      <!-- Items injected by JS — data source: PUBLICATIONS in data/publications.js -->
-      <div class="publications-list" id="publications-list" role="list"></div>
-      <div class="publications-cta" data-animate>
-        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
-          class="btn btn-ghost">
-          View all on Google Scholar →
-        </a>
       </div>
     </div>
   </section>
@@ -513,6 +499,50 @@
     </div>
   </section>
 
+  <!-- ═══════════════ PUBLICATIONS ═══════════════ -->
+  <section id="publications" class="section" aria-label="Publications">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Publications</span>
+        <h2 class="section-title">Selected Work</h2>
+      </header>
+      <!-- Items injected by JS — data source: PUBLICATIONS in data/publications.js -->
+      <div class="publications-list" id="publications-list" role="list"></div>
+      <div class="publications-cta" data-animate>
+        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
+          class="btn btn-ghost">
+          View all on Google Scholar →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BLOG ═══════════════ -->
+  <!--
+    HOW TO ADD A BLOG POST
+    ────────────────────────
+    Open data/blog.js and add an entry to BLOG_POSTS:
+    {
+      title:   "My first post",
+      date:    "2024-12-01",
+      excerpt: "A short summary...",
+      tag:     "Engineering",
+      readMin: 5,
+      url:     "blog/my-first-post.html"   // or a full URL
+    }
+    Cards appear automatically — newest first.
+    Leave BLOG_POSTS = [] to show a "Coming soon" placeholder.
+  -->
+  <section id="blog" class="section" aria-label="Blog">
+    <div class="container">
+      <header class="section-header" data-animate>
+        <span class="section-tag">Blog</span>
+        <h2 class="section-title">Thoughts &amp; Writing</h2>
+      </header>
+      <div class="blog-grid" id="blog-grid"></div>
+    </div>
+  </section>
+
   <!-- ═══════════════ CONTACT ═══════════════ -->
   <section id="contact" class="section section-alt" aria-label="Contact">
     <div class="container">
@@ -571,32 +601,6 @@
 
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════ BLOG ═══════════════ -->
-  <!--
-    HOW TO ADD A BLOG POST
-    ────────────────────────
-    Open data/blog.js and add an entry to BLOG_POSTS:
-    {
-      title:   "My first post",
-      date:    "2024-12-01",
-      excerpt: "A short summary...",
-      tag:     "Engineering",
-      readMin: 5,
-      url:     "blog/my-first-post.html"   // or a full URL
-    }
-    Cards appear automatically — newest first.
-    Leave BLOG_POSTS = [] to show a "Coming soon" placeholder.
-  -->
-  <section id="blog" class="section" aria-label="Blog">
-    <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Blog</span>
-        <h2 class="section-title">Thoughts &amp; Writing</h2>
-      </header>
-      <div class="blog-grid" id="blog-grid"></div>
     </div>
   </section>
 

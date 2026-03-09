@@ -1514,8 +1514,8 @@ function initCommandPalette() {
     { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
     { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
     { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
-    { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
     { id: 'blog',         label: 'Blog',          hint: 'Thoughts & Writing' },
+    { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
   ];
 
   const ACTIONS = [
@@ -1840,17 +1840,15 @@ function renderPublications() {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
-  list.innerHTML = PUBLICATIONS.map((pub, i) => `
+  list.innerHTML = PUBLICATIONS.slice(0, 3).map((pub, i) => `
     <div class="pub-item" role="listitem" data-animate data-delay="${i * 70}">
       <div class="pub-year">${escapeHtml(pub.year)}</div>
-      <div>
-        <div class="pub-title">${escapeHtml(pub.title)}</div>
-        <div class="pub-meta">
-          ${escapeHtml(pub.authors)} &nbsp;·&nbsp;
-          <span class="pub-venue">${escapeHtml(pub.venue)}</span>
-        </div>
-        ${pub.url ? `<a href="${escapeHtml(pub.url)}" target="_blank" rel="noopener" class="pub-link">Read paper</a>` : ''}
+      <div class="pub-title">${escapeHtml(pub.title)}</div>
+      <div class="pub-meta">
+        ${escapeHtml(pub.authors)} &nbsp;·&nbsp;
+        <span class="pub-venue">${escapeHtml(pub.venue)}</span>
       </div>
+      ${pub.url ? `<a href="${escapeHtml(pub.url)}" target="_blank" rel="noopener" class="pub-link">Read paper</a>` : ''}
     </div>
   `).join('');
 }
@@ -1908,7 +1906,7 @@ function initCardTilt() {
   const MAX_RY = 12;   /* max degrees rotateY */
   const SPRING  = 0.10; /* lerp factor per frame */
 
-  Array.from(document.querySelectorAll('.research-card, .blog-card, .contact-card, .skill-group'))
+  Array.from(document.querySelectorAll('.research-card, .blog-card, .contact-card, .skill-group, .pub-item'))
     .forEach((card) => {
       let targetRX = 0, targetRY = 0, targetZ = 0;
       let currentRX = 0, currentRY = 0, currentZ = 0;
@@ -1986,7 +1984,10 @@ function initMagneticButtons() {
     document.querySelectorAll('.btn-primary, .btn-ghost, .social-btn')
   ).map(el => ({ el, tx: 0, ty: 0, cx: 0, cy: 0, active: false, raf: null }));
 
-  if (!magnets.length) return;
+  const heroActions = document.querySelector('.hero-actions');
+  const filteredMagnets = magnets.filter((m) => !heroActions?.contains(m.el));
+
+  if (!filteredMagnets.length) return;
 
   function tick(m) {
     m.cx += (m.tx - m.cx) * SPRING;
@@ -2003,7 +2004,7 @@ function initMagneticButtons() {
   }
 
   document.addEventListener('mousemove', (e) => {
-    magnets.forEach((m) => {
+    filteredMagnets.forEach((m) => {
       const rect = m.el.getBoundingClientRect();
       const dx   = e.clientX - (rect.left + rect.width  / 2);
       const dy   = e.clientY - (rect.top  + rect.height / 2);
