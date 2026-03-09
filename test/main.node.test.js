@@ -177,7 +177,7 @@ test('renderPublications injects publication cards into the container', () => {
   try {
     renderPublications();
     assert.match(list.innerHTML, /Paper title/);
-    assert.match(list.innerHTML, /Read paper/);
+    assert.match(list.innerHTML, /Open paper: Paper title/);
   } finally {
     global.document = prevDocument;
     global.PUBLICATIONS = prevPublications;
