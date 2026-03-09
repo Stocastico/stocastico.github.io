@@ -123,7 +123,7 @@ ${urlNodes}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-function main() {
+async function main() {
   const opts = parseArgs(process.argv);
   if (opts.help) { printHelp(); return; }
 

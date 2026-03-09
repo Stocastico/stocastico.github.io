@@ -1367,6 +1367,8 @@ function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
 
+  const progressBar = document.getElementById('reading-progress');
+
   const links = typeof document.querySelectorAll === 'function'
     ? Array.from(document.querySelectorAll('#nav-links a[href^="#"]'))
     : [];
@@ -1387,13 +1389,309 @@ function initNavbar() {
     });
   };
 
+  const updateReadingProgress = () => {
+    if (!progressBar) return;
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+    progressBar.style.width = `${pct}%`;
+  };
+
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     nav.classList.toggle('scrolled', y > 20);
     setActiveLink();
+    updateReadingProgress();
   }, { passive: true });
 
   setActiveLink();
+  updateReadingProgress();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BACK TO TOP BUTTON
+   ═══════════════════════════════════════════════════════════ */
+function initBackToTop() {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > window.innerHeight * 0.6);
+  }, { passive: true });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMMAND PALETTE  (⌘K / Ctrl+K)
+   ═══════════════════════════════════════════════════════════ */
+function initCommandPalette() {
+  const overlay  = document.getElementById('cmd-overlay');
+  const input    = document.getElementById('cmd-input');
+  const listEl   = document.getElementById('cmd-list');
+  if (!overlay || !input || !listEl) return;
+
+  /* ── Command definitions ───────────────────────────────── */
+  const SECTIONS = [
+    { id: 'about',        label: 'About',        hint: 'Who I am' },
+    { id: 'research',     label: 'Research',      hint: 'What I work on' },
+    { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
+    { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
+    { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
+    { id: 'blog',         label: 'Blog',          hint: 'Thoughts & Writing' },
+  ];
+
+  const ACTIONS = [
+    {
+      label: 'Open CV PDF',
+      hint: 'Download / view',
+      icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v12M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      action() { window.open('cv.pdf', '_blank'); },
+    },
+    {
+      label: 'Copy email address',
+      hint: 'To clipboard',
+      icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      action() {
+        const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
+        if (email && email !== 'your.email@example.com') {
+          navigator.clipboard?.writeText(email).catch(() => {});
+        }
+      },
+    },
+    {
+      label: 'LinkedIn profile',
+      hint: 'Open in new tab',
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73a1.77 1.77 0 1 1 0-3.54 1.77 1.77 0 0 1 0 3.54zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77C14.4 7.22 20 7.03 20 12.41V19z"/></svg>`,
+      action() { window.open('https://www.linkedin.com/in/stefanomasneri/', '_blank'); },
+    },
+    {
+      label: 'Google Scholar',
+      hint: 'Open in new tab',
+      icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 12.99L5 12.4V15l6 3.35L17 15v-2.61l-6 3.6z"/></svg>`,
+      action() { window.open('https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en', '_blank'); },
+    },
+  ];
+
+  const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+  /* ── Build all command items ────────────────────────────── */
+  let allItems = [
+    ...SECTIONS.map(s => ({
+      label: s.label,
+      hint: s.hint,
+      icon: navIcon,
+      action() {
+        if (s.href) {
+          window.location.href = s.href;
+        } else {
+          const el = document.getElementById(s.id);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+      },
+      group: 'Navigate',
+    })),
+    ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
+  ];
+
+  let filtered = allItems;
+  let activeIdx = 0;
+
+  /* ── Render list ────────────────────────────────────────── */
+  function render(items) {
+    listEl.innerHTML = '';
+    if (!items.length) {
+      const li = document.createElement('li');
+      li.className = 'cmd-item';
+      li.style.color = 'var(--text-faint)';
+      li.textContent = 'No results';
+      listEl.appendChild(li);
+      return;
+    }
+
+    let lastGroup = null;
+    items.forEach((item, i) => {
+      if (item.group !== lastGroup) {
+        const label = document.createElement('li');
+        label.className = 'cmd-group-label';
+        label.setAttribute('role', 'presentation');
+        label.textContent = item.group;
+        listEl.appendChild(label);
+        lastGroup = item.group;
+      }
+      const li = document.createElement('li');
+      li.className = 'cmd-item';
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(i === activeIdx));
+      li.innerHTML = `
+        <span class="cmd-item-icon">${item.icon}</span>
+        <span class="cmd-item-label">${item.label}</span>
+        <span class="cmd-item-hint">${item.hint || ''}</span>
+      `;
+      li.addEventListener('mouseenter', () => { activeIdx = i; render(filtered); });
+      li.addEventListener('click', () => { execute(item); });
+      listEl.appendChild(li);
+    });
+  }
+
+  /* ── Execute & close ────────────────────────────────────── */
+  function execute(item) {
+    close();
+    item.action();
+  }
+
+  /* ── Filter on input ────────────────────────────────────── */
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    filtered = q
+      ? allItems.filter(it => it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q))
+      : allItems;
+    activeIdx = 0;
+    render(filtered);
+  });
+
+  /* ── Keyboard navigation ────────────────────────────────── */
+  input.addEventListener('keydown', (e) => {
+    const visibleItems = filtered.filter(Boolean); /* same array */
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx + 1, visibleItems.length - 1);
+      render(visibleItems);
+      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx - 1, 0);
+      render(visibleItems);
+      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (visibleItems[activeIdx]) execute(visibleItems[activeIdx]);
+    } else if (e.key === 'Escape') {
+      close();
+    }
+  });
+
+  /* ── Open / close ───────────────────────────────────────── */
+  function open() {
+    filtered = allItems;
+    activeIdx = 0;
+    input.value = '';
+    render(filtered);
+    overlay.hidden = false;
+    requestAnimationFrame(() => input.focus());
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  /* Close on overlay click */
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  /* Global keyboard shortcut — ⌘K or Ctrl+K */
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      overlay.hidden ? open() : close();
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDE PROGRESS DOTS
+   ═══════════════════════════════════════════════════════════ */
+function initSideDots() {
+  const nav = document.getElementById('side-dots');
+  if (!nav) return;
+
+  /* Only activate on fine-pointer (mouse) viewports — CSS hides on coarse/narrow */
+  if (!window.matchMedia('(pointer: fine) and (min-width: 901px)').matches) return;
+
+  const sections = Array.from(
+    document.querySelectorAll('section[id], div[id="hero"]')
+  ).filter(s => s.id);
+
+  if (!sections.length) return;
+
+  /* Build dots */
+  sections.forEach(section => {
+    const label = section.getAttribute('aria-label') || section.id;
+    const btn = document.createElement('button');
+    btn.className = 'side-dot';
+    btn.dataset.label = label.charAt(0).toUpperCase() + label.slice(1);
+    btn.setAttribute('aria-label', `Go to ${label}`);
+    btn.setAttribute('aria-current', 'false');
+    btn.addEventListener('click', () => {
+      section.scrollIntoView({ behavior: 'smooth' });
+    });
+    nav.appendChild(btn);
+  });
+
+  const dots = Array.from(nav.querySelectorAll('.side-dot'));
+
+  /* Show nav after scrolling past the hero */
+  function onScroll() {
+    const scrolled = window.scrollY > window.innerHeight * 0.5;
+    nav.classList.toggle('visible', scrolled);
+
+    /* Determine the active section (first one whose top is ≤ 60% viewport height) */
+    let active = 0;
+    const threshold = window.innerHeight * 0.5;
+    sections.forEach((sec, i) => {
+      if (sec.getBoundingClientRect().top <= threshold) active = i;
+    });
+
+    dots.forEach((dot, i) => {
+      dot.setAttribute('aria-current', String(i === active));
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); /* run once on init */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STAGGERED HERO TAGLINE REVEAL
+   ═══════════════════════════════════════════════════════════ */
+function initTaglineReveal() {
+  if (prefersReducedMotion()) return;
+  const tagline = document.querySelector('.hero-tagline');
+  if (!tagline) return;
+
+  /* Split on the · separator, then further split each phrase into words */
+  const text = tagline.textContent.trim();
+  const parts = text.split('·');
+  let delay = 120; /* ms — start after a brief pause */
+  const STEP = 40;  /* ms per word */
+
+  const spans = [];
+  parts.forEach((phrase, partIdx) => {
+    const words = phrase.trim().split(/\s+/).filter(Boolean);
+    words.forEach(word => {
+      spans.push(`<span class="tagline-word" style="animation-delay:${delay}ms">${word}</span>`);
+      delay += STEP;
+    });
+    if (partIdx < parts.length - 1) {
+      spans.push(`<span class="tagline-sep" style="animation-delay:${delay}ms">·</span>`);
+      delay += STEP;
+    }
+  });
+
+  tagline.innerHTML = spans.join(' ');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CURSOR GLOW — disabled for performance
+   The body::after radial gradient forced full-page repaints
+   on every mousemove. CSS rule also removed.
+   ═══════════════════════════════════════════════════════════ */
+function initCursorGlow() {
+  /* intentionally empty — effect removed to save battery */
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1659,9 +1957,8 @@ function initScroll3D() {
   if (prefersReducedMotion()) return;
   if (typeof document === 'undefined') return;
 
-  /* Alternate entrance angles: even cards lean right, odd lean left */
-  Array.from(document.querySelectorAll('.research-card[data-animate]'))
-    .forEach((card, i) => card.style.setProperty('--card-init-ry', `${i % 2 === 0 ? '14' : '-14'}deg`));
+  /* Research cards now use a horizontal carousel with translateX entrance,
+     so the old rotateY entrance angles are no longer needed. */
 
   /* Hero parallax — skip on touch devices to prevent scroll jank on mobile */
   if (typeof window === 'undefined') return;
@@ -1669,8 +1966,6 @@ function initScroll3D() {
 
   const heroContent = document.querySelector('.hero-content');
   const heroSection = document.getElementById('hero');
-  const orb1 = document.querySelector('.orb-1');
-  const orb2 = document.querySelector('.orb-2');
 
   /* Wait for the hero entrance animation to finish before taking over transforms */
   let ready = false;
@@ -1689,11 +1984,10 @@ function initScroll3D() {
     const scrollY = window.scrollY;
     const heroH   = heroSection ? heroSection.offsetHeight : 0;
 
-    /* Apply parallax only while the hero section is still in or near view */
+    /* Apply parallax only while the hero section is still in or near view.
+       Orb parallax removed — orbs are now static for battery savings. */
     if (scrollY < heroH * 1.1) {
       if (heroContent) heroContent.style.transform = `translateY(${scrollY * 0.28}px)`;
-      if (orb1) orb1.style.transform = `translateY(${scrollY * 0.12}px)`;
-      if (orb2) orb2.style.transform = `translateY(${scrollY * 0.20}px)`;
     }
   }
 
@@ -1707,33 +2001,20 @@ function initScroll3D() {
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
    Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   One card per job/degree — all details visible, no flipping.
    ═══════════════════════════════════════════════════════════ */
 function renderCV() {
   if (typeof document === 'undefined') return;
-  const timelineList = document.getElementById('cv-timeline-list');
-  if (!timelineList) return;
+  const timeline = document.getElementById('cv-timeline');
+  if (!timeline) return;
   if (typeof CV_CAREER    === 'undefined') return;
   if (typeof CV_EDUCATION === 'undefined') return;
 
-  function parseYearSpan(raw) {
-    const currentYear = new Date().getFullYear();
-    const txt = String(raw || '').toLowerCase();
-    const years = [...txt.matchAll(/\b(19|20)\d{2}\b/g)].map(m => parseInt(m[0], 10));
-    if (!years.length) return { start: currentYear, end: currentYear };
-    if (years.length === 1) {
-      if (txt.includes('present')) return { start: years[0], end: currentYear };
-      return { start: years[0], end: years[0] };
-    }
-    const start = Math.min(years[0], years[1]);
-    const end = txt.includes('present') ? currentYear : Math.max(years[0], years[1]);
-    return { start, end };
-  }
-
-  function entryHtml(entry, type) {
-    const side = type === 'career' ? 'career' : 'education';
-    const isCareer = side === 'career';
-    const titleKey = isCareer ? 'role'    : 'degree';
-    const subKey   = isCareer ? 'company' : 'institution';
+  /* ── Build card HTML ────────────────────────────────── */
+  function cardHtml(entry, type) {
+    const isCareer = type === 'career';
+    const title  = isCareer ? entry.role   : entry.degree;
+    const sub    = isCareer ? entry.company : entry.institution;
     const locHtml  = entry.location
       ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
       : '';
@@ -1744,73 +2025,45 @@ function renderCV() {
     const tagsHtml = tagsArr.length
       ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';
-    const hasBack = !!(entry.description || tagsArr.length);
+
     return `
-      <div class="tl-entry tl-entry--${side}">
-        <div class="tl-card${hasBack ? ' tl-card--flippable' : ''}" ${hasBack ? 'tabindex="0"' : ''}>
-          <div class="tl-card-front">
-            <div class="tl-card-header">
-              <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-              ${locHtml}
-            </div>
-            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            <p class="tl-sub">${escapeHtml(entry[subKey] || '')}</p>
-            ${hasBack ? '<span class="tl-flip-hint" aria-hidden="true">↻ details</span>' : ''}
-          </div>
-          ${hasBack ? `
-          <div class="tl-card-back">
-            <h3 class="tl-title">${escapeHtml(entry[titleKey] || '')}</h3>
-            ${descHtml}${tagsHtml}
-          </div>` : ''}
+      <div class="tl-card-single">
+        <div class="tl-card-header">
+          <span class="tl-year">${escapeHtml(String(entry.year))}</span>
+          ${locHtml}
         </div>
+        <h3 class="tl-title">${escapeHtml(title || '')}</h3>
+        <p class="tl-sub">${escapeHtml(sub || '')}</p>
+        ${descHtml}${tagsHtml}
       </div>`;
   }
 
-  const currentYear = new Date().getFullYear();
-  const startYear = 2000;
-  const byYear = new Map();
-  for (let year = currentYear; year >= startYear; year -= 1) byYear.set(year, []);
+  /* ── Merge & sort entries by start year (newest first) ─ */
+  function startYear(yearStr) {
+    var m = String(yearStr).match(/\d{4}/);
+    return m ? parseInt(m[0], 10) : 0;
+  }
 
-  const allEntries = [
-    ...(CV_CAREER || []).map(entry => ({ type: 'career', entry })),
-    ...(CV_EDUCATION || []).map(entry => ({ type: 'education', entry })),
-  ];
+  var allEntries = []
+    .concat((CV_CAREER    || []).map(function(e) { return Object.assign({}, e, { _type: 'career' }); }))
+    .concat((CV_EDUCATION || []).map(function(e) { return Object.assign({}, e, { _type: 'education' }); }))
+    .sort(function(a, b) { return startYear(b.year) - startYear(a.year); });
 
-  allEntries.forEach(({ type, entry }, idx) => {
-    const span = parseYearSpan(entry.year);
-    const from = Math.max(startYear, span.start);
-    const to = Math.min(currentYear, span.end);
-    for (let year = from; year <= to; year += 1) {
-      if (!byYear.has(year)) continue;
-      byYear.get(year).push({ type, entry, idx });
-    }
-  });
+  /* ── Render unified timeline rows ──────────────────── */
+  timeline.innerHTML = allEntries.map(function(entry) {
+    var type = entry._type;
+    var card = cardHtml(entry, type);
+    var left  = type === 'career'    ? card : '';
+    var right = type === 'education' ? card : '';
+    var emptyLeft  = type === 'education' ? '<div class="tl-empty"></div>' : '';
+    var emptyRight = type === 'career'    ? '<div class="tl-empty"></div>' : '';
 
-  timelineList.innerHTML = Array.from(byYear.entries())
-    .sort((a, b) => b[0] - a[0])
-    .map(([year, items]) => {
-      const careerHtml = items
-        .filter(item => item.type === 'career')
-        .sort((a, b) => a.idx - b.idx)
-        .map(item => entryHtml(item.entry, item.type))
-        .join('');
-      const educationHtml = items
-        .filter(item => item.type === 'education')
-        .sort((a, b) => a.idx - b.idx)
-        .map(item => entryHtml(item.entry, item.type))
-        .join('');
-      const isActive = !!(careerHtml || educationHtml);
-      return `
-        <div class="tl-year-row${isActive ? ' tl-year-row--active' : ''}">
-          <span class="tl-year-marker" data-year="${year}">${year}</span>
-          <div class="tl-year-events">
-            <div class="tl-year-col tl-year-col--career">${careerHtml}</div>
-            <div class="tl-year-col tl-year-col--education">${educationHtml}</div>
-          </div>
-        </div>
-      `;
-    })
-    .join('');
+    return '<div class="tl-row tl-row--' + type + '" data-animate>'
+      + '<div class="tl-left">' + emptyLeft + left + '</div>'
+      + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
+      + '<div class="tl-right">' + emptyRight + right + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1941,9 +2194,9 @@ function initTimelineScroll3D() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ANIMATED FAVICON — rotating 3-D capital "S"
-   Simulates y-axis rotation by scaling the canvas x-axis with
-   cos(angle).  Runs at ≤30 fps; pauses when the tab is hidden.
+   STATIC FAVICON — capital "S" rendered once
+   Draws a single frame and sets it as the favicon.
+   No animation loop — saves continuous CPU / PNG-encode cost.
    ═══════════════════════════════════════════════════════════ */
 function initAnimatedFavicon() {
   if (typeof document       === 'undefined') return;
@@ -1952,33 +2205,14 @@ function initAnimatedFavicon() {
   const link = document.querySelector('link[rel="icon"]');
   if (!link) return;
 
-  const S   = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
-  const TAU = Math.PI * 2;
-  const RADS_PER_MS = TAU / 4000; /* one full rotation every 4 s */
+  const S = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
 
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = S;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  let angle    = 0;
-  let prevMs   = 0;
-  let lastDraw = -1;
-
-  function frame(ms) {
-    requestAnimationFrame(frame);
-
-    /* Throttle to ~30 fps — favicon is tiny; 60 fps wastes CPU */
-    if (ms - lastDraw < 33) return;
-    lastDraw = ms;
-
-    /* Pause rendering while tab is hidden */
-    if (document.hidden) { prevMs = ms; return; }
-
-    const dt = prevMs ? Math.min(ms - prevMs, 150) : 0; /* cap big deltas */
-    prevMs   = ms;
-    angle    = (angle + RADS_PER_MS * dt) % TAU;
-
+  function render() {
     /* ── Background: dark rounded square ── */
     ctx.clearRect(0, 0, S, S);
     ctx.fillStyle = '#080c14';
@@ -1987,14 +2221,12 @@ function initAnimatedFavicon() {
     else               ctx.rect(0, 0, S, S);
     ctx.fill();
 
-    /* ── Rotating "S": front face = accent purple, back = accent2 cyan ── */
-    const cosA = Math.cos(angle);
+    /* ── Static "S" in accent purple ── */
     ctx.save();
     ctx.translate(S / 2, S / 2);
-    ctx.scale(cosA, 1); /* horizontal squeeze simulates 3-D y-axis spin */
     ctx.shadowBlur  = 10;
-    ctx.shadowColor = cosA >= 0 ? '#6c63ffbb' : '#00d4ffbb';
-    ctx.fillStyle   = cosA >= 0 ? '#6c63ff'   : '#00d4ff';
+    ctx.shadowColor = '#6c63ffbb';
+    ctx.fillStyle   = '#6c63ff';
     ctx.font        = 'bold 44px "Playfair Display", Georgia, serif';
     ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
@@ -2004,11 +2236,11 @@ function initAnimatedFavicon() {
     link.href = canvas.toDataURL('image/png');
   }
 
-  /* Start after fonts are loaded so Playfair Display is available */
+  /* Render after fonts are loaded so Playfair Display is available */
   const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
     ? document.fonts.ready
     : Promise.resolve();
-  whenReady.then(() => requestAnimationFrame(frame));
+  whenReady.then(render);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2030,7 +2262,7 @@ class HeroNameShader {
     this._io = null;
     this._isLowPower = isLowPowerDevice();
     this._pixelRatioCap = this._isLowPower ? 1.4 : 2;
-    this._targetFps = this._isLowPower ? 30 : 45;
+    this._targetFps = this._isLowPower ? 20 : 30;
     this._minFrameTime = 1 / this._targetFps;
     this._lastDrawTime = 0;
 
@@ -2141,7 +2373,7 @@ class HeroNameShader {
         disp     -= (toM / (md * md + 0.06)) * 0.007;
 
         /* chromatic aberration — 3 wavelengths offset horizontally */
-        float ab = 0.010;
+        float ab = 0.003;
         float aR = texture2D(uTex, clamp(uv + disp + vec2( ab, 0.0), 0.0, 1.0)).a;
         float aG = texture2D(uTex, clamp(uv + disp,                  0.0, 1.0)).a;
         float aB = texture2D(uTex, clamp(uv + disp - vec2( ab, 0.0), 0.0, 1.0)).a;
@@ -2225,13 +2457,13 @@ class HeroNameShader {
     /* read the live font-size from the h1 (respects clamp() / viewport) */
     const fs = parseFloat(getComputedStyle(this.h1).fontSize);
     ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
     /* Line 1 & 2: Playfair Display Bold — consistent elegant serif */
     ctx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
-    ctx.fillText('Stefano', w / 2, 0);
-    ctx.fillText('Masneri', w / 2, fs);
+    ctx.fillText('Stefano', 0, 0);
+    ctx.fillText('Masneri', 0, fs);
 
     gl.bindTexture(gl.TEXTURE_2D, this.tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
@@ -2317,12 +2549,14 @@ class HeroNameShader {
 /* ═══════════════════════════════════════════════════════════
    HERO BACKGROUND — GLSL NOISE GRADIENT
    Domain-warped fBm shader: indigo-violet ↔ cyan ↔ deep dark.
+   Renders a small burst of frames to produce a nice noise
+   pattern, then stops — no continuous animation loop.
    ═══════════════════════════════════════════════════════════ */
 class NoiseGradient {
   constructor(canvas) {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
-             || canvas.getContext('experimental-webgl', { alpha: false, depth: false });
+    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: true })
+             || canvas.getContext('experimental-webgl', { alpha: false, depth: false, preserveDrawingBuffer: true });
     if (!gl) { canvas.style.display = 'none'; return; }
     this.gl = gl;
     this._setup();
@@ -2330,7 +2564,7 @@ class NoiseGradient {
     window.addEventListener('resize', () => this._resize(), { passive: true });
     this._startTime = performance.now();
     this._lastT     = 0;
-    this._targetFps = 20; /* background; 20fps is plenty */
+    this._framesLeft = 3; /* render a few frames then stop */
     this._tick      = this._tick.bind(this);
     this._raf       = requestAnimationFrame(this._tick);
   }
@@ -2424,15 +2658,16 @@ class NoiseGradient {
   }
 
   _tick(now) {
+    if (this._framesLeft <= 0) { this._raf = null; return; }
     this._raf = requestAnimationFrame(this._tick);
     if (document.hidden) return;
-    if (now - this._lastT < 1000 / this._targetFps) return;
     this._lastT = now;
     const t = (now - this._startTime) / 1000;
     const { gl } = this;
     gl.uniform1f(this._uTime, t);
     gl.uniform2f(this._uRes, this.canvas.width, this.canvas.height);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this._framesLeft--;
   }
 
   destroy() {
@@ -2460,6 +2695,7 @@ if (typeof module !== 'undefined' && module.exports) {
     initScroll3D,
     initNavbar,
     initMobileMenu,
+    initBackToTop,
     initScrollReveal,
     initCounters,
     animateCounter,
@@ -2488,6 +2724,11 @@ if (typeof document !== 'undefined') {
   initTheme();
   initNavbar();
   initMobileMenu();
+  initBackToTop();
+  initSideDots();
+  initCommandPalette();
+  initCursorGlow();
+  initTaglineReveal();
 
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();

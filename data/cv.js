@@ -13,16 +13,8 @@ const CV_CAREER = [
     role:        'Senior AI Engineer',
     company:     'MediaPro',
     location:    'Donostia, ES',
-    description: 'Designed and deployed GenAI solutions for audiovisual production, including automatic highlight detection in sport events and a chatbot for movie script analysis. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.',
+    description: 'Designed and deployed GenAI solutions for audiovisual production, including automatic detection of commercial in live sport events. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.',
     tags:        ['GenAI', 'LLMs', 'NeRF', 'Gaussian Splatting', 'Computer Vision', 'Python'],
-  },
-  {
-    year:        '2024 – present',
-    role:        'Guest Lecturer',
-    company:     'ISDI Business School',
-    location:    'Barcelona, ES',
-    description: 'Teaching computer vision and AI to MBA and MIB students, covering practical applications of modern AI techniques in industry.',
-    tags:        ['Teaching', 'AI', 'Computer Vision'],
   },
   {
     year:        '2022 – 2024',
@@ -114,11 +106,11 @@ const CV_SKILLS = {
     },
     {
       name:  'MLOps · Docker · CI/CD',
-      level: 78,
+      level: 90,
     },
     {
       name:  'C++ · OpenCV · CUDA',
-      level: 70,
+      level: 85,
     },
   ],
   leadership: [

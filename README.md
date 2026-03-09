@@ -14,10 +14,12 @@ Personal website of **Stefano Masneri** — Senior AI Engineer specialising in M
 ```
 .
 ├── index.html                 Main single-page site
+├── cv.html                    Dedicated CV page (two-column: work | education)
 ├── css/
 │   └── styles.css             All styles, including shared blog-post rules
 ├── js/
 │   ├── main.js                Three.js animations, UI init, renderBlog/Publications
+│   ├── main.min.js            Minified production build (auto-generated)
 │   └── locations.js           Globe geocoding helper (browser)
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
@@ -319,6 +321,33 @@ Both scripts read `data/blog.js` at runtime and skip external post URLs in the s
 
 ---
 
+## Site layout
+
+### Navigation
+
+The navbar contains four items: **About**, **Research** (linked from hero), **Writing** (blog), and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically.
+
+### Pages
+
+| Page | Description |
+|------|-------------|
+| `index.html` | Single-page application — Hero, About, Research, Publications, Skills, Contact, Blog sections |
+| `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
+
+### Sections (index.html)
+
+| Section | Description |
+|---------|-------------|
+| Hero | Left-aligned layout with iridescent name shader, animated tagline, hero CTAs |
+| About | Asymmetric layout — photo + stats on the left, bio text on the right; interactive 3-D globe fills the right half |
+| Research | Horizontal-scroll carousel of research topic cards (Stripe-style) |
+| Publications | Filterable list of papers, rendered from `data/publications.js` |
+| Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
+| Contact | Contact cards with social links |
+| Blog | Post cards rendered from `data/blog.js` |
+
+---
+
 ## Visual effects
 
 The site uses several layers of real-time rendering, all progressive-enhancement: each effect degrades gracefully on low-power devices, and respects `prefers-reduced-motion`.
@@ -349,6 +378,12 @@ The "Stefano / Masneri" heading is rendered by a raw GLSL fragment shader layere
 4. Applies **mouse-repulsion warping**: the distortion field bends away from the cursor using inverse-square falloff, so moving the mouse visibly deforms the text.
 5. Computes an **iridescent colour sweep** — a cosine-based RGB palette with phase offsets, blended with a bright blue-white bias to give a glass / crystal appearance.
 
+FPS is capped at 30 fps (20 fps on low-power devices) to conserve battery.
+
+### Animated GLSL noise gradient (hero background)
+
+A full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette that cycles between the site's accent colours (indigo-violet `#6c63ff`, cyan `#00d4ff`) and deep black. To save battery, the gradient renders only 3 frames at startup and then stops — the last rendered frame persists as a static background.
+
 ### 3-D card tilt with specular gloss
 
 Cards (research, blog, contact, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices.
@@ -357,20 +392,65 @@ Cards (research, blog, contact, publication) track the cursor position relative 
 
 Interactive buttons (hero CTAs, social links, contact cards) exert a magnetic attraction on the cursor when it enters a configurable proximity radius (~80 px). The button translates toward the cursor by a fraction of the cursor-to-centre offset, producing the feeling that the button is trying to "catch" the pointer. The translation is spring-lerped so motion is smooth and natural. On leave, the button spring-snaps back to its resting position.
 
-### Animated GLSL noise gradient (hero background)
+### Scroll-driven effects
 
-A second full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette that cycles smoothly between the site's accent colours (indigo-violet `#6c63ff`, cyan `#00d4ff`) and deep black, so the gradient always feels on-brand. Time evolves slowly (~0.06 units/second) to keep motion calm rather than distracting.
+As the user scrolls, elements respond with transforms calculated from their position in the viewport:
 
-### Scroll-driven 3-D transforms
+- **Hero parallax**: the hero content translates at ~28 % of scroll speed, giving depth separation from the canvas background.
+- **Section entrance animations**: elements with `data-animate` fade and slide in as they enter the viewport.
+- **Research carousel**: cards enter with a `translateX` animation as they scroll into view.
+- **Skills sticky scroll**: each skill category pins to the viewport while active, then scrolls away as the next one takes over.
 
-As the user scrolls, elements respond with perspective-correct 3-D transforms calculated from their position in the viewport:
+All transforms are throttled to `requestAnimationFrame` and are disabled for `prefers-reduced-motion`.
 
-- **Research cards**: each card starts with a `rotateY(18 deg)` slant toward the centre and straightens to 0 ° as it enters the viewport, creating a "deck of cards fanning open" effect.
-- **Section titles**: translate along a subtle Z-axis parallax so headings appear to float at a different depth than the cards beneath them.
-- **Hero parallax**: the hero name and tagline move at 40 % of scroll speed, giving a depth separation between the text and the canvas behind it.
-- **Globe section**: the globe container gets a slight `rotateX` tilt based on scroll position so it appears to pivot toward the viewer.
+### Reading progress bar
 
-All transforms are throttled to `requestAnimationFrame`, use `will-change: transform` on participating elements, and are disabled for `prefers-reduced-motion`.
+A thin bar at the very top of the page fills from left to right as the user scrolls through the document. It is updated inside the existing scroll listener — no additional overhead.
+
+---
+
+## UI controls
+
+### Command palette (⌘K / Ctrl+K)
+
+Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page to open a spotlight-style command palette. Available actions:
+
+| Command | Action |
+|---------|--------|
+| About | Scroll to About section |
+| Research | Scroll to Research section |
+| Skills | Scroll to Skills section |
+| Contact | Scroll to Contact section |
+| CV | Navigate to `cv.html` |
+| Writing | Scroll to Blog section |
+| Copy email | Copy email address to clipboard |
+| GitHub | Open GitHub profile |
+| LinkedIn | Open LinkedIn profile |
+
+Type to filter commands. Press **Enter** to run the selected command, **Escape** to close.
+
+### Side-dot navigation
+
+A vertical row of small dots on the right edge of the viewport indicates the current section and lets the user jump directly to any section by clicking. Each dot is labelled with the section name via a tooltip that appears on hover.
+
+### Back-to-top button
+
+A floating button appears in the bottom-right corner once the user has scrolled past one viewport height. Clicking it smooth-scrolls back to the top.
+
+---
+
+## Performance notes
+
+Several optimisations were made to keep the page fast on low-power and mobile devices:
+
+| Change | Impact |
+|--------|--------|
+| NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
+| Cursor glow removed | Removes the per-frame radial gradient draw on the overlay canvas |
+| Hero orbs are static (no animation) | Eliminates CSS animation on large blurred elements |
+| HeroNameShader FPS capped at 30/20 | Halves GPU work on mid/low-power devices |
+| Animated favicon replaced with static render | Removes per-frame Canvas2D draw in the background tab |
+| Orb blur reduced from 100 px to 40 px | Reduces GPU rasterisation cost |
 
 ---
 

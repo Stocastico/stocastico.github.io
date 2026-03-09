@@ -45,7 +45,7 @@
   --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Spacing */
-  --section-py: clamp(5rem, 10vw, 9rem);
+  --section-py: clamp(6rem, 11vw, 10rem);
   --container: 1180px;
   --gap: 1.5rem;
 
@@ -65,15 +65,16 @@
   --nav-h: 68px;
 }
 
-/* ─── 1b. 3-D entrance for research cards ───────────────── */
-/* Overrides the generic translateY(30px) entrance with a rotateY slant.
-   --card-init-ry is set per-card by initScroll3D() (+14deg / -14deg alternating). */
+/* ─── 1b. Entrance for research cards ───────────────────── */
+/* Cards slide in from the right when they enter the viewport. */
 .research-card[data-animate]:not(.visible) {
-  transform: perspective(1000px) rotateY(var(--card-init-ry, 14deg)) translateY(20px);
+  opacity: 0;
+  transform: translateX(40px);
 }
 
 .research-card[data-animate].visible {
-  transform: perspective(1000px) rotateY(0deg) translateY(0);
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ─── 2. Reset & Base ────────────────────────────────────── */
@@ -177,6 +178,13 @@ h3 {
   padding-inline: clamp(1.25rem, 5vw, 3rem);
 }
 
+/* Wide container variant — allows carousel to use more horizontal space */
+.container--wide {
+  max-width: calc(var(--container) + 6rem);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 3rem);
+}
+
 /* ─── 5. Navigation ─────────────────────────────────────── */
 #navbar {
   position: fixed;
@@ -211,18 +219,7 @@ h3 {
   justify-content: space-between;
 }
 
-.nav-logo {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.02em;
-  transition: color var(--t-fast);
-}
-
-.nav-logo:hover {
-  color: var(--accent);
-}
+/* nav-logo removed — no SM branding in the top bar */
 
 .nav-links {
   display: flex;
@@ -264,6 +261,22 @@ h3 {
 
 .nav-links a[aria-current='true']::after {
   width: 100%;
+  background: var(--accent2);
+}
+
+/* Active section dot above the link */
+.nav-links a[aria-current='true']::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent2);
+  box-shadow: 0 0 6px var(--accent2-glow);
+  transition: opacity var(--t-med);
 }
 
 /* ─── Reading Progress Bar ───────────────────────────── */
@@ -312,13 +325,15 @@ h3 {
 }
 
 /* ─── 6. Hero Section ───────────────────────────────────── */
+/* Linear-style left-aligned hero: text sits in the left column,
+   neural-network canvas fills the entire background.           */
 #hero {
   position: relative;
   height: 100svh;
   min-height: 600px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;        /* left-align content */
   overflow: hidden;
 }
 
@@ -343,15 +358,16 @@ h3 {
   pointer-events: none;
 }
 
-/* Gradient orbs */
+/* Gradient orbs — static, reduced blur for battery savings.
+   blur(100px) on 650px elements is very GPU-expensive.
+   The radial-gradient already provides a soft edge, so 40px
+   is enough for a nice glow without the compositing cost.    */
 .hero-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
+  filter: blur(40px);
   pointer-events: none;
   z-index: 1;
-  will-change: transform;
-  /* animated float — separate layer */
 }
 
 .orb-1 {
@@ -360,7 +376,6 @@ h3 {
   top: -200px;
   left: -150px;
   background: radial-gradient(circle, rgba(108, 99, 255, 0.18) 0%, transparent 70%);
-  animation: orbFloat 18s ease-in-out infinite;
 }
 
 .orb-2 {
@@ -369,31 +384,14 @@ h3 {
   bottom: -100px;
   right: -100px;
   background: radial-gradient(circle, rgba(0, 212, 255, 0.13) 0%, transparent 70%);
-  animation: orbFloat 22s ease-in-out infinite reverse;
-}
-
-@keyframes orbFloat {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  33% {
-    transform: translate(30px, -40px) scale(1.05);
-  }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.97);
-  }
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  max-width: 800px;
-  padding: 1rem;
+  text-align: left;
+  max-width: 620px;
+  padding: 1rem clamp(1.5rem, 5vw, 4rem);
   animation: heroFadeUp 1.2s var(--ease) both;
 }
 
@@ -429,7 +427,7 @@ h3 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-align: center;
+  text-align: left;
   /* ensure text is still selectable / readable before shader loads */
   user-select: text;
 }
@@ -444,8 +442,7 @@ h3 {
 .hero-name-canvas {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   pointer-events: none;
   display: block;
   will-change: transform;
@@ -457,6 +454,26 @@ h3 {
   color: var(--text-muted);
   letter-spacing: 0.06em;
   margin-bottom: 1rem;
+}
+
+/* Staggered word reveal — each .tagline-word is set by JS */
+@keyframes tagline-word-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tagline-word {
+  display: inline-block;
+  opacity: 0;
+  animation: tagline-word-up 0.55s var(--ease) forwards;
+}
+
+/* Separator dots keep their original spacing */
+.tagline-sep {
+  display: inline-block;
+  opacity: 0;
+  margin-inline: 0.25em;
+  animation: tagline-word-up 0.55s var(--ease) forwards;
 }
 
 .hero-location {
@@ -477,7 +494,7 @@ h3 {
 .hero-actions {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -570,10 +587,30 @@ h3 {
 /* ─── 8. Section Shared ─────────────────────────────────── */
 .section {
   padding-block: var(--section-py);
+  position: relative;
 }
 
 .section-alt {
   background: var(--bg-alt);
+}
+
+/* Gradient divider lines at section transitions */
+.section + .section-alt::before,
+.section-alt + .section::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-glow) 25%,
+    var(--accent2-glow) 50%,
+    var(--accent-glow) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .section-header {
@@ -589,6 +626,10 @@ h3 {
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 0.75rem;
+  padding: 0.25em 0.9em;
+  border-radius: 999px;
+  border: 1px solid rgba(108, 99, 255, 0.22);
+  background: rgba(108, 99, 255, 0.07);
 }
 
 .section-title {
@@ -601,11 +642,47 @@ h3 {
 }
 
 /* ─── 9. About Section ──────────────────────────────────── */
-.about-grid {
+/* Asymmetric layout: bio on the left, globe filling the right half */
+.about-split {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 4rem;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
   align-items: start;
+}
+
+.about-right {
+  position: sticky;
+  top: calc(var(--nav-h) + 1.5rem);
+}
+
+.about-right .globe-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Shrink the globe scene in the split layout */
+.about-right .globe-scene {
+  height: clamp(280px, 42vw, 440px);
+}
+
+/* Inside the left column: photo + stats stacked above the bio text
+   so the bio gets the full width of the column.                     */
+.about-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Photo card + stats sit side by side in a compact row */
+.about-photo-col {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.about-photo-col .stats-row {
+  flex: 1;
+  margin-top: 0;
 }
 
 .photo-card {
@@ -614,6 +691,7 @@ h3 {
   border: 1px solid var(--border);
   background: var(--bg-card);
   aspect-ratio: 4/5;
+  max-width: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -709,6 +787,7 @@ h3 {
 .about-text-col p {
   color: var(--text-muted);
   margin-bottom: 1.1rem;
+  max-width: 60ch;
 }
 
 .about-text-col p strong {
@@ -754,11 +833,28 @@ h3 {
   background: rgba(108, 99, 255, 0.08);
 }
 
-/* ─── 10. Research Section ──────────────────────────────── */
+/* ─── 10. Research Section — horizontal carousel ──────── */
+/* Stripe-style horizontal scroll with CSS scroll-snap.
+   No JS animation loop — hardware-accelerated native scroll. */
 .research-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
   gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(1.25rem, 5vw, 3rem);
+  -webkit-overflow-scrolling: touch;
+  /* hide scrollbar but keep scroll behaviour */
+  scrollbar-width: none;
+  padding-bottom: 1rem;  /* space for shadow on hover */
+}
+
+.research-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.research-grid > .research-card {
+  flex: 0 0 clamp(280px, 30vw, 360px);
+  scroll-snap-align: start;
 }
 
 .research-card {
@@ -846,6 +942,7 @@ h3 {
   font-size: 0.875rem;
   color: var(--text-muted);
   line-height: 1.6;
+  max-width: 60ch;
 }
 
 /* ─── 11. Publications Section ──────────────────────────── */
@@ -923,11 +1020,51 @@ h3 {
   text-align: center;
 }
 
-/* ─── 12. Skills Section ────────────────────────────────── */
+/* ─── 12. Skills Section — sticky header layout ──────────── */
+/* Apple-style sticky storytelling: the header pins in place
+   while skill groups scroll past on the right.               */
+.skills-split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.skills-sticky-header {
+  position: sticky;
+  top: calc(var(--nav-h) + 2rem);
+}
+
+.section-header--left {
+  text-align: left;
+}
+
+.skills-sticky-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  max-width: 26ch;
+  line-height: 1.6;
+}
+
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--gap);
+}
+
+@media (max-width: 900px) {
+  .skills-split {
+    grid-template-columns: 1fr;
+  }
+
+  .skills-sticky-header {
+    position: static;
+  }
+
+  .section-header--left {
+    text-align: center;
+  }
 }
 
 .skill-group {
@@ -1065,6 +1202,8 @@ h3 {
   font-size: 1.05rem;
   color: var(--text-muted);
   margin-bottom: 2.5rem;
+  max-width: 60ch;
+  margin-inline: auto;
 }
 
 .contact-grid {
@@ -1160,140 +1299,149 @@ h3 {
   transform: none;
 }
 
-/* ─── 16c. Curriculum Vitae — timeline & skills ───────────── */
+/* ─── 16c. Curriculum Vitae — unified timeline ────────────── */
 
-.timeline-stage {
-  position: relative;
+/* ── Header actions (PDF button + legend) ─────────────── */
+.cv-header-actions {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             1.5rem;
+  margin-top:      1rem;
+  flex-wrap:       wrap;
 }
 
-.timeline-track {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: relative;
-  padding-bottom: 2rem;
+.cv-pdf-btn {
+  display:     inline-flex;
+  align-items: center;
+  gap:         0.4rem;
+  font-size:   0.82rem;
 }
 
-.timeline-track::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 3.6rem;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
-  box-shadow: 0 0 10px var(--accent-glow);
+.cv-legend {
+  display:     flex;
+  align-items: center;
+  gap:         1.25rem;
+  font-size:   0.75rem;
+  color:       var(--text-muted);
+}
+
+.cv-legend-item {
+  display:     flex;
+  align-items: center;
+  gap:         0.35rem;
+}
+
+.cv-legend-dot {
+  display:       inline-block;
+  width:         10px;
+  height:        10px;
+  border-radius: 50%;
+}
+
+.cv-legend-dot--career    { background: var(--accent);  box-shadow: 0 0 6px var(--accent-glow); }
+.cv-legend-dot--education { background: var(--accent2); box-shadow: 0 0 6px var(--accent2-glow); }
+
+/* ── Unified timeline container ───────────────────────── */
+.cv-timeline {
+  position:  relative;
+  max-width: 900px;
+  margin:    0 auto;
+  padding:   2rem 0;
+}
+
+/* Central vertical spine */
+.cv-timeline::before {
+  content:       '';
+  position:      absolute;
+  top:           0;
+  bottom:        0;
+  left:          50%;
+  width:         2px;
+  transform:     translateX(-50%);
+  background:    linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
+  box-shadow:    0 0 10px var(--accent-glow);
   border-radius: 2px;
 }
 
-.tl-year-row {
-  display: grid;
-  grid-template-columns: 88px 1fr;
-  gap: 1rem;
-  padding: 0.35rem 0;
+/* ── Timeline row — one per entry ─────────────────────── */
+.tl-row {
+  display:               grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap:                   0;
+  align-items:           start;
+  margin-bottom:         1.5rem;
+  position:              relative;
 }
 
-.tl-year-marker {
-  display: inline-flex;
-  align-items: center;
+/* ── Year marker on the spine ─────────────────────────── */
+.tl-spine {
+  display:         flex;
+  align-items:     center;
   justify-content: center;
-  height: 1.85rem;
-  min-width: 1.85rem;
-  padding: 0 0.55rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(8 12 20 / 0.96);
-  color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  position: relative;
-  z-index: 1;
+  position:        relative;
+  width:           52px;
+  z-index:         2;
 }
 
-.tl-year-row--active .tl-year-marker {
-  color: var(--text);
-  border-color: var(--border-hov);
+.tl-dot {
+  width:         14px;
+  height:        14px;
+  border-radius: 50%;
+  border:        2px solid var(--bg-alt);
+  flex-shrink:   0;
 }
 
-.tl-year-events {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem 1rem;
-  min-height: 1.85rem;
+.tl-row--career .tl-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
-.tl-year-row:not(.tl-year-row--active) .tl-year-events {
-  min-height: 0.6rem;
+.tl-row--education .tl-dot {
+  background: var(--accent2);
+  box-shadow: 0 0 8px var(--accent2-glow);
 }
 
-.tl-year-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.tl-entry {
-  position: relative;
-}
-
-/* ── Card — flip container ─────────────────────────────── */
-
-/* Grid stacking: card height = max(front height, back height) automatically.
-   Each card has its own perspective so the flip is isolated — no shared
-   3D context between the two columns (that was the cause of the flicker). */
-.tl-card {
-  display:     grid;
-  perspective: 900px;
-}
-
-.tl-card--flippable { cursor: pointer; }
-
-/* Flip on hover / keyboard focus */
-.tl-card--flippable:hover    .tl-card-front,
-.tl-card--flippable:focus-within .tl-card-front { transform: rotateY(-180deg); }
-
-.tl-card--flippable:hover    .tl-card-back,
-.tl-card--flippable:focus-within .tl-card-back  { transform: rotateY(0deg); }
-
-/* Both faces share the same grid cell */
-.tl-card-front,
-.tl-card-back {
-  grid-area:   1 / 1;
-  padding:     1.4rem 1.5rem;
-  background:  var(--bg-card);
-  border:      1px solid var(--border);
+/* ── Card — sits on left or right side ────────────────── */
+.tl-card-single {
+  padding:       1.5rem 1.75rem;
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
   border-radius: var(--r-lg);
-  backface-visibility:         hidden;
-  -webkit-backface-visibility: hidden;
-  transition:  transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:    border-color var(--t-med), background var(--t-med), box-shadow var(--t-med);
 }
 
-.tl-card-back {
-  transform:    rotateY(180deg);
-  background:   var(--bg-card-hov);
+.tl-card-single:hover {
   border-color: var(--border-hov);
+  background:   var(--bg-card-hov);
   box-shadow:   0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Colored spine-side accent on the front face only */
-.tl-entry--career .tl-card-front { border-right: 3px solid var(--accent);  }
-.tl-entry--education .tl-card-front { border-left: 3px solid var(--accent2); }
-
-/* Flip hint */
-.tl-flip-hint {
-  display:        block;
-  margin-top:     0.65rem;
-  font-size:      0.63rem;
-  font-weight:    600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  opacity:        0.38;
-  transition:     opacity var(--t-med);
+/* Career cards: left side — accent bar on right edge (toward spine) */
+.tl-row--career .tl-card-single {
+  border-right: 3px solid var(--accent);
 }
-.tl-card--flippable:hover .tl-flip-hint { opacity: 0.65; }
-.tl-entry--career .tl-flip-hint { color: var(--accent);  }
-.tl-entry--education .tl-flip-hint { color: var(--accent2); }
+
+/* Education cards: right side — accent bar on left edge (toward spine) */
+.tl-row--education .tl-card-single {
+  border-left: 3px solid var(--accent2);
+}
+
+/* Left cell (career) */
+.tl-left {
+  padding-right: 1rem;
+  text-align:    right;
+}
+
+/* Right cell (education) */
+.tl-right {
+  padding-left: 1rem;
+}
+
+/* Empty side placeholder */
+.tl-empty {
+  /* intentionally blank — keeps grid structure */
+}
 
 /* ── Card typography ──────────────────────────────────── */
 
@@ -1306,8 +1454,8 @@ h3 {
   margin-bottom:  0.4rem;
 }
 
-.tl-entry--career .tl-year { color: var(--accent);  }
-.tl-entry--education .tl-year { color: var(--accent2); }
+.tl-row--career .tl-year    { color: var(--accent);  }
+.tl-row--education .tl-year { color: var(--accent2); }
 
 .tl-title {
   font-size:    0.98rem;
@@ -1332,6 +1480,15 @@ h3 {
   margin-bottom:   0.25rem;
 }
 
+/* On career (left) cards, reverse header so location is on the left */
+.tl-left .tl-card-header {
+  flex-direction: row-reverse;
+}
+
+.tl-left .tl-location {
+  text-align: left;
+}
+
 .tl-location {
   color:       var(--text-faint);
   font-size:   0.72rem;
@@ -1353,14 +1510,19 @@ h3 {
   gap:       0.35rem;
 }
 
+/* On career (left) cards, align tags to the right */
+.tl-left .tl-tags {
+  justify-content: flex-end;
+}
+
 .tl-tag {
-  font-size:   0.67rem;
-  font-weight: 600;
-  padding:     0.2em 0.65em;
-  border-radius: 999px;
-  background:  rgba(108 99 255 / 0.11);
-  color:       var(--accent);
-  border:      1px solid rgba(108 99 255 / 0.22);
+  font-size:      0.67rem;
+  font-weight:    600;
+  padding:        0.2em 0.65em;
+  border-radius:  999px;
+  background:     rgba(108 99 255 / 0.11);
+  color:          var(--accent);
+  border:         1px solid rgba(108 99 255 / 0.22);
   letter-spacing: 0.02em;
 }
 
@@ -1489,26 +1651,78 @@ h3 {
   letter-spacing: 0.01em;
 }
 
-/* ── Responsive: tighter spacing on small screens ── */
+/* ── Responsive: single-column timeline on small screens ── */
 @media (max-width: 760px) {
-  .timeline-track::before {
-    left: 2.95rem;
+  .cv-timeline::before {
+    left: 6px;
   }
 
-  .tl-year-row {
-    grid-template-columns: 70px 1fr;
-    gap: 0.8rem;
+  .tl-row {
+    display: block;
+    padding-left: 2rem;
+    position: relative;
   }
 
-  .tl-year-events {
-    gap: 0.65rem;
+  .tl-spine {
+    position: absolute;
+    left:     0;
+    top:      1.2rem;
+    width:    auto;
   }
 
-  .tl-card-front,
-  .tl-card-back {
-    padding: 1rem 1.1rem;
+  .tl-dot {
+    width:  10px;
+    height: 10px;
+  }
+
+  .tl-left,
+  .tl-right {
+    padding: 0;
+    text-align: left;
+  }
+
+  .tl-left .tl-card-header {
+    flex-direction: row;
+  }
+
+  .tl-left .tl-location {
+    text-align: right;
+  }
+
+  .tl-left .tl-tags {
+    justify-content: flex-start;
+  }
+
+  .tl-empty {
+    display: none;
+  }
+
+  /* On mobile, accent bar always on left */
+  .tl-row--career .tl-card-single {
+    border-right: none;
+    border-left: 3px solid var(--accent);
+  }
+
+  .tl-card-single {
+    padding: 1.1rem 1.25rem;
   }
 }
+
+/* ─── 16d. CV page layout ────────────────────────────────── */
+
+.cv-page {
+  padding-top: 7rem; /* clear fixed navbar */
+}
+
+.cv-back-link {
+  display:         inline-block;
+  font-size:       0.82rem;
+  color:           var(--accent);
+  text-decoration: none;
+  margin-bottom:   1.5rem;
+  transition:      color var(--t-fast);
+}
+.cv-back-link:hover { color: var(--accent2); }
 
 /* ─── 17. Performance: content-visibility ───────────────────
    Skips layout, style, and paint for off-screen sections —
@@ -1522,7 +1736,6 @@ h3 {
 ──────────────────────────────────────────────────────────── */
 #research,
 #publications,
-#cv,
 #skills,
 #blog,
 #contact {
@@ -1531,6 +1744,16 @@ h3 {
 }
 
 /* ─── 18. Responsive ────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .about-split {
+    grid-template-columns: 1fr;
+  }
+
+  .about-right {
+    position: static;
+  }
+}
+
 @media (max-width: 900px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1578,6 +1801,15 @@ h3 {
   }
 }
 
+@media (max-width: 680px) {
+  /* On mobile, re-centre the hero for a balanced look */
+  #hero { justify-content: center; }
+  .hero-content { text-align: center; padding-inline: 1rem; }
+  .hero-name { text-align: center; }
+  .hero-name-canvas { left: 50%; transform: translateX(-50%); }
+  .hero-actions { justify-content: center; }
+}
+
 @media (max-width: 480px) {
   .hero-actions {
     flex-direction: column;
@@ -1606,11 +1838,6 @@ h3 {
 }
 
 /* ─── 18. Globe (About section) ─────────────────────────── */
-.about-globe {
-  margin-top: clamp(3.5rem, 7vw, 5.5rem);
-  text-align: center;
-}
-
 .globe-header {
   margin-bottom: 2rem;
 }
@@ -1926,3 +2153,308 @@ h3 {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ─── Command Palette ────────────────────────────────────── */
+.cmd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: clamp(4rem, 12vh, 8rem);
+  background: rgba(8 12 20 / 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: cmd-fade-in 0.15s var(--ease);
+}
+
+.cmd-overlay[hidden] { display: none; }
+
+@keyframes cmd-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cmd-box {
+  width: min(640px, calc(100vw - 2rem));
+  background: rgba(12 17 30 / 0.97);
+  border: 1px solid rgba(108 99 255 / 0.3);
+  border-radius: var(--r-lg);
+  box-shadow: 0 32px 80px rgba(0 0 0 / 0.7), 0 0 0 1px rgba(108 99 255 / 0.15);
+  overflow: hidden;
+  animation: cmd-slide-in 0.18s var(--ease);
+}
+
+@keyframes cmd-slide-in {
+  from { transform: translateY(-12px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1);        opacity: 1; }
+}
+
+.cmd-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cmd-search-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.cmd-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--text);
+  caret-color: var(--accent2);
+}
+
+.cmd-input::placeholder {
+  color: var(--text-faint);
+}
+
+.cmd-esc-hint {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
+}
+
+.cmd-list {
+  list-style: none;
+  max-height: min(360px, 60vh);
+  overflow-y: auto;
+  padding: 0.4rem 0;
+}
+
+.cmd-group-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0.6rem 1rem 0.25rem;
+}
+
+.cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background var(--t-fast);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.cmd-item:hover,
+.cmd-item[aria-selected="true"] {
+  background: rgba(108 99 255 / 0.12);
+  color: var(--text);
+}
+
+.cmd-item[aria-selected="true"] {
+  background: rgba(108 99 255 / 0.18);
+}
+
+.cmd-item-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--r-sm);
+  background: rgba(255 255 255 / 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent2);
+}
+
+.cmd-item-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cmd-item-label { flex: 1; }
+
+.cmd-item-hint {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+/* Keyboard shortcut pill in nav */
+.cmd-trigger-hint {
+  display: none;
+}
+
+@media (pointer: fine) {
+  .cmd-trigger-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.45em;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    transition: border-color var(--t-fast), color var(--t-fast);
+  }
+
+  .cmd-trigger-hint:hover {
+    border-color: var(--accent);
+    color: var(--text-muted);
+  }
+}
+
+/* ─── Side Progress Dots ─────────────────────────────────── */
+.side-dots {
+  position: fixed;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+  /* Hidden on small screens / touch devices */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-med);
+}
+
+.side-dots.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.side-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+}
+
+.side-dot:hover {
+  background: var(--text-muted);
+  transform: scale(1.4);
+}
+
+.side-dot[aria-current="true"] {
+  background: var(--accent2);
+  transform: scale(1.35);
+  box-shadow: 0 0 8px var(--accent2-glow);
+}
+
+/* Tooltip label on hover */
+.side-dot::before {
+  content: attr(data-label);
+  position: absolute;
+  right: calc(100% + 0.75rem);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: rgba(8 12 20 / 0.85);
+  border: 1px solid var(--border);
+  padding: 0.2em 0.55em;
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-fast);
+  backdrop-filter: blur(8px);
+}
+
+.side-dot:hover::before {
+  opacity: 1;
+}
+
+/* Only show on wide enough screens with a mouse */
+@media (max-width: 900px), (pointer: coarse) {
+  .side-dots { display: none; }
+}
+
+/* ─── Back to Top Button ─────────────────────────────────── */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 90;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hov);
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(14px) saturate(1.4);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(12px) scale(0.85);
+  transition: opacity var(--t-med) var(--ease),
+    transform var(--t-med) var(--ease),
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+  pointer-events: none;
+}
+
+.back-to-top svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--accent2);
+  transition: stroke var(--t-fast);
+}
+
+.back-to-top:hover {
+  border-color: var(--accent2);
+  box-shadow: 0 0 18px var(--accent2-glow);
+}
+
+.back-to-top:hover svg {
+  stroke: var(--accent2);
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+@media (max-width: 480px) {
+  .back-to-top {
+    bottom: 1.25rem;
+    right: 1.25rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .back-to-top {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ─── Cursor Glow — removed for performance ──────────────── */
+/* The body::after radial gradient forced full-page repaints
+   on every mousemove, draining battery on older hardware.     */
