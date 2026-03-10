@@ -169,7 +169,8 @@ async function compileLocations(source, options) {
     if (!placeName) throw new Error(`Missing location name for geocoding at ${contextLabel || 'unknown context'}`);
     if (!options.geocode) throw new Error(`Missing coordinates for ${locationHint} (run without --no-geocode)`);
 
-    if (requests > 0) await wait(REQUEST_DELAY_MS);
+    const isCacheHit = Boolean(geocodeCache[placeName]);
+    if (!isCacheHit && requests > 0) await wait(REQUEST_DELAY_MS);
     let coords;
     try {
       coords = await geocodeWithCache(placeName, geocodeCache, ua);
@@ -178,7 +179,7 @@ async function compileLocations(source, options) {
     }
     item.lat = roundCoord(coords.lat);
     item.lon = roundCoord(coords.lon);
-    requests += 1;
+    if (!isCacheHit) requests += 1;
   }
 
   const pins = [];

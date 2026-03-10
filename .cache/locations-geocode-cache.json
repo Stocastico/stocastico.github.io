@@ -1,0 +1,590 @@
+{
+  "Brescia, Italy": {
+    "lat": 45.77958,
+    "lon": 10.42587
+  },
+  "Berlin, Germany": {
+    "lat": 52.51739,
+    "lon": 13.39513
+  },
+  "Frankfurt, Germany": {
+    "lat": 50.11064,
+    "lon": 8.68209
+  },
+  "San Sebastián, Spain": {
+    "lat": 43.32242,
+    "lon": -1.98389
+  },
+  "Dublin, Ireland": {
+    "lat": 53.34938,
+    "lon": -6.26056
+  },
+  "Leiria, Portugal": {
+    "lat": 39.74379,
+    "lon": -8.80711
+  },
+  "Brussels, Belgium": {
+    "lat": 50.84674,
+    "lon": 4.35249
+  },
+  "Martigny, Switzerland": {
+    "lat": 46.10312,
+    "lon": 7.07274
+  },
+  "Edinburgh, United Kingdom": {
+    "lat": 55.95335,
+    "lon": -3.18837
+  },
+  "Tel Aviv, Israel": {
+    "lat": 32.0853,
+    "lon": 34.78181
+  },
+  "Athens, Greece": {
+    "lat": 37.97556,
+    "lon": 23.73483
+  },
+  "Oslo, Norway": {
+    "lat": 59.91333,
+    "lon": 10.73897
+  },
+  "Reykjavik, Iceland": {
+    "lat": 64.14598,
+    "lon": -21.94224
+  },
+  "Glendale, Arizona, USA": {
+    "lat": 33.53869,
+    "lon": -112.18599
+  },
+  "Norfolk, Virginia, USA": {
+    "lat": 36.84937,
+    "lon": -76.28995
+  },
+  "Gdansk, Poland": {
+    "lat": 54.4288,
+    "lon": 18.79833
+  },
+  "Bamberg, Germany": {
+    "lat": 49.8916,
+    "lon": 10.88685
+  },
+  "Bruges, Belgium": {
+    "lat": 51.20855,
+    "lon": 3.22677
+  },
+  "Salzburg, Austria": {
+    "lat": 47.79813,
+    "lon": 13.04648
+  },
+  "Porto, Portugal": {
+    "lat": 41.15022,
+    "lon": -8.61035
+  },
+  "Hamburg, Germany": {
+    "lat": 53.55034,
+    "lon": 10.00065
+  },
+  "Budapest, Hungary": {
+    "lat": 47.48139,
+    "lon": 19.14609
+  },
+  "Prague, Czechia": {
+    "lat": 50.08501,
+    "lon": 14.42652
+  },
+  "Munich, Germany": {
+    "lat": 48.13711,
+    "lon": 11.57538
+  },
+  "Niza, France": {
+    "lat": 43.70094,
+    "lon": 7.26839
+  },
+  "Amsterdam, Netherlands": {
+    "lat": 52.37308,
+    "lon": 4.89245
+  },
+  "London, UK": {
+    "lat": 51.50745,
+    "lon": -0.12777
+  },
+  "Paris, France": {
+    "lat": 48.8535,
+    "lon": 2.34839
+  },
+  "Lisbon, Portugal": {
+    "lat": 38.70775,
+    "lon": -9.13659
+  },
+  "Vienna, Austria": {
+    "lat": 48.20835,
+    "lon": 16.3725
+  },
+  "Bordeaux, France": {
+    "lat": 44.84123,
+    "lon": -0.58004
+  },
+  "Toulouse, France": {
+    "lat": 43.60446,
+    "lon": 1.44424
+  },
+  "Arles, France": {
+    "lat": 43.67762,
+    "lon": 4.63097
+  },
+  "Marseille, France": {
+    "lat": 43.29617,
+    "lon": 5.36995
+  },
+  "Bayonne, France": {
+    "lat": 43.49451,
+    "lon": -1.47367
+  },
+  "Chicago, Illinois, USA": {
+    "lat": 41.87556,
+    "lon": -87.62442
+  },
+  "Bloomington, Indiana, USA": {
+    "lat": 39.16704,
+    "lon": -86.53429
+  },
+  "Louisville, Kentucky, USA": {
+    "lat": 38.25424,
+    "lon": -85.75941
+  },
+  "Nashville, Tennessee, USA": {
+    "lat": 36.16228,
+    "lon": -86.7743
+  },
+  "Lynchburg, Tennessee, USA": {
+    "lat": 35.28317,
+    "lon": -86.37398
+  },
+  "Asheville, North Carolina, USA": {
+    "lat": 35.59536,
+    "lon": -82.55084
+  },
+  "Durham, North Carolina, USA": {
+    "lat": 35.99665,
+    "lon": -78.90181
+  },
+  "Washington D.C., District of Columbia, USA": {
+    "lat": 38.89504,
+    "lon": -77.03654
+  },
+  "Baltimore, Maryland, USA": {
+    "lat": 39.29088,
+    "lon": -76.61076
+  },
+  "Asbury Park, New Jersey, USA": {
+    "lat": 40.22039,
+    "lon": -74.01208
+  },
+  "New York City, New York, USA": {
+    "lat": 40.71273,
+    "lon": -74.00602
+  },
+  "Agadir, Morocco": {
+    "lat": 30.42052,
+    "lon": -9.58385
+  },
+  "Essaouira, Morocco": {
+    "lat": 31.51183,
+    "lon": -9.76209
+  },
+  "Marrakech, Morocco": {
+    "lat": 31.62583,
+    "lon": -7.98916
+  },
+  "Ouarzazate, Morocco": {
+    "lat": 30.92019,
+    "lon": -6.91092
+  },
+  "Erg Chebbi, Morocco": {
+    "lat": 31.13824,
+    "lon": -3.9707
+  },
+  "Antalya, Turkey": {
+    "lat": 36.88657,
+    "lon": 30.70302
+  },
+  "Pamukkale, Turkey": {
+    "lat": 37.92004,
+    "lon": 29.12175
+  },
+  "Akyaka, Turkey": {
+    "lat": 40.73985,
+    "lon": 43.62341
+  },
+  "Fethiye, Turkey": {
+    "lat": 36.62212,
+    "lon": 29.11534
+  },
+  "Kas, Turkey": {
+    "lat": 36.19938,
+    "lon": 29.64134
+  },
+  "Alghero, Sardinia, Italy": {
+    "lat": 40.55873,
+    "lon": 8.31532
+  },
+  "Bosa, Sardinia, Italy": {
+    "lat": 40.29701,
+    "lon": 8.49861
+  },
+  "Cala Gonone, Sardinia, Italy": {
+    "lat": 40.28209,
+    "lon": 9.63434
+  },
+  "Orosei, Sardinia, Italy": {
+    "lat": 40.37918,
+    "lon": 9.69501
+  },
+  "Olbia, Sardinia, Italy": {
+    "lat": 40.92327,
+    "lon": 9.50274
+  },
+  "Palau, Sardinia, Italy": {
+    "lat": 41.18108,
+    "lon": 9.38204
+  },
+  "Tokyo, Japan": {
+    "lat": 35.67686,
+    "lon": 139.76389
+  },
+  "Yokohama, Japan": {
+    "lat": 35.45034,
+    "lon": 139.63438
+  },
+  "Perhentian Islands, Malaysia": {
+    "lat": 5.90289,
+    "lon": 102.75575
+  },
+  "Kuala Lumpur, Malaysia": {
+    "lat": 3.1517,
+    "lon": 101.69424
+  },
+  "Kyoto, Japan": {
+    "lat": 35.01158,
+    "lon": 135.76814
+  },
+  "Arashiyama, Japan": {
+    "lat": 35.00905,
+    "lon": 135.6745
+  },
+  "Nara, Japan": {
+    "lat": 34.68454,
+    "lon": 135.80484
+  },
+  "Koyasan, Japan": {
+    "lat": 34.21211,
+    "lon": 135.582
+  },
+  "Osaka, Japan": {
+    "lat": 34.69376,
+    "lon": 135.50145
+  },
+  "Malaga, Spain": {
+    "lat": 36.7213,
+    "lon": -4.42164
+  },
+  "Cazorla, Spain": {
+    "lat": 37.91289,
+    "lon": -3.00389
+  },
+  "Conil, Spain": {
+    "lat": 36.27705,
+    "lon": -6.08819
+  },
+  "Tarifa, Spain": {
+    "lat": 36.01291,
+    "lon": -5.60502
+  },
+  "Cadiz, Spain": {
+    "lat": 36.52974,
+    "lon": -6.2929
+  },
+  "Jerez de la Frontera, Spain": {
+    "lat": 36.68169,
+    "lon": -6.13774
+  },
+  "Bangkok, Thailand": {
+    "lat": 13.75249,
+    "lon": 100.49351
+  },
+  "Chiang Mai, Thailand": {
+    "lat": 18.78828,
+    "lon": 98.98588
+  },
+  "Railay, Thailand": {
+    "lat": 8.01068,
+    "lon": 98.83966
+  },
+  "Koh Phi Phi, Thailand": {
+    "lat": 7.73737,
+    "lon": 98.77045
+  },
+  "Palermo, Sicily, Italy": {
+    "lat": 38.11123,
+    "lon": 13.35244
+  },
+  "Scopello, Sicily, Italy": {
+    "lat": 38.07035,
+    "lon": 12.81816
+  },
+  "San Vito Lo Capo, Sicily, Italy": {
+    "lat": 38.17235,
+    "lon": 12.73493
+  },
+  "Trapani, Sicily, Italy": {
+    "lat": 38.0174,
+    "lon": 12.51602
+  },
+  "Favignana, Sicily, Italy": {
+    "lat": 37.9314,
+    "lon": 12.32743
+  },
+  "Mazara del Vallo, Sicily, Italy": {
+    "lat": 37.65373,
+    "lon": 12.58869
+  },
+  "Erice, Sicily, Italy": {
+    "lat": 38.03823,
+    "lon": 12.58718
+  },
+  "Monreale, Sicily, Italy": {
+    "lat": 38.08263,
+    "lon": 13.29199
+  },
+  "Agrigento, Sicily, Italy": {
+    "lat": 37.3123,
+    "lon": 13.57465
+  },
+  "Santiago de Compostela, Galicia, Spain": {
+    "lat": 42.88042,
+    "lon": -8.54586
+  },
+  "Illa de Arousa, Galicia, Spain": {
+    "lat": 42.55004,
+    "lon": -8.86716
+  },
+  "Pontevedra, Galicia, Spain": {
+    "lat": 42.43189,
+    "lon": -8.64316
+  },
+  "Illa de Ons, Galicia, Spain": {
+    "lat": 42.37737,
+    "lon": -8.93755
+  },
+  "Cabo Home, Galicia, Spain": {
+    "lat": 42.25376,
+    "lon": -8.87326
+  },
+  "Vigo, Galicia, Spain": {
+    "lat": 42.23766,
+    "lon": -8.72472
+  },
+  "Cies Islands, Galicia, Spain": {
+    "lat": 42.19905,
+    "lon": -8.90299
+  },
+  "Mouros, Galicia, Spain": {
+    "lat": 42.73388,
+    "lon": -8.84143
+  },
+  "Ézaro, Galicia, Spain": {
+    "lat": 42.91881,
+    "lon": -9.13658
+  },
+  "A Coruña, Galicia, Spain": {
+    "lat": 43.37097,
+    "lon": -8.39594
+  },
+  "Gijon, Asturias, Spain": {
+    "lat": 43.54494,
+    "lon": -5.66275
+  },
+  "Ljubljana, Slovenia": {
+    "lat": 46.05003,
+    "lon": 14.50693
+  },
+  "Zagreb, Croatia": {
+    "lat": 45.8131,
+    "lon": 15.97728
+  },
+  "Plitvice Lakes, Croatia": {
+    "lat": 44.8523,
+    "lon": 15.59035
+  },
+  "Split, Croatia": {
+    "lat": 43.51164,
+    "lon": 16.43997
+  },
+  "Brac, Croatia": {
+    "lat": 43.32394,
+    "lon": 16.65485
+  },
+  "Zadar, Croatia": {
+    "lat": 44.11686,
+    "lon": 15.23533
+  },
+  "Pula, Croatia": {
+    "lat": 44.87023,
+    "lon": 13.84553
+  },
+  "Kamenjak, Croatia": {
+    "lat": 44.24704,
+    "lon": 14.76707
+  },
+  "Rovinj, Croatia": {
+    "lat": 45.08074,
+    "lon": 13.64173
+  },
+  "Trieste, Italy": {
+    "lat": 45.64965,
+    "lon": 13.77728
+  },
+  "La Valletta, Malta": {
+    "lat": 35.899,
+    "lon": 14.51366
+  },
+  "Gozo, Malta": {
+    "lat": 36.04678,
+    "lon": 14.25826
+  },
+  "Catania, Sicily, Italy": {
+    "lat": 37.50236,
+    "lon": 15.08737
+  },
+  "Taormina, Sicily, Italy": {
+    "lat": 37.85122,
+    "lon": 15.28302
+  },
+  "Syracuse, Sicily, Italy": {
+    "lat": 37.06461,
+    "lon": 15.29072
+  },
+  "Noto, Sicily, Italy": {
+    "lat": 36.89089,
+    "lon": 15.07065
+  },
+  "Marzamemi, Sicily, Italy": {
+    "lat": 36.74184,
+    "lon": 15.11765
+  },
+  "Ragusa, Sicily, Italy": {
+    "lat": 36.92568,
+    "lon": 14.73075
+  },
+  "Tirana, Albania": {
+    "lat": 41.32815,
+    "lon": 19.81844
+  },
+  "Ohrid, North Macedonia": {
+    "lat": 41.11702,
+    "lon": 20.80177
+  },
+  "Ljubanishta, North Macedonia": {
+    "lat": 40.91346,
+    "lon": 20.741
+  },
+  "Berat, Albania": {
+    "lat": 40.70186,
+    "lon": 19.95808
+  },
+  "Vlore, Albania": {
+    "lat": 40.47076,
+    "lon": 19.49127
+  },
+  "Himare, Albania": {
+    "lat": 40.10216,
+    "lon": 19.7473
+  },
+  "Saranda, Albania": {
+    "lat": 39.87522,
+    "lon": 20.00653
+  },
+  "Ksamil, Albania": {
+    "lat": 39.77014,
+    "lon": 20.00379
+  },
+  "Gjirokaster, Albania": {
+    "lat": 40.07709,
+    "lon": 20.13934
+  },
+  "Corfu, Greece": {
+    "lat": 39.59134,
+    "lon": 19.85962
+  },
+  "San Francisco, California, USA": {
+    "lat": 37.78794,
+    "lon": -122.40752
+  },
+  "Santa Cruz, California, USA": {
+    "lat": 36.97436,
+    "lon": -122.02947
+  },
+  "Carmel-by-the-Sea, California, USA": {
+    "lat": 36.55527,
+    "lon": -121.92328
+  },
+  "San Luis Obispo, California, USA": {
+    "lat": 35.35402,
+    "lon": -120.37572
+  },
+  "Los Angeles, California, USA": {
+    "lat": 34.05369,
+    "lon": -118.24277
+  },
+  "Santa Monica, California, USA": {
+    "lat": 34.01947,
+    "lon": -118.49123
+  },
+  "San Diego, California, USA": {
+    "lat": 32.71742,
+    "lon": -117.16277
+  },
+  "Bonn, Germany": {
+    "lat": 50.73438,
+    "lon": 7.09548
+  },
+  "Wageningen, Netherlands": {
+    "lat": 51.96917,
+    "lon": 5.66528
+  },
+  "Sevilla, Spain": {
+    "lat": 37.38283,
+    "lon": -5.97317
+  },
+  "Tarragona, Spain": {
+    "lat": 41.11888,
+    "lon": 1.24452
+  },
+  "Girona, Spain": {
+    "lat": 41.98244,
+    "lon": 2.81456
+  },
+  "Burgos, Spain": {
+    "lat": 42.34392,
+    "lon": -3.6969
+  },
+  "Gant, Belgium": {
+    "lat": 51.05373,
+    "lon": 3.72098
+  },
+  "Antwerp, Belgium": {
+    "lat": 51.22047,
+    "lon": 4.40246
+  },
+  "Zurich, Switzerland": {
+    "lat": 47.37689,
+    "lon": 8.54169
+  },
+  "Geneva, Switzerland": {
+    "lat": 46.20222,
+    "lon": 6.14569
+  },
+  "Burdur, Turkey": {
+    "lat": 37.72038,
+    "lon": 30.28936
+  }
+}
