@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
-    content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+    content="Stefano Masneri — Senior AI Lead specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="keywords" content="Stefano Masneri, AI Engineer, Machine Learning, Computer Vision, Augmented Reality, Deep Learning, XR, ViT, Speaker Diarisation, San Sebastián" />
   <!-- Disallow AI/LLM training use of this page's content -->
@@ -38,7 +38,7 @@
       "@type": "Person",
       "name": "Stefano Masneri",
       "url": "https://stocastico.github.io/",
-      "image": "https://stocastico.github.io/screenshot-hero.png",
+      "image": "https://stocastico.github.io/img/screenshot-hero.png",
       "jobTitle": "Senior AI Engineer",
       "worksFor": {
         "@type": "Organization",
@@ -112,6 +112,9 @@
         <li><a href="#blog">Writing</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
+      <kbd class="cmd-trigger-hint" id="cmd-trigger" aria-label="Open command palette">
+        <span class="cmd-trigger-key"></span>K
+      </kbd>
     </div>
   </nav>
 
@@ -180,10 +183,6 @@
             <div class="about-photo-col" data-animate data-delay="100">
               <div class="photo-card">
                 <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" />
-                <!-- <div class="photo-placeholder" role="img" aria-label="Photo placeholder — add your own image">
-                  <span class="photo-initials">SM</span>
-                  <span class="photo-hint">Add your photo here</span>
-                </div> -->
               </div>
 
               <!-- Quick stats -->
@@ -312,6 +311,13 @@
     </div>
     <!-- Carousel breaks out of container for full-width horizontal scroll -->
     <div class="container container--wide">
+      <div class="research-carousel-wrap">
+      <button class="research-scroll-btn research-scroll-btn--left" id="research-scroll-left" aria-label="Scroll research cards left">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="research-scroll-btn research-scroll-btn--right" id="research-scroll-right" aria-label="Scroll research cards right">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <div class="research-grid" id="research-grid" role="list">
 
         <div class="research-card" role="listitem" data-animate data-delay="0">
@@ -392,6 +398,7 @@
             broadcast/broadband services, and connected media ecosystems.</p>
         </div>
 
+      </div>
       </div>
     </div>
   </section>
@@ -545,8 +552,8 @@
 
           <a href="#" class="contact-card contact-email-obfuscated" data-email-user="c3RlZmFuby5tYXNuZXJp"
             data-email-domain="bGl2ZS5jb20=" data-email-revealed="false"
-            aria-label="Hover to preview email, click to send"
-            title="Hover to reveal, click to open mail client"
+            aria-label="Click to reveal email address"
+            title="Click to reveal and open mail client"
             data-animate data-delay="0">
             <div class="contact-icon">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -556,7 +563,7 @@
             </div>
             <div class="contact-info">
               <span class="contact-label">Email</span>
-              <span class="contact-value">stefano.masneri@live.com</span>
+              <span class="contact-value">Click to reveal</span>
             </div>
           </a>
 

@@ -219,7 +219,21 @@ h3 {
   justify-content: space-between;
 }
 
-/* nav-logo removed — no SM branding in the top bar */
+.nav-logo {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.04em;
+  transition: opacity var(--t-fast);
+}
+
+.nav-logo:hover {
+  opacity: 0.8;
+}
 
 .nav-links {
   display: flex;
@@ -855,6 +869,97 @@ h3 {
 .research-grid > .research-card {
   flex: 0 0 clamp(280px, 30vw, 360px);
   scroll-snap-align: start;
+}
+
+/* Carousel navigation arrows */
+.research-carousel-wrap {
+  position: relative;
+}
+
+.research-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hov);
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(14px) saturate(1.4);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease), border-color var(--t-fast), box-shadow var(--t-fast);
+  pointer-events: none;
+}
+
+.research-scroll-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.research-scroll-btn:hover {
+  border-color: var(--accent2);
+  box-shadow: 0 0 14px var(--accent2-glow);
+}
+
+.research-scroll-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--accent2);
+}
+
+.research-scroll-btn--left {
+  left: 0.5rem;
+}
+
+.research-scroll-btn--right {
+  right: 0.5rem;
+}
+
+/* Fade edges to hint at scrollable content */
+.research-carousel-wrap::before,
+.research-carousel-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(1.5rem, 4vw, 3rem);
+  z-index: 5;
+  pointer-events: none;
+  transition: opacity var(--t-fast);
+}
+
+.research-carousel-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-alt), transparent);
+  opacity: 0;
+}
+
+.research-carousel-wrap.fade-left::before {
+  opacity: 1;
+}
+
+.research-carousel-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-alt), transparent);
+  opacity: 1;
+}
+
+.research-carousel-wrap.fade-right-off::after {
+  opacity: 0;
+}
+
+@media (max-width: 680px) {
+  .research-scroll-btn { display: none; }
+}
+
+@media (pointer: coarse) {
+  .research-scroll-btn { display: none; }
 }
 
 .research-cv-callout {
@@ -2222,7 +2327,7 @@ h3 {
 .post {
   max-width: 760px;
   margin: 0 auto;
-  padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 5vw, 2rem) 5rem;
+  padding: calc(var(--nav-h) + clamp(2rem, 6vw, 4rem)) clamp(1.25rem, 5vw, 2rem) 5rem;
 }
 
 .post-meta {

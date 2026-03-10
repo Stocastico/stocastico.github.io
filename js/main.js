@@ -2819,7 +2819,64 @@ if (typeof module !== 'undefined' && module.exports) {
     decodeBase64,
     getObfuscatedContactEmail,
     initEmailObfuscation,
+    initResearchCarousel,
+    initCmdTriggerHint,
   };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESEARCH CAROUSEL SCROLL BUTTONS
+   ═══════════════════════════════════════════════════════════ */
+function initResearchCarousel() {
+  const grid = document.getElementById('research-grid');
+  const leftBtn = document.getElementById('research-scroll-left');
+  const rightBtn = document.getElementById('research-scroll-right');
+  const wrap = grid?.closest('.research-carousel-wrap');
+  if (!grid || !leftBtn || !rightBtn || !wrap) return;
+
+  function updateButtons() {
+    const { scrollLeft, scrollWidth, clientWidth } = grid;
+    const atStart = scrollLeft <= 8;
+    const atEnd = scrollLeft + clientWidth >= scrollWidth - 8;
+    leftBtn.classList.toggle('visible', !atStart);
+    rightBtn.classList.toggle('visible', !atEnd);
+    wrap.classList.toggle('fade-left', !atStart);
+    wrap.classList.toggle('fade-right-off', atEnd);
+  }
+
+  leftBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: -320, behavior: 'smooth' });
+  });
+  rightBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: 320, behavior: 'smooth' });
+  });
+
+  grid.addEventListener('scroll', updateButtons, { passive: true });
+  updateButtons();
+  /* Re-check after cards animate in */
+  setTimeout(updateButtons, 600);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMMAND PALETTE TRIGGER HINT
+   ═══════════════════════════════════════════════════════════ */
+function initCmdTriggerHint() {
+  const hint = document.getElementById('cmd-trigger');
+  if (!hint) return;
+  const keyEl = hint.querySelector('.cmd-trigger-key');
+  if (keyEl) {
+    const isMac = typeof navigator !== 'undefined'
+      && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+    keyEl.textContent = isMac ? '\u2318' : 'Ctrl+';
+  }
+  hint.addEventListener('click', () => {
+    const overlay = document.getElementById('cmd-overlay');
+    if (overlay && overlay.hidden !== undefined) {
+      overlay.hidden = false;
+      const inp = document.getElementById('cmd-input');
+      if (inp) inp.focus();
+    }
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2843,6 +2900,8 @@ if (typeof document !== 'undefined') {
   initBackToTop();
   initSideDots();
   initCommandPalette();
+  initCmdTriggerHint();
+  initResearchCarousel();
   initCursorGlow();
   initTaglineReveal();
 
