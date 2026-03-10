@@ -316,7 +316,7 @@ function buildHtml(fm, bodyHtml) {
   <meta property="og:url"         content="${escapeHtml(postUrl)}" />
   <meta property="og:title"       content="${escapeHtml(fm.title)}" />
   <meta property="og:description" content="${escapeHtml(fm.excerpt)}" />
-  <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
+  <meta property="og:image"       content="https://stocastico.github.io/img/screenshot-hero.png" />
   <meta property="og:image:alt"   content="${escapeHtml(fm.title)}" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta property="og:locale"      content="en_GB" />
@@ -325,7 +325,7 @@ function buildHtml(fm, bodyHtml) {
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${escapeHtml(fm.title)}" />
   <meta name="twitter:description" content="${escapeHtml(fm.excerpt)}" />
-  <meta name="twitter:image"       content="https://stocastico.github.io/screenshot-hero.png" />` : '';
+  <meta name="twitter:image"       content="https://stocastico.github.io/img/screenshot-hero.png" />` : '';
 
   const jsonLd = `
   <!-- JSON-LD structured data -->
@@ -354,7 +354,6 @@ function buildHtml(fm, bodyHtml) {
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="${escapeHtml(fm.excerpt)}" />
   <meta name="author" content="Stefano Masneri" />
@@ -365,48 +364,45 @@ function buildHtml(fm, bodyHtml) {
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="../css/styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-  <main class="post">
+  <a class="skip-link" href="#post-content">Skip to article</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">SM</a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../index.html#blog">Writing</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="post-content" class="post">
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
-      <a href="../index.html#blog" class="btn btn-ghost">← Back to blog</a>
-      <button id="theme-toggle" class="theme-btn" aria-label="Toggle colour theme">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
+      <a href="../index.html#blog" class="btn btn-ghost">&larr; Back to blog</a>
     </div>
     <p class="post-meta">${humanDate} · ${escapeHtml(String(fm.tag))} · ${fm.readMin} min read</p>
     <h1 class="post-title">${escapeHtml(fm.title)}</h1>${leadHtml}
     ${bodyHtml}
   </main>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script>
-    hljs.highlightAll();
-    (function () {
-      var btn = document.getElementById('theme-toggle');
-      if (btn) btn.addEventListener('click', function () {
-        var curr = document.documentElement.getAttribute('data-theme') || 'dark';
-        var next = curr === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-      });
-      var bar = document.getElementById('reading-progress');
-      if (bar) window.addEventListener('scroll', function () {
-        var total = document.documentElement.scrollHeight - window.innerHeight;
-        bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
-      }, { passive: true });
-    }());
-  </script>
+  <script>hljs.highlightAll();</script>
+  <script defer src="../js/main.min.js"></script>
 </body>
 </html>
 `;
