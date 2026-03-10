@@ -560,6 +560,7 @@ class Globe3D {
     this.parent = canvasEl.parentElement;
     this.tooltip = document.getElementById('globe-tooltip');
     this.raycaster = new THREE.Raycaster();
+    this.raycaster.params.Mesh = { threshold: 0.012 };   /* generous hitbox for small pins */
     this.mouse = new THREE.Vector2(-9, -9);
     this._mpos = { x: 0, y: 0 };
     this.pulseRings = [];
@@ -932,12 +933,12 @@ class Globe3D {
       /* Spike — thin line from globe surface up to the dot */
       this.pivot.add(new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([surf, pos]),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.80 : 0.45 }),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.55 : 0.30 }),
       ));
 
-      /* Dot — keep just slightly larger than trip city-stop points */
+      /* Dot — small, similar to trip city-stop dots */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.008 : 0.0068, 12, 12),
+        new THREE.SphereGeometry(isHome ? 0.005 : 0.004, 10, 10),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
@@ -945,21 +946,21 @@ class Globe3D {
       this.pivot.add(dot);
       this.markerMeshes.push(dot);
 
-      /* Static halo — scaled down with the marker so it does not dominate */
-      const [rIn, rOut, op] = isHome ? [0.011, 0.014, 0.45] : [0.0085, 0.011, 0.28];
+      /* Subtle halo ring — just enough to make the dot readable */
+      const [rIn, rOut, op] = isHome ? [0.006, 0.008, 0.30] : [0.005, 0.0065, 0.18];
       const halo = new THREE.Mesh(
-        new THREE.RingGeometry(rIn, rOut, 40),
+        new THREE.RingGeometry(rIn, rOut, 32),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }),
       );
       halo.position.copy(pos);
       this._faceOut(halo, pos);
       this.pivot.add(halo);
 
-      /* Two staggered animated pulse rings — only for lived/home pins */
+      /* Single subtle pulse ring — only for lived/home pins */
       if (isHome) {
         [0, Math.PI].forEach(phaseOffset => {
           const pulse = new THREE.Mesh(
-            new THREE.RingGeometry(0.007, 0.010, 40),
+            new THREE.RingGeometry(0.004, 0.006, 32),
             new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
           );
           pulse.position.copy(pos);
@@ -1151,8 +1152,8 @@ class Globe3D {
     /* Pulse rings — two per lived pin, staggered by π */
     this.pulseRings.forEach(ring => {
       const norm = ((t * ring.userData.speed + ring.userData.phase) % (Math.PI * 2)) / (Math.PI * 2);
-      ring.scale.set(1 + norm * 3.0, 1 + norm * 3.0, 1);
-      ring.material.opacity = (1 - norm) * 0.65;
+      ring.scale.set(1 + norm * 2.2, 1 + norm * 2.2, 1);
+      ring.material.opacity = (1 - norm) * 0.45;
     });
 
     /* Trip travellers + comet trails */
@@ -1180,7 +1181,7 @@ class Globe3D {
         /* Scale up the hovered marker; reset the previously hovered one */
         if (this._hoveredMesh !== hit) {
           if (this._hoveredMesh) this._hoveredMesh.scale.setScalar(1);
-          hit.scale.setScalar(1.6);
+          hit.scale.setScalar(2.0);
           this._hoveredMesh = hit;
         }
         const { name, info, type } = hit.userData;

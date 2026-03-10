@@ -131,8 +131,8 @@ test('EuropeMap2D: drawPin uses valid rgba halo colors', () => {
 
   map._drawPin({ type: 'holiday', x: 200, y: 100 }, false);
 
-  assert.equal(fills[0], 'rgba(255, 140, 66, 0.15)');
-  assert.equal(fills[1], 'rgba(255, 140, 66, 0.30)');
+  assert.equal(fills[0], 'rgba(255, 140, 66, 0.12)');
+  assert.equal(fills[1], '#ff8c42');
 });
 
 test('EuropeMap2D: builds curved Europe-only trip segments from locations data', () => {
