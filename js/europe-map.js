@@ -279,7 +279,7 @@ class EuropeMap2D {
       ctx.beginPath();
       ctx.moveTo(seg.x0, seg.y0);
       ctx.quadraticCurveTo(seg.cpX, seg.cpY, seg.x1, seg.y1);
-      ctx.strokeStyle = `${seg.stroke}2e`;
+      ctx.strokeStyle = this._colorToRgba(seg.stroke, 0.18);
       ctx.lineWidth = 4;
       ctx.shadowColor = seg.stroke;
       ctx.shadowBlur = 12;
@@ -290,7 +290,7 @@ class EuropeMap2D {
       ctx.beginPath();
       ctx.moveTo(seg.x0, seg.y0);
       ctx.quadraticCurveTo(seg.cpX, seg.cpY, seg.x1, seg.y1);
-      ctx.strokeStyle = `${seg.stroke}77`;
+      ctx.strokeStyle = this._colorToRgba(seg.stroke, 0.5);
       ctx.lineWidth = 1.8;
       ctx.stroke();
 
@@ -306,6 +306,31 @@ class EuropeMap2D {
       ctx.setLineDash([]);
       ctx.lineDashOffset = 0;
     }
+  }
+
+  _colorToRgba(color, alpha) {
+    if (typeof color !== 'string') return `rgba(124, 232, 255, ${alpha})`;
+
+    const hex = color.trim().replace('#', '');
+    if (hex.length === 3) {
+      const r = parseInt(hex[0] + hex[0], 16);
+      const g = parseInt(hex[1] + hex[1], 16);
+      const b = parseInt(hex[2] + hex[2], 16);
+      if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+    }
+
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+    }
+
+    return color;
   }
 
   /* ── TopoJSON loader ───────────────────────────────────────────────── */

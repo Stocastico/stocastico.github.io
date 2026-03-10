@@ -221,3 +221,40 @@ test('EuropeMap2D: drawTrips renders layered neon arcs', () => {
   assert.ok(curves.length >= 3);
   assert.ok(strokes.includes('rgba(130, 229, 255, 0.95)'));
 });
+
+test('EuropeMap2D: drawTrips converts hex trip color to rgba glow layers', () => {
+  const { canvas, strokes } = createCanvasAndContext();
+  const tooltip = createTooltip();
+
+  const env = {
+    LOCATIONS: {
+      pins: [],
+      trips: [
+        {
+          name: 'Europe hop',
+          color: '#0af',
+          cities: [
+            { name: 'Madrid', lat: 40.41, lon: -3.7 },
+            { name: 'Paris', lat: 48.85, lon: 2.35 },
+          ],
+        },
+      ],
+    },
+    document: {
+      hidden: false,
+      getElementById(id) { return id === 'europe-tooltip' ? tooltip : null; },
+      addEventListener() {},
+    },
+    window: { addEventListener() {} },
+    IntersectionObserver: class { observe() {} },
+    requestAnimationFrame() { return 1; },
+    console,
+  };
+
+  const EuropeMap2D = loadEuropeMapClass(env);
+  const map = new EuropeMap2D(canvas);
+  map._drawTrips(0);
+
+  assert.ok(strokes.includes('rgba(0, 170, 255, 0.18)'));
+  assert.ok(strokes.includes('rgba(0, 170, 255, 0.5)'));
+});
