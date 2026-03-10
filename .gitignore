@@ -47,6 +47,9 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+# Keep the geocoding cache so CI does not re-request coordinates on every run
+!.cache/
+!.cache/locations-geocode-cache.json
 nosetests.xml
 coverage.xml
 *.cover
