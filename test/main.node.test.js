@@ -509,6 +509,7 @@ function createMinimalThree() {
     set(v) { this.value = v; }
   }
   class Raycaster {
+    constructor() { this.params = { Mesh: {} }; }
     setFromCamera() {}
     intersectObjects() { return []; }
   }

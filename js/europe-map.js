@@ -10,7 +10,7 @@
 class EuropeMap2D {
   /* Color scheme matches Globe3D */
   static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
-  static PIN_SIZE = { lived: 3.2, current: 3.2, worktrip: 2.6, holiday: 2.6 };
+  static PIN_SIZE = { lived: 1.8, current: 1.8, worktrip: 1.4, holiday: 1.4 };
 
   constructor(canvasEl) {
     if (!canvasEl || canvasEl.tagName !== 'CANVAS') return;
@@ -189,7 +189,7 @@ class EuropeMap2D {
 
   _rayhit() {
     this._hoveredPin = null;
-    const hitDist = 12;  /* px hitbox radius */
+    const hitDist = 10;  /* px hitbox radius — generous for small dots */
 
     for (const pin of this.filteredPins) {
       const dx = this.mouse.x - pin.x;
@@ -492,23 +492,17 @@ class EuropeMap2D {
     const ctx = this.ctx;
     const color = EuropeMap2D.PIN_COLORS[pin.type] || '#ffffff';
     const isLarge = pin.type === 'lived' || pin.type === 'current';
-    const size = isHovered ? (isLarge ? 4.2 : 3.5) : EuropeMap2D.PIN_SIZE[pin.type];
+    const size = isHovered ? (isLarge ? 2.8 : 2.2) : EuropeMap2D.PIN_SIZE[pin.type];
 
     const hex = color.replace('#', '');
     const r = parseInt(hex.slice(0, 2), 16);
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
 
-    /* Outer halo glow */
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
+    /* Subtle outer glow */
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.12)`;
     ctx.beginPath();
-    ctx.arc(pin.x, pin.y, size * 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* Mid glow */
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.30)`;
-    ctx.beginPath();
-    ctx.arc(pin.x, pin.y, size * 1.8, 0, Math.PI * 2);
+    ctx.arc(pin.x, pin.y, size * 2.2, 0, Math.PI * 2);
     ctx.fill();
 
     /* Solid dot */
@@ -518,9 +512,9 @@ class EuropeMap2D {
     ctx.fill();
 
     /* Bright inner core for emphasis */
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillStyle = `rgba(255,255,255,${isHovered ? 0.7 : 0.5})`;
     ctx.beginPath();
-    ctx.arc(pin.x, pin.y, size * 0.4, 0, Math.PI * 2);
+    ctx.arc(pin.x, pin.y, size * 0.35, 0, Math.PI * 2);
     ctx.fill();
   }
 }
