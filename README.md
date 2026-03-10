@@ -20,14 +20,16 @@ Personal website of **Stefano Masneri** — Senior AI Engineer specialising in M
 ├── js/
 │   ├── main.js                Three.js animations, UI init, renderBlog/Publications
 │   ├── main.min.js            Minified production build (auto-generated)
-│   └── locations.js           Globe geocoding helper (browser)
+│   ├── locations.js           Globe geocoding helper (browser)
+│   └── europe-map.js          Interactive 2D Canvas map of Europe
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
 │   ├── cv.js                  Generated CV data (do not edit manually)
 │   ├── blog.js                BLOG_POSTS array — edit to add/update posts
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
 │   ├── locations.yaml         Source of truth for globe pins/trips/regions
-│   └── locations.js           Generated file (do not edit manually)
+│   ├── locations.js           Generated file (do not edit manually)
+│   └── world-110m.json        TopoJSON world map data used by the Europe 2D map
 ├── blog/
 │   └── *.html                 Individual blog post pages
 ├── scripts/
@@ -45,13 +47,14 @@ Personal website of **Stefano Masneri** — Senior AI Engineer specialising in M
 │   ├── cv.test.js                  Tests for CV rendering
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
+│   ├── europe-map.test.js          Tests for js/europe-map.js
 │   ├── new-post.test.js            Tests for scripts/new-post.js
 │   ├── generate-rss.test.js        Tests for scripts/generate-rss.js
 │   ├── generate-sitemap.test.js    Tests for scripts/generate-sitemap.js
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   └── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 ├── .cache/
-│   └── locations-geocode-cache.json  Geocoding cache (auto-created, do not commit)
+│   └── locations-geocode-cache.json  Geocoding cache (auto-created; commit this to avoid re-querying the API in CI)
 ├── rss.xml                    Generated RSS feed
 ├── sitemap.xml                Generated sitemap
 ├── robots.txt                 SEO robot rules
@@ -71,6 +74,7 @@ npm run test:locations         # locations generator tests only
 npm run test:post              # new-post.js tests only
 npm run test:rss               # generate-rss.js tests only
 npm run test:sitemap           # generate-sitemap.js tests only
+# europe-map.test.js is included in `npm test` but has no dedicated shorthand
 ```
 
 No external test dependencies are required — the Node.js built-in test runner (Node ≥ 18) handles everything.
@@ -409,6 +413,10 @@ As the user scrolls, elements respond with transforms calculated from their posi
 - **Skills sticky scroll**: each skill category pins to the viewport while active, then scrolls away as the next one takes over.
 
 All transforms are throttled to `requestAnimationFrame` and are disabled for `prefers-reduced-motion`.
+
+### Interactive 2D Europe map (About section)
+
+A Canvas2D flat map of Europe rendered from `data/world-110m.json` (TopoJSON). Country outlines are drawn with a neon cyan stroke on a dark background, matching the globe's visual style. Location pins from `data/locations.js` are plotted as pulsing rings or spikes using the same pin types as the 3D globe (`lived` / `work` / `travel`). Hovering a pin shows a tooltip with the location name. The map is loaded from `js/europe-map.js` and used as a complementary view alongside the 3D globe.
 
 ### Reading progress bar
 
