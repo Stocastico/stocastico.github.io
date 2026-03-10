@@ -68,39 +68,6 @@ function createTooltip() {
   };
 }
 
-test('EuropeMap2D: filters pins by Europe bounds and selected types', () => {
-  const { canvas } = createCanvasAndContext();
-  const tooltip = createTooltip();
-
-  const env = {
-    LOCATIONS: {
-      pins: [
-        { type: 'lived', name: 'Bilbao', lat: 43.2, lon: -2.9, info: 'EU' },
-        { type: 'worktrip', name: 'Berlin', lat: 52.5, lon: 13.4, info: 'EU' },
-        { type: 'holiday', name: 'Tokyo', lat: 35.6, lon: 139.7, info: 'Non-EU' },
-      ],
-    },
-    document: {
-      hidden: false,
-      getElementById(id) { return id === 'europe-tooltip' ? tooltip : null; },
-      addEventListener() {},
-    },
-    window: { addEventListener() {} },
-    IntersectionObserver: class { observe() {} },
-    requestAnimationFrame() { return 1; },
-    console,
-  };
-
-  const EuropeMap2D = loadEuropeMapClass(env);
-  const map = new EuropeMap2D(canvas);
-
-  assert.equal(map.filteredPins.length, 2);
-
-  map.setFilteredTypes(new Set(['lived']));
-  assert.equal(map.filteredPins.length, 1);
-  assert.equal(map.filteredPins[0].name, 'Bilbao');
-});
-
 test('EuropeMap2D: hover tooltip shows pin metadata', () => {
   const { canvas } = createCanvasAndContext();
   const tooltip = createTooltip();

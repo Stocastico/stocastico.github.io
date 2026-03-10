@@ -1326,6 +1326,16 @@ h3 {
   color: var(--text-faint);
 }
 
+.site-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.site-footer a:hover {
+  color: var(--accent2);
+}
+
 /* ─── 16. Scroll Reveal Animations ─────────────────────── */
 [data-animate] {
   opacity: 0;
@@ -1792,6 +1802,16 @@ h3 {
   .about-right {
     position: static;
   }
+
+  /* Stack stats below the photo instead of beside it */
+  .about-photo-col {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .about-photo-col .photo-card {
+    max-width: 180px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1902,49 +1922,6 @@ h3 {
   letter-spacing: 0.07em;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
-}
-
-/* Location type filter controls */
-.location-filters {
-  display: none;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  padding: 0.5rem 0;
-  margin-bottom: 1.5rem;
-  justify-content: flex-start;
-}
-
-.filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
-  background: rgba(8, 12, 20, 0.5);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-primary);
-  font-size: 0.7rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filter-btn:hover {
-  background: rgba(8, 12, 20, 0.8);
-  border-color: rgba(0, 212, 255, 0.5);
-}
-
-.filter-btn.active {
-  background: rgba(0, 212, 255, 0.15);
-  border-color: rgba(0, 212, 255, 0.6);
-  color: #00d4ff;
-}
-
-.filter-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  display: inline-block;
 }
 
 .globe-scene {

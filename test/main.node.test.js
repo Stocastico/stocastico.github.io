@@ -785,23 +785,6 @@ test('Globe3D: European worktrip/holiday pins are excluded from 3D globe markers
   }
 });
 
-test('Globe3D.setFilteredTypes toggles marker visibility by type', () => {
-  const markerA = { userData: { type: 'lived' }, visible: true };
-  const markerB = { userData: { type: 'holiday' }, visible: true };
-  const markerC = { userData: { type: 'trip' }, visible: true };
-
-  const fakeGlobe = {
-    visibleTypes: new Set(['lived', 'holiday', 'trip']),
-    markerMeshes: [markerA, markerB, markerC],
-  };
-
-  Globe3D.prototype.setFilteredTypes.call(fakeGlobe, new Set(['lived', 'holiday']));
-
-  assert.equal(markerA.visible, true);
-  assert.equal(markerB.visible, true);
-  assert.equal(markerC.visible, false);
-});
-
 test('HeroNameShader boots with mocked WebGL context', async () => {
   const prevWindow = global.window;
   const prevDocument = global.document;
