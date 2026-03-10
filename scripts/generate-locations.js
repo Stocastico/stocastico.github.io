@@ -13,6 +13,43 @@ const DEFAULT_TRIP_CYCLE_SEC = 28;
 const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
 const REQUEST_DELAY_MS = 1100;
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function findYamlNameLine(sourceRaw, placeName) {
+  if (typeof sourceRaw !== 'string' || !sourceRaw.trim()) return null;
+  if (typeof placeName !== 'string' || !placeName.trim()) return null;
+
+  const escaped = escapeRegExp(placeName.trim());
+  const patterns = [
+    new RegExp(`^\\s*name\\s*:\\s*${escaped}\\s*$`),
+    new RegExp(`^\\s*name\\s*:\\s*"${escaped}"\\s*$`),
+    new RegExp(`^\\s*name\\s*:\\s*'${escaped}'\\s*$`),
+    new RegExp(`^\\s*-\\s*${escaped}\\s*$`),
+    new RegExp(`^\\s*-\\s*\"${escaped}\"\\s*$`),
+    new RegExp(`^\\s*-\\s*'${escaped}'\\s*$`),
+  ];
+
+  const lines = sourceRaw.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i += 1) {
+    if (patterns.some((pattern) => pattern.test(lines[i]))) return i + 1;
+  }
+  return null;
+}
+
+function formatLocationHint({ contextLabel, placeName, sourceRaw, sourcePath }) {
+  const parts = [];
+  if (placeName) parts.push(`\"${placeName}\"`);
+  if (contextLabel) parts.push(contextLabel);
+  const where = parts.length ? parts.join(' at ') : 'unknown location';
+
+  const line = findYamlNameLine(sourceRaw, placeName);
+  if (!line) return where;
+  const file = sourcePath || 'locations.yaml';
+  return `${where} (${file}:${line})`;
+}
+
 function parseArgs(argv) {
   const out = {
     input: 'data/locations.yaml',
@@ -113,7 +150,7 @@ async function compileLocations(source, options) {
   const ua = 'stocastico-website-locations-generator/1.0 (+https://github.com/stocastico)';
   let requests = 0;
 
-  async function fillCoords(item, fallbackName) {
+  async function fillCoords(item, fallbackName, contextLabel) {
     const hasCoords = Number.isFinite(item.lat) && Number.isFinite(item.lon);
     if (hasCoords) {
       item.lat = roundCoord(Number(item.lat));
@@ -122,21 +159,34 @@ async function compileLocations(source, options) {
     }
 
     const placeName = item.name || fallbackName;
-    if (!placeName) throw new Error('Missing location name for geocoding');
-    if (!options.geocode) throw new Error(`Missing coordinates for "${placeName}" (run without --no-geocode)`);
+    const locationHint = formatLocationHint({
+      contextLabel,
+      placeName,
+      sourceRaw: options.sourceRaw,
+      sourcePath: options.sourcePath,
+    });
+
+    if (!placeName) throw new Error(`Missing location name for geocoding at ${contextLabel || 'unknown context'}`);
+    if (!options.geocode) throw new Error(`Missing coordinates for ${locationHint} (run without --no-geocode)`);
 
     if (requests > 0) await wait(REQUEST_DELAY_MS);
-    const coords = await geocodeWithCache(placeName, geocodeCache, ua);
+    let coords;
+    try {
+      coords = await geocodeWithCache(placeName, geocodeCache, ua);
+    } catch (error) {
+      throw new Error(`Geocoding failed for ${locationHint}: ${error.message}`);
+    }
     item.lat = roundCoord(coords.lat);
     item.lon = roundCoord(coords.lon);
     requests += 1;
   }
 
   const pins = [];
-  for (const rawPin of source.pins) {
+  for (let p = 0; p < source.pins.length; p += 1) {
+    const rawPin = source.pins[p];
     const pin = { ...rawPin };
     pin.type = ['lived', 'current', 'worktrip', 'holiday'].includes(pin.type) ? pin.type : 'lived';
-    await fillCoords(pin, pin.name);
+    await fillCoords(pin, pin.name, `pins[${p}]`);
     pins.push({
       type: pin.type,
       name: String(pin.name || ''),
@@ -153,7 +203,7 @@ async function compileLocations(source, options) {
     const sourceCities = Array.isArray(rawTrip.cities) ? rawTrip.cities : [];
     for (const rawCity of sourceCities) {
       const city = normalizeCity(rawCity);
-      await fillCoords(city, city.name);
+      await fillCoords(city, city.name, `trips[${t}].cities[${cities.length}]`);
       cities.push({
         name: String(city.name || ''),
         lat: city.lat,
@@ -172,9 +222,10 @@ async function compileLocations(source, options) {
   }
 
   const regions = [];
-  for (const rawRegion of source.regions) {
+  for (let r = 0; r < source.regions.length; r += 1) {
+    const rawRegion = source.regions[r];
     const region = { ...rawRegion };
-    await fillCoords(region, region.name);
+    await fillCoords(region, region.name, `regions[${r}]`);
     regions.push({
       name: String(region.name || ''),
       lat: region.lat,
@@ -221,8 +272,14 @@ async function main() {
   if (!fs.existsSync(inputPath)) throw new Error(`Input file not found: ${inputPath}`);
   const sourceRaw = fs.readFileSync(inputPath, 'utf8');
   const source = parseYaml(sourceRaw);
-  const compiled = await compileLocations(source, { ...options, cache: cachePath });
-  const js = toLocationsJs(compiled, path.relative(process.cwd(), inputPath));
+  const sourcePath = path.relative(process.cwd(), inputPath);
+  const compiled = await compileLocations(source, {
+    ...options,
+    cache: cachePath,
+    sourceRaw,
+    sourcePath,
+  });
+  const js = toLocationsJs(compiled, sourcePath);
   ensureDirForFile(outputPath);
   fs.writeFileSync(outputPath, `${js}\n`, 'utf8');
   console.log(`Generated ${path.relative(process.cwd(), outputPath)}`);

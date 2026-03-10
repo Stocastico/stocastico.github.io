@@ -97,3 +97,73 @@ test('toLocationsJs returns executable JS declaration', () => {
   assert.match(js, /const LOCATIONS =/);
   assert.match(js, /Crema, Italy/);
 });
+
+test('compileLocations reports place and YAML line when coordinates are missing with --no-geocode', async () => {
+  const source = {
+    pins: [
+      { type: 'lived', name: 'Unknown Place XYZ', info: 'Missing coords' },
+    ],
+    trips: [],
+    regions: [],
+  };
+
+  const sourceRaw = `
+pins:
+  - type: lived
+    name: Unknown Place XYZ
+    info: Missing coords
+trips: []
+regions: []
+`;
+
+  await assert.rejects(
+    () => compileLocations(source, {
+      geocode: false,
+      cache: '/tmp/stocastico-test-no-geocode.json',
+      sourceRaw,
+      sourcePath: 'data/locations.yaml',
+    }),
+    /Missing coordinates for "Unknown Place XYZ" at pins\[0\] \(data\/locations\.yaml:4\)/,
+  );
+});
+
+test('compileLocations reports geocoding no-results with place and YAML line', async () => {
+  const source = {
+    pins: [
+      { type: 'lived', name: 'No Result City ABC', info: 'Missing coords' },
+    ],
+    trips: [],
+    regions: [],
+  };
+
+  const sourceRaw = `
+pins:
+  - type: lived
+    name: No Result City ABC
+    info: Missing coords
+trips: []
+regions: []
+`;
+
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({
+    ok: true,
+    async json() {
+      return [];
+    },
+  });
+
+  try {
+    await assert.rejects(
+      () => compileLocations(source, {
+        geocode: true,
+        cache: '/tmp/stocastico-test-geocode-empty.json',
+        sourceRaw,
+        sourcePath: 'data/locations.yaml',
+      }),
+      /Geocoding failed for "No Result City ABC" at pins\[0\] \(data\/locations\.yaml:4\): No geocoding results/,
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

@@ -63,6 +63,30 @@ pins:
   - type: holiday
     name: Bamberg, Germany
     info: amici
+  - type: holiday
+    name: Bruges, Belgium
+    info: amici
+  - type: holiday
+    name: Salzburg, Austria
+    info: amici
+  - type: holiday
+    name: Porto, Portugal
+    info: amici
+  - type: holiday
+    name: Hamburg, Germany
+    info: amici
+  - type: holiday
+    name: Budapest, Hungary
+    info: amici
+  - type: holiday
+    name: Prague, Czechia
+    info: amici
+  - type: holiday
+    name: Munich, Germany
+    info: amici
+  - type: holiday
+    name: Niza, France
+    info: amici
 
 # holidays
   - type: holiday
@@ -153,10 +177,10 @@ trips:
     cities:
       - Tokyo, Japan
       - Yokohama, Japan
-      - Perenthian Islands, Malaysia
+      - Perhentian Islands, Malaysia
       - Kuala Lumpur, Malaysia
       - Kyoto, Japan
-      - Arashijama, Japan
+      - Arashiyama, Japan
       - Nara, Japan
       - Koyasan, Japan
       - Osaka, Japan
@@ -254,7 +278,7 @@ trips:
     cities:
       - San Francisco, California, USA
       - Santa Cruz, California, USA
-      - Carmel on the Sea, California, USA
+      - Carmel-by-the-Sea, California, USA
       - San Luis Obispo, California, USA
       - Los Angeles, California, USA
       - Santa Monica, California, USA
