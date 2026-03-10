@@ -62,7 +62,7 @@ pins:
 # vacanze amici
   - type: holiday
     name: Bamberg, Germany
-    info: Visited both for work and leisure
+    info: amici
 
 # holidays
   - type: holiday
@@ -82,9 +82,6 @@ pins:
     info: Holiday
   - type: holiday
     name: Vienna, Austria
-    info: Holiday
-  - type: holiday
-    name: La Valletta, Malta
     info: Holiday
   - type: holiday
     name: Bordeaux, France
@@ -121,6 +118,16 @@ trips:
       - Asbury Park, New Jersey, USA
       - New York City, New York, USA
 
+  - name: Morocco 2013
+    cycleSec: 13
+    cities:
+      - Agadir, Morocco
+      - Essaouira, Morocco
+      - Marrakech, Morocco
+      - Ouarzazate, Morocco
+      - Erg Chebbi, Morocco
+      - Agadir, Morocco
+
   - name: Turkey 2014
     cycleSec: 24
     cities:
@@ -130,6 +137,16 @@ trips:
       - Fethiye, Turkey
       - Kas, Turkey
       - Antalya, Turkey
+
+  - name: Sardinia 2015
+    cycleSec: 17
+    cities:
+      - Alghero, Sardinia, Italy
+      - Bosa, Sardinia, Italy
+      - Cala Gonone, Sardinia, Italy
+      - Orosei, Sardinia, Italy
+      - Olbia, Sardinia, Italy
+      - Palau, Sardinia, Italy
 
   - name: Japan and Malaysia 2016
     cycleSec: 22
@@ -145,6 +162,16 @@ trips:
       - Osaka, Japan
       - Tokyo, Japan
 
+  - name: Andalusia 2017
+    cycleSec: 21
+    cities:
+      - Malaga, Spain
+      - Cazorla, Spain
+      - Conil, Spain
+      - Tarifa, Spain
+      - Cadiz, Spain
+      - Jerez de la Frontera, Spain
+
   - name: Thailand 2018
     cycleSec: 19
     cities:
@@ -152,5 +179,85 @@ trips:
       - Chiang Mai, Thailand
       - Railay, Thailand
       - Koh Phi Phi, Thailand
+
+  - name: Sicily 2019
+    cycleSec: 20
+    cities:
+      - Palermo, Sicily, Italy
+      - Scopello, Sicily, Italy
+      - San Vito Lo Capo, Sicily, Italy
+      - Trapani, Sicily, Italy
+      - Favignana, Sicily, Italy
+      - Mazara del Vallo, Sicily, Italy
+      - Erice, Sicily, Italy
+      - Monreale, Sicily, Italy
+      - Agrigento, Sicily, Italy
+      - Palermo, Sicily, Italy
+
+  - name: Galicia 2020
+    cycleSec: 18
+    cities:
+      - Santiago de Compostela, Galicia, Spain
+      - Illa de Arousa, Galicia, Spain
+      - Pontevedra, Galicia, Spain
+      - Illa de Ons, Galicia, Spain
+      - Cabo Home, Galicia, Spain
+      - Vigo, Galicia, Spain
+      - Cies Islands, Galicia, Spain
+      - Mouros, Galicia, Spain
+      - Ézaro, Galicia, Spain
+      - A Coruña, Galicia, Spain
+      - Gijon, Asturias, Spain
+
+  - name: Slovenia and Croatia 2021
+    cycleSec: 20
+    cities:
+      - Ljubljana, Slovenia
+      - Zagreb, Croatia
+      - Plitvice Lakes, Croatia
+      - Split, Croatia
+      - Brac, Croatia
+      - Zadar, Croatia
+      - Pula, Croatia
+      - Kamenjak, Croatia
+      - Rovinj, Croatia
+      - Trieste, Italy
+
+  - name: Malta and Sicily 2022
+    cycleSec: 21
+    cities:
+      - La Valletta, Malta
+      - Gozo, Malta
+      - Catania, Sicily, Italy
+      - Taormina, Sicily, Italy
+      - Syracuse, Sicily, Italy
+      - Noto, Sicily, Italy
+      - Marzamemi, Sicily, Italy
+      - Ragusa, Sicily, Italy
+
+  - name: Albania, Macedonia, Greece 2023
+    cycleSec: 18
+    cities:
+      - Tirana, Albania
+      - Ohrid, North Macedonia
+      - Ljubanishta, North Macedonia
+      - Berat, Albania
+      - Vlore, Albania
+      - Himare, Albania
+      - Saranda, Albania
+      - Ksamil, Albania
+      - Gjirokaster, Albania
+      - Corfu, Greece
+
+  - name: California 2024
+    cycleSec: 22
+    cities:
+      - San Francisco, California, USA
+      - Santa Cruz, California, USA
+      - Carmel on the Sea, California, USA
+      - San Luis Obispo, California, USA
+      - Los Angeles, California, USA
+      - Santa Monica, California, USA
+      - San Diego, California, USA
 
 

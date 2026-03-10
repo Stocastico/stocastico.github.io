@@ -37,6 +37,7 @@ Personal website of **Stefano Masneri** — Senior AI Engineer specialising in M
 │   ├── generate-rss.js        Generate rss.xml from data/blog.js
 │   ├── generate-sitemap.js    Generate sitemap.xml from data/blog.js + static pages
 │   ├── update-locations.sh    Convenience wrapper for generate-locations.js
+│   ├── update-locations.ps1   PowerShell wrapper for generate-locations.js
 │   └── lib/
 │       └── yaml.js            Minimal YAML parser (no external dependencies)
 ├── test/
@@ -106,6 +107,10 @@ Reads `data/locations.yaml`, auto-geocodes missing coordinates via OpenStreetMap
 npm run generate-locations
 # or:
 ./scripts/update-locations.sh
+# Windows PowerShell:
+.\scripts\update-locations.ps1
+# npm wrapper for PowerShell:
+npm run update-locations:ps
 # or directly:
 node scripts/generate-locations.js
 
@@ -275,6 +280,8 @@ Edit `data/locations.yaml`, then regenerate:
 npm run generate-locations
 # or:
 ./scripts/update-locations.sh
+# Windows PowerShell:
+.\scripts\update-locations.ps1
 ```
 
 The YAML file supports three kinds of content:
