@@ -39,6 +39,7 @@ class EuropeMap2D {
     /* Filtered pins — initially all shown */
     this.visibleTypes = new Set(['lived', 'current', 'worktrip', 'holiday']);
     this.filteredPins = [];
+    this.filteredTrips = [];
 
     /* Europe bounding box (simplified): roughly [lon_min, lat_min, lon_max, lat_max] */
     this.bounds = { minLon: -10, maxLon: 40, minLat: 35, maxLat: 71 };
@@ -48,6 +49,7 @@ class EuropeMap2D {
 
     this._resize();
     this._buildFilteredPins();
+    this._buildFilteredTrips();
     this._bindEvents();
     this._animate();
     this._loadTopoJSON();
@@ -97,6 +99,51 @@ class EuropeMap2D {
       }));
   }
 
+  _buildFilteredTrips() {
+    this.filteredTrips = [];
+
+    for (const trip of (LOCATIONS.trips || [])) {
+      const cities = Array.isArray(trip.cities) ? trip.cities : [];
+      if (cities.length < 2) continue;
+
+      for (let i = 0; i < cities.length - 1; i++) {
+        const a = cities[i];
+        const b = cities[i + 1];
+        if (!a || !b) continue;
+
+        /* Keep the 2D map focused on Europe-only segments. */
+        if (!this._isInEurope(a) || !this._isInEurope(b)) continue;
+
+        const x0 = this._lonToX(a.lon);
+        const y0 = this._latToY(a.lat);
+        const x1 = this._lonToX(b.lon);
+        const y1 = this._latToY(b.lat);
+
+        const mx = (x0 + x1) * 0.5;
+        const my = (y0 + y1) * 0.5;
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const lift = Math.min(44, Math.max(14, len * 0.22));
+
+        this.filteredTrips.push({
+          name: trip.name || 'Trip',
+          stroke: trip.color || '#7ce8ff',
+          x0,
+          y0,
+          x1,
+          y1,
+          cpX: mx + nx * (lift * 0.35),
+          cpY: my + ny * (lift * 0.35) - lift,
+          phase: i * 7,
+          cycleMs: Math.max(8000, (trip.cycleSec || 24) * 1000),
+        });
+      }
+    }
+  }
+
   _isInEurope(pin) {
     return pin.lat >= this.bounds.minLat && pin.lat <= this.bounds.maxLat &&
            pin.lon >= this.bounds.minLon && pin.lon <= this.bounds.maxLon;
@@ -135,6 +182,7 @@ class EuropeMap2D {
     window.addEventListener('resize', () => {
       this._resize();
       this._buildFilteredPins();
+      this._buildFilteredTrips();
       this._rect = null;
     }, false);
   }
@@ -193,6 +241,9 @@ class EuropeMap2D {
 
   _draw() {
     const ctx = this.ctx;
+    const t = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
 
     /* Clear */
     ctx.fillStyle = '#020b18';
@@ -200,6 +251,9 @@ class EuropeMap2D {
 
     /* Draw continental Europe with neon glow */
     this._drawEuropeBorders();
+
+    /* Draw trips below pins so dots stay readable */
+    this._drawTrips(t);
 
     /* Draw location pins */
     this.filteredPins.forEach(pin => {
@@ -210,6 +264,48 @@ class EuropeMap2D {
     ctx.strokeStyle = 'rgba(0,210,255,0.3)';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(0, 0, this.w, this.h);
+  }
+
+  _drawTrips(t) {
+    const ctx = this.ctx;
+    if (!this.filteredTrips.length) return;
+
+    for (const seg of this.filteredTrips) {
+      const progress = (t % seg.cycleMs) / seg.cycleMs;
+      const dashOffset = -((progress * 120) + seg.phase);
+
+      /* Soft outer glow */
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(seg.x0, seg.y0);
+      ctx.quadraticCurveTo(seg.cpX, seg.cpY, seg.x1, seg.y1);
+      ctx.strokeStyle = `${seg.stroke}2e`;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = seg.stroke;
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.restore();
+
+      /* Mid stroke */
+      ctx.beginPath();
+      ctx.moveTo(seg.x0, seg.y0);
+      ctx.quadraticCurveTo(seg.cpX, seg.cpY, seg.x1, seg.y1);
+      ctx.strokeStyle = `${seg.stroke}77`;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      /* Bright moving core */
+      ctx.beginPath();
+      ctx.setLineDash([8, 10]);
+      ctx.lineDashOffset = dashOffset;
+      ctx.moveTo(seg.x0, seg.y0);
+      ctx.quadraticCurveTo(seg.cpX, seg.cpY, seg.x1, seg.y1);
+      ctx.strokeStyle = 'rgba(130, 229, 255, 0.95)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
+    }
   }
 
   /* ── TopoJSON loader ───────────────────────────────────────────────── */
