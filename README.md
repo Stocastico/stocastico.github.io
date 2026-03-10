@@ -162,13 +162,13 @@ node scripts/generate-sitemap.js --dry-run
 npm run minify
 ```
 
-Runs `terser` on `js/main.js` → `js/main.min.js` with `--compress --mangle`. See [DEPLOYMENT.md](DEPLOYMENT.md) for how to switch the HTML to use the minified file.
+Runs `terser` on `js/main.js` → `js/main.min.js` with `--compress --mangle`. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for how to switch the HTML to use the minified file.
 
 ---
 
 ## Data formats
 
-Full YAML format reference is in **[DATA-FORMATS.md](DATA-FORMATS.md)**.
+Full YAML format reference is in **[docs/DATA-FORMATS.md](docs/DATA-FORMATS.md)**.
 
 Quick summary:
 
@@ -255,7 +255,7 @@ Edit `data/cv.yaml`, then regenerate:
 npm run generate-cv
 ```
 
-The YAML file has three top-level sections — `career`, `education`, and `skills`. See [DATA-FORMATS.md](DATA-FORMATS.md) for the complete field reference and examples.
+The YAML file has three top-level sections — `career`, `education`, and `skills`. See [docs/DATA-FORMATS.md](docs/DATA-FORMATS.md) for the complete field reference and examples.
 
 ### Validate without generating
 
@@ -283,7 +283,7 @@ The YAML file supports three kinds of content:
 - **`trips`** — animated round-trip routes drawn as Bézier curves
 - **`regions`** — circular disc overlays for islands / countries
 
-Missing coordinates are looked up automatically via the Nominatim API (one request per second) and cached in `.cache/locations-geocode-cache.json`. See [DATA-FORMATS.md](DATA-FORMATS.md) for the full field reference.
+Missing coordinates are looked up automatically via the Nominatim API (one request per second) and cached in `.cache/locations-geocode-cache.json`. See [docs/DATA-FORMATS.md](docs/DATA-FORMATS.md) for the full field reference.
 
 ---
 

@@ -410,7 +410,8 @@ with your actual email address.
 ├── img/                (create this folder) — put your photo here
 ├── blog/               Blog post HTML files
 ├── CNAME               (optional) — custom domain for GitHub Pages
-├── DATA-FORMATS.md     YAML format reference for cv.yaml and locations.yaml
-├── DEPLOYMENT.md       This file
+├── docs/
+│   ├── DATA-FORMATS.md YAML format reference for cv.yaml and locations.yaml
+│   └── DEPLOYMENT.md   This file
 └── README.md           Developer documentation
 ```

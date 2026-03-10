@@ -7,7 +7,7 @@
 #   2. Push to main — the workflow runs automatically.
 #
 # For a custom domain, add a CNAME file to the repo root and configure
-# DNS as described in DEPLOYMENT.md.
+# DNS as described in docs/DEPLOYMENT.md.
 
 name: Build and Deploy
 
@@ -69,7 +69,7 @@ jobs:
 
       # Minify js/main.js → js/main.min.js.
       # The HTML must reference js/main.min.js for this to have any effect
-      # on the deployed site (see DEPLOYMENT.md — Minification section).
+      # on the deployed site (see docs/DEPLOYMENT.md — Minification section).
       - name: Minify JavaScript
         run: npm run minify
 
