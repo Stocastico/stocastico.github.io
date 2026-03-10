@@ -67,22 +67,6 @@ class EuropeMap2D {
     this.canvas._europe = this;
   }
 
-  /* ── Public API for filtering ──────────────────────────────────────── */
-
-  setFilteredTypes(typeSet) {
-    this.visibleTypes = new Set(typeSet);
-    this._buildFilteredPins();
-  }
-
-  toggleType(type) {
-    if (this.visibleTypes.has(type)) {
-      this.visibleTypes.delete(type);
-    } else {
-      this.visibleTypes.add(type);
-    }
-    this._buildFilteredPins();
-  }
-
   /* ── Internals ──────────────────────────────────────────────────────── */
 
   _resize() {

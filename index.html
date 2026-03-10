@@ -10,7 +10,7 @@
   <meta name="keywords" content="Stefano Masneri, AI Engineer, Machine Learning, Computer Vision, Augmented Reality, Deep Learning, XR, ViT, Speaker Diarisation, San Sebastián" />
   <!-- Disallow AI/LLM training use of this page's content -->
   <meta name="robots" content="index, follow, noai, noimageai" />
-  <title>Stefano Masneri's personal website</title>
+  <title>Stefano Masneri — ML, Vision &amp; AR</title>
   <link rel="canonical" href="https://stocastico.github.io/" />
   <!-- RSS feed discovery -->
   <link rel="alternate" type="application/rss+xml" title="Stefano Masneri — Blog" href="https://stocastico.github.io/rss.xml" />
@@ -18,14 +18,14 @@
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://stocastico.github.io/" />
-  <meta property="og:title"       content="Stefano Masneri's personal website" />
+  <meta property="og:title"       content="Stefano Masneri — ML, Vision &amp; AR" />
   <meta property="og:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta property="og:image"       content="https://stocastico.github.io/screenshot-hero.png" />
   <meta property="og:image:alt"   content="Stefano Masneri personal website hero section" />
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Stefano Masneri's personal website" />
+  <meta name="twitter:title"       content="Stefano Masneri — ML, Vision &amp; AR" />
   <meta name="twitter:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="twitter:image"       content="https://stocastico.github.io/screenshot-hero.png" />
   <meta name="twitter:image:alt"   content="Stefano Masneri personal website" />
@@ -51,7 +51,8 @@
       },
       "sameAs": [
         "https://www.linkedin.com/in/stefanomasneri/",
-        "https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en"
+        "https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en",
+        "https://github.com/Stocastico"
       ],
       "knowsAbout": [
         "Machine Learning",
@@ -101,6 +102,7 @@
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
   <nav id="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
+      <a href="#hero" class="nav-logo" aria-label="Home">SM</a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
@@ -195,8 +197,8 @@
               <!-- Quick stats -->
               <div class="stats-row">
                 <div class="stat-item">
-                  <span class="stat-number" data-count="271">0</span><span class="stat-suffix">+</span>
-                  <span class="stat-label">Citations</span>
+                  <span class="stat-number" data-count="3">0</span>
+                  <span class="stat-label">Countries</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-number" data-count="20">0</span><span class="stat-suffix">+</span>
@@ -251,6 +253,13 @@
                   </svg>
                   Google Scholar
                 </a>
+                <a href="https://github.com/Stocastico" target="_blank" rel="noopener" class="social-btn"
+                  aria-label="GitHub profile">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3" />
+                  </svg>
+                  GitHub
+                </a>
               </div>
             </div>
           </div>
@@ -279,22 +288,6 @@
           </div>
 
           <p class="globe-subtitle">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
-
-          <!-- Filter controls for location types -->
-          <div class="location-filters">
-            <button class="filter-btn active" data-type="lived" title="Toggle 'Lived' locations">
-              <span class="filter-dot gl-lived"></span>Lived
-            </button>
-            <button class="filter-btn active" data-type="current" title="Toggle 'Current' location">
-              <span class="filter-dot gl-current"></span>Current
-            </button>
-            <button class="filter-btn active" data-type="worktrip" title="Toggle 'Worktrip' locations">
-              <span class="filter-dot gl-worktrip"></span>Worktrips
-            </button>
-            <button class="filter-btn active" data-type="holiday" title="Toggle 'Holiday' locations">
-              <span class="filter-dot gl-holiday"></span>Holidays
-            </button>
-          </div>
 
           <!-- 2D Europe Map section -->
           <div class="europe-section">
@@ -412,7 +405,7 @@
   </section>
 
   <!-- ═══════════════ SKILLS ═══════════════ -->
-  <section id="skills" class="section section-alt" aria-label="Skills">
+  <section id="skills" class="section" aria-label="Skills">
     <div class="container">
       <div class="skills-split">
         <!-- Left: sticky header that stays while you scroll through skills -->
@@ -602,6 +595,19 @@
             </div>
           </a>
 
+          <a href="https://github.com/Stocastico" target="_blank" rel="noopener"
+            class="contact-card" data-animate data-delay="300">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3" />
+              </svg>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">GitHub</span>
+              <span class="contact-value">Stocastico</span>
+            </div>
+          </a>
+
         </div>
       </div>
     </div>
@@ -610,7 +616,7 @@
   <!-- ═══════════════ FOOTER ═══════════════ -->
   <footer class="site-footer">
     <div class="container">
-      <p>© <span id="footer-year"></span> Stefano Masneri &nbsp;·&nbsp; Built with care in San Sebastián</p>
+      <p>© <span id="footer-year"></span> Stefano Masneri &nbsp;·&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> + <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebastián</p>
     </div>
   </footer>
 

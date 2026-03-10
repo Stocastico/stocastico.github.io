@@ -625,17 +625,6 @@ class Globe3D {
     });
   }
 
-  /* ── Public API for filtering ──────────────────────────────────────── */
-
-  setFilteredTypes(typeSet) {
-    this.visibleTypes = new Set(typeSet);
-    /* Update marker mesh visibility based on filter */
-    for (const mesh of this.markerMeshes) {
-      const type = mesh.userData?.type;
-      mesh.visible = type && this.visibleTypes.has(type);
-    }
-  }
-
   /* ── Internals ──────────────────────────────────────────── */
 
   _resize() {
@@ -2921,31 +2910,6 @@ if (typeof document !== 'undefined') {
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
     new EuropeMap2D(europeCanvas);
   }
-
-  /* Location type filtering — toggle location type visibility */
-  document.addEventListener('click', (e) => {
-    if (!e.target.matches('.filter-btn')) return;
-    const type = e.target.dataset.type;
-    if (!type) return;
-
-    e.target.classList.toggle('active');
-
-    /* Collect all active filter types */
-    const activeFilters = Array.from(document.querySelectorAll('.filter-btn.active'))
-      .map(btn => btn.dataset.type);
-
-    /* Update Globe3D — if it exists, filter its markers */
-    const globeCanvas = document.getElementById('globe-canvas');
-    if (globeCanvas && globeCanvas._globe) {
-      globeCanvas._globe.setFilteredTypes(new Set(activeFilters));
-    }
-
-    /* Update EuropeMap2D — if it exists, filter its pins */
-    const europeCanvasEl = document.getElementById('europe-canvas');
-    if (europeCanvasEl && europeCanvasEl._europe) {
-      europeCanvasEl._europe.setFilteredTypes(new Set(activeFilters));
-    }
-  });
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');
