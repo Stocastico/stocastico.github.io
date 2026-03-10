@@ -1,22 +1,21 @@
 # .github/workflows/deploy.yml
 #
-# Build and deploy to GitHub Pages on every push to main.
+# Manual deployment to GitHub Pages.
 #
 # Setup:
-#   1. Go to Settings → Pages → Source → "GitHub Actions"
-#   2. Push to main — the workflow runs automatically.
+#   1. Go to Settings -> Pages -> Source -> "GitHub Actions"
+#   2. Run this workflow manually from the Actions tab.
 #
-# For a custom domain, add a CNAME file to the repo root and configure
-# DNS as described in docs/DEPLOYMENT.md.
+# Later, to deploy automatically after a successful build workflow run,
+# enable the commented workflow_run trigger below.
 
-name: Build and Deploy
+name: Deploy
 
 on:
-  # Automatic deployment on push is disabled until the site is ready to go live.
-  # Re-enable by uncommenting the lines below:
-  # push:
-  #   branches: [main]
   workflow_dispatch: # allow manual trigger from the GitHub Actions UI
+  # workflow_run:
+  #   workflows: [Build]
+  #   types: [completed]
 
 permissions:
   contents: read
@@ -30,48 +29,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── Build ──────────────────────────────────────────────────────────────────
-  build:
-    name: Build site
+  # If workflow_run is enabled, keep deployment gated on successful builds.
+  deploy:
+    name: Deploy to GitHub Pages
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # Run the full test suite before generating any output.
-      - name: Run tests
-        run: npm test
-
-      # Regenerate data/cv.js from data/cv.yaml.
-      - name: Generate CV data
-        run: npm run generate-cv
-
-      # Regenerate data/locations.js from data/locations.yaml.
-      # Geocode cache is committed to the repo (.cache/locations-geocode-cache.json)
-      # so this step only queries Nominatim for genuinely new places.
-      - name: Generate globe locations
-        run: npm run generate-locations
-
-      # Regenerate rss.xml.
-      # Replace the --base-url value with your actual domain.
-      - name: Generate RSS feed
-        run: npm run generate-rss -- --base-url https://${{ github.repository_owner }}.github.io
-
-      # Regenerate sitemap.xml.
-      - name: Generate sitemap
-        run: npm run generate-sitemap -- --base-url https://${{ github.repository_owner }}.github.io
-
-      # Minify js/main.js → js/main.min.js.
-      # The HTML must reference js/main.min.js for this to have any effect
-      # on the deployed site (see docs/DEPLOYMENT.md — Minification section).
-      - name: Minify JavaScript
-        run: npm run minify
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
@@ -84,17 +54,6 @@ jobs:
         with:
           path: .
 
-  # ── Deploy ─────────────────────────────────────────────────────────────────
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

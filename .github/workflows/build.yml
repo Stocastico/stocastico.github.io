@@ -1,0 +1,49 @@
+name: Build
+
+on:
+  # Runs after a PR is merged into main (merge creates a push on main).
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Run the full test suite before generating any output.
+      - name: Run tests
+        run: npm test
+
+      # Regenerate data/cv.js from data/cv.yaml.
+      - name: Generate CV data
+        run: npm run generate-cv
+
+      # Regenerate data/locations.js from data/locations.yaml.
+      # Geocode cache is committed to the repo (.cache/locations-geocode-cache.json)
+      # so this step only queries Nominatim for genuinely new places.
+      - name: Generate globe locations
+        run: npm run generate-locations
+
+      # Regenerate rss.xml.
+      - name: Generate RSS feed
+        run: npm run generate-rss -- --base-url https://${{ github.repository_owner }}.github.io
+
+      # Regenerate sitemap.xml.
+      - name: Generate sitemap
+        run: npm run generate-sitemap -- --base-url https://${{ github.repository_owner }}.github.io
+
+      # Minify js/main.js → js/main.min.js.
+      - name: Minify JavaScript
+        run: npm run minify
