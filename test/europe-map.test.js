@@ -17,18 +17,30 @@ function loadEuropeMapClass(env) {
 
 function createCanvasAndContext() {
   const fills = [];
+  const strokes = [];
+  const curves = [];
   const ctx = {
     fillStyle: '',
     strokeStyle: '',
     lineWidth: 0,
+    lineDashOffset: 0,
+    shadowColor: '',
+    shadowBlur: 0,
     beginPath() {},
     arc() {},
     fill() { fills.push(this.fillStyle); },
-    stroke() {},
+    stroke() { strokes.push(this.strokeStyle); },
     moveTo() {},
     lineTo() {},
+    quadraticCurveTo(cpx, cpy, x, y) { curves.push({ cpx, cpy, x, y }); },
     fillRect() {},
     strokeRect() {},
+    setLineDash() {},
+    save() {},
+    restore() {},
+    clip() {},
+    rect() {},
+    closePath() {},
   };
 
   const canvas = {
@@ -42,7 +54,7 @@ function createCanvasAndContext() {
     addEventListener() {},
   };
 
-  return { canvas, ctx, fills };
+  return { canvas, ctx, fills, strokes, curves };
 }
 
 function createTooltip() {
@@ -121,4 +133,128 @@ test('EuropeMap2D: drawPin uses valid rgba halo colors', () => {
 
   assert.equal(fills[0], 'rgba(255, 140, 66, 0.15)');
   assert.equal(fills[1], 'rgba(255, 140, 66, 0.30)');
+});
+
+test('EuropeMap2D: builds curved Europe-only trip segments from locations data', () => {
+  const { canvas } = createCanvasAndContext();
+  const tooltip = createTooltip();
+
+  const env = {
+    LOCATIONS: {
+      pins: [],
+      trips: [
+        {
+          name: 'Europe hop',
+          color: '#00d4ff',
+          cities: [
+            { name: 'Madrid', lat: 40.41, lon: -3.7 },
+            { name: 'Paris', lat: 48.85, lon: 2.35 },
+            { name: 'Berlin', lat: 52.52, lon: 13.4 },
+          ],
+        },
+        {
+          name: 'Out of bounds',
+          color: '#ff8c42',
+          cities: [
+            { name: 'Tokyo', lat: 35.68, lon: 139.69 },
+            { name: 'Osaka', lat: 34.69, lon: 135.5 },
+          ],
+        },
+      ],
+    },
+    document: {
+      hidden: false,
+      getElementById(id) { return id === 'europe-tooltip' ? tooltip : null; },
+      addEventListener() {},
+    },
+    window: { addEventListener() {} },
+    IntersectionObserver: class { observe() {} },
+    requestAnimationFrame() { return 1; },
+    console,
+  };
+
+  const EuropeMap2D = loadEuropeMapClass(env);
+  const map = new EuropeMap2D(canvas);
+
+  assert.equal(Array.isArray(map.filteredTrips), true);
+  assert.equal(map.filteredTrips.length, 2);
+  assert.equal(map.filteredTrips[0].name, 'Europe hop');
+  assert.equal(map.filteredTrips[0].stroke, '#00d4ff');
+  assert.equal(typeof map.filteredTrips[0].cpX, 'number');
+  assert.equal(typeof map.filteredTrips[0].cpY, 'number');
+  assert.ok(map.filteredTrips[0].cpY < Math.max(map.filteredTrips[0].y0, map.filteredTrips[0].y1));
+});
+
+test('EuropeMap2D: drawTrips renders layered neon arcs', () => {
+  const { canvas, curves, strokes } = createCanvasAndContext();
+  const tooltip = createTooltip();
+
+  const env = {
+    LOCATIONS: {
+      pins: [],
+      trips: [
+        {
+          name: 'Europe hop',
+          color: '#00d4ff',
+          cities: [
+            { name: 'Madrid', lat: 40.41, lon: -3.7 },
+            { name: 'Paris', lat: 48.85, lon: 2.35 },
+          ],
+        },
+      ],
+    },
+    document: {
+      hidden: false,
+      getElementById(id) { return id === 'europe-tooltip' ? tooltip : null; },
+      addEventListener() {},
+    },
+    window: { addEventListener() {} },
+    IntersectionObserver: class { observe() {} },
+    requestAnimationFrame() { return 1; },
+    console,
+  };
+
+  const EuropeMap2D = loadEuropeMapClass(env);
+  const map = new EuropeMap2D(canvas);
+  map._drawTrips(0);
+
+  assert.ok(curves.length >= 3);
+  assert.ok(strokes.includes('rgba(130, 229, 255, 0.95)'));
+});
+
+test('EuropeMap2D: drawTrips converts hex trip color to rgba glow layers', () => {
+  const { canvas, strokes } = createCanvasAndContext();
+  const tooltip = createTooltip();
+
+  const env = {
+    LOCATIONS: {
+      pins: [],
+      trips: [
+        {
+          name: 'Europe hop',
+          color: '#0af',
+          cities: [
+            { name: 'Madrid', lat: 40.41, lon: -3.7 },
+            { name: 'Paris', lat: 48.85, lon: 2.35 },
+          ],
+        },
+      ],
+    },
+    document: {
+      hidden: false,
+      getElementById(id) { return id === 'europe-tooltip' ? tooltip : null; },
+      addEventListener() {},
+    },
+    window: { addEventListener() {} },
+    IntersectionObserver: class { observe() {} },
+    requestAnimationFrame() { return 1; },
+    console,
+  };
+
+  const EuropeMap2D = loadEuropeMapClass(env);
+  const map = new EuropeMap2D(canvas);
+  map._drawTrips(0);
+
+  assert.ok(strokes.includes('rgba(0, 170, 255, 0.18)'));
+  assert.ok(strokes.includes('rgba(0, 170, 255, 0.5)'));
 });
