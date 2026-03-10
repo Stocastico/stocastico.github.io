@@ -935,9 +935,9 @@ class Globe3D {
         new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.80 : 0.45 }),
       ));
 
-      /* Dot — lived pins are larger and more prominent */
+      /* Dot — keep just slightly larger than trip city-stop points */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.012 : 0.008, 12, 12),
+        new THREE.SphereGeometry(isHome ? 0.008 : 0.0068, 12, 12),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
@@ -945,8 +945,8 @@ class Globe3D {
       this.pivot.add(dot);
       this.markerMeshes.push(dot);
 
-      /* Static halo — thicker for lived, thinner for work/travel */
-      const [rIn, rOut, op] = isHome ? [0.016, 0.021, 0.55] : [0.011, 0.014, 0.30];
+      /* Static halo — scaled down with the marker so it does not dominate */
+      const [rIn, rOut, op] = isHome ? [0.011, 0.014, 0.45] : [0.0085, 0.011, 0.28];
       const halo = new THREE.Mesh(
         new THREE.RingGeometry(rIn, rOut, 40),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }),
@@ -959,7 +959,7 @@ class Globe3D {
       if (isHome) {
         [0, Math.PI].forEach(phaseOffset => {
           const pulse = new THREE.Mesh(
-            new THREE.RingGeometry(0.010, 0.015, 40),
+            new THREE.RingGeometry(0.007, 0.010, 40),
             new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
           );
           pulse.position.copy(pos);
@@ -1338,7 +1338,7 @@ class GlobeFallback2D {
       const p = this._project(pt.lat, pt.lon);
       if (p.z <= 0.02) return;
       const col = GlobeFallback2D.PIN_COLORS[pt.type] || '#e8edf8';
-      const rr = (pt.type === 'lived' || pt.type === 'current') ? 3.8 : 2.6;
+      const rr = (pt.type === 'lived' || pt.type === 'current') ? 2.9 : 2.2;
       ctx.fillStyle = col;
       ctx.globalAlpha = Math.max(0.22, p.z);
       ctx.beginPath();

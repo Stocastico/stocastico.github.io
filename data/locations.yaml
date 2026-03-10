@@ -38,6 +38,13 @@ pins:
   - type: worktrip
     name: Tel Aviv, Israel
     info: inEVENT meeting
+  # Auvis (BMBF)
+  - type: worktrip
+    name: Bonn, Germany
+    info: Auvis meeting
+  - type: worktrip
+    name: Wageningen, Netherlands
+    info: Auvis meeting
   # RUSHES (FP6, 2007-2009)
   - type: worktrip
     name: Athens, Greece
@@ -96,17 +103,12 @@ pins:
     name: London, UK
     info: Visited both for work and leisure
   - type: holiday
-    name: Paris, France
-    info: Holiday
-  - type: holiday
-    name: Prague, Czechia
-    info: Holiday
-  - type: holiday
     name: Lisbon, Portugal
     info: Holiday
   - type: holiday
     name: Vienna, Austria
     info: Holiday
+# France
   - type: holiday
     name: Bordeaux, France
     info: Holiday
@@ -117,14 +119,46 @@ pins:
     name: Arles, France
     info: Holiday
   - type: holiday
-    name: Niza, France
-    info: Holiday
-  - type: holiday
     name: Marseille, France
     info: Holiday
   - type: holiday
     name: Bayonne, France
     info: Holiday
+  - type: holiday
+    name: Paris, France
+    info: Holiday
+# Germany
+
+# Italy
+
+# Spain
+  - type: holiday
+    name: Sevilla, Spain
+    info: Holiday
+  - type: holiday
+    name: Tarragona, Spain
+    info: Holiday
+  - type: holiday
+    name: Girona, Spain
+    info: Holiday
+  - type: holiday
+    name: Burgos, Spain
+    info: Holiday
+# Benelux
+  - type: holiday
+    name: Gant, Belgium
+    info: Holiday
+  - type: holiday
+    name: Antwerp, Belgium
+    info: Holiday
+# Others
+  - type: holiday
+    name: Zurich, Switzerland
+    info: Holiday
+  - type: holiday
+    name: Geneva, Switzerland
+    info: Holiday
+
 
 trips:
   - name: USA 2011
@@ -157,7 +191,7 @@ trips:
     cities:
       - Antalya, Turkey
       - Pamukkale, Turkey
-      - Akyaka, Turkey
+      - Burdur, Turkey
       - Fethiye, Turkey
       - Kas, Turkey
       - Antalya, Turkey

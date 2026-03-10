@@ -10,7 +10,7 @@
 class EuropeMap2D {
   /* Color scheme matches Globe3D */
   static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
-  static PIN_SIZE = { lived: 6, current: 6, worktrip: 4, holiday: 4 };
+  static PIN_SIZE = { lived: 3.2, current: 3.2, worktrip: 2.6, holiday: 2.6 };
 
   constructor(canvasEl) {
     if (!canvasEl || canvasEl.tagName !== 'CANVAS') return;
@@ -492,7 +492,7 @@ class EuropeMap2D {
     const ctx = this.ctx;
     const color = EuropeMap2D.PIN_COLORS[pin.type] || '#ffffff';
     const isLarge = pin.type === 'lived' || pin.type === 'current';
-    const size = isHovered ? (isLarge ? 8 : 6) : EuropeMap2D.PIN_SIZE[pin.type];
+    const size = isHovered ? (isLarge ? 4.2 : 3.5) : EuropeMap2D.PIN_SIZE[pin.type];
 
     const hex = color.replace('#', '');
     const r = parseInt(hex.slice(0, 2), 16);
