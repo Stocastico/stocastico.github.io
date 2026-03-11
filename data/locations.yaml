@@ -202,6 +202,15 @@ pins:
   - type: holiday
     name: Milan, Italy
     info: Holiday
+  - type: holiday
+    name: Trento, Italy
+    info: Holiday
+  - type: holiday
+    name: Bolzano, Italy
+    info: Holiday
+  - type: holiday
+    name: Mantova, Italy
+    info: Holiday
 # Spain
   - type: holiday
     name: Sevilla, Spain
