@@ -65,6 +65,10 @@ pins:
   - type: worktrip
     name: Gdansk, Poland
     info: Work with UFC
+  # worked there
+  - type: workplace
+    name: Darmstadt, Germany
+    info: Worked there for 1 year
 
 # vacanze amici
   - type: holiday
@@ -127,8 +131,43 @@ pins:
   - type: holiday
     name: Paris, France
     info: Holiday
+  - type: holiday
+    name: Strasbourg, France
+    info: Holiday
 # Germany
-
+  - type: holiday
+    name: Köln, Germany
+    info: Holiday
+  - type: holiday
+    name: Wiesbaden, Germany
+    info: Holiday
+  - type: holiday
+    name: Stuttgart, Germany
+    info: Holiday
+  - type: holiday
+    name: Leipzig, Germany
+    info: Holiday
+  - type: holiday
+    name: Nuremberg, Germany
+    info: Holiday
+  - type: holiday
+    name: Binz, Germany
+    info: Holiday
+  - type: holiday
+    name: Dresden, Germany
+    info: Holiday
+  - type: holiday
+    name: Freiburg, Germany
+    info: Holiday
+  - type: holiday
+    name: Brandenburg, Germany
+    info: Holiday
+  - type: holiday
+    name: Düsseldorf, Germany
+    info: Holiday
+  - type: holiday
+    name: Konstanz, Germany
+    info: Holiday
 # Italy
 
 # Spain
