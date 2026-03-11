@@ -6,8 +6,8 @@ My Personal website
 
 Before going live, complete the following tasks:
 
-- [ ] Revise all text in index.html
-- [ ] Add text in index.html where necessary (before the globe, etc)
+- [x] Revise all text in index.html
+- [x] Add text in index.html where necessary (before the globe, etc)
 - [ ] Complete locations list
 - [ ] Remove placeholder blog posts
 - [ ] Add blog post 1: Why a blog in 2026
