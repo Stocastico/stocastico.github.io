@@ -129,6 +129,17 @@ a {
   text-decoration: none;
 }
 
+.inline-link {
+  color: var(--accent2);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: opacity var(--t-fast);
+}
+
+.inline-link:hover {
+  opacity: 0.75;
+}
+
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent2);
@@ -220,19 +231,18 @@ h3 {
 }
 
 .nav-logo {
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
   transition: opacity var(--t-fast);
 }
 
 .nav-logo:hover {
-  opacity: 0.8;
+  opacity: 0.75;
+}
+
+.nav-home-icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .nav-links {
