@@ -103,7 +103,18 @@
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
   <nav id="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="#hero" class="nav-logo" aria-label="Home">SM</a>
+      <a href="#hero" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
@@ -213,7 +224,8 @@
                 My work spans <strong>generative AI</strong>, <strong>deep learning</strong>,
                 <strong>3D reconstruction</strong>, and <strong>large language models</strong>. I hold a
                 <strong>PhD from the University of the Basque Country</strong>, where I
-                researched collaborative, multi-user augmented reality experiences for education.
+                researched collaborative, multi-user augmented reality experiences for education
+                (<a href="#" class="inline-link">defense slides</a>).
               </p>
               <p>
                 I have worked in Italy, Germany, and Spain at both research institutions and software companies — from
