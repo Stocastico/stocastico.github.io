@@ -169,7 +169,39 @@ pins:
     name: Konstanz, Germany
     info: Holiday
 # Italy
-
+  -type: holiday
+    name: Rome, Italy
+    info: Holiday
+  - type: holiday
+    name: Florence, Italy
+    info: Holiday
+  - type: holiday
+    name: Venice, Italy
+    info: Holiday
+  - type: holiday
+    name: Turin, Italy
+    info: Holiday
+  - type: holiday
+    name: Genoa, Italy
+    info: Holiday
+  - type: holiday
+    name: Bologna, Italy
+    info: Holiday
+  - type: holiday
+    name: Verona, Italy
+    info: Holiday
+  - type: holiday
+    name: San Marino, San Marino
+    info: Holiday
+  - type: holiday
+    name: Pescara, Italy
+    info: Holiday
+  - type: holiday
+    name: Ancona, Italy
+    info: Holiday
+  - type: holiday
+    name: Milan, Italy
+    info: Holiday
 # Spain
   - type: holiday
     name: Sevilla, Spain
@@ -357,4 +389,11 @@ trips:
       - Santa Monica, California, USA
       - San Diego, California, USA
 
+  - name: 70 anni mamma
+    cycleSec: 14
+    cities:
+      - Napoli, Italy
+      - Salerno, Italy
+      - Matera, Italy
+      - Bari, Italy
 
