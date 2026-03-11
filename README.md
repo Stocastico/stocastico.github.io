@@ -6,20 +6,20 @@ My Personal website
 
 Before going live, complete the following tasks:
 
-[] Revise all text in index.html
-[] Add text in index.html where necessary (before the globe, etc)
-[] Complete locations list
-[] Remove placeholder blog posts
-[] Add blog post 1: Why a blog in 2026
-[] Add blog post 2: How I keep up-to-date with all things AI
+- [ ] Revise all text in index.html
+- [ ] Add text in index.html where necessary (before the globe, etc)
+- [ ] Complete locations list
+- [ ] Remove placeholder blog posts
+- [ ] Add blog post 1: Why a blog in 2026
+- [ ] Add blog post 2: How I keep up-to-date with all things AI
 
 And some ideas for future blog posts:
 
-[] Software development in the era of AI agents
-[] The web is beautiful (list of nice websites in the era of enshittification)
-[] Digital sovereignity (EU tools, reduce dependency on Google etc)
-[] Digital cleaning: how do I do that
-[] Commenting on test of different models etc (several possible blog posts)
+- [ ] Software development in the era of AI agents
+- [ ] The web is beautiful (list of nice websites in the era of enshittification)
+- [ ] Digital sovereignity (EU tools, reduce dependency on Google etc)
+- [ ] Digital cleaning: how do I do that
+- [ ] Commenting on test of different models etc (several possible blog posts)
 
 
 
