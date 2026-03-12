@@ -1545,6 +1545,32 @@ h3 {
   position:              relative;
 }
 
+/* ── Concurrent block: education spans multiple career rows ── */
+.tl-concurrent-block {
+  display:               grid;
+  grid-template-columns: 1fr auto 1fr;
+  row-gap:               1.5rem;
+  align-items:           start;
+  margin-bottom:         1.5rem;
+  position:              relative;
+}
+
+/* Dots inside concurrent block use career colour */
+.tl-concurrent-block .tl-spine .tl-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Education card stretches to fill its full row span */
+.tl-concurrent-block .tl-right {
+  align-self: stretch;
+}
+
+.tl-concurrent-block .tl-right .tl-card-single {
+  height:     100%;
+  box-sizing: border-box;
+}
+
 /* ── Year marker on the spine ─────────────────────────── */
 .tl-spine {
   display:         flex;

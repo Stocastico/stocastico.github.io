@@ -2151,32 +2151,108 @@ function renderCV() {
       </div>`;
   }
 
-  /* ── Merge & sort entries by start year (newest first) ─ */
+  /* ── Extract start year for sorting ────────────────── */
   function startYear(yearStr) {
     var m = String(yearStr).match(/\d{4}/);
     return m ? parseInt(m[0], 10) : 0;
   }
 
-  var allEntries = []
-    .concat((CV_CAREER    || []).map(function(e) { return Object.assign({}, e, { _type: 'career' }); }))
-    .concat((CV_EDUCATION || []).map(function(e) { return Object.assign({}, e, { _type: 'education' }); }))
-    .sort(function(a, b) { return startYear(b.year) - startYear(a.year); });
+  /* ── Separate concurrent from normal education entries ── */
+  var concurrentEduEntries = [];
+  var normalEduEntries     = [];
+  (CV_EDUCATION || []).forEach(function(e) {
+    if (Array.isArray(e.concurrent_with) && e.concurrent_with.length > 0) {
+      concurrentEduEntries.push(e);
+    } else {
+      normalEduEntries.push(e);
+    }
+  });
 
-  /* ── Render unified timeline rows ──────────────────── */
-  timeline.innerHTML = allEntries.map(function(entry) {
-    var type = entry._type;
-    var card = cardHtml(entry, type);
-    var left  = type === 'career'    ? card : '';
-    var right = type === 'education' ? card : '';
-    var emptyLeft  = type === 'education' ? '<div class="tl-empty"></div>' : '';
-    var emptyRight = type === 'career'    ? '<div class="tl-empty"></div>' : '';
+  /* ── Build set of career companies involved in concurrent blocks ── */
+  var concurrentCareerSet = {};
+  concurrentEduEntries.forEach(function(edu) {
+    edu.concurrent_with.forEach(function(company) {
+      concurrentCareerSet[company] = true;
+    });
+  });
 
-    return '<div class="tl-row tl-row--' + type + '" data-animate>'
-      + '<div class="tl-left">' + emptyLeft + left + '</div>'
-      + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-      + '<div class="tl-right">' + emptyRight + right + '</div>'
-      + '</div>';
-  }).join('');
+  /* ── Partition career entries ── */
+  var concurrentCareerEntries = [];
+  var normalCareerEntries     = [];
+  (CV_CAREER || []).forEach(function(e) {
+    if (concurrentCareerSet[e.company]) {
+      concurrentCareerEntries.push(e);
+    } else {
+      normalCareerEntries.push(e);
+    }
+  });
+
+  /* ── Build sortable row descriptors ── */
+  var rows = [];
+
+  /* Normal career rows */
+  normalCareerEntries.forEach(function(entry) {
+    rows.push({
+      sort: startYear(entry.year),
+      html: '<div class="tl-row tl-row--career" data-animate>'
+          + '<div class="tl-left">' + cardHtml(entry, 'career') + '</div>'
+          + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
+          + '<div class="tl-right"><div class="tl-empty"></div></div>'
+          + '</div>',
+    });
+  });
+
+  /* Normal (unpaired) education rows */
+  normalEduEntries.forEach(function(entry) {
+    rows.push({
+      sort: startYear(entry.year),
+      html: '<div class="tl-row tl-row--education" data-animate>'
+          + '<div class="tl-left"><div class="tl-empty"></div></div>'
+          + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
+          + '<div class="tl-right">' + cardHtml(entry, 'education') + '</div>'
+          + '</div>',
+    });
+  });
+
+  /* Concurrent blocks: education entry with concurrent_with spans matching career rows */
+  concurrentEduEntries.forEach(function(eduEntry) {
+    var companies   = eduEntry.concurrent_with;
+    var careerPairs = concurrentCareerEntries
+      .filter(function(c) { return companies.indexOf(c.company) !== -1; })
+      .sort(function(a, b) { return startYear(b.year) - startYear(a.year); });
+
+    var n = careerPairs.length;
+
+    /* Left column + spine: one career card per grid row */
+    var leftCells = careerPairs.map(function(c, i) {
+      var row = i + 1;
+      return '<div class="tl-left tl-row--career" style="grid-column:1;grid-row:' + row + '">'
+           +   cardHtml(c, 'career')
+           + '</div>'
+           + '<div class="tl-spine" style="grid-column:2;grid-row:' + row + '">'
+           +   '<div class="tl-dot" aria-hidden="true"></div>'
+           + '</div>';
+    }).join('');
+
+    /* Right column: education card spans all career rows */
+    var rightCell = '<div class="tl-right tl-row--education" style="grid-column:3;grid-row:1/' + (n + 1) + '">'
+                  + cardHtml(eduEntry, 'education')
+                  + '</div>';
+
+    var sortYear = n > 0 ? startYear(careerPairs[0].year) : startYear(eduEntry.year);
+
+    rows.push({
+      sort: sortYear,
+      html: '<div class="tl-concurrent-block" data-animate>'
+          + leftCells
+          + rightCell
+          + '</div>',
+    });
+  });
+
+  /* ── Sort all rows newest-first and render ── */
+  rows.sort(function(a, b) { return b.sort - a.sort; });
+  timeline.innerHTML = rows.map(function(r) { return r.html; }).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════
