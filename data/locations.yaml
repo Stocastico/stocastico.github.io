@@ -169,7 +169,7 @@ pins:
     name: Konstanz, Germany
     info: Holiday
 # Italy
-  -type: holiday
+  - type: holiday
     name: Rome, Italy
     info: Holiday
   - type: holiday

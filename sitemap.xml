@@ -12,22 +12,4 @@
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>
-  <url>
-    <loc>https://stocastico.github.io/blog/multi-user-ar-classroom.html</loc>
-    <lastmod>2024-11-20</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stocastico.github.io/blog/vit-production-guide.html</loc>
-    <lastmod>2024-09-10</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://stocastico.github.io/blog/multimodal-diarisation-broadcast.html</loc>
-    <lastmod>2024-07-18</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.7</priority>
-  </url>
 </urlset>

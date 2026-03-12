@@ -2567,8 +2567,10 @@ class HeroNameShader {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    /* read the live font-size from the h1 (respects clamp() / viewport) */
-    const fs = parseFloat(getComputedStyle(this.h1).fontSize);
+    /* read the live font-size + line-height from the h1 (respects clamp() / viewport) */
+    const styles = getComputedStyle(this.h1);
+    const fs = parseFloat(styles.fontSize);
+    const lh = parseFloat(styles.lineHeight) || fs;
     ctx.fillStyle = 'white';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -2576,7 +2578,7 @@ class HeroNameShader {
     /* Line 1 & 2: Playfair Display Bold — consistent elegant serif */
     ctx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
     ctx.fillText('Stefano', 0, 0);
-    ctx.fillText('Masneri', 0, fs);
+    ctx.fillText('Masneri', 0, lh);
 
     gl.bindTexture(gl.TEXTURE_2D, this.tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);

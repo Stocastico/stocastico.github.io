@@ -638,5 +638,121 @@
   "Konstanz, Germany": {
     "lat": 47.659216,
     "lon": 9.1750718
+  },
+  "Rome, Italy": {
+    "lat": 41.8933203,
+    "lon": 12.4829321
+  },
+  "Florence, Italy": {
+    "lat": 43.7697955,
+    "lon": 11.2556404
+  },
+  "Venice, Italy": {
+    "lat": 45.4371908,
+    "lon": 12.3345898
+  },
+  "Turin, Italy": {
+    "lat": 45.0677551,
+    "lon": 7.6824892
+  },
+  "Genoa, Italy": {
+    "lat": 44.40726,
+    "lon": 8.9338624
+  },
+  "Bologna, Italy": {
+    "lat": 44.4938203,
+    "lon": 11.3426327
+  },
+  "Verona, Italy": {
+    "lat": 45.4424977,
+    "lon": 10.9857377
+  },
+  "San Marino, San Marino": {
+    "lat": 43.9458623,
+    "lon": 12.458306
+  },
+  "Pescara, Italy": {
+    "lat": 42.3102619,
+    "lon": 13.9575901
+  },
+  "Ancona, Italy": {
+    "lat": 43.4801189,
+    "lon": 13.2187279
+  },
+  "Milan, Italy": {
+    "lat": 45.4641943,
+    "lon": 9.1896346
+  },
+  "Trento, Italy": {
+    "lat": 46.0664228,
+    "lon": 11.1257601
+  },
+  "Bolzano, Italy": {
+    "lat": 46.6559455,
+    "lon": 11.2302129
+  },
+  "Mantova, Italy": {
+    "lat": 45.1692628,
+    "lon": 10.6708365
+  },
+  "Sharm el Sheikh, Egypt": {
+    "lat": 27.8644422,
+    "lon": 34.295447
+  },
+  "Poznań, Poland": {
+    "lat": 52.4006632,
+    "lon": 16.9197326
+  },
+  "Wrocław, Poland": {
+    "lat": 51.1263106,
+    "lon": 16.9781963
+  },
+  "Havana, Cuba": {
+    "lat": 23.135305,
+    "lon": -82.3589631
+  },
+  "Viñales, Cuba": {
+    "lat": 22.616537,
+    "lon": -83.709023
+  },
+  "Cienfuegos, Cuba": {
+    "lat": 22.1459864,
+    "lon": -80.4530775
+  },
+  "Cayo Coco, Cuba": {
+    "lat": 22.4718562,
+    "lon": -78.4486874
+  },
+  "Cayo Largo, Cuba": {
+    "lat": 20.3668846,
+    "lon": -77.2089218
+  },
+  "Napoli, Italy": {
+    "lat": 40.8358846,
+    "lon": 14.2487679
+  },
+  "Salerno, Italy": {
+    "lat": 40.4194417,
+    "lon": 15.3106085
+  },
+  "Matera, Italy": {
+    "lat": 40.4476419,
+    "lon": 16.4735738
+  },
+  "Bari, Italy": {
+    "lat": 41.1257843,
+    "lon": 16.8620293
+  },
+  "Vik, Iceland": {
+    "lat": 63.4188166,
+    "lon": -19.0054737
+  },
+  "Selfoss, Iceland": {
+    "lat": 63.9368093,
+    "lon": -21.0035319
+  },
+  "Höfn, Iceland": {
+    "lat": 64.2532647,
+    "lon": -15.2080441
   }
 }

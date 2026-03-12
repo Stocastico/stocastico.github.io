@@ -443,7 +443,7 @@ h3 {
   font-family: var(--font-serif);
   font-size: clamp(3.5rem, 9vw, 8.5rem);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.02em;
   margin-bottom: 0;
   /* spacing now on .hero-name-wrap */
@@ -2288,6 +2288,10 @@ h3 {
 
 .blog-accent-ai {
   background: linear-gradient(90deg, var(--accent2), #00ff9d);
+}
+
+.blog-accent-personal {
+  background: linear-gradient(90deg, #f59e0b, #fb7185);
 }
 
 .blog-accent-general {
