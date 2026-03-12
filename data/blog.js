@@ -18,6 +18,14 @@
 
 const BLOG_POSTS = [
     {
+            title: "A personal website",
+            date: "2026-03-12",
+            excerpt: "Creating a personal website using Claude Code. Plus, why did I choose to start a blog in 2026",
+            tag: "Personal",
+            readMin: 5,
+            url: "blog/a-personal-website.html",
+        },
+    {
         title: 'Why Multi-user AR Belongs in Every Classroom',
         date: '2024-11-20',
         excerpt: 'After four large-scale pilots and hundreds of students, here is what we learned about designing collaborative XR experiences that genuinely improve learning outcomes.',

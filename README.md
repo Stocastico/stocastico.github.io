@@ -9,8 +9,8 @@ Before going live, complete the following tasks:
 - [x] Revise all text in index.html
 - [x] Add text in index.html where necessary (before the globe, etc)
 - [x] Complete locations list
-- [ ] Remove placeholder blog posts
-- [ ] Add blog post 1: Why a blog in 2026
+- [x] Remove placeholder blog posts
+- [x] Add blog post 1: Why a blog in 2026
 - [ ] Add blog post 2: How I keep up-to-date with all things AI
 
 And some ideas for future blog posts:

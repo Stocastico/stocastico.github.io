@@ -5,8 +5,16 @@
     <link>https://stocastico.github.io/</link>
     <description>Senior AI Engineer — Machine Learning, Computer Vision, Augmented Reality</description>
     <language>en-gb</language>
-    <lastBuildDate>Mon, 09 Mar 2026 04:57:59 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Mar 2026 15:58:15 GMT</lastBuildDate>
     <atom:link href="https://stocastico.github.io/rss.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>A personal website</title>
+      <link>https://stocastico.github.io/blog/a-personal-website.html</link>
+      <guid isPermaLink="true">https://stocastico.github.io/blog/a-personal-website.html</guid>
+      <description>Creating a personal website using Claude Code. Plus, why did I choose to start a blog in 2026</description>
+      <pubDate>Thu, 12 Mar 2026 12:00:00 GMT</pubDate>
+      <category>Personal</category>
+    </item>
     <item>
       <title>Why Multi-user AR Belongs in Every Classroom</title>
       <link>https://stocastico.github.io/blog/multi-user-ar-classroom.html</link>
