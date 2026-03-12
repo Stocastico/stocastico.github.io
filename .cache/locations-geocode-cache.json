@@ -586,5 +586,57 @@
   "Burdur, Turkey": {
     "lat": 37.72038,
     "lon": 30.28936
+  },
+  "Darmstadt, Germany": {
+    "lat": 49.872775,
+    "lon": 8.651177
+  },
+  "Strasbourg, France": {
+    "lat": 48.584614,
+    "lon": 7.7507127
+  },
+  "Köln, Germany": {
+    "lat": 50.938361,
+    "lon": 6.959974
+  },
+  "Wiesbaden, Germany": {
+    "lat": 50.0820384,
+    "lon": 8.2416556
+  },
+  "Stuttgart, Germany": {
+    "lat": 48.7784485,
+    "lon": 9.1800132
+  },
+  "Leipzig, Germany": {
+    "lat": 51.3406321,
+    "lon": 12.3747329
+  },
+  "Nuremberg, Germany": {
+    "lat": 49.453872,
+    "lon": 11.077298
+  },
+  "Binz, Germany": {
+    "lat": 54.4010291,
+    "lon": 13.6076477
+  },
+  "Dresden, Germany": {
+    "lat": 51.0493286,
+    "lon": 13.7381437
+  },
+  "Freiburg, Germany": {
+    "lat": 47.9960901,
+    "lon": 7.8494005
+  },
+  "Brandenburg, Germany": {
+    "lat": 52.8455492,
+    "lon": 13.2461296
+  },
+  "Düsseldorf, Germany": {
+    "lat": 51.2254018,
+    "lon": 6.7763137
+  },
+  "Konstanz, Germany": {
+    "lat": 47.659216,
+    "lon": 9.1750718
   }
 }
