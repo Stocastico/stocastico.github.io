@@ -210,6 +210,29 @@ test('renderCV: entries sorted by start year descending', () => {
   restore();
 });
 
+test('renderCV: concurrent_with entries rendered in tl-concurrent-block', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
+  global.CV_CAREER = [
+    { year: '2022 – 2024', role: 'Manager',    company: 'NTT DATA',   tags: [] },
+    { year: '2018 – 2022', role: 'Researcher', company: 'Vicomtech',  tags: [] },
+  ];
+  global.CV_EDUCATION = [{
+    year: '2019 – 2024',
+    degree: 'PhD',
+    institution: 'UPV',
+    concurrent_with: ['NTT DATA', 'Vicomtech'],
+  }];
+  renderCV();
+  const html = els['cv-timeline'].innerHTML;
+  assert.ok(html.includes('tl-concurrent-block'), 'concurrent block rendered');
+  assert.ok(html.includes('Manager'),    'NTT DATA entry present');
+  assert.ok(html.includes('Researcher'), 'Vicomtech entry present');
+  assert.ok(html.includes('PhD'),        'PhD entry present');
+  const standaloneRows = (html.match(/class="tl-row /g) || []).length;
+  assert.strictEqual(standaloneRows, 0, 'no standalone tl-rows when all career entries are concurrent');
+  restore();
+});
+
 test('renderCV: multi-year career entry appears exactly once', () => {
   const { els, restore } = setupDom(['cv-timeline']);
   global.CV_CAREER = [{ year: '2009 – 2015', role: 'Research Associate', company: 'Fraunhofer', tags: [] }];

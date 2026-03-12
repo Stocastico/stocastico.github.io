@@ -236,7 +236,7 @@ function generateCvJs(data) {
   const skills    = data.skills    || {};
 
   const careerKeys = ['year', 'role', 'company', 'location', 'description', 'tags'];
-  const eduKeys    = ['year', 'degree', 'institution', 'location', 'description'];
+  const eduKeys    = ['year', 'degree', 'institution', 'location', 'description', 'concurrent_with'];
 
   const careerBlock = career.map(e => jsAlignedObject(e, careerKeys, 2)).join(',\n');
   const eduBlock    = education.map(e => jsAlignedObject(e, eduKeys,  2)).join(',\n');

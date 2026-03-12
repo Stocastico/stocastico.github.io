@@ -65,11 +65,12 @@ const CV_CAREER = [
 /* ── Education ────────────────────────────────────────────── */
 const CV_EDUCATION = [
   {
-    year:        '2019 – 2024',
-    degree:      'PhD — Computer Science',
-    institution: 'Euskal Herriko Unibertsitatea (UPV/EHU)',
-    location:    'Bilbao, ES',
-    description: 'Thesis: "A Novel Architecture for Collaborative Augmented Reality Experiences for Education." Graduated cum laude.',
+    year:            '2019 – 2024',
+    degree:          'PhD — Computer Science',
+    institution:     'Euskal Herriko Unibertsitatea (UPV/EHU)',
+    location:        'Bilbao, ES',
+    description:     'Thesis: "A Novel Architecture for Collaborative Augmented Reality Experiences for Education." Graduated cum laude.',
+    concurrent_with: ['NTT DATA', 'Vicomtech'],
   },
   {
     year:        '2005 – 2008',
@@ -89,46 +90,46 @@ const CV_EDUCATION = [
 const CV_SKILLS = {
   technical:  [
     {
-      name:  'GenAI & LLMs (RAG · Fine-tuning · LangChain)',
+      name:  'GenAI & LLMs (Fine-tuning · RAG · LangChain · Vector DBs)',
       level: 92,
     },
     {
-      name:  'Python · PyTorch · TensorFlow',
+      name:  'Python · PyTorch · TensorFlow · Hugging Face',
       level: 90,
     },
     {
-      name:  'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats)',
+      name:  'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)',
       level: 88,
+    },
+    {
+      name:  'MLOps · Docker · Kubernetes · CI/CD · GCP · Azure',
+      level: 90,
     },
     {
       name:  'Augmented Reality (ARCore · ARKit · WebXR)',
       level: 82,
     },
     {
-      name:  'MLOps · Docker · CI/CD',
-      level: 90,
-    },
-    {
-      name:  'C++ · OpenCV · CUDA',
+      name:  'C++ · C · OpenCV · CUDA · Matlab',
       level: 85,
     },
   ],
   leadership: [
     {
-      name:  'Technical team management & mentoring',
-      level: 90,
-    },
-    {
-      name:  'EU project management & reporting',
+      name:  'Hiring & People Development',
       level: 88,
     },
     {
-      name:  'Technical roadmap & system architecture',
-      level: 87,
+      name:  'Delivery Track Record (10+ AI/ML projects, Agile/Scrum)',
+      level: 90,
     },
     {
-      name:  'Stakeholder & partner communication',
-      level: 85,
+      name:  'Technical Mentoring & Training (20+ sessions)',
+      level: 90,
+    },
+    {
+      name:  'Stakeholder & Partner Coordination',
+      level: 87,
     },
   ],
   languages:  [
@@ -137,16 +138,20 @@ const CV_SKILLS = {
       proficiency: 'Native',
     },
     {
+      name:        'Spanish',
+      proficiency: 'C2 — Proficient',
+    },
+    {
       name:        'English',
       proficiency: 'C2 — Proficient',
     },
     {
-      name:        'Spanish',
+      name:        'German',
       proficiency: 'B2 — Upper-Intermediate',
     },
     {
       name:        'Basque',
-      proficiency: 'A2 — Elementary',
+      proficiency: 'B1 — Intermediate',
     },
   ],
 };
