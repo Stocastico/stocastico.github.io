@@ -8,7 +8,7 @@ Before going live, complete the following tasks:
 
 - [x] Revise all text in index.html
 - [x] Add text in index.html where necessary (before the globe, etc)
-- [ ] Complete locations list
+- [x] Complete locations list
 - [ ] Remove placeholder blog posts
 - [ ] Add blog post 1: Why a blog in 2026
 - [ ] Add blog post 2: How I keep up-to-date with all things AI
@@ -20,8 +20,6 @@ And some ideas for future blog posts:
 - [ ] Digital sovereignity (EU tools, reduce dependency on Google etc)
 - [ ] Digital cleaning: how do I do that
 - [ ] Commenting on test of different models etc (several possible blog posts)
-
-
 
 ## Tech stack
 
@@ -251,20 +249,20 @@ Prints the generated HTML and the `data/blog.js` entry without writing any files
 
 ### Blog post frontmatter fields
 
-| Field     | Type   | Required | Description |
-|-----------|--------|----------|-------------|
-| `title`   | string | Yes      | Post title |
-| `date`    | string | Yes      | ISO date, e.g. `"2025-03-01"` |
-| `excerpt` | string | Yes      | Short summary shown on the index card |
+| Field     | Type   | Required | Description                                             |
+|-----------|--------|----------|---------------------------------------------------------|
+| `title`   | string | Yes      | Post title                                              |
+| `date`    | string | Yes      | ISO date, e.g. `"2025-03-01"`                           |
+| `excerpt` | string | Yes      | Short summary shown on the index card                   |
 | `tag`     | string | No       | Badge label, e.g. `"Research"`, `"Engineering"`, `"AI"` |
-| `readMin` | number | No       | Estimated read time in minutes |
-| `lead`    | string | No       | Opening sentence displayed in large type |
-| `url`     | string | No       | Override the output filename / URL path |
+| `readMin` | number | No       | Estimated read time in minutes                          |
+| `lead`    | string | No       | Opening sentence displayed in large type                |
+| `url`     | string | No       | Override the output filename / URL path                 |
 
 ### Supported Markdown syntax
 
 | Syntax | Output |
-|--------|--------|
+| -------- | -------- |
 | `# H1` / `## H2` / `### H3` | `<h1>` / `<h2>` / `<h3>` |
 | `**bold**` | `<strong>` |
 | `*italic*` or `_italic_` | `<em>` |
@@ -362,14 +360,14 @@ The navbar contains four items: **About**, **Research** (linked from hero), **Wr
 ### Pages
 
 | Page | Description |
-|------|-------------|
+| ------ | ------------- |
 | `index.html` | Single-page application — Hero, About, Research, Publications, Skills, Contact, Blog sections |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
 
 ### Sections (index.html)
 
 | Section | Description |
-|---------|-------------|
+| --------- | ------------- |
 | Hero | Left-aligned layout with iridescent name shader, animated tagline, hero CTAs |
 | About | Asymmetric layout — photo + stats on the left, bio text on the right; interactive 3-D globe fills the right half |
 | Research | Horizontal-scroll carousel of research topic cards (Stripe-style) |
@@ -452,7 +450,7 @@ A thin bar at the very top of the page fills from left to right as the user scro
 Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page to open a spotlight-style command palette. Available actions:
 
 | Command | Action |
-|---------|--------|
+| --------- | -------- |
 | About | Scroll to About section |
 | Research | Scroll to Research section |
 | Skills | Scroll to Skills section |
@@ -480,7 +478,7 @@ A floating button appears in the bottom-right corner once the user has scrolled 
 Several optimisations were made to keep the page fast on low-power and mobile devices:
 
 | Change | Impact |
-|--------|--------|
+| -------- | -------- |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
 | Cursor glow removed | Removes the per-frame radial gradient draw on the overlay canvas |
 | Hero orbs are static (no animation) | Eliminates CSS animation on large blurred elements |

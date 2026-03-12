@@ -238,6 +238,15 @@ pins:
   - type: holiday
     name: Geneva, Switzerland
     info: Holiday
+  - type: holiday
+    name: Sharm el Sheikh, Egypt
+    info: Holiday
+  - type: holiday
+    name: Poznań, Poland
+    info: Holiday
+  - type: holiday
+    name: Wrocław, Poland
+    info: Holiday
 
 
 trips:
@@ -255,6 +264,16 @@ trips:
       - Baltimore, Maryland, USA
       - Asbury Park, New Jersey, USA
       - New York City, New York, USA
+
+  - name: Cuba 2012
+    cycleSec: 20
+    cities:
+      - Havana, Cuba
+      - Viñales, Cuba
+      - Cienfuegos, Cuba
+      - Cayo Coco, Cuba
+      - Cayo Largo, Cuba
+      - Havana, Cuba
 
   - name: Morocco 2013
     cycleSec: 13
@@ -406,3 +425,11 @@ trips:
       - Matera, Italy
       - Bari, Italy
 
+  - name: Islanda
+    cycleSec: 17
+    cities:
+      - Reykjavik, Iceland
+      - Vik, Iceland
+      - Selfoss, Iceland
+      - Höfn, Iceland
+      - Reykjavik, Iceland
