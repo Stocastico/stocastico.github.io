@@ -30,7 +30,7 @@ And some ideas for future blog posts:
 
 ## Project structure
 
-```
+```text
 .
 ├── index.html                 Main single-page site
 ├── cv.html                    Dedicated CV page (two-column: work | education)
