@@ -1100,6 +1100,12 @@ h3 {
 }
 
 /* ─── 11. Publications Section ──────────────────────────── */
+.publications-intro {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  max-width: 60ch;
+}
+
 .publications-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
