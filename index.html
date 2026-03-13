@@ -78,17 +78,11 @@
   <meta name="theme-color" content="#080c14" />
 
   <!-- Resource hints — pre-warm connections before the browser needs them -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
   <!-- dns-prefetch: fallback for browsers that do not support preconnect -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
-  <!-- Fonts -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
-    rel="stylesheet" />
+  <!-- Self-hosted fonts (no external requests to Google) -->
+  <link rel="stylesheet" href="css/fonts.css" />
   <link rel="icon"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
 
@@ -163,8 +157,6 @@
       </p>
       <div class="hero-actions">
         <a href="#about" class="btn btn-primary">About</a>
-        <a href="#research" class="btn btn-ghost">Work</a>
-        <a href="#blog" class="btn btn-ghost">Writing</a>
         <a href="#contact" class="btn btn-ghost">Contact</a>
       </div>
     </div>
@@ -225,7 +217,8 @@
                 My work spans <strong>generative AI</strong>, <strong>deep learning</strong>,
                 <strong>3D reconstruction</strong>, and <strong>large language models</strong>. I hold a
                 <strong>PhD from the University of the Basque Country</strong>, where I
-                researched collaborative, multi-user augmented reality experiences for education.
+                researched collaborative, multi-user augmented reality experiences for education
+                (<a href="docs/defense.pdf" class="inline-link" target="_blank" rel="noopener">defense slides</a>).
               </p>
               <p>
                 I have worked in Italy, Germany, and Spain at both research institutions and software companies — from
@@ -687,7 +680,7 @@
        executed in order after parsing completes, before DOMContentLoaded.
        This keeps the critical rendering path clear of blocking JS.       -->
   <!-- Three.js from CDN (deferred so it downloads in parallel with data files) -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
   <!-- ── Content data files ──────────────────────────────────────────────
        Edit these files to update frequently-changing content:
          data/locations.js    — 3D globe pins, trips, regions
