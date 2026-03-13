@@ -69,6 +69,91 @@ As the site grows, consider splitting into separate modules:
 
 Even without a bundler, separate `<script defer>` tags maintain execution order.
 
+## Audit Findings (March 2026)
+
+Comprehensive UI/UX, accessibility, performance, and code audit results.
+
+### Priority Fix Summary
+
+| Priority | Issue | Effort |
+|----------|-------|--------|
+| **High** | Footer claims "React" — should be removed/corrected | 1 min |
+| **High** | Command palette CV PDF path wrong (`cv.pdf` → `docs/cv.pdf`) | 1 min |
+| **Medium** | `--text-faint` (#6a7788) fails WCAG AA contrast on dark bg | 10 min |
+| **Medium** | Sitemap missing `cv.html` | 2 min |
+| **Medium** | Blog post inline styles → CSS class | 2 min |
+| **Low** | Mobile nav focus trapping | 20 min |
+| **Low** | Print stylesheet | 10 min |
+| **Low** | Add `loading="lazy"` to photo.jpg | 1 min |
+| **Low** | Dead theme script in `cv.html` | 1 min |
+
+### Accessibility
+
+- **`--text-faint` fails WCAG AA**: `#6a7788` on `#080c14` is ~3.7:1 contrast
+  (needs 4.5:1). Affects stat labels, footer text, globe subtitles, scroll hint.
+  Lighten to ~`#8a97a8` or similar to reach 4.5:1.
+- **Email reveal pattern**: Screen readers just hear "Click to reveal". Add
+  `aria-description` explaining the anti-spam behavior.
+- **Globe canvas inaccessible to keyboard**: Interactive pins can't be
+  tab-navigated. Consider a visually-hidden description list as fallback.
+- **Side dots nav**: Verify JS sets `aria-label` on each dot (not just
+  `data-label`).
+- **Mobile hamburger menu doesn't trap focus**: Keyboard users can tab past the
+  open menu overlay into content behind it.
+
+### Performance
+
+- **Three.js from CDN (~640KB gzipped)**: Only a fraction of Three.js is used.
+  A tree-shaken ESM import would cut size dramatically, but requires a bundler.
+  Pragmatic trade-off for GitHub Pages.
+- **`world-110m.json` fetched twice**: Once by `Globe3D._buildGlobe()` and once
+  by `EuropeMap2D._loadTopoJSON()`. Share a data promise to avoid double-parse.
+- **Scroll handler reads `offsetTop`**: `setActiveLink()` reads
+  `section.offsetTop` on every scroll event, which can cause forced layout.
+  Consider IntersectionObserver for section tracking instead.
+- **`photo.jpg` served at 1088×1088 but displayed at ~200px**: Add
+  `loading="lazy"` and consider serving a smaller version.
+- **Verify `main.min.js` is up to date** with `main.js` source before publishing.
+
+### UI / UX
+
+- **Footer says "Built with React"**: No React in the codebase — this is vanilla
+  JS + Three.js. Remove or correct.
+- **Command palette CV PDF path**: `window.open('cv.pdf')` should be
+  `window.open('docs/cv.pdf')`.
+- **Defense slides link** (`docs/defense.pdf`): File does not exist in repo.
+  (Already known.)
+- **Blog post inline styles**: `a-personal-website.html:83` uses inline
+  `style="display:flex;..."` — should be a CSS class.
+- **No active nav indicator on blog post pages**: Nav links point to
+  `../index.html#blog` but nothing highlights "Writing" as current.
+- **Dead theme script in `cv.html:6`**: Reads from localStorage but theme
+  switching is disabled. `index.html` doesn't have it. Remove for consistency.
+
+### SEO
+
+- **Sitemap missing `cv.html`**: Add it to `sitemap.xml`.
+- **Blog structured data**: Could add `"image"` and `"wordCount"` properties to
+  the BlogPosting JSON-LD.
+- **Twitter creator**: Add `<meta name="twitter:creator">` if you have a handle.
+
+### Code / Misc
+
+- **No print styles**: Dark background + light text wastes ink and may be
+  unreadable. Add at minimum:
+  ```css
+  @media print { body { background: white; color: black; } }
+  ```
+- **`#nav-grad` SVG gradient ID** is repeated across pages. Not a current issue
+  (one nav per page) but technically invalid if multiple navs were ever present.
+- **`EuropeMap2D._loadTopoJSON()`** uses relative path `'./data/world-110m.json'`
+  — works from root only. Fine since it's only loaded on `index.html`.
+- **`100svh` on `#hero`**: Well-supported now, with `min-height: 600px` fallback.
+  No action needed.
+- **Geocoding function** sends requests to Nominatim without a User-Agent (ToS
+  violation). But since all coordinates are pre-generated, this never runs in
+  production. No action needed.
+
 ## Nice-to-Have
 
 ### 9. Add a 404 page navbar
