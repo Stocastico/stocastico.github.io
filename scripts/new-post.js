@@ -314,7 +314,7 @@ function buildHtml(fm, bodyHtml) {
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type"        content="article" />
   <meta property="og:url"         content="${escapeHtml(postUrl)}" />
-  <meta property="og:title"       content="${escapeHtml(fm.title)}" />
+  <meta property="og:title"       content="${escapeHtml(fm.title)} — Stefano Masneri" />
   <meta property="og:description" content="${escapeHtml(fm.excerpt)}" />
   <meta property="og:image"       content="https://stocastico.github.io/img/screenshot-hero.png" />
   <meta property="og:image:alt"   content="${escapeHtml(fm.title)}" />
@@ -323,7 +323,7 @@ function buildHtml(fm, bodyHtml) {
   <meta property="article:author" content="Stefano Masneri" />
   <meta property="article:published_time" content="${escapeHtml(fm.date)}" />
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="${escapeHtml(fm.title)}" />
+  <meta name="twitter:title"       content="${escapeHtml(fm.title)} — Stefano Masneri" />
   <meta name="twitter:description" content="${escapeHtml(fm.excerpt)}" />
   <meta name="twitter:image"       content="https://stocastico.github.io/img/screenshot-hero.png" />` : '';
 
@@ -350,6 +350,15 @@ function buildHtml(fm, bodyHtml) {
   }
   <\/script>`;
 
+  // Detect if the post body contains code blocks (for conditional highlight.js)
+  const hasCodeBlocks = bodyHtml.includes('<pre><code');
+  const hljsCss = hasCodeBlocks
+    ? '\n  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />'
+    : '\n  <!-- highlight.js loaded only on posts with code blocks -->\n  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" /> -->';
+  const hljsJs = hasCodeBlocks
+    ? '\n  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>\n  <script>hljs.highlightAll();<\/script>'
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -358,13 +367,12 @@ function buildHtml(fm, bodyHtml) {
   <meta name="description" content="${escapeHtml(fm.excerpt)}" />
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow, noai, noimageai" />${canonicalHtml}${ogHtml}${jsonLd}
-  <title>${escapeHtml(fm.title)}</title>
+  <title>${escapeHtml(fm.title)} — Stefano Masneri</title>
   <!-- Self-hosted fonts -->
   <link rel="stylesheet" href="../css/fonts.css" />
   <link rel="icon"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="../css/styles.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <link rel="stylesheet" href="../css/styles.css" />${hljsCss}
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -372,7 +380,21 @@ function buildHtml(fm, bodyHtml) {
 
   <nav id="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="../index.html" class="nav-logo" aria-label="Home">SM</a>
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
       <ul class="nav-links" id="nav-links">
         <li><a href="../index.html#about">About</a></li>
         <li><a href="../index.html#research">Work</a></li>
@@ -391,14 +413,18 @@ function buildHtml(fm, bodyHtml) {
     ${bodyHtml}
   </main>
 
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> + <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
   <button class="back-to-top" id="back-to-top" aria-label="Back to top">
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script>hljs.highlightAll();</script>
+${hljsJs}
   <script defer src="../js/main.min.js"></script>
 </body>
 </html>
