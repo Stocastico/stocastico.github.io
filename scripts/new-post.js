@@ -415,7 +415,7 @@ function buildHtml(fm, bodyHtml) {
 
   <footer class="site-footer">
     <div class="container">
-      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> + <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://react.dev" target="_blank" rel="noopener">React</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
     </div>
   </footer>
 
