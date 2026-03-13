@@ -9,16 +9,25 @@
    4. Layout Helpers
    5. Navigation
    6. Hero Section
-   7. Section Shared
-   8. About Section
-   9. Research Section
-   10. Publications Section
-   11. Skills Section
-   12. Blog Section
-   13. Contact Section
-   14. Footer
-   15. Animations & Utilities
-   16. Responsive
+   7. Buttons
+   8. Section Shared
+   9. About Section
+   10. Research Section
+   11. Publications Section
+   12. Skills Section
+   13. Blog Section
+   14. Contact Section
+   15. Footer
+   16. Scroll Reveal Animations
+   16c. Curriculum Vitae — Timeline
+   16d. CV Page Layout
+   17. Performance (content-visibility)
+   18. Responsive
+   18b. Europe 2D Map
+   19. Enhanced Blog Cards
+   20. Blog Post Page
+   21. Command Palette
+   22. Side Progress Dots
    ============================================================ */
 
 /* ─── 1. Custom Properties ─────────────────────────────── */
@@ -38,7 +47,7 @@
 
   --text: #e8edf8;
   --text-muted: #8893a4;
-  --text-faint: #4d5a70;
+  --text-faint: #6a7788;
 
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;
@@ -818,10 +827,10 @@ h3 {
   color: var(--text);
 }
 
-.about-lead {
-  font-size: 1.1rem !important;
-  color: var(--text) !important;
-  margin-bottom: 1.5rem !important;
+.about-text-col p.about-lead {
+  font-size: 1.1rem;
+  color: var(--text);
+  margin-bottom: 1.5rem;
 }
 
 .social-links {
@@ -2079,6 +2088,13 @@ h3 {
   margin-bottom: 0.75rem;
 }
 
+/* Show mouse hint by default, touch hint on coarse pointers */
+.globe-subtitle--touch { display: none; }
+@media (pointer: coarse) {
+  .globe-subtitle--mouse { display: none; }
+  .globe-subtitle--touch { display: block; }
+}
+
 .globe-scene {
   position: relative;
   height: clamp(340px, 58vw, 580px);
@@ -2619,7 +2635,7 @@ h3 {
   display: none;
 }
 
-@media (pointer: fine) {
+@media (pointer: fine) and (min-width: 681px) {
   .cmd-trigger-hint {
     display: inline-flex;
     align-items: center;
