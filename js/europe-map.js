@@ -172,6 +172,7 @@ class EuropeMap2D {
       this.mouse.y = e.clientY - this._rect.top;
       this._mouseOver = true;
       this._rayhit();
+      this._ensureAnimating();
     }, false);
 
     this.canvas.addEventListener('mouseleave', () => {
@@ -236,7 +237,20 @@ class EuropeMap2D {
     }
 
     this._draw();
-    this._rafId = requestAnimationFrame(() => this._animate());
+
+    /* Only keep the RAF loop running when there are animated trips or
+       the user is hovering.  Otherwise draw once and stop — the 2D map
+       is essentially static and doesn't need continuous repaints. */
+    if (this.filteredTrips.length || this._mouseOver) {
+      this._rafId = requestAnimationFrame(() => this._animate());
+    } else {
+      this._rafId = null;
+    }
+  }
+
+  /* Restart the render loop when interaction resumes */
+  _ensureAnimating() {
+    if (!this._rafId && this._visible) this._animate();
   }
 
   _draw() {

@@ -1985,9 +1985,7 @@ function initCardTilt() {
       card.addEventListener('mousemove', (e) => {
         const r  = card.getBoundingClientRect();
         const cx = (e.clientX - r.left) / r.width;
-          const email = getObfuscatedContactEmail()
-            || document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '')
-            || '';
+        const cy = (e.clientY - r.top) / r.height;
         targetRY =  (cx - 0.5) * MAX_RY * 2;
         targetRX = -(cy - 0.5) * MAX_RX * 2;
         card.style.setProperty('--gloss-x', `${(cx * 100).toFixed(1)}%`);

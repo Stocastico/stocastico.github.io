@@ -177,6 +177,7 @@
   <!-- hero-split: neural canvas fills the right half on wide screens
        via CSS, no extra markup needed -->
 
+  <main>
   <!-- ═══════════════ ABOUT ═══════════════ -->
   <section id="about" class="section" aria-label="About me">
     <div class="container">
@@ -194,7 +195,7 @@
             <!-- Photo -->
             <div class="about-photo-col" data-animate data-delay="100">
               <div class="photo-card">
-                <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" />
+                <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" width="1088" height="1088" />
               </div>
 
               <!-- Quick stats -->
@@ -224,8 +225,7 @@
                 My work spans <strong>generative AI</strong>, <strong>deep learning</strong>,
                 <strong>3D reconstruction</strong>, and <strong>large language models</strong>. I hold a
                 <strong>PhD from the University of the Basque Country</strong>, where I
-                researched collaborative, multi-user augmented reality experiences for education
-                (<a href="#" class="inline-link">defense slides</a>).
+                researched collaborative, multi-user augmented reality experiences for education.
               </p>
               <p>
                 I have worked in Italy, Germany, and Spain at both research institutions and software companies — from
@@ -238,7 +238,7 @@
               </p>
 
               <!-- Social links -->
-              <div class="social-links" aria-label="Social and academic profiles">
+              <nav class="social-links" aria-label="Social and academic profiles">
                 <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener" class="social-btn"
                   aria-label="LinkedIn profile">
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -261,7 +261,7 @@
                   </svg>
                   GitHub
                 </a>
-              </div>
+              </nav>
             </div>
           </div>
         </div>
@@ -293,7 +293,8 @@
             </div>
           </div>
 
-          <p class="globe-subtitle">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
+          <p class="globe-subtitle globe-subtitle--mouse">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
+          <p class="globe-subtitle globe-subtitle--touch">Drag to rotate &nbsp;·&nbsp; Tap a pin for details</p>
 
           <!-- 2D Europe Map section -->
           <div class="europe-section">
@@ -627,6 +628,8 @@
       </div>
     </div>
   </section>
+
+  </main>
 
   <!-- ═══════════════ FOOTER ═══════════════ -->
   <footer class="site-footer">
