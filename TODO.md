@@ -92,27 +92,27 @@ Comprehensive UI/UX, accessibility, performance, and code audit results.
 |----------|-------|--------|
 | ~~**High**~~ | ~~Footer claims "React" — should be removed/corrected~~ ✅ | ~~1 min~~ |
 | ~~**High**~~ | ~~Command palette CV PDF path wrong (`cv.pdf` → `docs/cv.pdf`)~~ ✅ | ~~1 min~~ |
-| **Medium** | `--text-faint` (#6a7788) fails WCAG AA contrast on dark bg | 10 min |
+| ~~**Medium**~~ | ~~`--text-faint` (#6a7788) fails WCAG AA contrast on dark bg~~ ✅ | ~~10 min~~ |
 | ~~**Medium**~~ | ~~Sitemap missing `cv.html`~~ ✅ | ~~2 min~~ |
 | ~~**Medium**~~ | ~~Blog post inline styles → CSS class~~ ✅ | ~~2 min~~ |
-| **Low** | Mobile nav focus trapping | 20 min |
+| ~~**Low**~~ | ~~Mobile nav focus trapping~~ ✅ | ~~20 min~~ |
 | ~~**Low**~~ | ~~Print stylesheet~~ ✅ | ~~10 min~~ |
 | ~~**Low**~~ | ~~Add `loading="lazy"` to photo.jpg~~ ✅ | ~~1 min~~ |
 | ~~**Low**~~ | ~~Dead theme script in `cv.html`~~ ✅ | ~~1 min~~ |
 
 ### Accessibility
 
-- **`--text-faint` fails WCAG AA**: `#6a7788` on `#080c14` is ~3.7:1 contrast
+- ~~**`--text-faint` fails WCAG AA**: `#6a7788` on `#080c14` is ~3.7:1 contrast
   (needs 4.5:1). Affects stat labels, footer text, globe subtitles, scroll hint.
-  Lighten to ~`#8a97a8` or similar to reach 4.5:1.
-- **Email reveal pattern**: Screen readers just hear "Click to reveal". Add
-  `aria-description` explaining the anti-spam behavior.
+  Lightened to `#8a97a8` to reach 4.5:1.~~ ✅
+- ~~**Email reveal pattern**: Screen readers just hear "Click to reveal". Added
+  `aria-description` explaining the anti-spam behavior.~~ ✅
 - **Globe canvas inaccessible to keyboard**: Interactive pins can't be
   tab-navigated. Consider a visually-hidden description list as fallback.
 - **Side dots nav**: Verify JS sets `aria-label` on each dot (not just
   `data-label`).
-- **Mobile hamburger menu doesn't trap focus**: Keyboard users can tab past the
-  open menu overlay into content behind it.
+- ~~**Mobile hamburger menu doesn't trap focus**: Keyboard users can tab past the
+  open menu overlay into content behind it.~~ ✅
 
 ### Performance
 
@@ -155,10 +155,10 @@ Comprehensive UI/UX, accessibility, performance, and code audit results.
 
 ## Nice-to-Have
 
-### 9. Add a 404 page navbar
+### ~~9. Add a 404 page navbar~~ ✅
 
-The 404 page currently has no navigation — just a "Back to Home" button.
-Adding the standard navbar would help users find their way.
+~~The 404 page currently has no navigation — just a "Back to Home" button.
+Adding the standard navbar would help users find their way.~~
 
 ### 10. OG image for blog posts
 
