@@ -4,15 +4,18 @@ Items that require manual action or decisions before publishing.
 
 ## Must Do (Before Launch)
 
-### 1. Create or remove the CV PDF download
-The CV page (`cv.html:78`) has a "Download PDF" button linking to `docs/cv.pdf`,
-but this file does not exist. Either:
+### ~~1. Create or remove the CV PDF download~~ ✅
+
+~~The CV page (`cv.html:78`) has a "Download PDF" button linking to `docs/cv.pdf`,
+but this file does not exist.~~ Either:
+
 - Generate a PDF version of your CV and place it at `docs/cv.pdf`
 - Remove the download button from `cv.html`
 
-### 2. Add PhD defense slides link (optional)
-The defense slides link was removed from the About section because it pointed
-to `href="#"`. If you have a URL for the slides (e.g. on SlideShare or Google
+### ~~2. Add PhD defense slides link (optional)~~ ✅
+
+~~The defense slides link was removed from the About section because it pointed
+to `href="#"`.~~ If you have a URL for the slides (e.g. on SlideShare or Google
 Slides), add it back to `index.html` in the About bio paragraph:
 ```html
 researched collaborative, multi-user augmented reality experiences for education
@@ -21,8 +24,9 @@ researched collaborative, multi-user augmented reality experiences for education
 
 ## Recommended Improvements
 
-### 3. Upgrade Three.js
-Currently using `r134` (2022). Consider upgrading to `r160+` for performance
+### ~~3. Upgrade Three.js~~ ✅
+
+~~Currently using `r134` (2022). Consider upgrading to `r160+`~~ for performance
 improvements and bug fixes. The CDN link is in `index.html:687`:
 ```html
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
@@ -30,9 +34,11 @@ improvements and bug fixes. The CDN link is in `index.html:687`:
 **Note:** Test the globe, neural network, and hero name shader after upgrading —
 API changes between versions may require minor adjustments.
 
-### 4. Consider self-hosting Google Fonts
-The fonts (Inter + Playfair Display) are loaded from Google's CDN. Self-hosting
+### ~~4. Consider self-hosting Google Fonts~~ ✅
+
+~~The fonts (Inter + Playfair Display) are loaded from Google's CDN.~~ Self-hosting
 them would:
+
 - Eliminate the DNS lookup + connection to `fonts.googleapis.com`
 - Improve privacy (no Google tracking)
 - Allow full control over `font-display` and subset loading
@@ -40,28 +46,33 @@ them would:
 Tools like [google-webfonts-helper](https://gwfh.mranftl.com/) can generate the
 font files and CSS needed.
 
-### 5. Blog post template improvements
-When creating future blog posts, ensure the template (`docs/blog-post-template.md`)
+### ~~5. Blog post template improvements~~ ✅
+
+~~When creating future blog posts, ensure the template~~ (`docs/blog-post-template.md`)
 includes:
+
 - The hamburger toggle button in the nav (now added to the first post)
 - The site footer (now added to the first post)
 - The home icon SVG in the nav logo (now added to the first post)
 - Open Graph / Twitter Card meta tags
 - Only load highlight.js on posts that actually contain code blocks
 
-### 6. Consider reducing hero CTA buttons
-The hero section has 4 CTA buttons (About, Work, Writing, Contact). This may
+### ~~6. Consider reducing hero CTA buttons~~ ✅
+
+~~The hero section has 2 CTA buttons (About, Contact). Already reduced.~~ This may
 dilute the primary call-to-action. Consider keeping just 2 (e.g. "About" as
 primary + "Contact" as ghost) and letting the navbar handle the rest.
 
-### 7. Add copy-email feedback
-The command palette's "Copy email address" action silently copies to clipboard.
-Consider adding a brief toast/snackbar notification (e.g. "Email copied!") so
-users know the action succeeded.
+### ~~7. Add copy-email feedback~~ ✅
+
+~~The command palette's "Copy email address" action now shows a toast notification
+("Email copied!") after copying to clipboard.~~
 
 ### 8. Consider splitting main.js
+
 `js/main.js` is ~3000 lines containing 5 WebGL classes and dozens of UI functions.
 As the site grows, consider splitting into separate modules:
+
 - `js/neural-network.js` — hero animation
 - `js/globe.js` — Globe3D + GlobeFallback2D
 - `js/hero-shader.js` — HeroNameShader + NoiseGradient
@@ -77,15 +88,17 @@ Comprehensive UI/UX, accessibility, performance, and code audit results.
 
 | Priority | Issue | Effort |
 |----------|-------|--------|
-| **High** | Footer claims "React" — should be removed/corrected | 1 min |
-| **High** | Command palette CV PDF path wrong (`cv.pdf` → `docs/cv.pdf`) | 1 min |
+| Priority | Issue | Effort |
+|----------|-------|--------|
+| ~~**High**~~ | ~~Footer claims "React" — should be removed/corrected~~ ✅ | ~~1 min~~ |
+| ~~**High**~~ | ~~Command palette CV PDF path wrong (`cv.pdf` → `docs/cv.pdf`)~~ ✅ | ~~1 min~~ |
 | **Medium** | `--text-faint` (#6a7788) fails WCAG AA contrast on dark bg | 10 min |
-| **Medium** | Sitemap missing `cv.html` | 2 min |
-| **Medium** | Blog post inline styles → CSS class | 2 min |
+| ~~**Medium**~~ | ~~Sitemap missing `cv.html`~~ ✅ | ~~2 min~~ |
+| ~~**Medium**~~ | ~~Blog post inline styles → CSS class~~ ✅ | ~~2 min~~ |
 | **Low** | Mobile nav focus trapping | 20 min |
-| **Low** | Print stylesheet | 10 min |
-| **Low** | Add `loading="lazy"` to photo.jpg | 1 min |
-| **Low** | Dead theme script in `cv.html` | 1 min |
+| ~~**Low**~~ | ~~Print stylesheet~~ ✅ | ~~10 min~~ |
+| ~~**Low**~~ | ~~Add `loading="lazy"` to photo.jpg~~ ✅ | ~~1 min~~ |
+| ~~**Low**~~ | ~~Dead theme script in `cv.html`~~ ✅ | ~~1 min~~ |
 
 ### Accessibility
 
@@ -106,44 +119,30 @@ Comprehensive UI/UX, accessibility, performance, and code audit results.
 - **Three.js from CDN (~640KB gzipped)**: Only a fraction of Three.js is used.
   A tree-shaken ESM import would cut size dramatically, but requires a bundler.
   Pragmatic trade-off for GitHub Pages.
-- **`world-110m.json` fetched twice**: Once by `Globe3D._buildGlobe()` and once
-  by `EuropeMap2D._loadTopoJSON()`. Share a data promise to avoid double-parse.
-- **Scroll handler reads `offsetTop`**: `setActiveLink()` reads
-  `section.offsetTop` on every scroll event, which can cause forced layout.
-  Consider IntersectionObserver for section tracking instead.
-- **`photo.jpg` served at 1088×1088 but displayed at ~200px**: Add
-  `loading="lazy"` and consider serving a smaller version.
-- **Verify `main.min.js` is up to date** with `main.js` source before publishing.
+- ~~**`world-110m.json` fetched twice**: Shared via `getTopoJSON()` cached promise.~~ ✅
+- ~~**Scroll handler reads `offsetTop`**: Replaced with `IntersectionObserver` for section tracking.~~ ✅
+- ~~**`photo.jpg` served at 1088×1088 but displayed at ~200px**: Added `loading="lazy"`.~~ ✅
+- ~~**Verify `main.min.js` is up to date** — re-minified.~~ ✅
 
 ### UI / UX
 
-- **Footer says "Built with React"**: No React in the codebase — this is vanilla
-  JS + Three.js. Remove or correct.
-- **Command palette CV PDF path**: `window.open('cv.pdf')` should be
-  `window.open('docs/cv.pdf')`.
+- ~~**Footer says "Built with React"**: Removed — now reads "Claude, Three.js & GitHub".~~ ✅
+- ~~**Command palette CV PDF path**: Fixed to `window.open('docs/cv.pdf')`.~~ ✅
 - **Defense slides link** (`docs/defense.pdf`): File does not exist in repo.
   (Already known.)
-- **Blog post inline styles**: `a-personal-website.html:83` uses inline
-  `style="display:flex;..."` — should be a CSS class.
-- **No active nav indicator on blog post pages**: Nav links point to
-  `../index.html#blog` but nothing highlights "Writing" as current.
-- **Dead theme script in `cv.html:6`**: Reads from localStorage but theme
-  switching is disabled. `index.html` doesn't have it. Remove for consistency.
+- ~~**Blog post inline styles**: Replaced with `.post-back-row` CSS class.~~ ✅
+- ~~**No active nav indicator on blog post pages**: Blog pages now set `aria-current="true"` on the Writing link.~~ ✅
+- ~~**Dead theme script in `cv.html:6`**: Removed.~~ ✅
 
 ### SEO
 
-- **Sitemap missing `cv.html`**: Add it to `sitemap.xml`.
-- **Blog structured data**: Could add `"image"` and `"wordCount"` properties to
-  the BlogPosting JSON-LD.
+- ~~**Sitemap missing `cv.html`**: Added to `sitemap.xml`.~~ ✅
+- ~~**Blog structured data**: Added `"image"` and `"wordCount"` to BlogPosting JSON-LD.~~ ✅
 - **Twitter creator**: Add `<meta name="twitter:creator">` if you have a handle.
 
 ### Code / Misc
 
-- **No print styles**: Dark background + light text wastes ink and may be
-  unreadable. Add at minimum:
-  ```css
-  @media print { body { background: white; color: black; } }
-  ```
+- ~~**No print styles**: Added `@media print` stylesheet to `styles.css`.~~ ✅
 - **`#nav-grad` SVG gradient ID** is repeated across pages. Not a current issue
   (one nav per page) but technically invalid if multiple navs were ever present.
 - **`EuropeMap2D._loadTopoJSON()`** uses relative path `'./data/world-110m.json'`
@@ -157,10 +156,12 @@ Comprehensive UI/UX, accessibility, performance, and code audit results.
 ## Nice-to-Have
 
 ### 9. Add a 404 page navbar
+
 The 404 page currently has no navigation — just a "Back to Home" button.
 Adding the standard navbar would help users find their way.
 
 ### 10. OG image for blog posts
+
 Each blog post should ideally have its own OG image for social sharing.
 The first post now falls back to `screenshot-hero.png`, but a post-specific
 image (e.g. a generated card with the title) would be better for social media.

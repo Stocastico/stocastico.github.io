@@ -351,9 +351,9 @@ class EuropeMap2D {
 
   async _loadTopoJSON() {
     try {
-      const resp = await fetch('./data/world-110m.json');
-      if (!resp.ok) return;
-      const topo = await resp.json();
+      const topo = typeof getTopoJSON === 'function'
+        ? await getTopoJSON()
+        : await fetch('./data/world-110m.json').then(r => { if (!r.ok) throw r; return r.json(); });
       const allRings = this._decodeTopoJSON(topo);
       /* Keep only rings that have at least one vertex inside Europe bounds */
       this._europeRings = allRings.filter(ring => {

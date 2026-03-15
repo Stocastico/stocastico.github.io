@@ -2796,3 +2796,55 @@ h3 {
 /* ─── Cursor Glow — removed for performance ──────────────── */
 /* The body::after radial gradient forced full-page repaints
    on every mousemove, draining battery on older hardware.     */
+
+/* ─── Post Back Row (blog posts) ─────────────────────── */
+.post-back-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* ─── Toast Notification ─────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(1rem);
+  background: var(--surface, #1a1f2e);
+  color: var(--text, #e0e6ed);
+  border: 1px solid var(--accent2, #00d4ff);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+}
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+/* ─── Print Styles ───────────────────────────────────── */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  #navbar, .reading-progress, .scroll-hint, .side-dots,
+  .back-to-top, .cmd-overlay, #noise-canvas, #neural-canvas,
+  .hero-orb, #name-canvas, #globe-canvas, #europe-canvas,
+  .globe-legend, .globe-subtitle, .hero-actions, .nav-toggle,
+  .cmd-trigger-hint {
+    display: none !important;
+  }
+  .section, .section-alt {
+    background: white;
+    color: black;
+  }
+  a { color: #0052cc; }
+  .site-footer { background: white; color: #333; }
+}

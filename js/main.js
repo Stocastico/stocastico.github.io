@@ -17,6 +17,19 @@
 
 'use strict';
 
+/* Shared TopoJSON cache — avoids double-fetching world-110m.json */
+if (typeof window !== 'undefined') {
+  window._topoPromise = null;
+}
+function getTopoJSON() {
+  if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
+  if (!window._topoPromise) {
+    window._topoPromise = fetch('./data/world-110m.json')
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  return window._topoPromise;
+}
+
 function isLowPowerDevice() {
   const nav = typeof navigator !== 'undefined' ? navigator : null;
   const cores = nav && typeof nav.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : 8;
@@ -825,9 +838,7 @@ class Globe3D {
     this.pivot.add(new _THREE.Mesh(new _THREE.SphereGeometry(1, 64, 64), mat));
 
     try {
-      const resp = await fetch('./data/world-110m.json');
-      if (!resp.ok) throw new Error(resp.status);
-      const topo  = await resp.json();
+      const topo  = await getTopoJSON();
       const rings = this._decodeTopoJSON(topo);
       const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
       mat.map = tex;
@@ -1433,6 +1444,13 @@ function initNavbar() {
 
   const progressBar = document.getElementById('reading-progress');
 
+  /* ── Blog page: highlight "Writing" nav link ──────────── */
+  const isBlogPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/blog/');
+  if (isBlogPage) {
+    const blogLink = document.querySelector('#nav-links a[href*="#blog"]');
+    if (blogLink) blogLink.setAttribute('aria-current', 'true');
+  }
+
   const links = typeof document.querySelectorAll === 'function'
     ? Array.from(document.querySelectorAll('#nav-links a[href^="#"]'))
     : [];
@@ -1440,18 +1458,35 @@ function initNavbar() {
     .map((link) => document.querySelector(link.getAttribute('href')))
     .filter(Boolean);
 
+  /* ── Section tracking with IntersectionObserver ────────── */
+  let activeId = targets[0]?.id || '';
   const setActiveLink = () => {
-    if (!links.length || !targets.length) return;
-    const checkpoint = window.scrollY + (window.innerHeight * 0.35);
-    let activeId = targets[0]?.id;
-    targets.forEach((section) => {
-      if (checkpoint >= section.offsetTop) activeId = section.id;
-    });
     links.forEach((link) => {
       const isActive = link.getAttribute('href') === `#${activeId}`;
       link.setAttribute('aria-current', isActive ? 'true' : 'false');
     });
   };
+
+  if (targets.length && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeId = entry.target.id;
+          setActiveLink();
+        }
+      });
+    }, { rootMargin: '-35% 0px -65% 0px' });
+    targets.forEach((t) => observer.observe(t));
+  } else if (targets.length) {
+    /* Fallback for browsers without IntersectionObserver */
+    window.addEventListener('scroll', () => {
+      const checkpoint = window.scrollY + (window.innerHeight * 0.35);
+      targets.forEach((section) => {
+        if (checkpoint >= section.offsetTop) activeId = section.id;
+      });
+      setActiveLink();
+    }, { passive: true });
+  }
 
   const updateReadingProgress = () => {
     if (!progressBar) return;
@@ -1464,7 +1499,6 @@ function initNavbar() {
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     nav.classList.toggle('scrolled', y > 20);
-    setActiveLink();
     updateReadingProgress();
   }, { passive: true });
 
@@ -1486,6 +1520,23 @@ function initBackToTop() {
   btn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST NOTIFICATION
+   ═══════════════════════════════════════════════════════════ */
+function showToast(message) {
+  let el = document.querySelector('.toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'toast';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.add('visible');
+  clearTimeout(el._tid);
+  el._tid = setTimeout(() => el.classList.remove('visible'), 2500);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1513,7 +1564,7 @@ function initCommandPalette() {
       label: 'Open CV PDF',
       hint: 'Download / view',
       icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v12M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
-      action() { window.open('cv.pdf', '_blank'); },
+      action() { window.open('docs/cv.pdf', '_blank'); },
     },
     {
       label: 'Copy email address',
@@ -1522,7 +1573,7 @@ function initCommandPalette() {
       action() {
         const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
         if (email && email !== 'your.email@example.com') {
-          navigator.clipboard?.writeText(email).catch(() => {});
+          navigator.clipboard?.writeText(email).then(() => showToast('Email copied!')).catch(() => {});
         }
       },
     },
