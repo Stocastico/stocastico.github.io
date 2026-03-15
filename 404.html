@@ -53,6 +53,30 @@
 </head>
 
 <body>
+  <!-- ═══════════════ NAVIGATION ═══════════════ -->
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#research">Work</a></li>
+        <li><a href="/#blog">Writing</a></li>
+        <li><a href="/#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
   <main class="error-page">
     <div class="error-code">404</div>
     <h1 class="error-title">Page not found</h1>

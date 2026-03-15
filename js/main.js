@@ -1834,6 +1834,18 @@ function initMobileMenu() {
   if (typeof document.addEventListener === 'function') {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && toggle.classList.contains('open')) setMenuState(false);
+
+      /* Focus trapping when mobile menu is open */
+      if (e.key === 'Tab' && toggle.classList.contains('open')) {
+        const focusable = [toggle, ...links.querySelectorAll('a')];
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
     });
 
     document.addEventListener('click', (e) => {
@@ -2813,6 +2825,10 @@ class NoiseGradient {
     const s = this.gl.createShader(type);
     this.gl.shaderSource(s, src);
     this.gl.compileShader(s);
+    if (!this.gl.getShaderParameter(s, this.gl.COMPILE_STATUS)) {
+      console.error('[NoiseGradient shader]', this.gl.getShaderInfoLog(s));
+      return null;
+    }
     return s;
   }
 
@@ -2867,10 +2883,17 @@ class NoiseGradient {
          gl_FragColor=vec4(col,1.0);
        }`);
 
+    if (!vert || !frag) { this.canvas.style.display = 'none'; return; }
+
     this.prog = gl.createProgram();
     gl.attachShader(this.prog, vert);
     gl.attachShader(this.prog, frag);
     gl.linkProgram(this.prog);
+    if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+      console.error('[NoiseGradient link]', gl.getProgramInfoLog(this.prog));
+      this.canvas.style.display = 'none';
+      return;
+    }
     gl.useProgram(this.prog);
 
     /* Full-screen quad */
@@ -3011,6 +3034,13 @@ function initCmdTriggerHint() {
    INIT — runs when DOM is ready
    ═══════════════════════════════════════════════════════════ */
 if (typeof document !== 'undefined') {
+  /* Catch unhandled promise rejections (e.g. failed fetches, WebGL errors) */
+  if (typeof window !== 'undefined') {
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('[Unhandled rejection]', e.reason);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
 
   /* Render dynamic content (static sections are already in HTML) */
