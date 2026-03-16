@@ -480,6 +480,20 @@ const LOCATIONS = {
     },
     {
       "type": "holiday",
+      "name": "Palma de Mallorca, Spain",
+      "lat": 39.56958,
+      "lon": 2.65007,
+      "info": "Holiday"
+    },
+    {
+      "type": "holiday",
+      "name": "Santa Cruz de Tenerife, Spain",
+      "lat": 28.46718,
+      "lon": -16.25078,
+      "info": "Holiday"
+    },
+    {
+      "type": "holiday",
       "name": "Gant, Belgium",
       "lat": 51.05373,
       "lon": 3.72098,

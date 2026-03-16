@@ -754,5 +754,13 @@
   "Höfn, Iceland": {
     "lat": 64.2532647,
     "lon": -15.2080441
+  },
+  "Palma de Mallorca, Spain": {
+    "lat": 39.5695818,
+    "lon": 2.6500745
+  },
+  "Santa Cruz de Tenerife, Spain": {
+    "lat": 28.467178,
+    "lon": -16.2507843
   }
 }

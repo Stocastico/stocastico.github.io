@@ -224,6 +224,12 @@ pins:
   - type: holiday
     name: Burgos, Spain
     info: Holiday
+  - type: holiday
+    name: Palma de Mallorca, Spain
+    info: Holiday
+  - type: holiday
+    name: Santa Cruz de Tenerife, Spain
+    info: Holiday
 # Benelux
   - type: holiday
     name: Gant, Belgium
