@@ -82,7 +82,9 @@ class NeuralNetwork {
     this._isLowPower = isLowPowerDevice();
     this.particleCount = this._isLowPower ? 84 : NeuralNetwork.PARTICLE_COUNT;
     this.connectionDist = this._isLowPower ? 145 : NeuralNetwork.CONNECTION_DIST;
-    this.pixelRatioCap = this._isLowPower ? 1.5 : 2;
+    /* Cap at 1.0 so WebGL line segments stay at least 1 CSS-pixel wide
+       on HiDPI/Retina screens (WebGL clamps linewidth to 1 device pixel). */
+    this.pixelRatioCap = 1;
     this.lineFrameStep = this._isLowPower ? 2 : 1;
     this._lineTick = 0;
 
@@ -208,7 +210,9 @@ class NeuralNetwork {
       vertexColors: true,
       blending: THREE.AdditiveBlending,
       transparent: true,
+      opacity: 1.0,
       depthWrite: false,
+      linewidth: 2,   /* respected on some platforms; harmless no-op elsewhere */
     });
 
     this.lines = new THREE.LineSegments(geo, mat);
@@ -275,7 +279,9 @@ class NeuralNetwork {
         if (d2 >= dist2) continue;
 
         const d = Math.sqrt(d2);         /* sqrt only on confirmed connections */
-        const a = 1 - d / dist;
+        /* Quadratic falloff keeps close connections bright while far ones fade.
+           Minimum 0.18 ensures even distant connections remain visible on HiDPI. */
+        const a = Math.max(0.18, (1 - d / dist) ** 0.65);
         const s = seg * 6;
 
         lp[s] = ax; lp[s + 1] = ay; lp[s + 2] = az;
@@ -734,7 +740,7 @@ class Globe3D {
     const ctx = cvs.getContext('2d');
 
     /* Deep-ocean background */
-    ctx.fillStyle = '#020b18';
+    ctx.fillStyle = '#030d1c';
     ctx.fillRect(0, 0, W, H);
 
     /* lon, lat → canvas pixel (equirectangular) */
@@ -742,7 +748,7 @@ class Globe3D {
 
     /* Antarctica: filled band at bottom of map */
     const antY = (90 - (-68)) / 180 * H;
-    ctx.fillStyle = '#081624';
+    ctx.fillStyle = '#0e2640';
     ctx.fillRect(0, antY, W, H - antY);
 
     /* Draw one ring with a multi-pass neon glow stroke */
@@ -755,11 +761,11 @@ class Globe3D {
         ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = '#081624';
+      ctx.fillStyle = '#0e2640';
       ctx.fill();
-      /* outer glow halo */ ctx.lineWidth = 4;   ctx.strokeStyle = 'rgba(0,185,235,0.18)'; ctx.stroke();
-      /* mid glow        */ ctx.lineWidth = 2;   ctx.strokeStyle = 'rgba(0,210,255,0.50)'; ctx.stroke();
-      /* bright core     */ ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)'; ctx.stroke();
+      /* outer glow halo */ ctx.lineWidth = 5;   ctx.strokeStyle = 'rgba(0,185,235,0.25)'; ctx.stroke();
+      /* mid glow        */ ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,210,255,0.60)'; ctx.stroke();
+      /* bright core     */ ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(155,242,255,1.00)'; ctx.stroke();
     };
 
     /* Paint European land with dark neon violet BEFORE the neon coastlines
@@ -800,7 +806,7 @@ class Globe3D {
       ctx.closePath();
       ctx.clip();
       /* Fill — only visible where both clips overlap (land in Europe) */
-      ctx.fillStyle = '#3d1f5c';
+      ctx.fillStyle = '#4e2870';
       ctx.fillRect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
       ctx.restore();
     });
@@ -829,11 +835,8 @@ class Globe3D {
     const _THREE = THREE; /* eslint-disable-line no-undef */
     const cvs = document.createElement('canvas');
 
-    const mat = new _THREE.MeshPhongMaterial({
+    const mat = new _THREE.MeshBasicMaterial({
       color: 0xffffff,
-      emissive: 0x010810,
-      specular: new _THREE.Color(0x001018),
-      shininess: 3,
     });
     this.pivot.add(new _THREE.Mesh(new _THREE.SphereGeometry(1, 64, 64), mat));
 
@@ -949,13 +952,23 @@ class Globe3D {
 
       /* Dot — small, similar to trip city-stop dots */
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.005 : 0.004, 10, 10),
+        new THREE.SphereGeometry(isHome ? 0.006 : 0.005, 10, 10),
         new THREE.MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
-      dot.userData = { name: loc.name, info: loc.info, type: loc.type };
       this.pivot.add(dot);
-      this.markerMeshes.push(dot);
+
+      /* Invisible hit-test sphere — much larger for reliable hover detection.
+         Raycaster threshold is ignored for Mesh objects, so we need actual
+         geometry large enough to intersect the ray. */
+      const hitArea = new THREE.Mesh(
+        new THREE.SphereGeometry(0.025, 8, 8),
+        new THREE.MeshBasicMaterial({ visible: false }),
+      );
+      hitArea.position.copy(pos);
+      hitArea.userData = { name: loc.name, info: loc.info, type: loc.type };
+      this.pivot.add(hitArea);
+      this.markerMeshes.push(hitArea);
 
       /* Subtle halo ring — just enough to make the dot readable */
       const [rIn, rOut, op] = isHome ? [0.006, 0.008, 0.30] : [0.005, 0.0065, 0.18];
@@ -1041,9 +1054,17 @@ class Globe3D {
           new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 }),
         );
         cdot.position.copy(cpos);
-        cdot.userData = { name: city.name, info: trip.name, type: 'trip' };
         this.pivot.add(cdot);
-        this.markerMeshes.push(cdot);
+
+        /* Invisible hit-test sphere for reliable hover */
+        const cHit = new THREE.Mesh(
+          new THREE.SphereGeometry(0.025, 8, 8),
+          new THREE.MeshBasicMaterial({ visible: false }),
+        );
+        cHit.position.copy(cpos);
+        cHit.userData = { name: city.name, info: trip.name, type: 'trip' };
+        this.pivot.add(cHit);
+        this.markerMeshes.push(cHit);
       });
 
       /* Traveller dot — explicit opacity:0 to avoid a 1-frame opaque flash */
@@ -1189,11 +1210,12 @@ class Globe3D {
       const hits = this.raycaster.intersectObjects(this.markerMeshes);
       if (hits.length > 0) {
         const hit = hits[0].object;
-        /* Scale up the hovered marker; reset the previously hovered one */
+        /* Scale up the hovered hit-area; reset the previously hovered one */
         if (this._hoveredMesh !== hit) {
           if (this._hoveredMesh) this._hoveredMesh.scale.setScalar(1);
           hit.scale.setScalar(2.0);
           this._hoveredMesh = hit;
+          this.canvas.style.cursor = 'pointer';
         }
         const { name, info, type } = hit.userData;
         if (this.tooltip) {
@@ -1210,7 +1232,7 @@ class Globe3D {
           this.tooltip.classList.add('visible');
         }
       } else {
-        if (this._hoveredMesh) { this._hoveredMesh.scale.setScalar(1); this._hoveredMesh = null; }
+        if (this._hoveredMesh) { this._hoveredMesh.scale.setScalar(1); this._hoveredMesh = null; this.canvas.style.cursor = ''; }
         this.tooltip?.classList.remove('visible');
       }
     }
@@ -2615,15 +2637,16 @@ class HeroNameShader {
                        + vec2(uTime * 0.11, uTime * 0.07));
         float f2 = fbm(vec2(uv.x * asp * 2.2 + 4.3, uv.y * 2.2 + 3.1)
                        + vec2(uTime * 0.08, uTime * 0.14));
-        vec2 disp = vec2(f1 - 0.5, f2 - 0.5) * 0.009;
+        vec2 disp = vec2(f1 - 0.5, f2 - 0.5) * 0.005;
 
         /* mouse repulsion / warping */
         vec2  toM = (uMouse - uv) * vec2(asp, 1.0);
         float md  = length(toM);
-        disp     -= (toM / (md * md + 0.06)) * 0.007;
+        disp     -= (toM / (md * md + 0.06)) * 0.004;
 
-        /* chromatic aberration — 3 wavelengths offset horizontally */
-        float ab = 0.003;
+        /* chromatic aberration — 3 wavelengths offset horizontally.
+           Subtle enough to keep Playfair Display serifs crisp. */
+        float ab = 0.0012;
         float aR = texture2D(uTex, clamp(uv + disp + vec2( ab, 0.0), 0.0, 1.0)).a;
         float aG = texture2D(uTex, clamp(uv + disp,                  0.0, 1.0)).a;
         float aB = texture2D(uTex, clamp(uv + disp - vec2( ab, 0.0), 0.0, 1.0)).a;
@@ -2872,14 +2895,15 @@ class NoiseGradient {
          vec2 r=vec2(fbm(uv*1.4+2.0*q+vec2(1.7,9.2)+0.15*t),
                      fbm(uv*1.4+2.0*q+vec2(8.3,2.8)+0.126*t));
          float f=fbm(uv*1.4+2.5*r);
-         /* Palette: deep dark → indigo-violet → cyan */
-         vec3 col=mix(vec3(0.047,0.063,0.102),
-                      vec3(0.424,0.392,1.000),
+         /* Palette: deep dark → muted indigo-violet → subdued cyan.
+            Toned down to avoid an overly blue wash over the hero. */
+         vec3 col=mix(vec3(0.035,0.040,0.068),
+                      vec3(0.300,0.270,0.700),
                       clamp(f*2.0-0.15,0.0,1.0));
          col=mix(col,
-                 vec3(0.000,0.831,1.000),
+                 vec3(0.000,0.580,0.720),
                  clamp(f*f*4.0-0.4,0.0,1.0));
-         col*=f*1.35+0.12;
+         col*=f*1.05+0.08;
          gl_FragColor=vec4(col,1.0);
        }`);
 
