@@ -51,7 +51,7 @@
 
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
 
   /* Spacing */
   --section-py: clamp(6rem, 11vw, 10rem);
@@ -455,7 +455,7 @@ h3 {
 }
 
 .hero-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(3.5rem, 9vw, 8.5rem);
   font-weight: 700;
   line-height: 1.1;
@@ -672,7 +672,7 @@ h3 {
 }
 
 .section-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3.25rem);
   background: linear-gradient(135deg, var(--text) 50%, var(--text-muted));
   -webkit-background-clip: text;
@@ -752,7 +752,7 @@ h3 {
 }
 
 .photo-initials {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 4rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -802,7 +802,7 @@ h3 {
 
 .stat-number {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;
@@ -1140,7 +1140,7 @@ h3 {
 }
 
 .pub-year {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--accent);
@@ -2069,7 +2069,7 @@ h3 {
 }
 
 .globe-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.25rem);
   background: linear-gradient(135deg, var(--text) 50%, var(--text-muted));
   -webkit-background-clip: text;
@@ -2415,7 +2415,7 @@ h3 {
 }
 
 .post-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 3rem);
   line-height: 1.2;
   margin-bottom: 1rem;

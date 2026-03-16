@@ -2499,7 +2499,7 @@ function initAnimatedFavicon() {
     ctx.shadowBlur  = 10;
     ctx.shadowColor = '#6c63ffbb';
     ctx.fillStyle   = '#6c63ff';
-    ctx.font        = 'bold 44px "Playfair Display", Georgia, serif';
+    ctx.font        = 'bold 44px "Outfit", "Inter", system-ui, sans-serif';
     ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('S', 0, 2); /* +2 px optical centre correction */
@@ -2508,7 +2508,7 @@ function initAnimatedFavicon() {
     link.href = canvas.toDataURL('image/png');
   }
 
-  /* Render after fonts are loaded so Playfair Display is available */
+  /* Render after fonts are loaded so Outfit is available */
   const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
     ? document.fonts.ready
     : Promise.resolve();
@@ -2645,7 +2645,7 @@ class HeroNameShader {
         disp     -= (toM / (md * md + 0.06)) * 0.004;
 
         /* chromatic aberration — 3 wavelengths offset horizontally.
-           Subtle enough to keep Playfair Display serifs crisp. */
+           Subtle enough to keep letterforms crisp. */
         float ab = 0.0012;
         float aR = texture2D(uTex, clamp(uv + disp + vec2( ab, 0.0), 0.0, 1.0)).a;
         float aG = texture2D(uTex, clamp(uv + disp,                  0.0, 1.0)).a;
@@ -2735,8 +2735,8 @@ class HeroNameShader {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    /* Line 1 & 2: Playfair Display Bold — consistent elegant serif */
-    ctx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
+    /* Line 1 & 2: Outfit Bold — clean geometric sans-serif */
+    ctx.font = `700 ${fs}px 'Outfit', 'Inter', system-ui, sans-serif`;
     ctx.fillText('Stefano', 0, 0);
     ctx.fillText('Masneri', 0, lh);
 
@@ -2755,7 +2755,7 @@ class HeroNameShader {
     const measureCtx = this._measureCanvas.getContext('2d');
     let textW = fallbackW;
     if (measureCtx && typeof measureCtx.measureText === 'function') {
-      measureCtx.font = `700 ${fs}px 'Playfair Display', Georgia, serif`;
+      measureCtx.font = `700 ${fs}px 'Outfit', 'Inter', system-ui, sans-serif`;
       const l1 = measureCtx.measureText('Stefano').width;
       const l2 = measureCtx.measureText('Masneri').width;
       textW = Math.max(fallbackW, l1, l2) + fs * 0.28;
