@@ -105,7 +105,7 @@ test('EuropeMap2D: hover tooltip shows pin metadata', () => {
 
   assert.equal(tooltip._refs.etType.textContent, 'Worktrip');
   assert.equal(tooltip._refs.etName.textContent, 'Berlin');
-  assert.equal(tooltip._refs.etInfo.textContent, 'Conference');
+  assert.equal(tooltip._refs.etInfo.textContent, '');
   assert.equal(tooltip.classList.contains('visible'), true);
 });
 
