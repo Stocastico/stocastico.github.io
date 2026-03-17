@@ -12,6 +12,7 @@ Before going live, complete the following tasks:
 - [x] Remove placeholder blog posts
 - [x] Add blog post 1: Why a blog in 2026
 - [ ] Add blog post 2: How I keep up-to-date with all things AI
+- [ ] Add blog post 3: How I made this website
 - [x] Select three papers and add correct links
 - [x] Update texts in the CV section (skills, languages etc)
 
