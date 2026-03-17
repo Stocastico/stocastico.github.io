@@ -682,46 +682,56 @@ h3 {
 
 /* ─── 9. About Section ──────────────────────────────────── */
 /* Asymmetric layout: bio on the left, globe filling the right half */
-.about-split {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 3rem;
-  align-items: start;
-}
-
-.about-right {
-  position: sticky;
-  top: calc(var(--nav-h) + 1.5rem);
-}
-
-.about-right .globe-header {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-/* Shrink the globe scene in the split layout */
-.about-right .globe-scene {
-  height: clamp(280px, 42vw, 440px);
-}
-
-/* Inside the left column: photo + stats stacked above the bio text
-   so the bio gets the full width of the column.                     */
-.about-grid {
+/* ─── About: top area (photo + stats + bio) ──────────────── */
+.about-top {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin-bottom: 3rem;
 }
 
-/* Photo card + stats sit side by side in a compact row */
 .about-photo-col {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   gap: 1.5rem;
+  flex-shrink: 0;
 }
 
 .about-photo-col .stats-row {
-  flex: 1;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
   margin-top: 0;
+}
+
+/* ─── About: maps area (globe + europe side by side) ─────── */
+.about-maps {
+  margin-top: 1rem;
+}
+
+.about-maps .globe-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.about-maps .globe-intro {
+  max-width: 52ch;
+  margin-inline: auto;
+}
+
+.maps-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.maps-col--globe .globe-scene {
+  height: clamp(300px, 36vw, 460px);
+}
+
+.maps-col--europe .europe-scene {
+  height: clamp(300px, 36vw, 460px);
 }
 
 .photo-card {
@@ -1957,30 +1967,32 @@ h3 {
 
 /* ─── 18. Responsive ────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .about-split {
-    grid-template-columns: 1fr;
-  }
-
-  .about-right {
-    position: static;
-  }
-
-  /* Stack stats below the photo instead of beside it */
-  .about-photo-col {
+  .about-top {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .about-photo-col {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .about-photo-col .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+    flex: 1;
   }
 
   .about-photo-col .photo-card {
     max-width: 180px;
   }
+
+  .maps-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
-  .about-grid {
-    grid-template-columns: 1fr;
-  }
-
   .photo-card {
     max-width: 300px;
     margin-inline: auto;
@@ -2230,43 +2242,12 @@ h3 {
 }
 
 /* ─── 18b. Europe 2D Map (About section) ───────────────────────── */
-.europe-section {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-top: 2.5rem;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  contain: layout style paint;
-}
-
-.europe-header {
-  display: none;
-}
-
-.europe-subtitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.europe-hint {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
 .europe-scene {
   position: relative;
   width: 100%;
-  max-height: 480px;
   background: #020b18;
   border: 1px solid var(--border);
-  border-radius: 0.6rem;
+  border-radius: var(--r-xl);
   overflow: hidden;
 }
 

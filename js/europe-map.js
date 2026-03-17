@@ -42,7 +42,7 @@ class EuropeMap2D {
     this.filteredTrips = [];
 
     /* Europe bounding box (simplified): roughly [lon_min, lat_min, lon_max, lat_max] */
-    this.bounds = { minLon: -10, maxLon: 40, minLat: 35, maxLat: 71 };
+    this.bounds = { minLon: -14, maxLon: 40, minLat: 35, maxLat: 71 };
 
     /* TopoJSON-decoded land rings (filled async) */
     this._europeRings = [];
@@ -77,13 +77,23 @@ class EuropeMap2D {
     const centerLat = (this.bounds.minLat + this.bounds.maxLat) / 2;
     this._cosLat = Math.cos(centerLat * Math.PI / 180);
 
-    this.w = this.parent.clientWidth || 800;
-    /* Uniform scale: correct for latitude so shapes aren't stretched */
-    this.h = Math.round(this.w * latRange / (lonRange * this._cosLat));
-    this.canvas.width = this.w;
-    this.canvas.height = this.h;
+    const containerW = this.parent.clientWidth || 800;
+    const containerH = this.parent.clientHeight || 600;
 
-    this._scale = this.w / (lonRange * this._cosLat);
+    /* Fit-inside: choose the scale that makes the full map visible */
+    const scaleByW = containerW / (lonRange * this._cosLat);
+    const scaleByH = containerH / latRange;
+    this._scale = Math.min(scaleByW, scaleByH);
+
+    this.w = Math.round(lonRange * this._cosLat * this._scale);
+    this.h = Math.round(latRange * this._scale);
+
+    /* Center the map within the container */
+    this._offsetX = Math.round((containerW - this.w) / 2);
+    this._offsetY = Math.round((containerH - this.h) / 2);
+
+    this.canvas.width = containerW;
+    this.canvas.height = containerH;
 
     this._rect = this.canvas.getBoundingClientRect();
   }
@@ -150,16 +160,16 @@ class EuropeMap2D {
   }
 
   _lonToX(lon) {
-    return (lon - this.bounds.minLon) * this._cosLat * this._scale;
+    return (lon - this.bounds.minLon) * this._cosLat * this._scale + (this._offsetX || 0);
   }
 
   _latToY(lat) {
-    return (this.bounds.maxLat - lat) * this._scale;
+    return (this.bounds.maxLat - lat) * this._scale + (this._offsetY || 0);
   }
 
   _xyToLonLat(x, y) {
-    const lon = x / (this._cosLat * this._scale) + this.bounds.minLon;
-    const lat = this.bounds.maxLat - y / this._scale;
+    const lon = (x - (this._offsetX || 0)) / (this._cosLat * this._scale) + this.bounds.minLon;
+    const lat = this.bounds.maxLat - (y - (this._offsetY || 0)) / this._scale;
     return { lon, lat };
   }
 
@@ -167,9 +177,15 @@ class EuropeMap2D {
     if (typeof this.canvas.addEventListener !== 'function') return;
 
     this.canvas.addEventListener('mousemove', (e) => {
-      if (!this._rect) this._rect = this.canvas.getBoundingClientRect();
-      this.mouse.x = e.clientX - this._rect.left;
-      this.mouse.y = e.clientY - this._rect.top;
+      this._rect = this.canvas.getBoundingClientRect();
+      /* Scale from CSS pixels to canvas bitmap pixels */
+      const scaleX = this.canvas.width / this._rect.width;
+      const scaleY = this.canvas.height / this._rect.height;
+      this.mouse.x = (e.clientX - this._rect.left) * scaleX;
+      this.mouse.y = (e.clientY - this._rect.top) * scaleY;
+      /* Keep CSS-space coords for tooltip positioning */
+      this._cssMouseX = e.clientX - this._rect.left;
+      this._cssMouseY = e.clientY - this._rect.top;
       this._mouseOver = true;
       this._rayhit();
       this._ensureAnimating();
@@ -217,11 +233,11 @@ class EuropeMap2D {
     
     if (ttType) ttType.textContent = `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
     if (ttName) ttName.textContent = pin.name;
-    if (ttInfo) ttInfo.textContent = pin.info || '';
+    if (ttInfo) ttInfo.textContent = '';
     
     this.tooltip.classList.add('visible');
-    this.tooltip.style.left = `${this.mouse.x + 10}px`;
-    this.tooltip.style.top = `${this.mouse.y - 20}px`;
+    this.tooltip.style.left = `${(this._cssMouseX || this.mouse.x) + 10}px`;
+    this.tooltip.style.top = `${(this._cssMouseY || this.mouse.y) - 20}px`;
   }
 
   _hideTooltip() {
@@ -261,7 +277,7 @@ class EuropeMap2D {
 
     /* Clear */
     ctx.fillStyle = '#020b18';
-    ctx.fillRect(0, 0, this.w, this.h);
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     /* Draw continental Europe with neon glow */
     this._drawEuropeBorders();
@@ -277,7 +293,7 @@ class EuropeMap2D {
     /* Draw map border */
     ctx.strokeStyle = 'rgba(0,210,255,0.3)';
     ctx.lineWidth = 1.5;
-    ctx.strokeRect(0, 0, this.w, this.h);
+    ctx.strokeRect(this._offsetX || 0, this._offsetY || 0, this.w, this.h);
   }
 
   _drawTrips(t) {
@@ -399,18 +415,21 @@ class EuropeMap2D {
     ctx.strokeStyle = 'rgba(0,210,255,0.08)';
     ctx.lineWidth = 0.5;
 
+    const ox = this._offsetX || 0;
+    const oy = this._offsetY || 0;
+
     for (let lon = 0; lon <= 30; lon += 10) {
       const x = this._lonToX(lon);
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, this.h);
+      ctx.moveTo(x, oy);
+      ctx.lineTo(x, oy + this.h);
       ctx.stroke();
     }
     for (let lat = 40; lat <= 65; lat += 5) {
       const y = this._latToY(lat);
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.w, y);
+      ctx.moveTo(ox, y);
+      ctx.lineTo(ox + this.w, y);
       ctx.stroke();
     }
 
@@ -419,7 +438,7 @@ class EuropeMap2D {
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, this.w, this.h);
+    ctx.rect(this._offsetX || 0, this._offsetY || 0, this.w, this.h);
     ctx.clip();
 
     /* Classify rings: "local" (small islands/countries) vs "global" (continent) */

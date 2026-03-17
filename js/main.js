@@ -1122,9 +1122,8 @@ class Globe3D {
         this.rotY += dx * 0.005;
         this.prevMouse = { x, y };
       }
-      /* Use cached rect — avoids a forced reflow (getBoundingClientRect) on
-         every mousemove event.  Invalidated on resize. */
-      if (!this._rect) this._rect = cv.getBoundingClientRect();
+      /* Refresh rect every move to avoid stale position after scroll/layout changes */
+      this._rect = cv.getBoundingClientRect();
       const rect = this._rect;
       this._mpos = { x: x - rect.left, y: y - rect.top };
       this.mouse.x = ((x - rect.left) / rect.width) * 2 - 1;
@@ -1222,7 +1221,7 @@ class Globe3D {
           this._ttType.textContent = Globe3D.TT_LABEL[type] || type;
           this._ttType.style.color = Globe3D.TT_COLOR[type] || '#e8edf8';
           this._ttName.textContent = name;
-          this._ttInfo.textContent = info;
+          this._ttInfo.textContent = '';
           let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
           if (tx + 220 > this.w) tx = this._mpos.x - 228;
           if (ty + 90 > this.h) ty = this._mpos.y - 96;
