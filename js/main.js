@@ -1942,6 +1942,11 @@ function initEmailObfuscation() {
     card.setAttribute('aria-label', `Send email to ${email}`);
   };
 
+  card.addEventListener('mouseenter', () => {
+    if (card.dataset.emailRevealed === 'true') return;
+    revealEmail();
+  });
+
   card.addEventListener('click', (e) => {
     if (card.dataset.emailRevealed === 'true') return;
     e.preventDefault();
