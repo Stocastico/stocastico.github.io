@@ -208,6 +208,7 @@ class EuropeMap2D {
     this._hoveredPin = null;
     const hitDist = 10;  /* px hitbox radius — generous for small dots */
 
+    /* Check pins first (higher priority) */
     for (const pin of this.filteredPins) {
       const dx = this.mouse.x - pin.x;
       const dy = this.mouse.y - pin.y;
@@ -218,7 +219,48 @@ class EuropeMap2D {
         return;
       }
     }
+
+    /* Check trip arcs */
+    const tripHitDist = 8;
+    for (const seg of this.filteredTrips) {
+      if (this._distToBezier(this.mouse.x, this.mouse.y, seg) < tripHitDist) {
+        this._showTripTooltip(seg);
+        return;
+      }
+    }
+
     this._hideTooltip();
+  }
+
+  /* Approximate distance from point to quadratic bezier by sampling */
+  _distToBezier(px, py, seg) {
+    let minD = Infinity;
+    const steps = 12;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const u = 1 - t;
+      const x = u * u * seg.x0 + 2 * u * t * seg.cpX + t * t * seg.x1;
+      const y = u * u * seg.y0 + 2 * u * t * seg.cpY + t * t * seg.y1;
+      const d = Math.hypot(px - x, py - y);
+      if (d < minD) minD = d;
+    }
+    return minD;
+  }
+
+  _showTripTooltip(seg) {
+    if (!this.tooltip) return;
+
+    const ttType = this._ttType || this.tooltip.querySelector('.et-type');
+    const ttName = this._ttName || this.tooltip.querySelector('.et-name');
+    const ttInfo = this._ttInfo || this.tooltip.querySelector('.et-info');
+
+    if (ttType) ttType.textContent = 'Trip';
+    if (ttName) ttName.textContent = seg.name;
+    if (ttInfo) ttInfo.textContent = '';
+
+    this.tooltip.classList.add('visible');
+    this.tooltip.style.left = `${(this._cssMouseX || this.mouse.x) + 10}px`;
+    this.tooltip.style.top = `${(this._cssMouseY || this.mouse.y) - 20}px`;
   }
 
   _showTooltip(pin) {
