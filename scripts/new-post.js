@@ -320,13 +320,16 @@ function buildHtml(fm, bodyHtml) {
     ? (fm.url.startsWith('http') ? fm.url : `${SITE_BASE_URL}/${fm.url.replace(/^\//, '')}`)
     : '';
   const canonicalHtml = postUrl ? `\n  <link rel="canonical" href="${escapeHtml(postUrl)}" />` : '';
+  const ogImage = fm.image
+    ? `${SITE_BASE_URL}/${fm.image.replace(/^\//, '')}`
+    : `${SITE_BASE_URL}/img/screenshot-hero.png`;
   const ogHtml = postUrl ? `
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type"        content="article" />
   <meta property="og:url"         content="${escapeHtml(postUrl)}" />
   <meta property="og:title"       content="${escapeHtml(fm.title)} — Stefano Masneri" />
   <meta property="og:description" content="${escapeHtml(fm.excerpt)}" />
-  <meta property="og:image"       content="https://stocastico.github.io/img/screenshot-hero.png" />
+  <meta property="og:image"       content="${escapeHtml(ogImage)}" />
   <meta property="og:image:alt"   content="${escapeHtml(fm.title)}" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta property="og:locale"      content="en_GB" />
@@ -335,7 +338,7 @@ function buildHtml(fm, bodyHtml) {
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${escapeHtml(fm.title)} — Stefano Masneri" />
   <meta name="twitter:description" content="${escapeHtml(fm.excerpt)}" />
-  <meta name="twitter:image"       content="https://stocastico.github.io/img/screenshot-hero.png" />` : '';
+  <meta name="twitter:image"       content="${escapeHtml(ogImage)}" />` : '';
 
   const jsonLd = `
   <!-- JSON-LD structured data -->
@@ -346,6 +349,7 @@ function buildHtml(fm, bodyHtml) {
     "headline": "${escapeHtml(fm.title)}",
     "description": "${escapeHtml(fm.excerpt)}",
     "url": "${escapeHtml(postUrl)}",
+    "image": "${escapeHtml(ogImage)}",
     "datePublished": "${escapeHtml(fm.date)}",
     "author": {
       "@type": "Person",

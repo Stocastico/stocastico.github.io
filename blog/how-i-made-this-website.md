@@ -5,6 +5,7 @@ excerpt: "A concise summary of your post that will appear on the blog index. Kee
 tag: "Research"
 readMin: 5
 lead: "Optional: An opening sentence or hook that appears in large text at the beginning of the post."
+image: "img/pixel-art-sleepless-developer.png"
 ---
 
 ![Pixel art of a tired developer holding a baby at 3:47 AM, with a thought bubble showing software architecture diagrams](../img/pixel-art-sleepless-developer.png)
