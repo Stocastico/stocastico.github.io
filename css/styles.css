@@ -2376,6 +2376,68 @@ h3 {
   margin-top: auto;
 }
 
+.blog-view-all {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* ─── Blog listing page ────────────────────────────────── */
+.blog-list-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--t-fast), padding-left var(--t-fast);
+}
+
+.blog-list-item:hover {
+  background: var(--bg-card-hov);
+  padding-left: 1.5rem;
+}
+
+.blog-list-tag {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  min-width: 6rem;
+  color: var(--accent);
+}
+
+.blog-accent-text-research   { color: var(--accent); }
+.blog-accent-text-engineering { color: #ff6b6b; }
+.blog-accent-text-ai          { color: var(--accent2); }
+.blog-accent-text-personal    { color: #f59e0b; }
+.blog-accent-text-general     { color: var(--text-muted); }
+
+.blog-list-title {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.blog-list-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .blog-list-item {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .blog-list-tag {
+    min-width: auto;
+  }
+  .blog-list-date {
+    width: 100%;
+    order: 3;
+  }
+}
+
 @media (max-width: 680px) {
   .globe-legend {
     bottom: 0.75rem;

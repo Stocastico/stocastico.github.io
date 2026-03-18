@@ -11,6 +11,9 @@ const {
   Globe3D,
   renderPublications,
   renderBlog,
+  renderBlogCard,
+  renderBlogList,
+  BLOG_MAX_HOMEPAGE,
   setFooterYear,
   initNavbar,
   initMobileMenu,
@@ -218,13 +221,16 @@ test('renderBlog shows coming-soon state when BLOG_POSTS is empty', () => {
 });
 
 test('renderBlog injects cards and formats date correctly', () => {
-  const grid = { innerHTML: '' };
+  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
   const prevPosts = global.BLOG_POSTS;
   global.document = {
     getElementById(id) {
       if (id === 'blog-grid') return grid;
       return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
   global.BLOG_POSTS = [{
@@ -239,6 +245,110 @@ test('renderBlog injects cards and formats date correctly', () => {
     renderBlog();
     assert.match(grid.innerHTML, /20 November 2024/);
     assert.match(grid.innerHTML, /blog-accent-research/);
+  } finally {
+    global.document = prevDocument;
+    global.BLOG_POSTS = prevPosts;
+  }
+});
+
+test('renderBlog limits homepage to BLOG_MAX_HOMEPAGE posts', () => {
+  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { this.children.push(el); } } };
+  const prevDocument = global.document;
+  const prevPosts = global.BLOG_POSTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'blog-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  const posts = [];
+  for (let i = 0; i < 5; i++) {
+    posts.push({ title: `Post ${i}`, date: '2024-11-20', excerpt: 'Excerpt', tag: 'Research', readMin: 3, url: `blog/p${i}.html` });
+  }
+  global.BLOG_POSTS = posts;
+  try {
+    renderBlog();
+    const cardCount = (grid.innerHTML.match(/blog-card/g) || []).length;
+    // Each card has blog-card class, blog-card-accent, blog-card-body, blog-card-foot = 4 per card
+    assert.equal(cardCount, BLOG_MAX_HOMEPAGE * 4);
+    // "View all" link should be appended
+    assert.equal(grid.parentNode.children.length, 1);
+    assert.match(grid.parentNode.children[0].innerHTML, /blog\.html/);
+  } finally {
+    global.document = prevDocument;
+    global.BLOG_POSTS = prevPosts;
+  }
+});
+
+test('renderBlog does not show "View all" link when posts fit within limit', () => {
+  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { this.children.push(el); } } };
+  const prevDocument = global.document;
+  const prevPosts = global.BLOG_POSTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'blog-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.BLOG_POSTS = [
+    { title: 'Post', date: '2024-11-20', excerpt: 'Excerpt', tag: 'Research', readMin: 3, url: 'blog/p.html' },
+  ];
+  try {
+    renderBlog();
+    assert.equal(grid.parentNode.children.length, 0);
+  } finally {
+    global.document = prevDocument;
+    global.BLOG_POSTS = prevPosts;
+  }
+});
+
+test('renderBlogList renders all posts as list items', () => {
+  const list = { innerHTML: '' };
+  const prevDocument = global.document;
+  const prevPosts = global.BLOG_POSTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'blog-list') return list;
+      return null;
+    },
+  };
+  const posts = [];
+  for (let i = 0; i < 5; i++) {
+    posts.push({ title: `Post ${i}`, date: '2024-11-20', excerpt: 'Excerpt', tag: 'Research', readMin: 3, url: `blog/p${i}.html` });
+  }
+  global.BLOG_POSTS = posts;
+  try {
+    renderBlogList();
+    const itemCount = (list.innerHTML.match(/blog-list-item/g) || []).length;
+    assert.equal(itemCount, 5);
+    assert.match(list.innerHTML, /Post 0/);
+    assert.match(list.innerHTML, /Post 4/);
+  } finally {
+    global.document = prevDocument;
+    global.BLOG_POSTS = prevPosts;
+  }
+});
+
+test('renderBlogList shows empty state when no posts', () => {
+  const list = { innerHTML: '' };
+  const prevDocument = global.document;
+  const prevPosts = global.BLOG_POSTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'blog-list') return list;
+      return null;
+    },
+  };
+  global.BLOG_POSTS = [];
+  try {
+    renderBlogList();
+    assert.match(list.innerHTML, /No posts yet/);
   } finally {
     global.document = prevDocument;
     global.BLOG_POSTS = prevPosts;
