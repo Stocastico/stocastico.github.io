@@ -2,34 +2,13 @@
 
 My Personal website
 
-## To-Do
-
-Before going live, complete the following tasks:
-
-- [x] Revise all text in index.html
-- [x] Add text in index.html where necessary (before the globe, etc)
-- [x] Complete locations list
-- [x] Remove placeholder blog posts
-- [x] Add blog post 1: Why a blog in 2026
-- [ ] Add blog post 2: How I keep up-to-date with all things AI
-- [ ] Add blog post 3: How I made this website
-- [x] Select three papers and add correct links
-- [x] Update texts in the CV section (skills, languages etc)
-
-And some ideas for future blog posts:
-
-- [ ] Software development in the era of AI agents
-- [ ] The web is beautiful (list of nice websites in the era of enshittification)
-- [ ] Digital sovereignity (EU tools, reduce dependency on Google etc)
-- [ ] Digital cleaning: how do I do that
-- [ ] Commenting on test of different models etc (several possible blog posts)
-
 ## Tech stack
 
 - Pure HTML / CSS / JavaScript — no build step, no bundler
-- [Three.js](https://threejs.org/) (CDN) for the 3-D neural-network background and interactive globe
+- [Three.js](https://threejs.org/) r159 (CDN) for the 3-D neural-network background and interactive globe
 - Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra dependencies)
+- Self-hosted fonts: Inter (body) and Outfit (display / hero)
 
 ## Project structure
 
@@ -37,6 +16,7 @@ And some ideas for future blog posts:
 .
 ├── index.html                 Main single-page site
 ├── cv.html                    Dedicated CV page (two-column: work | education)
+├── 404.html                   Custom 404 page
 ├── css/
 │   └── styles.css             All styles, including shared blog-post rules
 ├── js/
@@ -51,7 +31,8 @@ And some ideas for future blog posts:
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
 │   ├── locations.yaml         Source of truth for globe pins/trips/regions
 │   ├── locations.js           Generated file (do not edit manually)
-│   └── world-110m.json        TopoJSON world map data used by the Europe 2D map
+│   ├── world-110m.json        TopoJSON world map data (110m resolution)
+│   └── land-50m.json          TopoJSON land data for Europe 2D map (50m, finer coastlines)
 ├── blog/
 │   └── *.html                 Individual blog post pages
 ├── scripts/
@@ -220,6 +201,7 @@ Quick summary:
    tag:     "Research"
    readMin: 6
    lead:    "Optional opening sentence in large type."
+   image:   "blog/my-post-image.jpg"
    ---
 
    ## Introduction
@@ -242,6 +224,13 @@ Quick summary:
 
 3. Preview locally by opening `index.html` in a browser, then commit both generated files.
 
+4. After adding a post, regenerate the RSS feed and sitemap:
+
+   ```bash
+   npm run generate-rss
+   npm run generate-sitemap
+   ```
+
 ### Dry-run mode
 
 ```bash
@@ -261,6 +250,7 @@ Prints the generated HTML and the `data/blog.js` entry without writing any files
 | `readMin` | number | No       | Estimated read time in minutes                          |
 | `lead`    | string | No       | Opening sentence displayed in large type                |
 | `url`     | string | No       | Override the output filename / URL path                 |
+| `image`   | string | No       | Custom OG / Twitter card image path or URL              |
 
 ### Supported Markdown syntax
 
@@ -366,18 +356,19 @@ The navbar contains four items: **About**, **Research** (linked from hero), **Wr
 | ------ | ------------- |
 | `index.html` | Single-page application — Hero, About, Research, Publications, Skills, Contact, Blog sections |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
+| `404.html` | Custom 404 error page. |
 
 ### Sections (index.html)
 
 | Section | Description |
 | --------- | ------------- |
 | Hero | Left-aligned layout with iridescent name shader, animated tagline, hero CTAs |
-| About | Asymmetric layout — photo + stats on the left, bio text on the right; interactive 3-D globe fills the right half |
-| Research | Horizontal-scroll carousel of research topic cards (Stripe-style) |
+| About | Photo + stats and bio text in a split layout; the interactive Europe 2D map spans full-width below; the 3-D globe fills the right half of the split |
+| Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows |
 | Publications | Filterable list of papers, rendered from `data/publications.js` |
 | Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
-| Contact | Contact cards with social links |
-| Blog | Post cards rendered from `data/blog.js` |
+| Contact | 2×2 grid of contact cards; email address is obfuscated and revealed on click |
+| Blog | The 3 most recent post cards rendered from `data/blog.js`, with a "View all posts" link to the full listing |
 
 ---
 
@@ -438,7 +429,7 @@ All transforms are throttled to `requestAnimationFrame` and are disabled for `pr
 
 ### Interactive 2D Europe map (About section)
 
-A Canvas2D flat map of Europe rendered from `data/world-110m.json` (TopoJSON). Country outlines are drawn with a neon cyan stroke on a dark background, matching the globe's visual style. Location pins from `data/locations.js` are plotted as pulsing rings or spikes using the same pin types as the 3D globe (`lived` / `work` / `travel`). Hovering a pin shows a tooltip with the location name. The map is loaded from `js/europe-map.js` and used as a complementary view alongside the 3D globe.
+A Canvas2D flat map of Europe rendered from `data/land-50m.json` (TopoJSON, 50m resolution for fine coastline detail). Country outlines are drawn with a neon cyan stroke on a dark background, matching the globe's visual style. Location pins from `data/locations.js` are plotted as pulsing rings or spikes using the same pin types as the 3D globe (`lived` / `work` / `travel`). Hovering a pin shows a tooltip with the location name and trip name (for trip waypoints). The map is loaded from `js/europe-map.js` and displayed full-width below the split layout in the About section.
 
 ### Reading progress bar
 
@@ -494,3 +485,27 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 ## Session start hook
 
 A `.claude/hooks/session-start.sh` hook verifies Node.js is available at the start of every Claude Code web session. Tests can be run immediately without any manual setup.
+
+---
+
+## To-Do
+
+Before going live, complete the following tasks:
+
+- [x] Revise all text in index.html
+- [x] Add text in index.html where necessary (before the globe, etc)
+- [x] Complete locations list
+- [x] Remove placeholder blog posts
+- [x] Add blog post 1: Why a blog in 2026
+- [ ] Add blog post 2: How I keep up-to-date with all things AI
+- [ ] Add blog post 3: How I made this website (draft exists)
+- [x] Select three papers and add correct links
+- [x] Update texts in the CV section (skills, languages etc)
+
+And some ideas for future blog posts:
+
+- [ ] Software development in the era of AI agents
+- [ ] The web is beautiful (list of nice websites in the era of enshittification)
+- [ ] Digital sovereignity (EU tools, reduce dependency on Google etc)
+- [ ] Digital cleaning: how do I do that
+- [ ] Commenting on test of different models etc (several possible blog posts)
