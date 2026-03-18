@@ -2492,6 +2492,24 @@ h3 {
   font-style: italic;
 }
 
+.post figure {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.post figure img {
+  max-width: 100%;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+}
+
+.post figure figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* ─── Command Palette ────────────────────────────────────── */
 .cmd-overlay {
   position: fixed;
