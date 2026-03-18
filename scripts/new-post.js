@@ -246,6 +246,16 @@ function markdownToHtml(md) {
     const h1 = raw.match(/^# (.+)/);
     if (h1) { closeParagraph(); closeUl(); closeOl(); out.push(`<h1>${applyInline(escapeHtml(h1[1]))}</h1>`); continue; }
 
+    // ── Standalone image → <figure> ──────────────────────────────────────────
+    const imgBlock = raw.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imgBlock) {
+      closeParagraph(); closeUl(); closeOl();
+      const alt = escapeHtml(imgBlock[1]);
+      const src = escapeHtml(imgBlock[2]);
+      out.push(`<figure>\n  <img src="${src}" alt="${alt}" loading="lazy" />\n</figure>`);
+      continue;
+    }
+
     // ── Unordered list ────────────────────────────────────────────────────────
     const ulItem = raw.match(/^[-*+] (.+)/);
     if (ulItem) {

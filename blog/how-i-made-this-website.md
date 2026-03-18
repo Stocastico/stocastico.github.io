@@ -7,6 +7,8 @@ readMin: 5
 lead: "Optional: An opening sentence or hook that appears in large text at the beginning of the post."
 ---
 
+![Pixel art of a tired developer holding a baby at 3:47 AM, with a thought bubble showing software architecture diagrams](../img/pixel-art-sleepless-developer.png)
+
 ## Introduction
 
 Start your post with an engaging introduction that sets up the main idea or problem you're addressing.
