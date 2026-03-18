@@ -1979,6 +1979,28 @@ function renderPublications() {
 }
 
 /* Blog posts — data source: BLOG_POSTS (data/blog.js) */
+var BLOG_MAX_HOMEPAGE = 3;
+
+function renderBlogCard(post, i) {
+  const date = formatIsoDate(post.date);
+  const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
+  const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
+  return `
+    <a href="${escapeHtml(post.url)}" class="blog-card" data-animate data-delay="${i * 80}">
+      <div class="blog-card-accent blog-accent-${tagSlug}"></div>
+      <div class="blog-card-body">
+        <span class="blog-tag">${escapeHtml(post.tag || 'Post')}</span>
+        <span class="blog-title">${escapeHtml(post.title)}</span>
+        <span class="blog-excerpt">${escapeHtml(post.excerpt)}</span>
+      </div>
+      <div class="blog-card-foot">
+        <span class="blog-date">${escapeHtml(date)}</span>
+        <span class="blog-read">${escapeHtml(readStr)}</span>
+      </div>
+    </a>
+  `;
+}
+
 function renderBlog() {
   const grid = document.getElementById('blog-grid');
   if (!grid) return;
@@ -1992,22 +2014,36 @@ function renderBlog() {
     return;
   }
 
-  grid.innerHTML = BLOG_POSTS.map((post, i) => {
+  const shown = BLOG_POSTS.slice(0, BLOG_MAX_HOMEPAGE);
+  grid.innerHTML = shown.map(renderBlogCard).join('');
+
+  if (BLOG_POSTS.length > BLOG_MAX_HOMEPAGE) {
+    const footer = document.createElement('div');
+    footer.className = 'blog-view-all';
+    footer.setAttribute('data-animate', '');
+    footer.setAttribute('data-delay', String(shown.length * 80));
+    footer.innerHTML = `<a href="blog.html" class="btn btn-ghost">View all posts &rarr;</a>`;
+    grid.parentNode.appendChild(footer);
+  }
+}
+
+function renderBlogList() {
+  const list = document.getElementById('blog-list');
+  if (!list) return;
+
+  if (!BLOG_POSTS.length) {
+    list.innerHTML = `<p class="blog-coming-soon">No posts yet — stay tuned.</p>`;
+    return;
+  }
+
+  list.innerHTML = BLOG_POSTS.map((post, i) => {
     const date = formatIsoDate(post.date);
     const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
-    const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
     return `
-      <a href="${escapeHtml(post.url)}" class="blog-card" data-animate data-delay="${i * 80}">
-        <div class="blog-card-accent blog-accent-${tagSlug}"></div>
-        <div class="blog-card-body">
-          <span class="blog-tag">${escapeHtml(post.tag || 'Post')}</span>
-          <span class="blog-title">${escapeHtml(post.title)}</span>
-          <span class="blog-excerpt">${escapeHtml(post.excerpt)}</span>
-        </div>
-        <div class="blog-card-foot">
-          <span class="blog-date">${escapeHtml(date)}</span>
-          <span class="blog-read">${escapeHtml(readStr)}</span>
-        </div>
+      <a href="${escapeHtml(post.url)}" class="blog-list-item" data-animate data-delay="${i * 50}">
+        <span class="blog-list-tag blog-accent-text-${tagSlug}">${escapeHtml(post.tag || 'Post')}</span>
+        <span class="blog-list-title">${escapeHtml(post.title)}</span>
+        <span class="blog-list-date">${escapeHtml(date)}</span>
       </a>
     `;
   }).join('');
@@ -2974,6 +3010,9 @@ if (typeof module !== 'undefined' && module.exports) {
     Globe3D,
     renderPublications,
     renderBlog,
+    renderBlogCard,
+    renderBlogList,
+    BLOG_MAX_HOMEPAGE,
     renderCV,
     renderSkills,
     setFooterYear,
@@ -3074,6 +3113,7 @@ if (typeof document !== 'undefined') {
   /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
   renderBlog();
+  renderBlogList();
   renderCV();      /* timeline entries from data/cv.js */
   renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
   setFooterYear();

@@ -89,6 +89,8 @@ function buildEntries(posts, baseUrl) {
   const entries = [
     // Main page — highest priority, changes frequently
     { loc: `${baseUrl}/`, lastmod: today, changefreq: 'weekly', priority: '1.0' },
+    // Blog listing page — updates whenever a new post is added
+    { loc: `${baseUrl}/blog.html`, lastmod: today, changefreq: 'weekly', priority: '0.8' },
   ];
 
   for (const post of posts) {

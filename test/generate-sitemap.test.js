@@ -28,11 +28,13 @@ test('todayIso returns a YYYY-MM-DD string', () => {
 
 // ─── buildEntries ─────────────────────────────────────────────────────────────
 
-test('buildEntries always includes the homepage as first entry', () => {
+test('buildEntries always includes the homepage and blog listing as first entries', () => {
   const entries = buildEntries([], 'https://stocastico.github.io');
-  assert.equal(entries.length, 1);
+  assert.equal(entries.length, 2);
   assert.equal(entries[0].loc, 'https://stocastico.github.io/');
   assert.equal(entries[0].priority, '1.0');
+  assert.equal(entries[1].loc, 'https://stocastico.github.io/blog.html');
+  assert.equal(entries[1].priority, '0.8');
 });
 
 test('buildEntries adds relative blog post URLs', () => {
