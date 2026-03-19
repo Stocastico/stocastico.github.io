@@ -2100,6 +2100,7 @@ function initCardTilt() {
       }
 
       card.addEventListener('mouseenter', () => {
+        if (card.classList.contains('is-flipped')) return;
         isHovered = true;
         targetZ   = 8;
         /* Suppress the CSS transform-transition while the spring runs */
@@ -2108,6 +2109,7 @@ function initCardTilt() {
       });
 
       card.addEventListener('mousemove', (e) => {
+        if (card.classList.contains('is-flipped')) return;
         const r  = card.getBoundingClientRect();
         const cx = (e.clientX - r.left) / r.width;
         const cy = (e.clientY - r.top) / r.height;
@@ -2127,6 +2129,23 @@ function initCardTilt() {
         if (!raf) raf = requestAnimationFrame(loop);
       });
     });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESEARCH CARD FLIP (click to reveal back face)
+   ═══════════════════════════════════════════════════════════ */
+function initCardFlip() {
+  if (typeof document === 'undefined') return;
+  document.querySelectorAll('#research-grid .research-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const flipping = card.classList.toggle('is-flipped');
+      /* Reset tilt state so the card springs back to neutral when flipped */
+      if (flipping) {
+        card.style.transform = '';
+        card.style.transition = '';
+      }
+    });
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -3039,6 +3058,7 @@ if (typeof module !== 'undefined' && module.exports) {
     initEmailObfuscation,
     initResearchCarousel,
     initCmdTriggerHint,
+    initCardFlip,
   };
 }
 
@@ -3145,6 +3165,7 @@ if (typeof document !== 'undefined') {
   const whenIdle = typeof requestIdleCallback !== 'undefined'
     ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
     : (fn) => setTimeout(fn, 0);
+  initCardFlip();
   whenIdle(() => {
     initCardTilt();
     initMagneticButtons();
