@@ -1048,27 +1048,28 @@ h3 {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 2rem;
-  cursor: default;
-  transition: transform var(--t-med) var(--ease),
-    border-color var(--t-med),
+  cursor: pointer;
+  transition: border-color var(--t-med),
     background var(--t-med),
     box-shadow var(--t-med);
   position: relative;
-  overflow: hidden;
+  perspective: 1000px;
+  min-height: 260px;
 }
 
 .research-card::before {
   content: '';
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 65%);
   opacity: 0;
   transition: opacity var(--t-med);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .research-card:hover {
-  transform: translateY(-6px);
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
@@ -1076,6 +1077,84 @@ h3 {
 
 .research-card:hover::before {
   opacity: 1;
+}
+
+/* ─── Card flip ──────────────────────────────────────────── */
+.card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: inherit;
+}
+
+.research-card.is-flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  inset: 0;
+  padding: 2rem;
+  border-radius: inherit;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  background: var(--bg-card-hov);
+  border: 1px solid var(--border-hov);
+  justify-content: space-between;
+}
+
+.card-back-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.card-back-body {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.card-flip-hint {
+  display: block;
+  margin-top: auto;
+  padding-top: 1rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  opacity: 0.5;
+  transition: opacity var(--t-med);
+}
+
+.research-card:hover .card-flip-hint {
+  opacity: 0.85;
+}
+
+.card-back-hint {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-inner {
+    transition: none;
+  }
 }
 
 /* ─── 3-D card tilt — specular gloss layer ───────────────── */
@@ -1096,7 +1175,7 @@ h3 {
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--t-med);
-  z-index: 1;
+  z-index: 2;
 }
 
 .tilt-ready:hover::after {
