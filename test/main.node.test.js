@@ -38,6 +38,7 @@ const {
   NeuralNetwork2D,
   NoiseGradient,
   GlobeFallback2D,
+  initCardFlip,
 } = require('../js/main.js');
 
 function makeClassList(initial = []) {
@@ -2000,4 +2001,147 @@ test('GlobeFallback2D skips pins marked with _skip', () => {
     global.navigator = prevNav;
     global.LOCATIONS = prevLoc;
   }
+});
+
+/* ─── initCardFlip tests ──────────────────────────────────── */
+
+function makeCard(id) {
+  const listeners = {};
+  const card = {
+    id,
+    classList: makeClassList(),
+    style: { transform: '', transition: '' },
+    addEventListener(type, fn) { listeners[type] = fn; },
+    _listeners: listeners,
+  };
+  return card;
+}
+
+test('initCardFlip toggles is-flipped class on click', () => {
+  const prevDoc = global.document;
+  const card = makeCard('c1');
+  global.document = {
+    querySelectorAll(sel) {
+      return sel === '#research-grid .research-card' ? [card] : [];
+    },
+  };
+  try {
+    initCardFlip();
+    assert.equal(card.classList.contains('is-flipped'), false);
+    card._listeners.click();
+    assert.equal(card.classList.contains('is-flipped'), true, 'First click should flip card');
+    card._listeners.click();
+    assert.equal(card.classList.contains('is-flipped'), false, 'Second click should flip back');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initCardFlip resets inline transform and transition when flipping to back', () => {
+  const prevDoc = global.document;
+  const card = makeCard('c2');
+  card.style.transform = 'perspective(900px) rotateX(5deg)';
+  card.style.transition = 'border-color 0.3s';
+  global.document = {
+    querySelectorAll(sel) {
+      return sel === '#research-grid .research-card' ? [card] : [];
+    },
+  };
+  try {
+    initCardFlip();
+    card._listeners.click();
+    assert.equal(card.classList.contains('is-flipped'), true);
+    assert.equal(card.style.transform, '', 'Inline transform should be cleared on flip');
+    assert.equal(card.style.transition, '', 'Inline transition should be cleared on flip');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initCardFlip does not reset transform when unflipping back to front', () => {
+  const prevDoc = global.document;
+  const card = makeCard('c3');
+  global.document = {
+    querySelectorAll(sel) {
+      return sel === '#research-grid .research-card' ? [card] : [];
+    },
+  };
+  try {
+    initCardFlip();
+    /* First click flips to back */
+    card._listeners.click();
+    assert.equal(card.classList.contains('is-flipped'), true);
+    /* Apply a simulated tilt transform */
+    card.style.transform = 'perspective(900px) rotateX(2deg)';
+    /* Second click flips back to front — should NOT clear the tilt transform */
+    card._listeners.click();
+    assert.equal(card.classList.contains('is-flipped'), false);
+    assert.equal(card.style.transform, 'perspective(900px) rotateX(2deg)',
+      'Tilt transform should be preserved when returning to front');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initCardFlip attaches listeners to all research grid cards', () => {
+  const prevDoc = global.document;
+  const cards = [makeCard('d1'), makeCard('d2'), makeCard('d3')];
+  global.document = {
+    querySelectorAll(sel) {
+      return sel === '#research-grid .research-card' ? cards : [];
+    },
+  };
+  try {
+    initCardFlip();
+    cards.forEach((card) => {
+      card._listeners.click();
+      assert.equal(card.classList.contains('is-flipped'), true,
+        `Card ${card.id} should be flippable`);
+    });
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initCardFlip does nothing when document is undefined', () => {
+  const prevDoc = global.document;
+  delete global.document;
+  try {
+    initCardFlip(); /* should not throw */
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+/* ─── index.html card structure tests ────────────────────── */
+
+test('index.html research cards have card-inner, card-front, and card-back', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const gridSection = html.slice(
+    html.indexOf('id="research-grid"'),
+    html.indexOf('</section>', html.indexOf('id="research-grid"')),
+  );
+  const cardCount = (gridSection.match(/class="research-card"/g) || []).length;
+  assert.equal(cardCount, 6, 'Should have 6 research cards in the grid');
+
+  const innerCount = (gridSection.match(/class="card-inner"/g) || []).length;
+  assert.equal(innerCount, 6, 'Each card should have a .card-inner wrapper');
+
+  const frontCount = (gridSection.match(/class="card-front"/g) || []).length;
+  assert.equal(frontCount, 6, 'Each card should have a .card-front face');
+
+  const backCount = (gridSection.match(/class="card-back"/g) || []).length;
+  assert.equal(backCount, 6, 'Each card should have a .card-back face');
+});
+
+test('index.html card backs have back-title, back-body, and back-hint', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const gridSection = html.slice(
+    html.indexOf('id="research-grid"'),
+    html.indexOf('</section>', html.indexOf('id="research-grid"')),
+  );
+  assert.ok(gridSection.includes('card-back-title'), 'Card back should have a title');
+  assert.ok(gridSection.includes('card-back-body'), 'Card back should have a body text');
+  assert.ok(gridSection.includes('card-back-hint'), 'Card back should have a flip-back hint');
+  assert.ok(gridSection.includes('card-flip-hint'), 'Card front should have a flip hint');
 });

@@ -3058,6 +3058,7 @@ if (typeof module !== 'undefined' && module.exports) {
     initEmailObfuscation,
     initResearchCarousel,
     initCmdTriggerHint,
+    initCardFlip,
   };
 }
 
