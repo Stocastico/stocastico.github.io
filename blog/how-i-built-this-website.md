@@ -5,6 +5,7 @@ excerpt: "Building a personal site with Claude Code mobile app while I am trying
 tag: "AI"
 readMin: 5
 lead: "If you're reading this, you're looking at a website that was built almost entirely at night, with an iPhone."
+image: img/pixel-art-sleepless-developer.png
 ---
 
 ## The 3 AM Coding Sessions
