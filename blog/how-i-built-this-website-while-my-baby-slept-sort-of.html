@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Building a personal site with Claude Code during late-night feeds — 3 AM sessions, iterative workflows, and what I learned about AI-assisted development." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "How I Built This Website While My Baby Slept (Sort Of)",
+    "description": "Building a personal site with Claude Code during late-night feeds — 3 AM sessions, iterative workflows, and what I learned about AI-assisted development.",
+    "url": "",
+    "image": "https://stocastico.github.io/img/screenshot-hero.png",
+    "datePublished": "2026-03-20",
+    "author": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stocastico.github.io/"
+    }
+  }
+  </script>
+  <title>How I Built This Website While My Baby Slept (Sort Of) — Stefano Masneri</title>
+  <!-- Self-hosted fonts -->
+  <link rel="stylesheet" href="../css/fonts.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <!-- highlight.js loaded only on posts with code blocks -->
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" /> -->
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#post-content">Skip to article</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../index.html#blog">Writing</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="post-content" class="post">
+    <div class="post-back-row">
+      <a href="../index.html#blog" class="btn btn-ghost">&larr; Back to blog</a>
+    </div>
+    <p class="post-meta">20 March 2026 · Engineering · 5 min read</p>
+    <h1 class="post-title">How I Built This Website While My Baby Slept (Sort Of)</h1>
+    <p class="post-lead">
+      If you're reading this, you're looking at a website that was built almost entirely during late-night feeds. No, really.
+    </p>
+    <h2>The 3 AM Coding Sessions</h2>
+<p>
+When you have an infant, sleep becomes this fragmented, negotiable thing. I'd spend hours awake at night holding my son, one arm cradling him, the other hand free. And that free hand ended up building this site.
+</p>
+<p>
+The trick was Claude Code on mobile. I could define what I wanted, describe layouts, request features — all from my phone while pacing around the living room at 3 AM. No laptop needed. No desk. Just me, a sleeping (or not-so-sleeping) baby, and an AI that doesn't judge you for coding at ungodly hours.
+</p>
+<h2>Starting With a Vision</h2>
+<p>
+I knew a few things from the start. I wanted something modern. I wanted <a href="https://threejs-journey.com/">Three.js</a> — because if you're going to have a personal site, why not have some 3D flair? And I wanted it to reflect what I actually do professionally: AI, computer vision, the kind of work that sits at the intersection of research and engineering.
+</p>
+<p>
+So I started defining the content structure, the sections, the visual effects. Night by night, piece by piece.
+</p>
+<h2>The Iteration Loop</h2>
+<p>
+Here's what the workflow looked like in practice: at night, I'd work with Claude Code to write and refine code. By the next day, I'd review the pull requests, check the results in the browser, spot bugs, take notes. Then the following night, I'd feed those observations back and iterate. Rinse and repeat, night after night.
+</p>
+<p>
+It was slow by startup standards, but honestly it worked surprisingly well. There's something about the forced patience of this rhythm — you can't rush it when your iteration cycle is literally &quot;wait until the baby wakes up again.&quot;
+</p>
+<h2>Polishing With AI</h2>
+<p>
+Once the core structure was solid and I was happy with how things looked, I shifted gears. I started filling in the actual textual content — the about section, project descriptions, all the stuff that makes a portfolio site actually useful.
+</p>
+<p>
+Then I did something that turned out to be really valuable: I asked Claude Opus to do a full review of the entire site. Not just the code — everything. UI consistency, UX flow, performance issues, missing content, accessibility gaps. It was like having a very thorough (and very patient) colleague do a design review at 2 AM.
+</p>
+<p>
+We went through several rounds of fixes and improvements based on that analysis. Bugs got squashed, layouts got tightened, copy got cleaned up.
+</p>
+<h2>The Final Touches</h2>
+<p>
+The last phase was adding the more complex visual content — the 3D globe, the interactive map of Europe, the kind of elements that make a site feel alive rather than just informative. These took more back-and-forth to get right, but that's the beauty of the iterative approach.
+</p>
+<p>
+Before going live, I asked a few people to take a look and give honest feedback. Fresh eyes always catch what you've gone blind to after staring at something for weeks.
+</p>
+<p>
+And here we are. You're reading the result.
+</p>
+<h2>What I Learned</h2>
+<p>
+A few takeaways, in case they're useful to anyone:
+</p>
+<ul>
+  <li><strong>AI-assisted coding on mobile is genuinely viable.</strong> Not for everything, but for a surprising amount of work. The constraint of working from a phone actually forced me to think more clearly about what I wanted before asking for it.</li>
+  <li><strong>Forced slow iteration isn't always bad.</strong> When you can only work in short bursts, you end up being more deliberate. Less &quot;let me just quickly try this&quot; and more &quot;let me think about what actually matters.&quot;</li>
+  <li><strong>Use AI for review, not just generation.</strong> The most valuable thing wasn't having Claude write code for me — it was having it critically review everything and point out what I'd missed.</li>
+</ul>
+<p>
+At some point you have to stop tweaking and put it out there. The blog post you're reading is proof I eventually managed that part too. Ship it.
+</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script defer src="../js/main.min.js"></script>
+</body>
+</html>
