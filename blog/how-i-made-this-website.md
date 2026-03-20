@@ -1,18 +1,18 @@
 ---
-title: "Your Post Title Here"
-date: "2024-03-09"
-excerpt: "A concise summary of your post that will appear on the blog index. Keep it brief and engaging."
-tag: "Research"
+title: "Hoe I built this website"
+date: "2024-03-19"
+excerpt: "The weird experience of building a product in bed, from my phone ."
+tag: "AI"
 readMin: 5
-lead: "Optional: An opening sentence or hook that appears in large text at the beginning of the post."
+lead: "AIs like Claude or ChatGPT enable us to do things we didn't imagine possible just a year ago."
 image: "img/pixel-art-sleepless-developer.png"
 ---
 
 ![Pixel art of a tired developer holding a baby at 3:47 AM, with a thought bubble showing software architecture diagrams](../img/pixel-art-sleepless-developer.png)
 
-## Introduction
+## Night sessions
 
-Start your post with an engaging introduction that sets up the main idea or problem you're addressing.
+The laste few months have been tough. We have been blessed by the arrival of a beautiful baby boy... He brightens our days eith his smile
 
 ## Main Section
 
