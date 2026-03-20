@@ -1,10 +1,10 @@
 ---
 title: "How I Built This Website While My Baby Slept (Sort Of)"
 date: "2026-03-20"
-excerpt: "Building a personal site with Claude Code during late-night feeds — 3 AM sessions, iterative workflows, and what I learned about AI-assisted development."
-tag: "Engineering"
+excerpt: "Building a personal site with Claude Code mobile app while I am trying to keep my baby asleep. From design to iterative workflows, and what I learned about AI-assisted development."
+tag: "AI"
 readMin: 5
-lead: "If you're reading this, you're looking at a website that was built almost entirely during late-night feeds. No, really."
+lead: "If you're reading this, you're looking at a website that was built almost entirely at night, with an iPhone."
 ---
 
 ## The 3 AM Coding Sessions
