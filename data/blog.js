@@ -18,14 +18,6 @@
 
 const BLOG_POSTS = [
     {
-            title: "How I Built This Website While My Baby Slept (Sort Of)",
-            date: "2026-03-20",
-            excerpt: "Building a personal site with Claude Code during late-night feeds — 3 AM sessions, iterative workflows, and what I learned about AI-assisted development.",
-            tag: "Engineering",
-            readMin: 5,
-            url: "blog/how-i-built-this-website-while-my-baby-slept-sort-of.html",
-        },
-    {
             title: "A personal website",
             date: "2026-03-12",
             excerpt: "Creating a personal website using Claude Code. Plus, why did I choose to start a blog in 2026",
