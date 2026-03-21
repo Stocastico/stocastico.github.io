@@ -680,6 +680,29 @@ h3 {
   background-clip: text;
 }
 
+.section-subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin-top: 0.75rem;
+}
+
+.section-cta {
+  text-align: center;
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.btn-outline:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 24px var(--accent-glow);
+}
+
 /* ─── 9. About Section ──────────────────────────────────── */
 /* Asymmetric layout: bio on the left, globe filling the right half */
 /* ─── About: top area (photo + stats + bio) ──────────────── */
