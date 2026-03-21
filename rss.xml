@@ -5,8 +5,16 @@
     <link>https://stocastico.github.io/</link>
     <description>Senior AI Engineer — Machine Learning, Computer Vision, Augmented Reality</description>
     <language>en-gb</language>
-    <lastBuildDate>Mon, 16 Mar 2026 09:56:08 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 21 Mar 2026 14:56:12 GMT</lastBuildDate>
     <atom:link href="https://stocastico.github.io/rss.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>How I Built This Website While My Baby Slept (Sort Of)</title>
+      <link>https://stocastico.github.io/blog/how-i-built-this-website-while-my-baby-slept-sort-of.html</link>
+      <guid isPermaLink="true">https://stocastico.github.io/blog/how-i-built-this-website-while-my-baby-slept-sort-of.html</guid>
+      <description>Building a personal site with Claude Code mobile app while I am trying to keep my baby asleep. From design to iterative workflows, and what I learned about AI-assisted development.</description>
+      <pubDate>Fri, 20 Mar 2026 12:00:00 GMT</pubDate>
+      <category>AI</category>
+    </item>
     <item>
       <title>A personal website</title>
       <link>https://stocastico.github.io/blog/a-personal-website.html</link>
