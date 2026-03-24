@@ -2,8 +2,11 @@
 'use strict';
 
 /**
- * new-post.js — Convert a Markdown file into a blog post HTML file and register
- * it in data/blog.js.
+ * new-post.js — Convert a Markdown file into a writing-page entry (HTML file)
+ * and register it in data/blog.js.
+ *
+ * Posts appear on the dedicated writing page (blog.html), not on the homepage.
+ * The homepage writing section is a static intro that links to blog.html.
  *
  * Usage:
  *   node scripts/new-post.js path/to/post.md [options]
@@ -17,7 +20,7 @@
  *   ---
  *   title:   "My Post Title"
  *   date:    "2024-12-01"
- *   excerpt: "Short summary shown on the blog index."
+ *   excerpt: "Short summary shown on the writing page."
  *   tag:     "Research"          # badge colour key
  *   readMin: 7                   # estimated read time in minutes
  *   ---
@@ -68,6 +71,9 @@ function printHelp() {
   console.log(`Usage:
   node scripts/new-post.js <markdown-file> [options]
 
+Generates an HTML file and registers the entry in data/blog.js.
+Entries appear on the writing page (blog.html), not on the homepage.
+
 Options:
   -o, --out-dir <dir>   Output directory for HTML (default: blog/)
   --dry-run             Print output without writing files
@@ -76,7 +82,7 @@ Options:
 Frontmatter fields (YAML between --- delimiters):
   title    (required)  Post title
   date     (required)  ISO date, e.g. 2024-12-01
-  excerpt  (required)  Short summary for the blog index card
+  excerpt  (required)  Short summary shown on the writing page (blog.html)
   tag      (required)  Badge label, e.g. Research / Engineering / AI
   readMin  (required)  Estimated reading time in minutes
   lead               Optional opening sentence in large type
