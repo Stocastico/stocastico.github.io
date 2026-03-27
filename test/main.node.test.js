@@ -39,6 +39,8 @@ const {
   NoiseGradient,
   GlobeFallback2D,
   initCardFlip,
+  renderProjects,
+  PROJECTS_MAX_HOMEPAGE,
 } = require('../js/main.js');
 
 function makeClassList(initial = []) {
@@ -2144,4 +2146,152 @@ test('index.html card backs have back-title, back-body, and back-hint', () => {
   assert.ok(gridSection.includes('card-back-body'), 'Card back should have a body text');
   assert.ok(gridSection.includes('card-back-hint'), 'Card back should have a flip-back hint');
   assert.ok(gridSection.includes('card-flip-hint'), 'Card front should have a flip hint');
+});
+
+// ── renderProjects tests ──────────────────────────────────────────────────────
+
+test('renderProjects shows empty state when PROJECTS is empty', () => {
+  const grid = { innerHTML: '' };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+  };
+  global.PROJECTS = [];
+  try {
+    renderProjects();
+    assert.match(grid.innerHTML, /Coming soon/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects injects project cards with title, year, and tags', () => {
+  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.PROJECTS = [{
+    id: 'test-project',
+    title: 'Test Project',
+    year: '2024',
+    tags: ['AI', 'CV'],
+    thumb: 'img/projects/test-thumb.jpg',
+    description: 'A test project description.',
+    url: 'projects.html#test-project',
+  }];
+  try {
+    renderProjects();
+    assert.match(grid.innerHTML, /Test Project/);
+    assert.match(grid.innerHTML, /2024/);
+    assert.match(grid.innerHTML, /AI/);
+    assert.match(grid.innerHTML, /CV/);
+    assert.match(grid.innerHTML, /project-card/);
+    assert.match(grid.innerHTML, /project-card__thumb/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
+  const appended = [];
+  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  // Create more projects than the homepage limit
+  const many = [];
+  for (let i = 0; i < PROJECTS_MAX_HOMEPAGE + 2; i++) {
+    many.push({
+      id: `project-${i}`,
+      title: `Project ${i}`,
+      year: '2024',
+      tags: ['Tag'],
+      thumb: `img/projects/p${i}.jpg`,
+      description: `Description ${i}`,
+      url: `projects.html#project-${i}`,
+    });
+  }
+  global.PROJECTS = many;
+  try {
+    renderProjects();
+    // Should only render PROJECTS_MAX_HOMEPAGE cards
+    const cardCount = (grid.innerHTML.match(/project-card"/g) || []).length;
+    assert.equal(cardCount, PROJECTS_MAX_HOMEPAGE);
+    // Should show "View all" link
+    assert.equal(appended.length, 1);
+    assert.match(appended[0].innerHTML, /View all projects/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects does not show "View all" when projects fit within limit', () => {
+  const appended = [];
+  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.PROJECTS = [{
+    id: 'solo',
+    title: 'Solo Project',
+    year: '2024',
+    tags: ['AI'],
+    thumb: 'img/projects/solo.jpg',
+    description: 'Only project.',
+    url: 'projects.html#solo',
+  }];
+  try {
+    renderProjects();
+    assert.equal(appended.length, 0);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects skips if container element not found', () => {
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById() { return null; },
+  };
+  global.PROJECTS = [{ id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' }];
+  try {
+    // Should not throw
+    renderProjects();
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
 });

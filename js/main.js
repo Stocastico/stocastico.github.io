@@ -1978,6 +1978,48 @@ function renderPublications() {
   `).join('');
 }
 
+/* Project cards — data source: PROJECTS (data/projects.js) */
+var PROJECTS_MAX_HOMEPAGE = 4;
+
+function renderProjectCard(project, i) {
+  const tagsHtml = (project.tags || [])
+    .map(function(t) { return '<span class="project-tag">' + escapeHtml(t) + '</span>'; })
+    .join('');
+  return '<a href="' + escapeHtml(project.url || '#') + '" class="project-card" data-animate data-delay="' + (i * 80) + '">' +
+    '<div class="project-card__thumb-wrap">' +
+      '<img class="project-card__thumb" src="' + escapeHtml(project.thumb || '') + '" alt="' + escapeHtml(project.title) + '" loading="lazy" />' +
+    '</div>' +
+    '<div class="project-card__body">' +
+      '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
+      '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +
+      '<div class="project-card__tags">' + tagsHtml + '</div>' +
+      '<p class="project-card__desc">' + escapeHtml(project.description || '') + '</p>' +
+    '</div>' +
+  '</a>';
+}
+
+function renderProjects() {
+  var grid = document.getElementById('projects-grid');
+  if (!grid) return;
+
+  if (!PROJECTS.length) {
+    grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
+    return;
+  }
+
+  var shown = PROJECTS.slice(0, PROJECTS_MAX_HOMEPAGE);
+  grid.innerHTML = shown.map(renderProjectCard).join('');
+
+  if (PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
+    var footer = document.createElement('div');
+    footer.className = 'projects-view-all';
+    footer.setAttribute('data-animate', '');
+    footer.setAttribute('data-delay', String(shown.length * 80));
+    footer.innerHTML = '<a href="projects.html" class="btn btn-ghost">View all projects &rarr;</a>';
+    grid.parentNode.appendChild(footer);
+  }
+}
+
 /* Blog posts — data source: BLOG_POSTS (data/blog.js) */
 var BLOG_MAX_HOMEPAGE = 3;
 
@@ -3028,6 +3070,9 @@ if (typeof module !== 'undefined' && module.exports) {
     geocodeLocations,
     Globe3D,
     renderPublications,
+    renderProjects,
+    renderProjectCard,
+    PROJECTS_MAX_HOMEPAGE,
     renderBlog,
     renderBlogCard,
     renderBlogList,
@@ -3132,6 +3177,7 @@ if (typeof document !== 'undefined') {
 
   /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
+  renderProjects();
   renderBlog();
   renderBlogList();
   renderCV();      /* timeline entries from data/cv.js */
