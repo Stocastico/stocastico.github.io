@@ -154,17 +154,13 @@ check (same pattern as `renderBlog`).
 
 ---
 
-## Open Questions / Decisions Needed
+## Decisions 
 
-- **Section placement**: between Publications and Writing, or between Research and Skills?
-  (Between Publications and Writing feels natural — it's the "show, don't tell" counterpart to
-  the publication list above it.)
-- **Homepage card count cap**: 4 seems right (one row on wide screens), but could be 3 or 6.
-- **Video embeds**: iframes add third-party requests. Prefer a "click to load" pattern (poster
-  image + play button that swaps in the iframe on click) to keep the page privacy-first.
+- **Section placement**: between Publications and Writing
+- **Homepage card count cap**: 4 seems right (one row on wide screens)
+- **Video embeds**: Prefer a "click to load" pattern (poster
+   in the iframe on click) to keep the page privacy-first.
 - **Thumbnail production**: what source material exists? Screenshots from papers, demo
-  recordings, conference slides? Decide before starting implementation so the right image sizes
-  can be established.
+  recordings, conference slides? could be anything, need to be flecible here
 - **`projects.html` detail content**: hand-authored HTML gives full flexibility but is not
-  scriptable. If projects become numerous, consider a richer data schema in `data/projects.js`
-  that drives the full detail view too (more work upfront, easier to maintain long-term).
+  scriptable... but let's keep it as it is for the moment.
