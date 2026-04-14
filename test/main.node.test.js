@@ -2013,7 +2013,7 @@ test('renderProjects injects project cards with title, year, and tags', () => {
     tags: ['AI', 'CV'],
     thumb: 'img/projects/test-thumb.jpg',
     description: 'A test project description.',
-    url: 'projects.html#test-project',
+    url: 'projects/test-project.html',
   }];
   try {
     renderProjects();
@@ -2022,7 +2022,73 @@ test('renderProjects injects project cards with title, year, and tags', () => {
     assert.match(grid.innerHTML, /AI/);
     assert.match(grid.innerHTML, /CV/);
     assert.match(grid.innerHTML, /project-card/);
-    assert.match(grid.innerHTML, /project-card__thumb/);
+    assert.match(grid.innerHTML, /projects\/test-project\.html/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects uses bg image as CSS background when provided', () => {
+  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.PROJECTS = [{
+    id: 'with-bg',
+    title: 'Project With BG',
+    year: '2024',
+    tags: ['AR'],
+    thumb: 'img/projects/with-bg-thumb.jpg',
+    bg: 'img/projects/with-bg-hero.jpg',
+    description: 'A project with a background image.',
+    url: 'projects/with-bg.html',
+  }];
+  try {
+    renderProjects();
+    // bg URL should end up as a CSS custom property on the card
+    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/with-bg-hero\.jpg['"]?\)/);
+    // has-bg class toggled when bg is present
+    assert.match(grid.innerHTML, /project-card--has-bg/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects falls back to thumb for background when bg is missing', () => {
+  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.PROJECTS = [{
+    id: 'thumb-only',
+    title: 'Thumb Only',
+    year: '2024',
+    tags: ['AI'],
+    thumb: 'img/projects/thumb-only.jpg',
+    description: 'No bg, thumb only.',
+    url: 'projects/thumb-only.html',
+  }];
+  try {
+    renderProjects();
+    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/thumb-only\.jpg['"]?\)/);
   } finally {
     global.document = prevDocument;
     global.PROJECTS = prevProjects;
@@ -2060,7 +2126,7 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   try {
     renderProjects();
     // Should only render PROJECTS_MAX_HOMEPAGE cards
-    const cardCount = (grid.innerHTML.match(/project-card"/g) || []).length;
+    const cardCount = (grid.innerHTML.match(/<a[^>]*class="project-card(?:\s|")/g) || []).length;
     assert.equal(cardCount, PROJECTS_MAX_HOMEPAGE);
     // Should show "View all" link
     assert.equal(appended.length, 1);

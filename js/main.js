@@ -1985,10 +1985,14 @@ function renderProjectCard(project, i) {
   const tagsHtml = (project.tags || [])
     .map(function(t) { return '<span class="project-tag">' + escapeHtml(t) + '</span>'; })
     .join('');
-  return '<a href="' + escapeHtml(project.url || '#') + '" class="project-card" data-animate data-delay="' + (i * 80) + '">' +
-    '<div class="project-card__thumb-wrap">' +
-      '<img class="project-card__thumb" src="' + escapeHtml(project.thumb || '') + '" alt="' + escapeHtml(project.title) + '" loading="lazy" />' +
-    '</div>' +
+  const bgSrc = project.bg || project.thumb || '';
+  const hasBg = Boolean(bgSrc);
+  const style = hasBg
+    ? ' style="--card-bg: url(\'' + escapeHtml(bgSrc) + '\')"'
+    : '';
+  const cls = 'project-card' + (hasBg ? ' project-card--has-bg' : '');
+  return '<a href="' + escapeHtml(project.url || '#') + '" class="' + cls + '" data-animate data-delay="' + (i * 80) + '"' + style + '>' +
+    '<div class="project-card__overlay" aria-hidden="true"></div>' +
     '<div class="project-card__body">' +
       '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
       '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +
