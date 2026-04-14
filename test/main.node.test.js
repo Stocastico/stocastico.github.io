@@ -10,10 +10,6 @@ const {
   geocodeLocations,
   Globe3D,
   renderPublications,
-  renderBlog,
-  renderBlogCard,
-  renderBlogList,
-  BLOG_MAX_HOMEPAGE,
   setFooterYear,
   initNavbar,
   initMobileMenu,
@@ -131,25 +127,6 @@ test('geocodeLocations marks item as skipped on failed lookup', async () => {
   }
 });
 
-test('BLOG_POSTS contain reachable local files or absolute URLs', () => {
-  const blogPosts = loadConstFromScript('data/blog.js', 'BLOG_POSTS');
-  assert.ok(Array.isArray(blogPosts));
-  assert.ok(blogPosts.length > 0);
-
-  for (const post of blogPosts) {
-    assert.ok(post.title);
-    assert.match(post.date, /^\d{4}-\d{2}-\d{2}$/);
-    assert.ok(post.excerpt);
-    assert.ok(post.url);
-    assert.notEqual(post.url, '#');
-
-    if (!/^https?:\/\//.test(post.url)) {
-      const target = path.join(ROOT, post.url);
-      assert.ok(fs.existsSync(target), `Missing blog target file: ${post.url}`);
-    }
-  }
-});
-
 test('PUBLICATIONS entries have required fields', () => {
   const publications = loadConstFromScript('data/publications.js', 'PUBLICATIONS');
   assert.ok(Array.isArray(publications));
@@ -203,160 +180,6 @@ test('renderPublications injects publication cards into the container', () => {
   }
 });
 
-test('renderBlog shows coming-soon state when BLOG_POSTS is empty', () => {
-  const grid = { innerHTML: '' };
-  const prevDocument = global.document;
-  const prevPosts = global.BLOG_POSTS;
-  global.document = {
-    getElementById(id) {
-      if (id === 'blog-grid') return grid;
-      return null;
-    },
-  };
-  global.BLOG_POSTS = [];
-  try {
-    renderBlog();
-    assert.match(grid.innerHTML, /Coming soon/);
-  } finally {
-    global.document = prevDocument;
-    global.BLOG_POSTS = prevPosts;
-  }
-});
-
-test('renderBlog injects cards and formats date correctly', () => {
-  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
-  const prevDocument = global.document;
-  const prevPosts = global.BLOG_POSTS;
-  global.document = {
-    getElementById(id) {
-      if (id === 'blog-grid') return grid;
-      return null;
-    },
-    createElement(tag) {
-      return { className: '', setAttribute() {}, innerHTML: '' };
-    },
-  };
-  global.BLOG_POSTS = [{
-    title: 'Post',
-    date: '2024-11-20',
-    excerpt: 'Excerpt',
-    tag: 'Research',
-    readMin: 7,
-    url: 'blog/post.html',
-  }];
-  try {
-    renderBlog();
-    assert.match(grid.innerHTML, /20 November 2024/);
-    assert.match(grid.innerHTML, /blog-accent-research/);
-  } finally {
-    global.document = prevDocument;
-    global.BLOG_POSTS = prevPosts;
-  }
-});
-
-test('renderBlog limits homepage to BLOG_MAX_HOMEPAGE posts', () => {
-  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { this.children.push(el); } } };
-  const prevDocument = global.document;
-  const prevPosts = global.BLOG_POSTS;
-  global.document = {
-    getElementById(id) {
-      if (id === 'blog-grid') return grid;
-      return null;
-    },
-    createElement(tag) {
-      return { className: '', setAttribute() {}, innerHTML: '' };
-    },
-  };
-  const posts = [];
-  for (let i = 0; i < 5; i++) {
-    posts.push({ title: `Post ${i}`, date: '2024-11-20', excerpt: 'Excerpt', tag: 'Research', readMin: 3, url: `blog/p${i}.html` });
-  }
-  global.BLOG_POSTS = posts;
-  try {
-    renderBlog();
-    const cardCount = (grid.innerHTML.match(/blog-card/g) || []).length;
-    // Each card has blog-card class, blog-card-accent, blog-card-body, blog-card-foot = 4 per card
-    assert.equal(cardCount, BLOG_MAX_HOMEPAGE * 4);
-    // "View all" link should be appended
-    assert.equal(grid.parentNode.children.length, 1);
-    assert.match(grid.parentNode.children[0].innerHTML, /blog\.html/);
-  } finally {
-    global.document = prevDocument;
-    global.BLOG_POSTS = prevPosts;
-  }
-});
-
-test('renderBlog does not show "View all" link when posts fit within limit', () => {
-  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { this.children.push(el); } } };
-  const prevDocument = global.document;
-  const prevPosts = global.BLOG_POSTS;
-  global.document = {
-    getElementById(id) {
-      if (id === 'blog-grid') return grid;
-      return null;
-    },
-    createElement(tag) {
-      return { className: '', setAttribute() {}, innerHTML: '' };
-    },
-  };
-  global.BLOG_POSTS = [
-    { title: 'Post', date: '2024-11-20', excerpt: 'Excerpt', tag: 'Research', readMin: 3, url: 'blog/p.html' },
-  ];
-  try {
-    renderBlog();
-    assert.equal(grid.parentNode.children.length, 0);
-  } finally {
-    global.document = prevDocument;
-    global.BLOG_POSTS = prevPosts;
-  }
-});
-
-test('renderBlogList renders all posts as list items', () => {
-  const list = { innerHTML: '' };
-  const prevDocument = global.document;
-  const prevPosts = global.BLOG_POSTS;
-  global.document = {
-    getElementById(id) {
-      if (id === 'blog-list') return list;
-      return null;
-    },
-  };
-  const posts = [];
-  for (let i = 0; i < 5; i++) {
-    posts.push({ title: `Post ${i}`, date: '2024-11-20', excerpt: 'Excerpt', tag: 'Research', readMin: 3, url: `blog/p${i}.html` });
-  }
-  global.BLOG_POSTS = posts;
-  try {
-    renderBlogList();
-    const itemCount = (list.innerHTML.match(/blog-list-item/g) || []).length;
-    assert.equal(itemCount, 5);
-    assert.match(list.innerHTML, /Post 0/);
-    assert.match(list.innerHTML, /Post 4/);
-  } finally {
-    global.document = prevDocument;
-    global.BLOG_POSTS = prevPosts;
-  }
-});
-
-test('renderBlogList shows empty state when no posts', () => {
-  const list = { innerHTML: '' };
-  const prevDocument = global.document;
-  const prevPosts = global.BLOG_POSTS;
-  global.document = {
-    getElementById(id) {
-      if (id === 'blog-list') return list;
-      return null;
-    },
-  };
-  global.BLOG_POSTS = [];
-  try {
-    renderBlogList();
-    assert.match(list.innerHTML, /No posts yet/);
-  } finally {
-    global.document = prevDocument;
-    global.BLOG_POSTS = prevPosts;
-  }
-});
 
 test('setFooterYear writes current year', () => {
   const el = { textContent: '' };
@@ -2190,7 +2013,7 @@ test('renderProjects injects project cards with title, year, and tags', () => {
     tags: ['AI', 'CV'],
     thumb: 'img/projects/test-thumb.jpg',
     description: 'A test project description.',
-    url: 'projects.html#test-project',
+    url: 'projects/test-project.html',
   }];
   try {
     renderProjects();
@@ -2199,7 +2022,73 @@ test('renderProjects injects project cards with title, year, and tags', () => {
     assert.match(grid.innerHTML, /AI/);
     assert.match(grid.innerHTML, /CV/);
     assert.match(grid.innerHTML, /project-card/);
-    assert.match(grid.innerHTML, /project-card__thumb/);
+    assert.match(grid.innerHTML, /projects\/test-project\.html/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects uses bg image as CSS background when provided', () => {
+  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.PROJECTS = [{
+    id: 'with-bg',
+    title: 'Project With BG',
+    year: '2024',
+    tags: ['AR'],
+    thumb: 'img/projects/with-bg-thumb.jpg',
+    bg: 'img/projects/with-bg-hero.jpg',
+    description: 'A project with a background image.',
+    url: 'projects/with-bg.html',
+  }];
+  try {
+    renderProjects();
+    // bg URL should end up as a CSS custom property on the card
+    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/with-bg-hero\.jpg['"]?\)/);
+    // has-bg class toggled when bg is present
+    assert.match(grid.innerHTML, /project-card--has-bg/);
+  } finally {
+    global.document = prevDocument;
+    global.PROJECTS = prevProjects;
+  }
+});
+
+test('renderProjects falls back to thumb for background when bg is missing', () => {
+  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
+  const prevDocument = global.document;
+  const prevProjects = global.PROJECTS;
+  global.document = {
+    getElementById(id) {
+      if (id === 'projects-grid') return grid;
+      return null;
+    },
+    createElement(tag) {
+      return { className: '', setAttribute() {}, innerHTML: '' };
+    },
+  };
+  global.PROJECTS = [{
+    id: 'thumb-only',
+    title: 'Thumb Only',
+    year: '2024',
+    tags: ['AI'],
+    thumb: 'img/projects/thumb-only.jpg',
+    description: 'No bg, thumb only.',
+    url: 'projects/thumb-only.html',
+  }];
+  try {
+    renderProjects();
+    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/thumb-only\.jpg['"]?\)/);
   } finally {
     global.document = prevDocument;
     global.PROJECTS = prevProjects;
@@ -2237,7 +2126,7 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   try {
     renderProjects();
     // Should only render PROJECTS_MAX_HOMEPAGE cards
-    const cardCount = (grid.innerHTML.match(/project-card"/g) || []).length;
+    const cardCount = (grid.innerHTML.match(/<a[^>]*class="project-card(?:\s|")/g) || []).length;
     assert.equal(cardCount, PROJECTS_MAX_HOMEPAGE);
     // Should show "View all" link
     assert.equal(appended.length, 1);

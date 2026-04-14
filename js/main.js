@@ -9,7 +9,7 @@
                             skills, contact, navigation, footer)
      data/locations.js    — 3D globe pins, trips, regions
      data/publications.js — selected papers  (PUBLICATIONS array)
-     data/blog.js         — blog posts       (BLOG_POSTS array)
+     data/projects.js     — projects         (PROJECTS array)
 
    To change neural-network colours, adjust the ACCENT_* /
    CYAN_* constants inside the NeuralNetwork class below.
@@ -1465,11 +1465,11 @@ function initNavbar() {
 
   const progressBar = document.getElementById('reading-progress');
 
-  /* ── Blog page: highlight "Writing" nav link ──────────── */
-  const isBlogPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/blog/');
-  if (isBlogPage) {
-    const blogLink = document.querySelector('#nav-links a[href*="#blog"]');
-    if (blogLink) blogLink.setAttribute('aria-current', 'true');
+  /* ── Project page: highlight "Projects" nav link ────────── */
+  const isProjectPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/projects/');
+  if (isProjectPage) {
+    const projectLink = document.querySelector('#nav-links a[href*="#projects"]');
+    if (projectLink) projectLink.setAttribute('aria-current', 'true');
   }
 
   const links = typeof document.querySelectorAll === 'function'
@@ -1576,7 +1576,7 @@ function initCommandPalette() {
     { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
     { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
     { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
-    { id: 'blog',         label: 'Blog',          hint: 'Thoughts & Writing' },
+    { id: 'projects',     label: 'Projects',      hint: 'Things I\u2019ve built', href: 'projects.html' },
     { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
   ];
 
@@ -1879,9 +1879,9 @@ function initMobileMenu() {
 
 /* ═══════════════════════════════════════════════════════════
    DYNAMIC CONTENT RENDERERS
-   Publications and blog posts are the only sections rendered
+   Publications and projects are the only sections rendered
    by JS — their data lives in data/publications.js and
-   data/blog.js respectively.
+   data/projects.js respectively.
    ═══════════════════════════════════════════════════════════ */
 
 /* Format YYYY-MM-DD without timezone shifts in local browsers */
@@ -1985,10 +1985,14 @@ function renderProjectCard(project, i) {
   const tagsHtml = (project.tags || [])
     .map(function(t) { return '<span class="project-tag">' + escapeHtml(t) + '</span>'; })
     .join('');
-  return '<a href="' + escapeHtml(project.url || '#') + '" class="project-card" data-animate data-delay="' + (i * 80) + '">' +
-    '<div class="project-card__thumb-wrap">' +
-      '<img class="project-card__thumb" src="' + escapeHtml(project.thumb || '') + '" alt="' + escapeHtml(project.title) + '" loading="lazy" />' +
-    '</div>' +
+  const bgSrc = project.bg || project.thumb || '';
+  const hasBg = Boolean(bgSrc);
+  const style = hasBg
+    ? ' style="--card-bg: url(\'' + escapeHtml(bgSrc) + '\')"'
+    : '';
+  const cls = 'project-card' + (hasBg ? ' project-card--has-bg' : '');
+  return '<a href="' + escapeHtml(project.url || '#') + '" class="' + cls + '" data-animate data-delay="' + (i * 80) + '"' + style + '>' +
+    '<div class="project-card__overlay" aria-hidden="true"></div>' +
     '<div class="project-card__body">' +
       '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
       '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +
@@ -2007,10 +2011,13 @@ function renderProjects() {
     return;
   }
 
-  var shown = PROJECTS.slice(0, PROJECTS_MAX_HOMEPAGE);
+  // On projects.html (listing page) the grid opts in via data-render="all"
+  // and shows every project. Elsewhere (homepage) we cap the count.
+  var showAll = grid.getAttribute && grid.getAttribute('data-render') === 'all';
+  var shown = showAll ? PROJECTS : PROJECTS.slice(0, PROJECTS_MAX_HOMEPAGE);
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
-  if (PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
+  if (!showAll && PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
     var footer = document.createElement('div');
     footer.className = 'projects-view-all';
     footer.setAttribute('data-animate', '');
@@ -2018,77 +2025,6 @@ function renderProjects() {
     footer.innerHTML = '<a href="projects.html" class="btn btn-ghost">View all projects &rarr;</a>';
     grid.parentNode.appendChild(footer);
   }
-}
-
-/* Blog posts — data source: BLOG_POSTS (data/blog.js) */
-var BLOG_MAX_HOMEPAGE = 3;
-
-function renderBlogCard(post, i) {
-  const date = formatIsoDate(post.date);
-  const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
-  const readStr = post.readMin ? `${post.readMin} min →` : 'Read →';
-  return `
-    <a href="${escapeHtml(post.url)}" class="blog-card" data-animate data-delay="${i * 80}">
-      <div class="blog-card-accent blog-accent-${tagSlug}"></div>
-      <div class="blog-card-body">
-        <span class="blog-tag">${escapeHtml(post.tag || 'Post')}</span>
-        <span class="blog-title">${escapeHtml(post.title)}</span>
-        <span class="blog-excerpt">${escapeHtml(post.excerpt)}</span>
-      </div>
-      <div class="blog-card-foot">
-        <span class="blog-date">${escapeHtml(date)}</span>
-        <span class="blog-read">${escapeHtml(readStr)}</span>
-      </div>
-    </a>
-  `;
-}
-
-function renderBlog() {
-  const grid = document.getElementById('blog-grid');
-  if (!grid) return;
-
-  if (!BLOG_POSTS.length) {
-    grid.innerHTML = `
-      <div class="blog-coming-soon" data-animate>
-        Coming soon — stay tuned for thoughts on AI, XR, and beyond.
-      </div>
-    `;
-    return;
-  }
-
-  const shown = BLOG_POSTS.slice(0, BLOG_MAX_HOMEPAGE);
-  grid.innerHTML = shown.map(renderBlogCard).join('');
-
-  if (BLOG_POSTS.length > BLOG_MAX_HOMEPAGE) {
-    const footer = document.createElement('div');
-    footer.className = 'blog-view-all';
-    footer.setAttribute('data-animate', '');
-    footer.setAttribute('data-delay', String(shown.length * 80));
-    footer.innerHTML = `<a href="blog.html" class="btn btn-ghost">View all posts &rarr;</a>`;
-    grid.parentNode.appendChild(footer);
-  }
-}
-
-function renderBlogList() {
-  const list = document.getElementById('blog-list');
-  if (!list) return;
-
-  if (!BLOG_POSTS.length) {
-    list.innerHTML = `<p class="blog-coming-soon">No posts yet — stay tuned.</p>`;
-    return;
-  }
-
-  list.innerHTML = BLOG_POSTS.map((post, i) => {
-    const date = formatIsoDate(post.date);
-    const tagSlug = (post.tag || 'general').toLowerCase().replace(/\s+/g, '-');
-    return `
-      <a href="${escapeHtml(post.url)}" class="blog-list-item" data-animate data-delay="${i * 50}">
-        <span class="blog-list-tag blog-accent-text-${tagSlug}">${escapeHtml(post.tag || 'Post')}</span>
-        <span class="blog-list-title">${escapeHtml(post.title)}</span>
-        <span class="blog-list-date">${escapeHtml(date)}</span>
-      </a>
-    `;
-  }).join('');
 }
 
 /* Footer year */
@@ -2109,7 +2045,7 @@ function initCardTilt() {
   const MAX_RY = 12;   /* max degrees rotateY */
   const SPRING  = 0.10; /* lerp factor per frame */
 
-  Array.from(document.querySelectorAll('.research-card, .blog-card, .contact-card, .skill-group, .pub-item'))
+  Array.from(document.querySelectorAll('.research-card, .project-card, .contact-card, .skill-group, .pub-item'))
     .forEach((card) => {
       let targetRX = 0, targetRY = 0, targetZ = 0;
       let currentRX = 0, currentRY = 0, currentZ = 0;
@@ -3073,10 +3009,6 @@ if (typeof module !== 'undefined' && module.exports) {
     renderProjects,
     renderProjectCard,
     PROJECTS_MAX_HOMEPAGE,
-    renderBlog,
-    renderBlogCard,
-    renderBlogList,
-    BLOG_MAX_HOMEPAGE,
     renderCV,
     renderSkills,
     setFooterYear,
@@ -3178,8 +3110,6 @@ if (typeof document !== 'undefined') {
   /* Render dynamic content (static sections are already in HTML) */
   renderPublications();
   renderProjects();
-  renderBlog();
-  renderBlogList();
   renderCV();      /* timeline entries from data/cv.js */
   renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
   setFooterYear();
