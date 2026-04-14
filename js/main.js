@@ -2011,10 +2011,13 @@ function renderProjects() {
     return;
   }
 
-  var shown = PROJECTS.slice(0, PROJECTS_MAX_HOMEPAGE);
+  // On projects.html (listing page) the grid opts in via data-render="all"
+  // and shows every project. Elsewhere (homepage) we cap the count.
+  var showAll = grid.getAttribute && grid.getAttribute('data-render') === 'all';
+  var shown = showAll ? PROJECTS : PROJECTS.slice(0, PROJECTS_MAX_HOMEPAGE);
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
-  if (PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
+  if (!showAll && PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
     var footer = document.createElement('div');
     footer.className = 'projects-view-all';
     footer.setAttribute('data-animate', '');

@@ -72,14 +72,12 @@
         <h1 class="section-title">Portfolio</h1>
       </header>
 
-      <!-- ═══════════════ PROJECT DETAIL SECTIONS ═══════════════
-           Add new project sections here. Each section should have:
-             <section id="project-slug" class="project-detail">
-           The id must match the project's id in data/projects.js
-           so homepage cards can deep-link here.
+      <!-- ═══════════════ PROJECT CARD GRID ═══════════════
+           Populated from data/projects.js by renderProjects() in main.js.
+           The data-render="all" attribute signals the listing page so the
+           homepage cap (PROJECTS_MAX_HOMEPAGE) is bypassed.
       ═══════════════════════════════════════════════════════════ -->
-
-      <!-- ── INJECT NEW PROJECTS ABOVE THIS LINE ── -->
+      <div class="projects-grid" id="projects-grid" data-render="all"></div>
 
     </div><!-- /.container -->
   </main>
@@ -98,6 +96,7 @@
     </svg>
   </button>
 
+  <script defer src="data/projects.js"></script>
   <script defer src="js/main.min.js"></script>
 </body>
 
