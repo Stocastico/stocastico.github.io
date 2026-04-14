@@ -12,8 +12,6 @@
   <meta name="robots" content="index, follow, noai, noimageai" />
   <title>Stefano Masneri — ML, Vision &amp; AR</title>
   <link rel="canonical" href="https://stocastico.github.io/" />
-  <!-- RSS feed discovery -->
-  <link rel="alternate" type="application/rss+xml" title="Stefano Masneri — Blog" href="https://stocastico.github.io/rss.xml" />
 
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type"        content="website" />
@@ -115,7 +113,7 @@
       <ul class="nav-links" id="nav-links">
         <li><a href="#about">About</a></li>
         <li><a href="#research">Work</a></li>
-        <li><a href="#blog">Writing</a></li>
+        <li><a href="#projects">Projects</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
       <kbd class="cmd-trigger-hint" id="cmd-trigger" aria-label="Open command palette">
@@ -590,25 +588,6 @@
     </div>
   </section>
 
-  <!-- ═══════════════ WRITING ═══════════════ -->
-  <section id="blog" class="section" aria-label="Writing">
-    <div class="container">
-      <header class="section-header" data-animate>
-        <span class="section-tag">Writing</span>
-        <h2 class="section-title">Notes &amp; Thoughts</h2>
-      </header>
-      <div class="writing-intro" data-animate>
-        <p class="writing-intro-text">
-          I keep a dedicated writing page where I collect short notes, things I learned while
-          working on AI, computer vision, or augmented reality, and the occasional longer post
-          when something is worth exploring in depth. Nothing too formal — just a place to think
-          out loud.
-        </p>
-        <a href="blog.html" class="btn btn-primary">Go to writing page &rarr;</a>
-      </div>
-    </div>
-  </section>
-
   <!-- ═══════════════ CONTACT ═══════════════ -->
   <section id="contact" class="section section-alt" aria-label="Contact">
     <div class="container">
@@ -696,14 +675,14 @@
     </div>
   </footer>
 
-  <!-- Speculation Rules API — prerender blog pages on hover so navigation
+  <!-- Speculation Rules API — prerender project pages on hover so navigation
        feels instant.  The browser auto-skips this on slow connections or
        low battery, so no JS guard is needed.  Gracefully ignored by
        browsers that do not support the API (all content still loads).   -->
   <script type="speculationrules">
   {
     "prerender": [{
-      "where": { "href_matches": "/blog/*" },
+      "where": { "href_matches": "/projects/*" },
       "eagerness": "moderate"
     }]
   }
@@ -750,13 +729,12 @@
        Edit these files to update frequently-changing content:
          data/locations.js    — 3D globe pins, trips, regions
          data/publications.js — selected papers list
-         data/blog.js         — blog post cards (leave BLOG_POSTS=[] for "Coming soon")
+         data/projects.js     — project cards (leave PROJECTS=[] for "Coming soon")
          data/cv.js           — CV timeline + skills (CV_CAREER, CV_EDUCATION, CV_SKILLS)
   ───────────────────────────────────────────────────────────────────── -->
   <script defer src="data/locations.js"></script>
   <script defer src="data/publications.js"></script>
   <script defer src="data/projects.js"></script>
-  <script defer src="data/blog.js"></script>
   <script defer src="js/europe-map.js"></script>
   <script defer src="js/main.min.js"></script>
 </body>

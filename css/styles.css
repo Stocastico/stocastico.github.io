@@ -1606,76 +1606,6 @@ h3 {
   background: rgba(0, 212, 255, 0.06);
 }
 
-/* ─── 13. Blog Section ──────────────────────────────────── */
-.blog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--gap);
-}
-
-.blog-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  transition: transform var(--t-med) var(--ease),
-    border-color var(--t-med),
-    background var(--t-med);
-}
-
-.blog-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--border-hov);
-  background: var(--bg-card-hov);
-}
-
-.blog-date {
-  font-size: 0.75rem;
-  color: var(--accent2);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.blog-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.4;
-}
-
-.blog-excerpt {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  flex: 1;
-}
-
-.blog-read {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--accent);
-  transition: color var(--t-fast);
-}
-
-.blog-read:hover {
-  color: var(--accent2);
-}
-
-/* Empty blog state */
-.blog-coming-soon {
-  grid-column: 1 / -1;
-  background: var(--bg-card);
-  border: 1px dashed var(--border);
-  border-radius: var(--r-lg);
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--text-faint);
-  font-style: italic;
-}
-
 /* ─── 14. Contact Section ───────────────────────────────── */
 .contact-wrap {
   max-width: 760px;
@@ -2275,7 +2205,7 @@ h3 {
 #research,
 #publications,
 #skills,
-#blog,
+#projects,
 #contact {
   content-visibility: auto;
   contain-intrinsic-block-size: auto 650px;
@@ -2620,132 +2550,6 @@ h3 {
   margin-left: 0.4rem;
 }
 
-/* ─── 19. Enhanced Blog Cards ────────────────────────────── */
-/* Override base card to remove top-padding — header accent bar takes its place */
-.blog-card {
-  padding: 0;
-  gap: 0;
-}
-
-.blog-card-accent {
-  height: 4px;
-  width: 100%;
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
-  flex-shrink: 0;
-}
-
-.blog-accent-research {
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-}
-
-.blog-accent-engineering {
-  background: linear-gradient(90deg, #ff6b6b, #ffd060);
-}
-
-.blog-accent-ai {
-  background: linear-gradient(90deg, var(--accent2), #00ff9d);
-}
-
-.blog-accent-personal {
-  background: linear-gradient(90deg, #f59e0b, #fb7185);
-}
-
-.blog-accent-general {
-  background: linear-gradient(90deg, var(--text-faint), var(--text-muted));
-}
-
-.blog-card-body {
-  padding: 1.4rem 1.5rem 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  flex: 1;
-}
-
-.blog-tag {
-  display: inline-block;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: rgba(108, 99, 255, 0.12);
-  border-radius: 999px;
-  padding: 0.2em 0.8em;
-  align-self: flex-start;
-}
-
-.blog-card-foot {
-  padding: 0.7rem 1.5rem 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--border);
-  margin-top: auto;
-}
-
-.blog-view-all {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-/* ─── Blog listing page ────────────────────────────────── */
-.blog-list-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  transition: background var(--t-fast), padding-left var(--t-fast);
-}
-
-.blog-list-item:hover {
-  background: var(--bg-card-hov);
-  padding-left: 1.5rem;
-}
-
-.blog-list-tag {
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  min-width: 6rem;
-  color: var(--accent);
-}
-
-.blog-accent-text-research   { color: var(--accent); }
-.blog-accent-text-engineering { color: #ff6b6b; }
-.blog-accent-text-ai          { color: var(--accent2); }
-.blog-accent-text-personal    { color: #f59e0b; }
-.blog-accent-text-general     { color: var(--text-muted); }
-
-.blog-list-title {
-  flex: 1;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.blog-list-date {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-@media (max-width: 600px) {
-  .blog-list-item {
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-  .blog-list-tag {
-    min-width: auto;
-  }
-  .blog-list-date {
-    width: 100%;
-    order: 3;
-  }
-}
-
 @media (max-width: 680px) {
   .globe-legend {
     bottom: 0.75rem;
@@ -2763,7 +2567,7 @@ h3 {
   }
 }
 
-/* ─── Blog Post Page ─────────────────────────────────────── */
+/* ─── Project Detail Page ────────────────────────────────── */
 .post {
   max-width: 760px;
   margin: 0 auto;
@@ -3185,7 +2989,7 @@ h3 {
 /* The body::after radial gradient forced full-page repaints
    on every mousemove, draining battery on older hardware.     */
 
-/* ─── Post Back Row (blog posts) ─────────────────────── */
+/* ─── Post Back Row (project pages) ────────────────────── */
 .post-back-row {
   display: flex;
   align-items: center;
