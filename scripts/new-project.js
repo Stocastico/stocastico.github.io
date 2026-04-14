@@ -2,27 +2,33 @@
 'use strict';
 
 /**
- * new-project.js — Convert a Markdown file into a project detail section
- * in projects.html and register it in data/projects.js.
+ * new-project.js — Convert a Markdown file into a standalone project detail
+ * page (projects/<id>.html) and register it in data/projects.js so the card
+ * appears on the homepage and on the projects listing page.
+ *
+ * Each project gets its own HTML file, mirroring the blog-post workflow.
  *
  * Usage:
  *   node scripts/new-project.js path/to/project.md [options]
  *
  * Options:
+ *   --out-dir <dir>   Output directory for the HTML file (default: projects/)
  *   --dry-run         Print generated HTML and data entry without writing files
  *   -h, --help        Show this help
  *
  * Markdown frontmatter (required fields):
  *   ---
- *   id:          my-project              # kebab-case, used as HTML anchor
+ *   id:          my-project              # kebab-case, used as filename
  *   title:       "My Project Title"
  *   year:        "2024"
  *   tags:        "AI, CV, Unity"         # comma-separated
- *   thumb:       "img/projects/my.jpg"   # 16:9 thumbnail
+ *   thumb:       "img/projects/my.jpg"   # card thumbnail
  *   description: "Short 2–3 sentence summary for the homepage card."
  *   ---
  *
  * Optional frontmatter:
+ *   bg:          "img/projects/my-bg.jpg"   # semi-transparent card bg /
+ *                                            # project-page hero image
  *   link_paper:  "https://..."
  *   link_github: "https://..."
  *   link_demo:   "https://..."
@@ -37,12 +43,14 @@ const path = require('node:path');
 function parseArgs(argv) {
   const out = {
     input: null,
+    outDir: 'projects',
     dryRun: false,
     help: false,
   };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--dry-run') out.dryRun = true;
+    if (arg === '--out-dir') out.outDir = argv[++i];
+    else if (arg === '--dry-run') out.dryRun = true;
     else if (arg === '--help' || arg === '-h') out.help = true;
     else if (!arg.startsWith('-')) out.input = arg;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -54,20 +62,23 @@ function printHelp() {
   console.log(`Usage:
   node scripts/new-project.js <markdown-file> [options]
 
-Generates a project detail section in projects.html and registers
-the entry in data/projects.js for the homepage cards.
+Generates a standalone project detail page (projects/<id>.html) and
+registers the project in data/projects.js so the card shows on the
+homepage and on projects.html.
 
 Options:
+  --out-dir <dir>       Output directory (default: projects)
   --dry-run             Print output without writing files
   -h, --help            Show this help
 
 Frontmatter fields (YAML between --- delimiters):
-  id           (required)  kebab-case identifier, becomes HTML anchor
+  id           (required)  kebab-case identifier, becomes filename
   title        (required)  Project title
   year         (required)  Project year
   tags         (required)  Comma-separated tag keywords
-  thumb        (required)  Path to 16:9 thumbnail image
+  thumb        (required)  Path to card thumbnail image
   description  (required)  Short summary for the homepage card
+  bg                       Semi-transparent card bg + detail hero image
   link_paper              URL to paper (optional)
   link_github             URL to GitHub repo (optional)
   link_demo               URL to live demo (optional)
@@ -252,7 +263,7 @@ function markdownToHtml(md) {
   return out.join('\n');
 }
 
-// ─── HTML section builder ─────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function slugify(title) {
   return title
@@ -265,19 +276,19 @@ function parseTags(tagsStr) {
   return String(tagsStr).split(',').map(t => t.trim()).filter(Boolean);
 }
 
-function buildProjectHtml(fm, bodyHtml) {
+function deriveOutputPath(id, outDir = 'projects') {
+  return path.join(outDir, `${id}.html`);
+}
+
+// ─── Standalone project page builder ──────────────────────────────────────────
+
+function buildProjectPage(fm, bodyHtml) {
   const tags = parseTags(fm.tags);
+  const heroImg = fm.bg || fm.thumb;
   const tagsHtml = tags
-    .map(t => `          <span class="project-tag">${escapeHtml(t)}</span>`)
+    .map(t => `        <span class="project-tag">${escapeHtml(t)}</span>`)
     .join('\n');
 
-  const mediaHtml = fm.thumb
-    ? `      <div class="project-detail__media">
-        <img src="${escapeHtml(fm.thumb)}" alt="${escapeHtml(fm.title)}" loading="lazy" />
-      </div>`
-    : '';
-
-  // Build optional links row
   const links = [];
   if (fm.link_paper) links.push({ label: 'Paper', url: fm.link_paper });
   if (fm.link_github) links.push({ label: 'GitHub', url: fm.link_github });
@@ -290,20 +301,107 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
       </div>`
     : '';
 
-  return `      <section id="${escapeHtml(fm.id)}" class="project-detail" data-animate>
-${mediaHtml}
-        <div class="project-detail__header">
-          <span class="project-detail__year">${escapeHtml(fm.year)}</span>
-          <h2 class="project-detail__title">${escapeHtml(fm.title)}</h2>
-          <div class="project-detail__tags">
+  const titleEsc = escapeHtml(fm.title);
+  const descEsc = escapeHtml(fm.description);
+  const yearEsc = escapeHtml(fm.year);
+  const heroImgEsc = escapeHtml(heroImg);
+
+  return `<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="${descEsc}" />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>${titleEsc} — Stefano Masneri</title>
+  <link rel="canonical" href="https://stocastico.github.io/projects/${escapeHtml(fm.id)}.html" />
+
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/projects/${escapeHtml(fm.id)}.html" />
+  <meta property="og:title"       content="${titleEsc} — Stefano Masneri" />
+  <meta property="og:description" content="${descEsc}" />
+  <meta property="og:image"       content="https://stocastico.github.io/${heroImgEsc}" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="${titleEsc} — Stefano Masneri" />
+  <meta name="twitter:description" content="${descEsc}" />
+
+  <meta name="theme-color" content="#080c14" />
+
+  <link rel="stylesheet" href="../css/fonts.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#project-content">Skip to project</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Project hero banner (semi-transparent image + title overlay) -->
+  <header class="project-hero" style="--project-hero-img: url('../${heroImgEsc}');" aria-label="${titleEsc}">
+    <div class="project-hero__overlay" aria-hidden="true"></div>
+    <div class="project-hero__inner">
+      <p class="post-back-row">
+        <a href="../projects.html" class="cv-back-link">&larr; All projects</a>
+      </p>
+      <p class="project-detail__year">${yearEsc}</p>
+      <h1 class="project-detail__title">${titleEsc}</h1>
+      <div class="project-detail__tags">
 ${tagsHtml}
-          </div>
-        </div>
-        <div class="project-detail__body">
-          ${bodyHtml}
-        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="project-content" class="post">
+    <div class="post-lead">${descEsc}</div>
+
+    ${bodyHtml}
+
 ${linksHtml}
-      </section>`;
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script defer src="../js/main.min.js"></script>
+</body>
+</html>
+`;
 }
 
 // ─── data/projects.js updater ─────────────────────────────────────────────────
@@ -315,35 +413,24 @@ function updateProjectsJs(projectsJsPath, entry, src) {
   const insertAt = src.indexOf('[', arrayStart) + 1;
 
   const tagsStr = JSON.stringify(entry.tags);
-  const entryLines = [
+  const lines = [
     '{',
     `        id: ${JSON.stringify(entry.id)},`,
     `        title: ${JSON.stringify(entry.title)},`,
     `        year: ${JSON.stringify(entry.year)},`,
     `        tags: ${tagsStr},`,
     `        thumb: ${JSON.stringify(entry.thumb)},`,
-    `        description: ${JSON.stringify(entry.description)},`,
-    `        url: ${JSON.stringify(entry.url)},`,
-    '    }',
-  ].map((l) => `\n    ${l}`).join('');
+  ];
+  if (entry.bg) lines.push(`        bg: ${JSON.stringify(entry.bg)},`);
+  lines.push(`        description: ${JSON.stringify(entry.description)},`);
+  lines.push(`        url: ${JSON.stringify(entry.url)},`);
+  lines.push('    }');
 
+  const entryBlock = lines.map((l) => `\n    ${l}`).join('');
   const before = src.slice(0, insertAt);
   const after = src.slice(insertAt);
   const separator = after.trimStart().startsWith(']') ? '' : ',';
-  return `${before}${entryLines}${separator}${after}`;
-}
-
-// ─── projects.html updater ────────────────────────────────────────────────────
-
-const INJECT_MARKER = '<!-- ── INJECT NEW PROJECTS ABOVE THIS LINE ── -->';
-
-function updateProjectsHtml(htmlPath, sectionHtml, src) {
-  if (src === undefined) src = fs.readFileSync(htmlPath, 'utf8');
-  const markerIdx = src.indexOf(INJECT_MARKER);
-  if (markerIdx === -1) throw new Error(`Could not find injection marker in ${htmlPath}`);
-  const before = src.slice(0, markerIdx);
-  const after = src.slice(markerIdx);
-  return `${before}${sectionHtml}\n\n      ${after}`;
+  return `${before}${entryBlock}${separator}${after}`;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -370,7 +457,7 @@ function main() {
 
   const tags = parseTags(fm.tags);
   const bodyHtml = markdownToHtml(body);
-  const sectionHtml = buildProjectHtml(fm, bodyHtml);
+  const pageHtml = buildProjectPage(fm, bodyHtml);
 
   const projectEntry = {
     id: String(fm.id),
@@ -379,26 +466,23 @@ function main() {
     tags: tags,
     thumb: String(fm.thumb),
     description: String(fm.description),
-    url: `projects.html#${fm.id}`,
+    url: `${opts.outDir.replace(/\\/g, '/')}/${fm.id}.html`,
   };
+  if (fm.bg) projectEntry.bg = String(fm.bg);
 
   if (opts.dryRun) {
-    console.log('=== Generated HTML section ===');
-    console.log(sectionHtml);
+    console.log('=== Generated project page HTML ===');
+    console.log(pageHtml);
     console.log('\n=== projects.js entry ===');
     console.log(JSON.stringify(projectEntry, null, 2));
     return;
   }
 
-  // Update projects.html
-  const projectsHtmlPath = path.resolve('projects.html');
-  if (fs.existsSync(projectsHtmlPath)) {
-    const updated = updateProjectsHtml(projectsHtmlPath, sectionHtml);
-    fs.writeFileSync(projectsHtmlPath, updated, 'utf8');
-    console.log(`Updated: ${path.relative(process.cwd(), projectsHtmlPath)}`);
-  } else {
-    console.warn(`Warning: ${projectsHtmlPath} not found — skipped projects.html update.`);
-  }
+  // Write standalone project HTML page
+  const outPath = path.resolve(deriveOutputPath(String(fm.id), opts.outDir));
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, pageHtml, 'utf8');
+  console.log(`Wrote:   ${path.relative(process.cwd(), outPath)}`);
 
   // Update data/projects.js
   const projectsJsPath = path.resolve('data/projects.js');
@@ -410,7 +494,7 @@ function main() {
     console.warn(`Warning: ${projectsJsPath} not found — skipped projects.js update.`);
   }
 
-  console.log(`\nProject added: ${fm.title} → projects.html#${fm.id}`);
+  console.log(`\nProject added: ${fm.title} → ${projectEntry.url}`);
 }
 
 if (require.main === module) {
@@ -422,10 +506,10 @@ module.exports = {
   parseFrontmatter,
   validateProjectFrontmatter,
   markdownToHtml,
-  buildProjectHtml,
+  buildProjectPage,
   updateProjectsJs,
-  updateProjectsHtml,
   slugify,
   parseTags,
   parseArgs,
+  deriveOutputPath,
 };
