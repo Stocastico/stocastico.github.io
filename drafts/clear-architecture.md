@@ -1,0 +1,61 @@
+---
+id:          clear-architecture
+title:       "cleAR: Interoperable Architecture for Multi-User AR"
+year:        "2023"
+tags:        "AR, Education, Architecture"
+thumb:       "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/38e67d207f1a/10055_2023_764_Fig2_HTML.jpg"
+bg:          "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/38e67d207f1a/10055_2023_764_Fig2_HTML.jpg"
+description: "cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research."
+link_paper:  "https://link.springer.com/article/10.1007/s10055-023-00764-5"
+---
+
+cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR) applications tailored to educational settings. It was the **core contribution of my PhD research**, developed in collaboration with the University of the Basque Country (UPV/EHU) and Vicomtech. The work was published in the *Virtual Reality* journal (Springer, 2023).
+
+Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school infrastructure and curricula. cleAR was designed to address both.
+
+## Design Objectives
+
+The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
+
+![Design objectives diagram](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/6a483ae3edfd/10055_2023_764_Fig1_HTML.jpg)
+
+- **DO1 — Interoperability**: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
+- **DO2 — Multi-user interactions**: Real-time collaboration between students and teachers, both in-person and remotely.
+- **DO3 — Long-term storage**: Persistent capture of student progress, task completion, and interaction data for longitudinal analysis.
+- **DO4 — Data visualisation**: Automatic generation of reports and interactive dashboards accessible to teachers without programming skills.
+- **DO5 — AI integration**: Support for machine learning pipelines that can surface usage patterns, estimate task difficulty, and flag students at risk of falling behind.
+- **DO6 — Ease of development**: A clean, well-documented API surface so developers can build new AR experiences without reimplementing common infrastructure.
+
+## Architecture
+
+cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated stack.
+
+![Architecture overview](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/38e67d207f1a/10055_2023_764_Fig2_HTML.jpg)
+
+**Real-time multi-user library.** A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and video streams.
+
+**Logging and data storage module.** Student interactions are serialised and forwarded to a Learning Record Store (LRS) via the xAPI standard, making cleAR compatible with any LMS that supports xAPI. The module supports configurable data collection frequency, anonymisation, and role-based access (admin, teacher, student).
+
+**AI-based analytics module.** A framework-agnostic server-side component processes three data types produced during AR sessions: natural text (chat, answers), structured tabular logs, and image data from camera feeds. It supports both supervised and unsupervised learning and can train models from scratch or fine-tune existing ones. The most common teacher-identified use cases were usage-pattern analysis (63%), automatic test difficulty estimation (60%), and early identification of struggling learners (58%).
+
+**Visual reporting module.** A code-free web interface for generating interactive dashboards and charts from stored xAPI data, built on D3 and Seaborn. Visualisations are rendered client-side to preserve privacy, with export options to local storage, external databases, or the school LMS.
+
+## Proof-of-Concept Applications
+
+Three proof-of-concept applications were developed to validate the architecture against the design objectives.
+
+**AR Cube** — a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
+
+![AR Cube proof-of-concept](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/96125f8d4bed/10055_2023_764_Fig4_HTML.jpg)
+
+**xAPI Data Analysis** — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
+
+**AR Geography Quiz** — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
+
+![AR Geography Quiz](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/7a8fe2cd964b/10055_2023_764_Fig6_HTML.jpg)
+
+## Impact
+
+cleAR provides a mature technological ecosystem designed to lower the barrier of entry for AR-based educational applications. By standardising the collaborative, data-logging, and analytics layers that every multi-user AR application needs, it allows developers to focus on pedagogical content rather than infrastructure. All proof-of-concept source code is released as open-source software.
+
+The work was published in *Virtual Reality* (Springer) in 2023 and is part of a broader research line exploring how AI and immersive technologies can be deployed responsibly and effectively in real classroom settings.
