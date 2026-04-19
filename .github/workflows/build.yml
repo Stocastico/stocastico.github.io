@@ -39,14 +39,6 @@ jobs:
       - name: Generate globe locations
         run: npm run generate-locations
 
-      # Regenerate rss.xml.
-      - name: Generate RSS feed
-        run: npm run generate-rss -- --base-url https://${{ github.repository_owner }}.github.io
-
-      # Regenerate sitemap.xml.
-      - name: Generate sitemap
-        run: npm run generate-sitemap -- --base-url https://${{ github.repository_owner }}.github.io
-
       # Minify js/main.js → js/main.min.js.
       - name: Minify JavaScript
         run: npm run minify
