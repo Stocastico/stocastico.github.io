@@ -3,8 +3,8 @@ id:          clear-architecture
 title:       "cleAR: Interoperable Architecture for Multi-User AR"
 year:        "2023"
 tags:        "AR, Education, Architecture"
-thumb:       "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/38e67d207f1a/10055_2023_764_Fig2_HTML.jpg"
-bg:          "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/38e67d207f1a/10055_2023_764_Fig2_HTML.jpg"
+thumb:       "img/projects/clear-architecture.jpg"
+bg:          "img/projects/clear-architecture.jpg"
 description: "cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research."
 link_paper:  "https://link.springer.com/article/10.1007/s10055-023-00764-5"
 ---
@@ -17,7 +17,7 @@ Despite the well-documented benefits of AR in learning — improved motivation, 
 
 The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
 
-![Design objectives diagram](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/6a483ae3edfd/10055_2023_764_Fig1_HTML.jpg)
+![Design objectives diagram](img/projects/clear-design-objectives.jpg)
 
 - **DO1 — Interoperability**: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
 - **DO2 — Multi-user interactions**: Real-time collaboration between students and teachers, both in-person and remotely.
@@ -30,7 +30,7 @@ The architecture was built around six design objectives (DOs) derived from a sys
 
 cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated stack.
 
-![Architecture overview](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/38e67d207f1a/10055_2023_764_Fig2_HTML.jpg)
+![Architecture overview](img/projects/clear-architecture.jpg)
 
 **Real-time multi-user library.** A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and video streams.
 
@@ -46,13 +46,13 @@ Three proof-of-concept applications were developed to validate the architecture 
 
 **AR Cube** — a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
 
-![AR Cube proof-of-concept](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/96125f8d4bed/10055_2023_764_Fig4_HTML.jpg)
+![AR Cube proof-of-concept](img/projects/clear-ar-cube.jpg)
 
 **xAPI Data Analysis** — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
 
 **AR Geography Quiz** — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
 
-![AR Geography Quiz](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3f25/9970121/7a8fe2cd964b/10055_2023_764_Fig6_HTML.jpg)
+![AR Geography Quiz](img/projects/clear-ar-quiz.jpg)
 
 ## Impact
 
