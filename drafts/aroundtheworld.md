@@ -3,8 +3,8 @@ id:          aroundtheworld
 title:       "ARoundTheWorld: Collaborative AR for Education"
 year:        "2024"
 tags:        "AR, Education, User Study"
-thumb:       "https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig3_HTML.png"
-bg:          "https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig2_HTML.png"
+thumb:       "img/projects/ARound_the_world_1.png"
+bg:          "img/projects/ARound_the_world_2.png"
 description: "ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula."
 link_paper:  "https://link.springer.com/article/10.1007/s10055-024-00952-x"
 ---
@@ -24,9 +24,9 @@ ARoundTheWorld is built on the four design objectives (DOs) defined in the cleAR
 
 A dedicated web interface allows teachers to compose new question sets. Geographical coordinates are resolved automatically via the Wikimedia API and questions are stored as plain JSON files, so new content can be added without touching application code.
 
-![ARoundTheWorld application workflow](https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig2_HTML.png)
+![ARoundTheWorld application workflow](img/projects/ARound_the_world_1.png)
 
-![Teacher web interface for creating question sets](https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig3_HTML.png)
+![Teacher web interface for creating question sets](img/projects/ARound_the_world_1.png)
 
 ## Evaluation
 
@@ -44,13 +44,13 @@ After each session, students completed a 20-item questionnaire adapted from the 
 
 Every question except the first received a positive response ("Agree" or "Strongly agree") from more than 60% of students. The usability and collaborative questions scored particularly well.
 
-![Survey results per question and grouped by category](https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig4_HTML.png)
+![Survey results per question and grouped by category](img/projects/ARound_the_world_3.webp)
 
-![Mean questionnaire scores with standard deviation](https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig5_HTML.png)
+![Mean questionnaire scores with standard deviation](img/projects/ARound_the_world_4.webp)
 
 Watchers gave a slightly higher mean score than players, though with greater variability — consistent with being less cognitively loaded during the quiz. Students using Apple devices (iPhone or iPad) rated the application marginally higher than those on Android or PC, but the difference was not statistically significant.
 
-![Survey results by device type, student role, and age group](https://media.springernature.com/lw685/springer-static/image/art%3A10.1007%2Fs10055-024-00952-x/MediaObjects/10055_2024_952_Fig6_HTML.png)
+![Survey results by device type, student role, and age group](img/projects/ARound_the_world_5.webp)
 
 A Pearson correlation analysis between the number of in-app interactions and the questionnaire scores revealed a small but statistically significant positive correlation (*p* < 0.05): students who engaged more with the collaborative features rated the application more highly. A hierarchical clustering of active-user data in PCA space identified two main groups — one characterised by a high number of interactions and another by higher survey scores — suggesting that engagement and satisfaction, while correlated, capture different aspects of the experience.
 

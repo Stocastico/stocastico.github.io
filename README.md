@@ -5,42 +5,41 @@ My Personal website
 ## Tech stack
 
 - Pure HTML / CSS / JavaScript — no build step, no bundler
-- [Three.js](https://threejs.org/) r159 (CDN) for the 3-D neural-network background and interactive globe
+- [Three.js](https://threejs.org/) r160 (CDN) for the 3-D neural-network background and interactive globe
 - Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra dependencies)
-- Self-hosted fonts: Inter (body) and Outfit (display / hero)
+- Self-hosted fonts: Inter (body) and Playfair Display (display / hero)
 
 ## Project structure
 
 ```text
 .
 ├── index.html                 Main single-page site
+├── projects.html              Dedicated projects listing page
 ├── cv.html                    Dedicated CV page (two-column: work | education)
 ├── 404.html                   Custom 404 page
 ├── css/
-│   └── styles.css             All styles, including shared blog-post rules
+│   └── styles.css             All styles, including shared project-page rules
 ├── js/
-│   ├── main.js                Three.js animations, UI init, renderBlog/Publications
+│   ├── main.js                Three.js animations, UI init, renderProjects/Publications
 │   ├── main.min.js            Minified production build (auto-generated)
 │   ├── locations.js           Globe geocoding helper (browser)
 │   └── europe-map.js          Interactive 2D Canvas map of Europe
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
 │   ├── cv.js                  Generated CV data (do not edit manually)
-│   ├── blog.js                BLOG_POSTS array — edit to add/update posts
+│   ├── projects.js            PROJECTS array — edit to add/update project cards
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
 │   ├── locations.yaml         Source of truth for globe pins/trips/regions
 │   ├── locations.js           Generated file (do not edit manually)
 │   ├── world-110m.json        TopoJSON world map data (110m resolution)
 │   └── land-50m.json          TopoJSON land data for Europe 2D map (50m, finer coastlines)
-├── blog/
-│   └── *.html                 Individual blog post pages
+├── projects/
+│   └── *.html                 Individual project detail pages
 ├── scripts/
-│   ├── new-post.js            Convert a Markdown file → blog post HTML + update blog.js
+│   ├── new-project.js         Convert a Markdown file → project HTML + update projects.js
 │   ├── generate-cv.js         Build data/cv.js from data/cv.yaml
 │   ├── generate-locations.js  Generate data/locations.js from data/locations.yaml
-│   ├── generate-rss.js        Generate rss.xml from data/blog.js
-│   ├── generate-sitemap.js    Generate sitemap.xml from data/blog.js + static pages
 │   ├── update-locations.sh    Convenience wrapper for generate-locations.js
 │   ├── update-locations.ps1   PowerShell wrapper for generate-locations.js
 │   └── lib/
@@ -51,14 +50,11 @@ My Personal website
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
 │   ├── europe-map.test.js          Tests for js/europe-map.js
-│   ├── new-post.test.js            Tests for scripts/new-post.js
-│   ├── generate-rss.test.js        Tests for scripts/generate-rss.js
-│   ├── generate-sitemap.test.js    Tests for scripts/generate-sitemap.js
+│   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   └── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 ├── .cache/
 │   └── locations-geocode-cache.json  Geocoding cache (auto-created; commit this to avoid re-querying the API in CI)
-├── rss.xml                    Generated RSS feed
 ├── sitemap.xml                Generated sitemap
 ├── robots.txt                 SEO robot rules
 └── package.json               npm scripts (no runtime dependencies)
@@ -69,14 +65,12 @@ My Personal website
 ## Running tests
 
 ```bash
-npm test                       # run all tests
+npm test                       # run all tests (~195 tests)
 npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
 npm run test:locations         # locations generator tests only
-npm run test:post              # new-post.js tests only
-npm run test:rss               # generate-rss.js tests only
-npm run test:sitemap           # generate-sitemap.js tests only
+npm run test:project           # new-project.js tests only
 # europe-map.test.js is included in `npm test` but has no dedicated shorthand
 ```
 
@@ -130,42 +124,19 @@ node scripts/generate-locations.js --help
 
 Geocoding results are cached in `.cache/locations-geocode-cache.json` so subsequent runs do not re-query the API. The Nominatim API has a 1-request-per-second rate limit; the script respects this automatically.
 
-### `new-post` — create a blog post from Markdown
+### `new-project` — create a project page from Markdown
 
-Converts a Markdown file to a styled `blog/<slug>.html` and prepends the entry to `data/blog.js`.
+Converts a Markdown file to a styled `projects/<id>.html` and registers the entry in `data/projects.js` so the card appears on the homepage and on `projects.html`.
 
 ```bash
-npm run new-post -- path/to/my-post.md
+npm run new-project -- path/to/my-project.md
 # or directly:
-node scripts/new-post.js path/to/my-post.md
+node scripts/new-project.js path/to/my-project.md
 
 # Options:
-node scripts/new-post.js post.md --out-dir blog/
-node scripts/new-post.js post.md --dry-run    # preview without writing
-node scripts/new-post.js --help
-```
-
-### `generate-rss` — rebuild RSS feed
-
-Reads `data/blog.js` and writes `rss.xml`.
-
-```bash
-npm run generate-rss
-# Options:
-node scripts/generate-rss.js --base-url https://yourdomain.com
-node scripts/generate-rss.js --output dist/rss.xml
-node scripts/generate-rss.js --dry-run
-```
-
-### `generate-sitemap` — rebuild sitemap
-
-Reads `data/blog.js` and writes `sitemap.xml`. External post URLs are skipped automatically.
-
-```bash
-npm run generate-sitemap
-# Options:
-node scripts/generate-sitemap.js --base-url https://yourdomain.com
-node scripts/generate-sitemap.js --dry-run
+node scripts/new-project.js project.md --out-dir projects/
+node scripts/new-project.js project.md --dry-run    # preview without writing
+node scripts/new-project.js --help
 ```
 
 ### `minify` — minify JavaScript for production
@@ -186,25 +157,25 @@ Quick summary:
 
 - **`data/cv.yaml`** — career, education, and skills. Edit then run `npm run generate-cv`.
 - **`data/locations.yaml`** — globe pins (`lived` / `work` / `travel`), animated trip routes, and highlighted regions. Edit then run `npm run generate-locations`.
+- **`data/projects.js`** — project card entries. Edit directly, or use `npm run new-project` to generate from Markdown.
 
 ---
 
-## Adding a new blog post from Markdown
+## Adding a new project from Markdown
 
-1. Write your post as a Markdown file with a YAML frontmatter block:
+1. Write your project as a Markdown file with a YAML frontmatter block:
 
    ```markdown
    ---
-   title:   "My Post Title"
-   date:    "2025-03-01"
-   excerpt: "One-sentence summary shown on the blog index."
-   tag:     "Research"
-   readMin: 6
-   lead:    "Optional opening sentence in large type."
-   image:   "blog/my-post-image.jpg"
+   id:          my-project
+   title:       "My Project Title"
+   year:        "2024"
+   tags:        "AI, CV, Python"
+   thumb:       "img/projects/my-thumb.jpg"
+   description: "Short 2–3 sentence summary shown on the homepage card."
    ---
 
-   ## Introduction
+   ## Overview
 
    Your content here. Supports **bold**, *italic*, `inline code`,
    [links](https://example.com), lists, fenced code blocks, and blockquotes.
@@ -213,44 +184,37 @@ Quick summary:
 2. Run the generator:
 
    ```bash
-   node scripts/new-post.js path/to/my-post.md
+   node scripts/new-project.js path/to/my-project.md
    # or via npm:
-   npm run new-post -- path/to/my-post.md
+   npm run new-project -- path/to/my-project.md
    ```
 
    This will:
-   - Create `blog/<slug>.html` from the template (with OG tags, canonical, reading progress bar, theme toggle, and syntax highlighting already included)
-   - Prepend the new entry to `data/blog.js` so the card appears automatically on the homepage
+   - Create `projects/<id>.html` from the template (with OG tags, canonical, and syntax highlighting already included)
+   - Register the entry in `data/projects.js` so the card appears on the homepage (up to 4) and on `projects.html`
 
 3. Preview locally by opening `index.html` in a browser, then commit both generated files.
-
-4. After adding a post, regenerate the RSS feed and sitemap:
-
-   ```bash
-   npm run generate-rss
-   npm run generate-sitemap
-   ```
 
 ### Dry-run mode
 
 ```bash
-node scripts/new-post.js path/to/my-post.md --dry-run
+node scripts/new-project.js path/to/my-project.md --dry-run
 ```
 
-Prints the generated HTML and the `data/blog.js` entry without writing any files.
+Prints the generated HTML and the `data/projects.js` entry without writing any files.
 
-### Blog post frontmatter fields
+### Project frontmatter fields
 
-| Field     | Type   | Required | Description                                             |
-|-----------|--------|----------|---------------------------------------------------------|
-| `title`   | string | Yes      | Post title                                              |
-| `date`    | string | Yes      | ISO date, e.g. `"2025-03-01"`                           |
-| `excerpt` | string | Yes      | Short summary shown on the index card                   |
-| `tag`     | string | No       | Badge label, e.g. `"Research"`, `"Engineering"`, `"AI"` |
-| `readMin` | number | No       | Estimated read time in minutes                          |
-| `lead`    | string | No       | Opening sentence displayed in large type                |
-| `url`     | string | No       | Override the output filename / URL path                 |
-| `image`   | string | No       | Custom OG / Twitter card image path or URL              |
+| Field         | Type   | Required | Description                                          |
+|---------------|--------|----------|------------------------------------------------------|
+| `id`          | string | Yes      | Kebab-case identifier, used as filename              |
+| `title`       | string | Yes      | Project title                                        |
+| `year`        | string | Yes      | Year of the project, e.g. `"2024"`                   |
+| `tags`        | string | Yes      | Comma-separated keyword badges, e.g. `"AI, CV"`      |
+| `thumb`       | string | Yes      | Path to 16:9 thumbnail image                         |
+| `description` | string | Yes      | Short summary shown on the homepage and listing card |
+| `bg`          | string | No       | Semi-transparent background image for the card       |
+| `url`         | string | No       | Override the output URL path                         |
 
 ### Supported Markdown syntax
 
@@ -326,35 +290,18 @@ Edit `data/publications.js` directly. Each entry:
 
 ---
 
-## Generating the RSS feed and sitemap
-
-```bash
-npm run generate-rss        # → rss.xml  (all blog posts)
-npm run generate-sitemap    # → sitemap.xml  (homepage + all blog posts)
-
-# Preview without writing files:
-npm run generate-rss -- --dry-run
-npm run generate-sitemap -- --dry-run
-
-# Custom output path or base URL:
-npm run generate-rss -- -o dist/rss.xml --base-url https://mysite.com
-```
-
-Both scripts read `data/blog.js` at runtime and skip external post URLs in the sitemap.
-
----
-
 ## Site layout
 
 ### Navigation
 
-The navbar contains four items: **About**, **Research** (linked from hero), **Writing** (blog), and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically.
+The navbar contains three items: **About**, **Projects**, and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically.
 
 ### Pages
 
 | Page | Description |
 | ------ | ------------- |
-| `index.html` | Single-page application — Hero, About, Research, Publications, Skills, Contact, Blog sections |
+| `index.html` | Single-page application — Hero, About, Research, Publications, Skills, Projects, Contact sections |
+| `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
 | `404.html` | Custom 404 error page. |
 
@@ -367,8 +314,8 @@ The navbar contains four items: **About**, **Research** (linked from hero), **Wr
 | Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows |
 | Publications | Filterable list of papers, rendered from `data/publications.js` |
 | Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
+| Projects | Up to 4 project cards rendered from `data/projects.js`, with a "View all projects" link to `projects.html` |
 | Contact | 2×2 grid of contact cards; email address is obfuscated and revealed on click |
-| Blog | The 3 most recent post cards rendered from `data/blog.js`, with a "View all posts" link to the full listing |
 
 ---
 
@@ -448,9 +395,9 @@ Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page
 | About | Scroll to About section |
 | Research | Scroll to Research section |
 | Skills | Scroll to Skills section |
+| Projects | Scroll to Projects section |
 | Contact | Scroll to Contact section |
 | CV | Navigate to `cv.html` |
-| Writing | Scroll to Blog section |
 | Copy email | Copy email address to clipboard |
 | GitHub | Open GitHub profile |
 | LinkedIn | Open LinkedIn profile |
@@ -495,17 +442,16 @@ Before going live, complete the following tasks:
 - [x] Revise all text in index.html
 - [x] Add text in index.html where necessary (before the globe, etc)
 - [x] Complete locations list
-- [x] Remove placeholder blog posts
-- [x] Add blog post 1: Why a blog in 2026
-- [ ] Add blog post 2: How I keep up-to-date with all things AI
-- [ ] Add blog post 3: How I made this website (draft exists)
 - [x] Select three papers and add correct links
 - [x] Update texts in the CV section (skills, languages etc)
+- [x] Replace blog section with projects section
+- [ ] Add project entries to data/projects.js
+- [ ] Write individual project detail pages
 
-And some ideas for future blog posts:
+And some ideas for future projects to document:
 
-- [ ] Software development in the era of AI agents
-- [ ] The web is beautiful (list of nice websites in the era of enshittification)
-- [ ] Digital sovereignity (EU tools, reduce dependency on Google etc)
-- [ ] Digital cleaning: how do I do that
-- [ ] Commenting on test of different models etc (several possible blog posts)
+- [ ] cleAR (AR for education)
+- [ ] ARoundTheWorld (location-aware AR)
+- [ ] RAG pipeline project
+- [ ] UFC fighter tracking (AGT International)
+- [ ] AVATecH / Audience Engagement

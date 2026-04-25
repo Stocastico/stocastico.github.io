@@ -46,16 +46,10 @@ them would:
 Tools like [google-webfonts-helper](https://gwfh.mranftl.com/) can generate the
 font files and CSS needed.
 
-### ~~5. Blog post template improvements~~ ✅
+### ~~5. Blog post template improvements~~ ✅ (superseded)
 
-~~When creating future blog posts, ensure the template~~ (`docs/blog-post-template.md`)
-includes:
-
-- The hamburger toggle button in the nav (now added to the first post)
-- The site footer (now added to the first post)
-- The home icon SVG in the nav logo (now added to the first post)
-- Open Graph / Twitter Card meta tags
-- Only load highlight.js on posts that actually contain code blocks
+~~Blog was replaced by a Projects section. Project page template~~ (`scripts/new-project.js`)
+includes OG tags, canonical, and syntax highlighting by default.
 
 ### ~~6. Consider reducing hero CTA buttons~~ ✅
 
