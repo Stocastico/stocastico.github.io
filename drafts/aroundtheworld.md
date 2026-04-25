@@ -26,7 +26,7 @@ A dedicated web interface allows teachers to compose new question sets. Geograph
 
 ![ARoundTheWorld application workflow](img/projects/ARound_the_world_1.png)
 
-![Teacher web interface for creating question sets](img/projects/ARound_the_world_1.png)
+![Teacher web interface for creating question sets](img/projects/ARound_the_world_2.png)
 
 ## Evaluation
 

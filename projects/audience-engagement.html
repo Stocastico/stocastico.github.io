@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>Multi-modal Audience Engagement Measurement System — Stefano Masneri</title>
+  <link rel="canonical" href="https://stocastico.github.io/projects/audience-engagement.html" />
+
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/projects/audience-engagement.html" />
+  <meta property="og:title"       content="Multi-modal Audience Engagement Measurement System — Stefano Masneri" />
+  <meta property="og:description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
+  <meta property="og:image"       content="https://stocastico.github.io/img/projects/audience-engagement-bg.png" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Multi-modal Audience Engagement Measurement System — Stefano Masneri" />
+  <meta name="twitter:description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
+
+  <meta name="theme-color" content="#080c14" />
+
+  <link rel="stylesheet" href="../css/fonts.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#project-content">Skip to project</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Project hero banner (semi-transparent image + title overlay) -->
+  <header class="project-hero" style="--project-hero-img: url('../img/projects/audience-engagement-bg.png');" aria-label="Multi-modal Audience Engagement Measurement System">
+    <div class="project-hero__overlay" aria-hidden="true"></div>
+    <div class="project-hero__inner">
+      <p class="post-back-row">
+        <a href="../projects.html" class="cv-back-link">&larr; All projects</a>
+      </p>
+      <p class="project-detail__year">2020</p>
+      <h1 class="project-detail__title">Multi-modal Audience Engagement Measurement System</h1>
+      <div class="project-detail__tags">
+        <span class="project-tag">Computer Vision</span>
+        <span class="project-tag">Multi-modal Sensing</span>
+        <span class="project-tag">Live Events</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="project-content" class="post">
+    <div class="post-lead">A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software.</div>
+
+    <p>
+How do you know whether an audience is actually paying attention? For a conference organiser, a museum curator, or a retail-space operator, the question matters: did people show up and engage, or did they walk past? Existing answers relied on either expensive, intrusive sensors or proxy metrics (ticket sales, post-event surveys) that say nothing about what happened in the room.
+</p>
+<p>
+This project, carried out at <strong>Vicomtech</strong> in <strong>2020</strong> and published at <strong>ICAART 2020</strong> (Sanz-Narrillos, Masneri, Zorrilla — <em>&quot;A Multi-modal Audience Engagement Measurement System&quot;</em>), proposed a different answer: combine two cheap, complementary sensing modalities — <strong>computer vision</strong> and <strong>wireless signal strength</strong> — and use each to cover the weaknesses of the other. The complete system was released as open source and is available on <a href="https://github.com/tv-vicomtech/AudienceEngagement">GitHub</a>.
+</p>
+<h2>The Two Modalities</h2>
+<p>
+<strong>Visual channel.</strong> Standard RGB cameras feed a pipeline built on <strong>TensorFlow</strong> and <strong>OpenCV</strong>. For each frame the system runs, in sequence:
+</p>
+<ol>
+  <li>Person detection — locating every individual in the frame.</li>
+  <li>Face detection inside each person bounding box.</li>
+  <li>Body-joint estimation — eyes, ears, nose, shoulders, elbows, hands, hips, knees, feet.</li>
+  <li>Frame-to-frame tracking to maintain stable identities over time.</li>
+  <li>Attention-direction estimation based on the geometric configuration of the eyes and nose — classified as <em>front</em>, <em>left</em>, <em>right</em>, or <em>no detection</em>.</li>
+</ol>
+<p>
+The visual channel answers rich questions (how many people, where, are they looking at the stage?) but fails in poor lighting, behind obstacles, or when the camera simply does not cover a section of the venue.
+</p>
+<p>
+<strong>Wireless channel.</strong> A network of <strong>Raspberry Pi scanners</strong> passively listens for WiFi and Bluetooth probe requests from devices in the environment. The received signal strength indicator (RSSI) from each scanner, combined across multiple nodes, is used to estimate the approximate location of each device within a set of predefined zones. The processing is done on a central server using the open-source <strong>Find3</strong> framework; scanners and server communicate via <strong>MQTT (Mosquitto)</strong>.
+</p>
+<p>
+The wireless channel is robust to lighting and occlusions, covers the entire venue regardless of camera placement, and — crucially — provides a <strong>per-device identity</strong> that persists across the event without any cooperation from the attendee.
+</p>
+<h2>Fusion</h2>
+<p>
+The two channels produce partially overlapping, partially complementary signals. The visual channel is <em>precise but narrow</em>: it tells you exactly who is looking at what, but only where a camera sees them. The wireless channel is <em>broad but coarse</em>: it knows someone is in the &quot;main hall&quot; zone, but not their pose or attention. The system fuses both to compute, for each zone and each time window:
+</p>
+<ul>
+  <li><strong>Occupancy</strong> — how many distinct devices and people were present.</li>
+  <li><strong>Dwell time</strong> — how long, on average, individuals stayed in the zone.</li>
+  <li><strong>Attention share</strong> — the fraction of visible people whose gaze was directed towards the designated focal point (stage, screen, exhibit).</li>
+  <li><strong>Movement patterns</strong> — total and maximum distance travelled, extracted from the visual tracks.</li>
+</ul>
+<p>
+An engagement score is computed by weighting these primitives. The weights are not fixed: they can be tuned per venue and per event type, which matters because &quot;engagement&quot; looks very different at a conference talk (low movement, high attention share) than at a museum exhibit (moderate movement, high dwell time) or a product launch (high movement, variable attention).
+</p>
+<h2>System Architecture</h2>
+<p>
+The software stack was designed to be deployable on commodity hardware:
+</p>
+<ul>
+  <li><strong>Scanner nodes</strong> — Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in <strong>Go</strong> for efficiency on constrained hardware.</li>
+  <li><strong>Server</strong> — Go-based aggregation and inference service, also handling MQTT brokerage.</li>
+  <li><strong>Vision processing</strong> — Python 3 with TensorFlow and OpenCV; runs on a small GPU-equipped edge machine connected to the venue cameras.</li>
+  <li><strong>Messaging</strong> — MQTT over Mosquitto for all inter-component communication.</li>
+  <li><strong>Deployment</strong> — Docker images for each component to simplify installation at the venue.</li>
+</ul>
+<p>
+The deliberate choice of <strong>Go for the wireless side</strong> and <strong>Python for the vision side</strong> reflected practical trade-offs: Go gave us the single-binary deployability and tight memory footprint we needed on the Pi scanners; Python gave us the machine-learning ecosystem for everything visual.
+</p>
+<h2>Evaluation</h2>
+<p>
+The system was validated in controlled deployments where ground truth (attendee counts, known positions, attention direction recorded manually) could be compared against the system's output. The paper reports the fusion of both modalities consistently outperforms either modality alone for the composite engagement metric, especially in scenarios where one of the channels degrades (poor lighting for vision, device-dense environments for wireless).
+</p>
+<h2>Why It Mattered</h2>
+<p>
+Three things made this project interesting beyond the engagement-metric angle:
+</p>
+<ol>
+  <li><strong>Multi-modal sensor fusion done pragmatically.</strong> Academic papers on multi-modal systems often fuse modalities that share a common machine-learning formulation. Here the channels had completely different statistical properties, completely different hardware requirements, and different failure modes. The fusion had to respect that asymmetry.</li>
+</ol>
+<ol>
+  <li><strong>Open-source release.</strong> The entire stack — scanner firmware, server, vision pipeline, MQTT plumbing, Docker files — is on GitHub and was designed for reproducibility. At the time, very little open tooling existed in the audience-analytics space outside of proprietary, closed commercial offerings.</li>
+</ol>
+<ol>
+  <li><strong>Privacy-aware by design.</strong> The wireless channel uses <strong>MAC addresses as transient identifiers only</strong>, and all personal identifiers are dropped before aggregation. The visual channel produces only zone-level statistics, not per-person records. This was a deliberate response to the GDPR landscape that was crystallising in Europe in 2019–2020.</li>
+</ol>
+<p>
+The work fed into subsequent research at Vicomtech on <strong>multi-device media services</strong> (IEEE Transactions on Broadcasting, <strong>2021</strong>) and shaped the broader thinking about <strong>adaptive, context-aware media delivery</strong> that I worked on throughout my time there.
+</p>
+
+      <div class="project-links">
+        <a href="https://link.springer.com/chapter/10.1007/978-3-030-71158-0_17" target="_blank" rel="noopener">Paper</a>
+      </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script defer src="../js/main.min.js"></script>
+</body>
+</html>

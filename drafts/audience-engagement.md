@@ -3,7 +3,7 @@ id:          audience-engagement
 title:       "Multi-modal Audience Engagement Measurement System"
 year:        "2020"
 tags:        "Computer Vision, Multi-modal Sensing, Live Events"
-thumb:       "img/projects/audience-engagement-thumb.jpg"
+thumb:       "img/projects/audience_engagement_thumb.jpg"
 bg:          "img/projects/audience-engagement-bg.png"
 description: "A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software."
 link_paper:  "https://link.springer.com/chapter/10.1007/978-3-030-71158-0_17"

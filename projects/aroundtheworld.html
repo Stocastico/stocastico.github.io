@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>ARoundTheWorld: Collaborative AR for Education — Stefano Masneri</title>
+  <link rel="canonical" href="https://stocastico.github.io/projects/aroundtheworld.html" />
+
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/projects/aroundtheworld.html" />
+  <meta property="og:title"       content="ARoundTheWorld: Collaborative AR for Education — Stefano Masneri" />
+  <meta property="og:description" content="ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula." />
+  <meta property="og:image"       content="https://stocastico.github.io/img/projects/ARound_the_world_2.png" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="ARoundTheWorld: Collaborative AR for Education — Stefano Masneri" />
+  <meta name="twitter:description" content="ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula." />
+
+  <meta name="theme-color" content="#080c14" />
+
+  <link rel="stylesheet" href="../css/fonts.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#project-content">Skip to project</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Project hero banner (semi-transparent image + title overlay) -->
+  <header class="project-hero" style="--project-hero-img: url('../img/projects/ARound_the_world_2.png');" aria-label="ARoundTheWorld: Collaborative AR for Education">
+    <div class="project-hero__overlay" aria-hidden="true"></div>
+    <div class="project-hero__inner">
+      <p class="post-back-row">
+        <a href="../projects.html" class="cv-back-link">&larr; All projects</a>
+      </p>
+      <p class="project-detail__year">2024</p>
+      <h1 class="project-detail__title">ARoundTheWorld: Collaborative AR for Education</h1>
+      <div class="project-detail__tags">
+        <span class="project-tag">AR</span>
+        <span class="project-tag">Education</span>
+        <span class="project-tag">User Study</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="project-content" class="post">
+    <div class="post-lead">ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula.</div>
+
+    <p>
+ARoundTheWorld is the culmination of my PhD research. Where the <a href="clear-architecture.html">cleAR architecture</a> paper established the infrastructure for building collaborative augmented reality applications in schools, this work demonstrates that infrastructure in a complete, evaluated product — tested with real students in real classrooms. It was published in <em>Virtual Reality</em> (Springer, 2024) and the findings were presented as part of my doctoral thesis defence in March 2024.
+</p>
+<p>
+The application is a collaborative geography quiz. Once the teacher starts a session, the first student receives a question — for example, <em>&quot;Where is Kyoto?&quot;</em> — and must place a pin on a 3D globe of the Earth rendered in the augmented space. Other students participate in two ways: they can suggest a continent to help the active user, or place a semi-transparent hint marker directly on the globe. The student with the most correct answers wins. The quiz design deliberately mixes individual performance with group collaboration, giving every participant a meaningful role throughout the session.
+</p>
+<h2>Implementation</h2>
+<p>
+ARoundTheWorld is built on the four design objectives (DOs) defined in the cleAR architecture:
+</p>
+<ul>
+  <li><strong>DO1 — Interoperability</strong>: the application runs on tablets and smartphones (iOS and Android) as a native AR app, and on laptops and desktops as a browser-based 3D experience, without degrading the collaborative experience.</li>
+  <li><strong>DO2 — Multi-user capabilities</strong>: state is synchronised across all connected devices at 30 updates per second, with end-to-end latency consistently below 15 ms on both Wi-Fi and mobile networks.</li>
+  <li><strong>DO3 — Data analytics</strong>: every student action generates an xAPI statement that is forwarded to a Learning Record Store (LRS) and integrated with the school's LMS, enabling automatic progress tracking without any manual export.</li>
+  <li><strong>DO4 — Ease of development</strong>: the developer noted that the cleAR API handled all networking transparently, eliminating the need to deal with low-level sockets or platform-specific code.</li>
+</ul>
+<p>
+A dedicated web interface allows teachers to compose new question sets. Geographical coordinates are resolved automatically via the Wikimedia API and questions are stored as plain JSON files, so new content can be added without touching application code.
+</p>
+<figure>
+  <img src="img/projects/ARound_the_world_1.png" alt="ARoundTheWorld application workflow" loading="lazy" />
+</figure>
+<figure>
+  <img src="img/projects/ARound_the_world_2.png" alt="Teacher web interface for creating question sets" loading="lazy" />
+</figure>
+<h2>Evaluation</h2>
+<p>
+The application was tested across three Basque secondary school classes: a group of 14-year-olds, a group of 17-year-olds, and a group of 19-year-olds. In total, 44 students and 3 teachers took part. Students were assigned either a tablet or a smartphone (players) or used the browser-based watcher interface, mirroring how devices are actually distributed in Basque classrooms.
+</p>
+<p>
+| Group | Students | Tablets (players) | Smartphones (players) | Watchers |
+ 
+|---|---|---|---|---|
+ 
+| 14 year-olds | 17 | 4 | 5 | 8 |
+ 
+| 17 year-olds | 17 | 3 | 6 | 8 |
+ 
+| 19 year-olds | 10 | 3 | 6 | 1 |
+</p>
+<p>
+After each session, students completed a 20-item questionnaire adapted from the Positive System Usability Scale (P-SUS), extended with questions specifically targeting the collaborative aspects of the application. Questions were grouped into four categories: interest in the application, quality of the user interface, effectiveness as a collaborative tool, and overall experience. Teachers were interviewed separately after the sessions.
+</p>
+<h2>Results</h2>
+<p>
+Every question except the first received a positive response (&quot;Agree&quot; or &quot;Strongly agree&quot;) from more than 60% of students. The usability and collaborative questions scored particularly well.
+</p>
+<figure>
+  <img src="img/projects/ARound_the_world_3.webp" alt="Survey results per question and grouped by category" loading="lazy" />
+</figure>
+<figure>
+  <img src="img/projects/ARound_the_world_4.webp" alt="Mean questionnaire scores with standard deviation" loading="lazy" />
+</figure>
+<p>
+Watchers gave a slightly higher mean score than players, though with greater variability — consistent with being less cognitively loaded during the quiz. Students using Apple devices (iPhone or iPad) rated the application marginally higher than those on Android or PC, but the difference was not statistically significant.
+</p>
+<figure>
+  <img src="img/projects/ARound_the_world_5.webp" alt="Survey results by device type, student role, and age group" loading="lazy" />
+</figure>
+<p>
+A Pearson correlation analysis between the number of in-app interactions and the questionnaire scores revealed a small but statistically significant positive correlation (<em>p</em> &lt; 0.05): students who engaged more with the collaborative features rated the application more highly. A hierarchical clustering of active-user data in PCA space identified two main groups — one characterised by a high number of interactions and another by higher survey scores — suggesting that engagement and satisfaction, while correlated, capture different aspects of the experience.
+</p>
+<p>
+Post-study teacher interviews confirmed that the collaborative capabilities and the ability to personalise content (creating their own question sets) were the two factors most likely to drive sustained adoption of AR in the classroom.
+</p>
+<h2>Context and Impact</h2>
+<p>
+The work was conducted as part of the ARETE project (Augmented Reality Interactive Educational System), funded under the EU Horizon 2020 programme (grant agreement No 856533). The evaluation results show that an application built on the cleAR architecture can fulfil all the design objectives identified by teachers, receive strong approval from students, and integrate into existing school infrastructure with minimal friction.
+</p>
+<p>
+The results support the broader thesis that the right approach to AR in education is not to build isolated, one-off applications, but to invest in shared, interoperable infrastructure that allows educators and developers to focus on pedagogical content rather than technical scaffolding.
+</p>
+
+      <div class="project-links">
+        <a href="https://link.springer.com/article/10.1007/s10055-024-00952-x" target="_blank" rel="noopener">Paper</a>
+      </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script defer src="../js/main.min.js"></script>
+</body>
+</html>

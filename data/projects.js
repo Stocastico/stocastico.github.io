@@ -17,4 +17,64 @@
    The homepage shows up to 4 projects; the rest appear only on projects.html.
    ============================================================ */
 
-const PROJECTS = [];
+const PROJECTS = [
+    {
+            id: "ufc-fighter-tracking",
+            title: "UFC Fighter Tracking: Multi-Modal Sensing in the Octagon",
+            year: "2017",
+            tags: ["Computer Vision","Sensor Fusion","Sports Analytics"],
+            thumb: "img/projects/ufc-octagon-thumb.png",
+            bg: "img/projects/ufc-octagon-bg.png",
+            description: "End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017.",
+            url: "projects/ufc-fighter-tracking.html",
+        },
+    {
+            id: "rag-document-qa",
+            title: "RAG Document Assistant for Financial Services",
+            year: "2023",
+            tags: ["RAG","LLM","NLP"],
+            thumb: "img/projects/rag-query.svg",
+            bg: "img/projects/rag-query.svg",
+            description: "A retrieval-augmented generation system built for a large European bank, replacing manual SharePoint search with a conversational assistant that answers questions and cites the exact document and page where each answer was found.",
+            url: "projects/rag-document-qa.html",
+        },
+    {
+            id: "clear-architecture",
+            title: "cleAR: Interoperable Architecture for Multi-User AR",
+            year: "2023",
+            tags: ["AR","Education","Architecture"],
+            thumb: "img/projects/clear-architecture.jpg",
+            bg: "img/projects/clear-architecture.jpg",
+            description: "cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research.",
+            url: "projects/clear-architecture.html",
+        },
+    {
+            id: "avatech",
+            title: "AVATecH: Automated Annotation of Audio/Video Corpora for Humanities Research",
+            year: "2009 – 2014",
+            tags: ["Computer Vision","Audio Analysis","Digital Humanities"],
+            thumb: "img/projects/avatech-thumb.svg",
+            bg: "img/projects/avatech-bg.jpg",
+            description: "AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN — the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide — turning weeks of manual labelling into minutes of supervised review.",
+            url: "projects/avatech.html",
+        },
+    {
+            id: "audience-engagement",
+            title: "Multi-modal Audience Engagement Measurement System",
+            year: "2020",
+            tags: ["Computer Vision","Multi-modal Sensing","Live Events"],
+            thumb: "img/projects/audience_engagement_thumb.jpg",
+            bg: "img/projects/audience-engagement-bg.png",
+            description: "A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software.",
+            url: "projects/audience-engagement.html",
+        },
+    {
+            id: "aroundtheworld",
+            title: "ARoundTheWorld: Collaborative AR for Education",
+            year: "2024",
+            tags: ["AR","Education","User Study"],
+            thumb: "img/projects/ARound_the_world_1.png",
+            bg: "img/projects/ARound_the_world_2.png",
+            description: "ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula.",
+            url: "projects/aroundtheworld.html",
+        }];

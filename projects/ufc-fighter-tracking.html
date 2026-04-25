@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>UFC Fighter Tracking: Multi-Modal Sensing in the Octagon — Stefano Masneri</title>
+  <link rel="canonical" href="https://stocastico.github.io/projects/ufc-fighter-tracking.html" />
+
+  <meta property="og:type"        content="article" />
+  <meta property="og:url"         content="https://stocastico.github.io/projects/ufc-fighter-tracking.html" />
+  <meta property="og:title"       content="UFC Fighter Tracking: Multi-Modal Sensing in the Octagon — Stefano Masneri" />
+  <meta property="og:description" content="End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017." />
+  <meta property="og:image"       content="https://stocastico.github.io/img/projects/ufc-octagon-bg.png" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="UFC Fighter Tracking: Multi-Modal Sensing in the Octagon — Stefano Masneri" />
+  <meta name="twitter:description" content="End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017." />
+
+  <meta name="theme-color" content="#080c14" />
+
+  <link rel="stylesheet" href="../css/fonts.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#project-content">Skip to project</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#00d4ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Project hero banner (semi-transparent image + title overlay) -->
+  <header class="project-hero" style="--project-hero-img: url('../img/projects/ufc-octagon-bg.png');" aria-label="UFC Fighter Tracking: Multi-Modal Sensing in the Octagon">
+    <div class="project-hero__overlay" aria-hidden="true"></div>
+    <div class="project-hero__inner">
+      <p class="post-back-row">
+        <a href="../projects.html" class="cv-back-link">&larr; All projects</a>
+      </p>
+      <p class="project-detail__year">2017</p>
+      <h1 class="project-detail__title">UFC Fighter Tracking: Multi-Modal Sensing in the Octagon</h1>
+      <div class="project-detail__tags">
+        <span class="project-tag">Computer Vision</span>
+        <span class="project-tag">Sensor Fusion</span>
+        <span class="project-tag">Sports Analytics</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="project-content" class="post">
+    <div class="post-lead">End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017.</div>
+
+    <p>
+This is one the projects I tell people about when they ask me what the most fun thing I have ever worked on was. In <strong>2017</strong>, while I was a Senior Data Scientist at <strong>AGT International</strong> in Darmstadt, our team built a real-time fighter-tracking and analytics system for the <strong>UFC</strong>. The product was launched as part of <strong>HEED</strong>, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO <strong>Mati Kochavi</strong> during AWS CTO Werner Vogels' keynote at <strong>AWS re:Invent 2017</strong> in Las Vegas — see the <a href="https://www.youtube.com/watch?v=vataVq9gY_o">recording on YouTube</a>.
+</p>
+<p>
+The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
+</p>
+<figure>
+  <img src="img/projects/ufc-octagon-overhead.jpg" alt="UFC octagon from above — camera coverage" loading="lazy" />
+</figure>
+<h2>What We Measured</h2>
+<p>
+The output of the system was a continuous stream of statistics for each of the two fighters:
+</p>
+<ul>
+  <li><strong>Position and speed</strong> — every fighter's location inside the octagon, sampled many times per second.</li>
+  <li><strong>Octagon control</strong> — which fighter was occupying the centre vs. being pushed against the cage, computed from the relative positions over time.</li>
+  <li><strong>Total movement</strong> — distance covered by each fighter through a round and across the fight.</li>
+  <li><strong>Posture state</strong> — <em>standing</em> vs. <em>on the ground</em>, with transitions timestamped so the broadcast could show &quot;X seconds of ground game&quot;.</li>
+  <li><strong>Strike counts</strong> — kicks and punches, separated by type (jab, hook, uppercut, …) and by <em>attempted</em> vs. <em>landed</em>.</li>
+</ul>
+<p>
+All of this was published to the cloud, aggregated, and pushed to the consumer-facing UFC app and to broadcast graphics in near real time.
+</p>
+<h2>Hardware in the Truss</h2>
+<p>
+Coverage of a UFC octagon — eight sides, fast lateral motion, frequent occlusions when fighters clinched — was the first hard problem. We solved it with <strong>two <a href="https://www.stereolabs.com/">Stereolabs ZED</a> RGB-D cameras</strong> mounted on the <strong>truss above the cage</strong>, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
+</p>
+<p>
+Both cameras were cabled to a <strong>GPU-equipped PC, also mounted on the truss</strong>, which performed all the perception work locally. Doing inference at the venue (rather than streaming raw footage to a remote machine) was a deliberate choice — it eliminated the network as a bottleneck, kept latency in the sub-second range, and meant the system kept working even when venue connectivity wobbled. The PC then streamed only the resulting statistics down to the cloud over a much narrower data path.
+</p>
+<h2>Sensor Fusion: Vision + Accelerometers</h2>
+<p>
+Pure vision could detect that a punch had been <em>thrown</em>, but not whether it had <em>connected</em> — and certainly not the punch <em>type</em> with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' <strong>gloves with accelerometers</strong>, providing a second, completely independent signal for every strike.
+</p>
+<p>
+We fused the two streams in real time:
+</p>
+<ul>
+  <li>The <strong>vision pipeline</strong> detected the launch of a strike, identified which fighter threw it, and gave a coarse classification of its trajectory.</li>
+  <li>The <strong>accelerometer pipeline</strong> detected the impact event, the magnitude of the deceleration, and the kinematic signature characteristic of different punch types (uppercut, hook, straight).</li>
+  <li>A <strong>fusion layer</strong> matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide <em>hit vs. miss</em> and to commit a final classification of the punch type.</li>
+</ul>
+<figure>
+  <img src="img/projects/ufc-octagon-bg.png" alt="Hardware setup and data processing" loading="lazy" />
+</figure>
+<h2>Cloud and Delivery</h2>
+<p>
+Once produced at the edge, the statistics were ingested through <strong>AWS</strong> services (Kinesis for ingestion, downstream services for processing, persistence, and fan-out — see <a href="https://www.youtube.com/watch?v=zHSEnKb69go">AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture</a>). From there they were relayed to the UFC app and to broadcast partners.
+</p>
+<p>
+This was a project where I was involved <strong>end to end</strong>:
+</p>
+<ul>
+  <li><strong>Algorithm design</strong> — I worked on the perception side: detection, tracking, posture classification, and the matching logic that fused vision with the accelerometer stream.</li>
+  <li><strong>Network and edge architecture</strong> — choices about where computation happened (truss vs. cloud), how data moved between components, and how the system behaved under network degradation.</li>
+  <li><strong>Product ownership</strong> — translating between what the UFC wanted as a product (clean, interpretable, defensible numbers) and what we could measure as engineers.</li>
+  <li><strong>Customer-facing point of contact</strong> — direct contact with the UFC and with the sensor team that built the glove instrumentation, coordinating their hardware and our software so the two halves of the system actually shipped as one product.</li>
+  <li><strong>Live deployment</strong> — I travelled to multiple live events around the world to install, calibrate, and operate the system on fight nights.</li>
+</ul>
+
+      <div class="project-links">
+        <a href="https://www.youtube.com/watch?v=vataVq9gY_o" target="_blank" rel="noopener">Video</a>
+      </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script defer src="../js/main.min.js"></script>
+</body>
+</html>
