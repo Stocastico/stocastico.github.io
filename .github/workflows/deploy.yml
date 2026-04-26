@@ -13,9 +13,9 @@ name: Deploy
 
 on:
   workflow_dispatch: # allow manual trigger from the GitHub Actions UI
-  # workflow_run:
-  #   workflows: [Build]
-  #   types: [completed]
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
 
 permissions:
   contents: read
