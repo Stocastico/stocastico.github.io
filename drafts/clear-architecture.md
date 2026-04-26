@@ -52,7 +52,7 @@ Three proof-of-concept applications were developed to validate the architecture 
 
 **AR Geography Quiz** — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
 
-![AR Geography Quiz](img/projects/clear-ar-quiz.jpg)
+![AR Geography Quiz](img/projects/clear-ar-quiz.webp)
 
 ## Impact
 

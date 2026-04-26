@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
+  <meta name="description"
+    content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow, noai, noimageai" />
   <title>cleAR: Interoperable Architecture for Multi-User AR — Stefano Masneri</title>
   <link rel="canonical" href="https://stocastico.github.io/projects/clear-architecture.html" />
 
-  <meta property="og:type"        content="article" />
-  <meta property="og:url"         content="https://stocastico.github.io/projects/clear-architecture.html" />
-  <meta property="og:title"       content="cleAR: Interoperable Architecture for Multi-User AR — Stefano Masneri" />
-  <meta property="og:description" content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
-  <meta property="og:image"       content="https://stocastico.github.io/img/projects/clear-architecture.jpg" />
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="cleAR: Interoperable Architecture for Multi-User AR — Stefano Masneri" />
-  <meta name="twitter:description" content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://stocastico.github.io/projects/clear-architecture.html" />
+  <meta property="og:title" content="cleAR: Interoperable Architecture for Multi-User AR — Stefano Masneri" />
+  <meta property="og:description"
+    content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
+  <meta property="og:image" content="https://stocastico.github.io/img/projects/clear-architecture.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="cleAR: Interoperable Architecture for Multi-User AR — Stefano Masneri" />
+  <meta name="twitter:description"
+    content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
 
   <meta name="theme-color" content="#080c14" />
 
@@ -25,6 +29,7 @@
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
+
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <a class="skip-link" href="#project-content">Skip to project</a>
@@ -32,15 +37,16 @@
   <nav id="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
       <a href="../index.html" class="nav-logo" aria-label="Home">
-        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <defs>
             <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#6c63ff"/>
-              <stop offset="100%" stop-color="#00d4ff"/>
+              <stop offset="0%" stop-color="#6c63ff" />
+              <stop offset="100%" stop-color="#00d4ff" />
             </linearGradient>
           </defs>
-          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
-          <path d="M9 22V12h6v10"/>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+          <path d="M9 22V12h6v10" />
         </svg>
       </a>
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
@@ -56,7 +62,8 @@
   </nav>
 
   <!-- Project hero banner (semi-transparent image + title overlay) -->
-  <header class="project-hero" style="--project-hero-img: url('../img/projects/clear-architecture.jpg');" aria-label="cleAR: Interoperable Architecture for Multi-User AR">
+  <header class="project-hero" style="--project-hero-img: url('../img/projects/clear-architecture.jpg');"
+    aria-label="cleAR: Interoperable Architecture for Multi-User AR">
     <div class="project-hero__overlay" aria-hidden="true"></div>
     <div class="project-hero__inner">
       <p class="post-back-row">
@@ -73,92 +80,137 @@
   </header>
 
   <main id="project-content" class="post">
-    <div class="post-lead">cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research.</div>
+    <div class="post-lead">cleAR is a modular, interoperable architecture for building multi-user augmented reality
+      applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited
+      classroom adoption, it was the core contribution of my PhD research.</div>
 
     <p>
-cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR) applications tailored to educational settings. It was the <strong>core contribution of my PhD research</strong>, developed in collaboration with the University of the Basque Country (UPV/EHU) and Vicomtech. The work was published in the <em>Virtual Reality</em> journal (Springer, 2023).
-</p>
-<p>
-Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school infrastructure and curricula. cleAR was designed to address both.
-</p>
-<h2>Design Objectives</h2>
-<p>
-The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
-</p>
-<figure>
-  <img src="../img/projects/clear-design-objectives.jpg" alt="Design objectives diagram" loading="lazy" />
-</figure>
-<ul>
-  <li><strong>DO1 — Interoperability</strong>: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.</li>
-  <li><strong>DO2 — Multi-user interactions</strong>: Real-time collaboration between students and teachers, both in-person and remotely.</li>
-  <li><strong>DO3 — Long-term storage</strong>: Persistent capture of student progress, task completion, and interaction data for longitudinal analysis.</li>
-  <li><strong>DO4 — Data visualisation</strong>: Automatic generation of reports and interactive dashboards accessible to teachers without programming skills.</li>
-  <li><strong>DO5 — AI integration</strong>: Support for machine learning pipelines that can surface usage patterns, estimate task difficulty, and flag students at risk of falling behind.</li>
-  <li><strong>DO6 — Ease of development</strong>: A clean, well-documented API surface so developers can build new AR experiences without reimplementing common infrastructure.</li>
-</ul>
-<h2>Architecture</h2>
-<p>
-cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated stack.
-</p>
-<figure>
-  <img src="../img/projects/clear-architecture.jpg" alt="Architecture overview" loading="lazy" />
-</figure>
-<p>
-<strong>Real-time multi-user library.</strong> A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and video streams.
-</p>
-<p>
-<strong>Logging and data storage module.</strong> Student interactions are serialised and forwarded to a Learning Record Store (LRS) via the xAPI standard, making cleAR compatible with any LMS that supports xAPI. The module supports configurable data collection frequency, anonymisation, and role-based access (admin, teacher, student).
-</p>
-<p>
-<strong>AI-based analytics module.</strong> A framework-agnostic server-side component processes three data types produced during AR sessions: natural text (chat, answers), structured tabular logs, and image data from camera feeds. It supports both supervised and unsupervised learning and can train models from scratch or fine-tune existing ones. The most common teacher-identified use cases were usage-pattern analysis (63%), automatic test difficulty estimation (60%), and early identification of struggling learners (58%).
-</p>
-<p>
-<strong>Visual reporting module.</strong> A code-free web interface for generating interactive dashboards and charts from stored xAPI data, built on D3 and Seaborn. Visualisations are rendered client-side to preserve privacy, with export options to local storage, external databases, or the school LMS.
-</p>
-<h2>Proof-of-Concept Applications</h2>
-<p>
-Three proof-of-concept applications were developed to validate the architecture against the design objectives.
-</p>
-<p>
-<strong>AR Cube</strong> — a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
-</p>
-<figure>
-  <img src="../img/projects/clear-ar-cube.jpg" alt="AR Cube proof-of-concept" loading="lazy" />
-</figure>
-<p>
-<strong>xAPI Data Analysis</strong> — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
-</p>
-<p>
-<strong>AR Geography Quiz</strong> — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
-</p>
-<figure>
-  <img src="../img/projects/clear-ar-quiz.jpg" alt="AR Geography Quiz" loading="lazy" />
-</figure>
-<h2>Impact</h2>
-<p>
-Every multi-user AR application ends up reimplementing the same three things: a way to synchronise state across devices, somewhere to store what students did, and a way to surface that data to teachers. cleAR does all three, so you don't have to. All proof-of-concept source code is released as open-source software.
-</p>
-<p>
-The work was published in <em>Virtual Reality</em> (Springer) in 2023 and fed directly into <a href="aroundtheworld.html">ARoundTheWorld</a>, the first full application built on the architecture.
-</p>
+      cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR)
+      applications tailored to educational settings. It was the <strong>core contribution of my PhD research</strong>,
+      developed in collaboration with the University of the Basque Country (UPV/EHU) and Vicomtech. The work was
+      published in the <em>Virtual Reality</em> journal (Springer, 2023).
+    </p>
+    <p>
+      Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier
+      knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty
+      of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school
+      infrastructure and curricula. cleAR was designed to address both.
+    </p>
+    <h2>Design Objectives</h2>
+    <p>
+      The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and
+      secondary school teachers and an extensive review of the literature.
+    </p>
+    <figure>
+      <img src="../img/projects/clear-design-objectives.jpg" alt="Design objectives diagram" loading="lazy" />
+    </figure>
+    <ul>
+      <li><strong>DO1 — Interoperability</strong>: Cross-platform support for head-mounted displays, tablets,
+        smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
+      </li>
+      <li><strong>DO2 — Multi-user interactions</strong>: Real-time collaboration between students and teachers, both
+        in-person and remotely.</li>
+      <li><strong>DO3 — Long-term storage</strong>: Persistent capture of student progress, task completion, and
+        interaction data for longitudinal analysis.</li>
+      <li><strong>DO4 — Data visualisation</strong>: Automatic generation of reports and interactive dashboards
+        accessible to teachers without programming skills.</li>
+      <li><strong>DO5 — AI integration</strong>: Support for machine learning pipelines that can surface usage patterns,
+        estimate task difficulty, and flag students at risk of falling behind.</li>
+      <li><strong>DO6 — Ease of development</strong>: A clean, well-documented API surface so developers can build new
+        AR experiences without reimplementing common infrastructure.</li>
+    </ul>
+    <h2>Architecture</h2>
+    <p>
+      cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated
+      stack.
+    </p>
+    <figure>
+      <img src="../img/projects/clear-architecture.jpg" alt="Architecture overview" loading="lazy" />
+    </figure>
+    <p>
+      <strong>Real-time multi-user library.</strong> A WebSocket-based server-side component manages low-latency session
+      routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions,
+      exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and
+      video streams.
+    </p>
+    <p>
+      <strong>Logging and data storage module.</strong> Student interactions are serialised and forwarded to a Learning
+      Record Store (LRS) via the xAPI standard, making cleAR compatible with any LMS that supports xAPI. The module
+      supports configurable data collection frequency, anonymisation, and role-based access (admin, teacher, student).
+    </p>
+    <p>
+      <strong>AI-based analytics module.</strong> A framework-agnostic server-side component processes three data types
+      produced during AR sessions: natural text (chat, answers), structured tabular logs, and image data from camera
+      feeds. It supports both supervised and unsupervised learning and can train models from scratch or fine-tune
+      existing ones. The most common teacher-identified use cases were usage-pattern analysis (63%), automatic test
+      difficulty estimation (60%), and early identification of struggling learners (58%).
+    </p>
+    <p>
+      <strong>Visual reporting module.</strong> A code-free web interface for generating interactive dashboards and
+      charts from stored xAPI data, built on D3 and Seaborn. Visualisations are rendered client-side to preserve
+      privacy, with export options to local storage, external databases, or the school LMS.
+    </p>
+    <h2>Proof-of-Concept Applications</h2>
+    <p>
+      Three proof-of-concept applications were developed to validate the architecture against the design objectives.
+    </p>
+    <p>
+      <strong>AR Cube</strong> — a minimal multi-user app in which up to four users share a virtual cube and can
+      manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative
+      logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both
+      Wi-Fi and 4G.
+    </p>
+    <figure>
+      <img src="../img/projects/clear-ar-cube.jpg" alt="AR Cube proof-of-concept" loading="lazy" />
+    </figure>
+    <p>
+      <strong>xAPI Data Analysis</strong> — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent
+      clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A
+      classification model trained on the collected data successfully predicted the originating client from the xAPI
+      triplet, validating DO3–DO5.
+    </p>
+    <p>
+      <strong>AR Geography Quiz</strong> — the most complete proof-of-concept, placing a teacher and multiple students
+      around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective
+      mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and
+      mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
+    </p>
+    <figure>
+      <img src="../img/projects/clear-ar-quiz.webp" alt="AR Geography Quiz" loading="lazy" />
+    </figure>
+    <h2>Impact</h2>
+    <p>
+      Every multi-user AR application ends up reimplementing the same three things: a way to synchronise state across
+      devices, somewhere to store what students did, and a way to surface that data to teachers. cleAR does all three,
+      so you don't have to. All proof-of-concept source code is released as open-source software.
+    </p>
+    <p>
+      The work was published in <em>Virtual Reality</em> (Springer) in 2023 and fed directly into <a
+        href="aroundtheworld.html">ARoundTheWorld</a>, the first full application built on the architecture.
+    </p>
 
-      <div class="project-links">
-        <a href="https://link.springer.com/article/10.1007/s10055-023-00764-5" target="_blank" rel="noopener">Paper</a>
-      </div>
+    <div class="project-links">
+      <a href="https://link.springer.com/article/10.1007/s10055-023-00764-5" target="_blank" rel="noopener">Paper</a>
+    </div>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a
+          href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org"
+          target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io"
+          target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
     </div>
   </footer>
 
   <button class="back-to-top" id="back-to-top" aria-label="Back to top">
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
     </svg>
   </button>
 
   <script defer src="../js/main.min.js"></script>
 </body>
+
 </html>
