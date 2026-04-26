@@ -56,6 +56,6 @@ Three proof-of-concept applications were developed to validate the architecture 
 
 ## Impact
 
-cleAR provides a mature technological ecosystem designed to lower the barrier of entry for AR-based educational applications. By standardising the collaborative, data-logging, and analytics layers that every multi-user AR application needs, it allows developers to focus on pedagogical content rather than infrastructure. All proof-of-concept source code is released as open-source software.
+Every multi-user AR application ends up reimplementing the same three things: a way to synchronise state across devices, somewhere to store what students did, and a way to surface that data to teachers. cleAR does all three, so you don't have to. All proof-of-concept source code is released as open-source software.
 
-The work was published in *Virtual Reality* (Springer) in 2023 and is part of a broader research line exploring how AI and immersive technologies can be deployed responsibly and effectively in real classroom settings.
+The work was published in *Virtual Reality* (Springer) in 2023 and fed directly into [ARoundTheWorld](aroundtheworld.html), the first full application built on the architecture.

@@ -76,13 +76,13 @@
     <div class="post-lead">End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017.</div>
 
     <p>
-This is one the projects I tell people about when they ask me what the most fun thing I have ever worked on was. In <strong>2017</strong>, while I was a Senior Data Scientist at <strong>AGT International</strong> in Darmstadt, our team built a real-time fighter-tracking and analytics system for the <strong>UFC</strong>. The product was launched as part of <strong>HEED</strong>, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO <strong>Mati Kochavi</strong> during AWS CTO Werner Vogels' keynote at <strong>AWS re:Invent 2017</strong> in Las Vegas — see the <a href="https://www.youtube.com/watch?v=vataVq9gY_o">recording on YouTube</a>.
+This is one of the projects I tell people about when they ask what the most fun thing I have ever worked on was. In <strong>2017</strong>, while I was a Senior Data Scientist at <strong>AGT International</strong> in Darmstadt, our team built a real-time fighter-tracking and analytics system for the <strong>UFC</strong>. The product was launched as part of <strong>HEED</strong>, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO <strong>Mati Kochavi</strong> during AWS CTO Werner Vogels' keynote at <strong>AWS re:Invent 2017</strong> in Las Vegas — see the <a href="https://www.youtube.com/watch?v=vataVq9gY_o">recording on YouTube</a>.
 </p>
 <p>
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 </p>
 <figure>
-  <img src="img/projects/ufc-octagon-overhead.jpg" alt="UFC octagon from above — camera coverage" loading="lazy" />
+  <img src="../img/projects/ufc-octagon-overhead.jpg" alt="UFC octagon from above — camera coverage" loading="lazy" />
 </figure>
 <h2>What We Measured</h2>
 <p>
@@ -118,7 +118,7 @@ We fused the two streams in real time:
   <li>A <strong>fusion layer</strong> matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide <em>hit vs. miss</em> and to commit a final classification of the punch type.</li>
 </ul>
 <figure>
-  <img src="img/projects/ufc-octagon-bg.png" alt="Hardware setup and data processing" loading="lazy" />
+  <img src="../img/projects/ufc-octagon-bg.png" alt="Hardware setup and data processing" loading="lazy" />
 </figure>
 <h2>Cloud and Delivery</h2>
 <p>

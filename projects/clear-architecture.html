@@ -86,7 +86,7 @@ Despite the well-documented benefits of AR in learning — improved motivation, 
 The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
 </p>
 <figure>
-  <img src="img/projects/clear-design-objectives.jpg" alt="Design objectives diagram" loading="lazy" />
+  <img src="../img/projects/clear-design-objectives.jpg" alt="Design objectives diagram" loading="lazy" />
 </figure>
 <ul>
   <li><strong>DO1 — Interoperability</strong>: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.</li>
@@ -101,7 +101,7 @@ The architecture was built around six design objectives (DOs) derived from a sys
 cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated stack.
 </p>
 <figure>
-  <img src="img/projects/clear-architecture.jpg" alt="Architecture overview" loading="lazy" />
+  <img src="../img/projects/clear-architecture.jpg" alt="Architecture overview" loading="lazy" />
 </figure>
 <p>
 <strong>Real-time multi-user library.</strong> A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and video streams.
@@ -123,7 +123,7 @@ Three proof-of-concept applications were developed to validate the architecture 
 <strong>AR Cube</strong> — a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
 </p>
 <figure>
-  <img src="img/projects/clear-ar-cube.jpg" alt="AR Cube proof-of-concept" loading="lazy" />
+  <img src="../img/projects/clear-ar-cube.jpg" alt="AR Cube proof-of-concept" loading="lazy" />
 </figure>
 <p>
 <strong>xAPI Data Analysis</strong> — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
@@ -132,14 +132,14 @@ Three proof-of-concept applications were developed to validate the architecture 
 <strong>AR Geography Quiz</strong> — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
 </p>
 <figure>
-  <img src="img/projects/clear-ar-quiz.jpg" alt="AR Geography Quiz" loading="lazy" />
+  <img src="../img/projects/clear-ar-quiz.jpg" alt="AR Geography Quiz" loading="lazy" />
 </figure>
 <h2>Impact</h2>
 <p>
-cleAR provides a mature technological ecosystem designed to lower the barrier of entry for AR-based educational applications. By standardising the collaborative, data-logging, and analytics layers that every multi-user AR application needs, it allows developers to focus on pedagogical content rather than infrastructure. All proof-of-concept source code is released as open-source software.
+Every multi-user AR application ends up reimplementing the same three things: a way to synchronise state across devices, somewhere to store what students did, and a way to surface that data to teachers. cleAR does all three, so you don't have to. All proof-of-concept source code is released as open-source software.
 </p>
 <p>
-The work was published in <em>Virtual Reality</em> (Springer) in 2023 and is part of a broader research line exploring how AI and immersive technologies can be deployed responsibly and effectively in real classroom settings.
+The work was published in <em>Virtual Reality</em> (Springer) in 2023 and fed directly into <a href="aroundtheworld.html">ARoundTheWorld</a>, the first full application built on the architecture.
 </p>
 
       <div class="project-links">

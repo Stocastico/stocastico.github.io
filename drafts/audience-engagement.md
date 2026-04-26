@@ -32,7 +32,7 @@ The wireless channel is robust to lighting and occlusions, covers the entire ven
 
 ## Fusion
 
-The two channels produce partially overlapping, partially complementary signals. The visual channel is *precise but narrow*: it tells you exactly who is looking at what, but only where a camera sees them. The wireless channel is *broad but coarse*: it knows someone is in the "main hall" zone, but not their pose or attention. The system fuses both to compute, for each zone and each time window:
+The two channels cover different things. The visual channel is *precise but narrow*: it tells you exactly who is looking at what, but only where a camera can see them. The wireless channel is *broad but coarse*: it knows someone is in the "main hall" zone, but nothing about their pose or attention. The system fuses both to compute, for each zone and each time window:
 
 - **Occupancy** — how many distinct devices and people were present.
 - **Dwell time** — how long, on average, individuals stayed in the zone.

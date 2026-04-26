@@ -227,7 +227,8 @@ function markdownToHtml(md) {
     if (imgBlock) {
       closeParagraph(); closeUl(); closeOl();
       const alt = escapeHtml(imgBlock[1]);
-      const src = escapeHtml(imgBlock[2]);
+      const rawSrc = imgBlock[2];
+      const src = escapeHtml(/^https?:\/\/|^\//.test(rawSrc) ? rawSrc : `../${rawSrc}`);
       out.push(`<figure>\n  <img src="${src}" alt="${alt}" loading="lazy" />\n</figure>`);
       continue;
     }
@@ -410,6 +411,11 @@ function updateProjectsJs(projectsJsPath, entry, src) {
   if (src === undefined) src = fs.readFileSync(projectsJsPath, 'utf8');
   const arrayStart = src.indexOf('const PROJECTS = [');
   if (arrayStart === -1) throw new Error(`Could not find PROJECTS array in ${projectsJsPath}`);
+
+  // Skip if an entry with this id is already registered
+  const idPattern = new RegExp(`id:\\s*${JSON.stringify(entry.id)}`);
+  if (idPattern.test(src)) return src;
+
   const insertAt = src.indexOf('[', arrayStart) + 1;
 
   const tagsStr = JSON.stringify(entry.tags);

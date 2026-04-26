@@ -38,7 +38,7 @@ When a user submits a question, the system answers in real time through a two-st
 
 From the employee's perspective, the interaction is a standard chat interface. They type a question in natural language — "What is the escalation procedure for tier-2 complaints?" or "Which products are covered under the cross-border exemption?" — and receive a direct answer with one or more citations of the form *Document name, page N*. Clicking a citation opens the relevant page of the source PDF.
 
-This eliminates the need to know the document hierarchy in advance and significantly reduces the time spent searching for policy or compliance information across a large, evolving knowledge base.
+No need to know which folder anything lives in — you just ask, and you get an answer with a pointer back to the source so you can verify it yourself.
 
 ## Technical Notes
 

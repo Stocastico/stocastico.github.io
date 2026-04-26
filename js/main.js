@@ -1979,7 +1979,7 @@ function renderPublications() {
 }
 
 /* Project cards — data source: PROJECTS (data/projects.js) */
-var PROJECTS_MAX_HOMEPAGE = 4;
+var PROJECTS_MAX_HOMEPAGE = 3;
 
 function renderProjectCard(project, i) {
   const tagsHtml = (project.tags || [])

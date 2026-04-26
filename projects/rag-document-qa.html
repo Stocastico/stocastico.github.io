@@ -86,7 +86,7 @@ The solution was a <strong>Retrieval-Augmented Generation (RAG)</strong> pipelin
 The first stage processes all existing PDF documents and builds a searchable index. This runs offline and is re-triggered whenever documents are added or updated in SharePoint.
 </p>
 <figure>
-  <img src="img/projects/rag-ingestion.svg" alt="Document ingestion pipeline" loading="lazy" />
+  <img src="../img/projects/rag-ingestion.svg" alt="Document ingestion pipeline" loading="lazy" />
 </figure>
 <ol>
   <li><strong>PDF extraction</strong> — each document is parsed page by page, preserving the mapping between text and page number. This granularity is what makes precise citations possible later.</li>
@@ -99,7 +99,7 @@ The first stage processes all existing PDF documents and builds a searchable ind
 When a user submits a question, the system answers in real time through a two-stage process.
 </p>
 <figure>
-  <img src="img/projects/rag-query.svg" alt="Query and answer pipeline" loading="lazy" />
+  <img src="../img/projects/rag-query.svg" alt="Query and answer pipeline" loading="lazy" />
 </figure>
 <ol>
   <li><strong>Query embedding</strong> — the user's question is passed through the same embedding model used during ingestion, producing a query vector in the same semantic space.</li>
@@ -112,7 +112,7 @@ When a user submits a question, the system answers in real time through a two-st
 From the employee's perspective, the interaction is a standard chat interface. They type a question in natural language — &quot;What is the escalation procedure for tier-2 complaints?&quot; or &quot;Which products are covered under the cross-border exemption?&quot; — and receive a direct answer with one or more citations of the form <em>Document name, page N</em>. Clicking a citation opens the relevant page of the source PDF.
 </p>
 <p>
-This eliminates the need to know the document hierarchy in advance and significantly reduces the time spent searching for policy or compliance information across a large, evolving knowledge base.
+No need to know which folder anything lives in — you just ask, and you get an answer with a pointer back to the source so you can verify it yourself.
 </p>
 <h2>Technical Notes</h2>
 <ul>

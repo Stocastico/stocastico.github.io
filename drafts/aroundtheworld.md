@@ -60,4 +60,4 @@ Post-study teacher interviews confirmed that the collaborative capabilities and 
 
 The work was conducted as part of the ARETE project (Augmented Reality Interactive Educational System), funded under the EU Horizon 2020 programme (grant agreement No 856533). The evaluation results show that an application built on the cleAR architecture can fulfil all the design objectives identified by teachers, receive strong approval from students, and integrate into existing school infrastructure with minimal friction.
 
-The results support the broader thesis that the right approach to AR in education is not to build isolated, one-off applications, but to invest in shared, interoperable infrastructure that allows educators and developers to focus on pedagogical content rather than technical scaffolding.
+If there is one thing I took from this work, it is that the bottleneck for AR in schools is rarely the technology itself — it is the time teachers don't have to rebuild the same plumbing for every new application. Shared infrastructure that just works lets them focus on teaching instead.
