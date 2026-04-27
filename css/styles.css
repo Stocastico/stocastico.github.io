@@ -369,6 +369,9 @@ h3 {
 #hero {
   position: relative;
   height: 100svh;
+  /* iOS Safari: dvh tracks the visible area as the URL bar collapses,
+     preventing layout shift when the toolbar shows/hides during scroll. */
+  height: 100dvh;
   min-height: 600px;
   display: flex;
   align-items: center;
@@ -1748,6 +1751,18 @@ h3 {
   margin-top: 0.15rem;
 }
 
+/* On narrow viewports (iPhone in Safari) the email/handle would otherwise
+   be ellipsed inside the card. Allow wrapping so the full value is visible. */
+@media (max-width: 480px) {
+  .contact-value {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 .contact-email-obfuscated[data-email-revealed='false'] .contact-value {
   filter: blur(5px);
   transition: filter 0.3s ease;
@@ -2207,6 +2222,13 @@ h3 {
 
   .tl-left .tl-card-header {
     flex-direction: row;
+  }
+
+  /* On phones, allow long location strings to wrap inside their card
+     instead of forcing horizontal overflow with `white-space: nowrap`. */
+  .tl-location {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .tl-left .tl-location {
