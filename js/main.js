@@ -67,8 +67,8 @@ function hasWebGLSupport() {
    ═══════════════════════════════════════════════════════════ */
 class NeuralNetwork {
   /* Tweak these to change the visual */
-  static PARTICLE_COUNT = 120;
-  static CONNECTION_DIST = 170;  /* max distance (px) to draw a line */
+  static PARTICLE_COUNT = 90;
+  static CONNECTION_DIST = 150;  /* max distance (px) to draw a line */
   static SPEED = 0.4;  /* particle drift speed             */
   static MOUSE_RADIUS = 220;  /* attraction zone around cursor    */
   static MOUSE_STRENGTH = 0.0008;
@@ -80,13 +80,18 @@ class NeuralNetwork {
     this.mouse = { x: 0, y: 0 };
     this.frameId = null;
     this._isLowPower = isLowPowerDevice();
-    this.particleCount = this._isLowPower ? 84 : NeuralNetwork.PARTICLE_COUNT;
-    this.connectionDist = this._isLowPower ? 145 : NeuralNetwork.CONNECTION_DIST;
+    this.particleCount = this._isLowPower ? 64 : NeuralNetwork.PARTICLE_COUNT;
+    this.connectionDist = this._isLowPower ? 130 : NeuralNetwork.CONNECTION_DIST;
     /* Cap at 1.0 so WebGL line segments stay at least 1 CSS-pixel wide
        on HiDPI/Retina screens (WebGL clamps linewidth to 1 device pixel). */
     this.pixelRatioCap = 1;
     this.lineFrameStep = this._isLowPower ? 2 : 1;
     this._lineTick = 0;
+    /* Throttle rAF — drift is imperceptibly smooth at 45 fps and saves
+       ~50 % of the GPU/CPU budget on 120 Hz displays. */
+    this._targetFps = this._isLowPower ? 30 : 45;
+    this._minFrameTime = 1 / this._targetFps;
+    this._lastDrawTime = 0;
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -117,7 +122,7 @@ class NeuralNetwork {
     window.addEventListener('mousemove', e => {
       this.mouse.x = e.clientX - window.innerWidth / 2;
       this.mouse.y = -(e.clientY - window.innerHeight / 2);
-    });
+    }, { passive: true });
     /* Touch support */
     window.addEventListener('touchmove', e => {
       if (!e.touches[0]) return;
@@ -308,6 +313,10 @@ class NeuralNetwork {
     /* Skip frames while tab is hidden or section is off-screen */
     if (document.hidden || !this._visible) { this.frameId = null; return; }
     this.frameId = requestAnimationFrame(() => this._animate());
+    /* FPS cap — bail out if not enough time has elapsed since the last draw. */
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
+    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
+    this._lastDrawTime = now;
     this._update();
     this.renderer.render(this.scene, this.camera);
   }
@@ -342,6 +351,9 @@ class NeuralNetwork2D {
     this.maxDist = this._isLowPower ? 120 : 150;
     this.maxDist2 = this.maxDist * this.maxDist;
     this.points = [];
+    /* FPS cap — 30 fps is plenty for a slow-drifting 2D canvas animation. */
+    this._minFrameTime = 1 / 30;
+    this._lastDrawTime = 0;
 
     this._onResize();
     for (let i = 0; i < this.count; i++) this.points.push(this._newPoint());
@@ -350,7 +362,7 @@ class NeuralNetwork2D {
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = e.clientX;
       this.mouse.y = e.clientY;
-    });
+    }, { passive: true });
     window.addEventListener('touchmove', (e) => {
       if (!e.touches[0]) return;
       this.mouse.x = e.touches[0].clientX;
@@ -448,6 +460,9 @@ class NeuralNetwork2D {
   _animate() {
     if (document.hidden || !this._visible) { this.frameId = null; return; }
     this.frameId = requestAnimationFrame(() => this._animate());
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
+    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
+    this._lastDrawTime = now;
     this._draw();
   }
 }
@@ -609,11 +624,15 @@ class Globe3D {
     /* The mesh the cursor is currently hovering (scaled up for feedback) */
     this._hoveredMesh = null;
     this._isLowPower = isLowPowerDevice();
-    this._pixelRatioCap = this._isLowPower ? 1.35 : 2;
+    this._pixelRatioCap = this._isLowPower ? 1.25 : 1.5;
     this._starCount = this._isLowPower ? 900 : 1400;
     this._tripCurvePoints = this._isLowPower ? 64 : 96;
     this._frameStep = this._isLowPower ? 2 : 1;
     this._frameTick = 0;
+    /* FPS cap — globe rotates at 0.0014 rad/frame; 45 fps is visually
+       indistinguishable from 60/120 fps and halves GPU work on Retina. */
+    this._minFrameTime = 1 / (this._isLowPower ? 30 : 45);
+    this._lastDrawTime = 0;
 
     /* Filtered pins — initially all types visible */
     this.visibleTypes = new Set(['lived', 'current', 'worktrip', 'holiday']);
@@ -1164,6 +1183,11 @@ class Globe3D {
     if (document.hidden || !this._globeVisible) { this._rafId = null; return; }
     this._rafId = requestAnimationFrame(() => this._animate());
     if ((this._frameTick++ % this._frameStep) !== 0) return;
+    /* FPS cap on top of the frame-stepper: keeps draw rate at 45 fps
+       (30 on low-power) regardless of the host display refresh rate. */
+    const tNow = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
+    if (this._lastDrawTime && (tNow - this._lastDrawTime) < this._minFrameTime) return;
+    this._lastDrawTime = tNow;
 
     const t = performance.now() * 0.001;   /* seconds */
 
@@ -1257,6 +1281,9 @@ class GlobeFallback2D {
     this._drag = false;
     this._prevX = 0;
     this._points = [];
+    /* FPS cap — 30 fps is plenty for a slow-spinning 2D globe. */
+    this._minFrameTime = 1 / 30;
+    this._lastDrawTime = 0;
 
     this._collectPoints();
     this._resize();
@@ -1392,6 +1419,9 @@ class GlobeFallback2D {
   _animate() {
     if (document.hidden || !this._visible) { this._rafId = null; return; }
     this._rafId = requestAnimationFrame(() => this._animate());
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
+    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
+    this._lastDrawTime = now;
     if (!this._drag) this._rot += this._spin;
     this._draw();
   }
@@ -2570,7 +2600,7 @@ class HeroNameShader {
     this._visible = true;
     this._io = null;
     this._isLowPower = isLowPowerDevice();
-    this._pixelRatioCap = this._isLowPower ? 1.4 : 2;
+    this._pixelRatioCap = this._isLowPower ? 1.25 : 1.5;
     this._targetFps = this._isLowPower ? 20 : 30;
     this._minFrameTime = 1 / this._targetFps;
     this._lastDrawTime = 0;
