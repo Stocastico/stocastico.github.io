@@ -2184,3 +2184,320 @@ test('renderProjects skips if container element not found', () => {
     global.PROJECTS = prevProjects;
   }
 });
+
+/* ─── Performance optimisations ───────────────────────────── */
+
+/* Helpers shared across the perf-cap tests below. They build the smallest
+   possible globals/canvas mocks that let each animation class boot.
+   Node >=21 defines `navigator` as a getter-only on the global, so plain
+   assignment is silently ignored — use defineProperty to actually replace it. */
+const setSafe = (key, val) => {
+  try {
+    Object.defineProperty(global, key, {
+      value: val, writable: true, configurable: true, enumerable: true,
+    });
+  } catch (_) { /* truly read-only — give up */ }
+};
+function withPerfGlobals(fn, { lowPower = false } = {}) {
+  const KEYS = [
+    'window', 'document', 'requestAnimationFrame', 'cancelAnimationFrame',
+    'IntersectionObserver', 'devicePixelRatio', 'navigator', 'performance',
+    'THREE', 'LOCATIONS', 'getComputedStyle', 'setTimeout',
+  ];
+  const prev = {};
+  for (const k of KEYS) prev[k] = global[k];
+  global.window = {
+    innerWidth: lowPower ? 600 : 1280,
+    innerHeight: lowPower ? 800 : 800,
+    devicePixelRatio: lowPower ? 1 : 3,
+    addEventListener() {},
+    matchMedia() { return { matches: false }; },
+  };
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+    createElement(tag) {
+      if (tag !== 'canvas') return {};
+      return {
+        width: 0, height: 0,
+        getContext() {
+          return {
+            createRadialGradient() { return { addColorStop() {} }; },
+            fillRect() {}, fillStyle: '',
+            clearRect() {}, strokeStyle: '', lineWidth: 0,
+            beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+            fill() {}, arc() {}, setTransform() {},
+            globalAlpha: 1, save() {}, restore() {},
+            rect() {}, clip() {}, closePath() {},
+          };
+        },
+      };
+    },
+  };
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => {};
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+  };
+  global.devicePixelRatio = lowPower ? 1 : 3;
+  setSafe('navigator', {
+    hardwareConcurrency: lowPower ? 2 : 8,
+    maxTouchPoints: lowPower ? 5 : 0,
+  });
+  global.performance = { now: () => 1000 };
+  try { return fn(); } finally {
+    for (const k of KEYS) setSafe(k, prev[k]);
+  }
+}
+
+test('perf: NeuralNetwork enforces an FPS cap (<=45 normal, <=30 low-power)', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    const canvas = {
+      addEventListener() {},
+      getContext() { return {}; },
+    };
+    const nn = new NeuralNetwork(canvas);
+    assert.equal(typeof nn._minFrameTime, 'number',
+      'NeuralNetwork should expose a _minFrameTime to throttle rAF');
+    assert.ok(nn._minFrameTime >= 1 / 45 - 1e-6,
+      `expected min frame time >= 1/45s, got ${nn._minFrameTime}`);
+  });
+});
+
+test('perf: NeuralNetwork low-power FPS cap is <=30', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    const canvas = { addEventListener() {}, getContext() { return {}; } };
+    const nn = new NeuralNetwork(canvas);
+    assert.ok(nn._isLowPower, 'mock should be detected as low-power');
+    assert.ok(nn._minFrameTime >= 1 / 30 - 1e-6,
+      `expected low-power min frame time >= 1/30s, got ${nn._minFrameTime}`);
+  }, { lowPower: true });
+});
+
+test('perf: NeuralNetwork _animate skips render when called faster than the cap', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    const canvas = { addEventListener() {}, getContext() { return {}; } };
+    let renderCalls = 0;
+    let now = 1.0;
+    global.performance = { now: () => now * 1000 };
+    const nn = new NeuralNetwork(canvas);
+    nn.renderer.render = () => { renderCalls++; };
+    nn._visible = true;
+    nn._animate(); // first call seeds last-draw and renders
+    const after1 = renderCalls;
+    now += nn._minFrameTime / 4; // well below the cap
+    nn._animate();
+    assert.equal(renderCalls, after1,
+      'second call within the frame budget should NOT trigger a render');
+    now += nn._minFrameTime + 0.01; // well above the cap
+    nn._animate();
+    assert.ok(renderCalls > after1,
+      'call after the frame budget should trigger a render');
+  });
+});
+
+test('perf: NeuralNetwork2D enforces an FPS cap (<=30)', () => {
+  withPerfGlobals(() => {
+    const ctx = {
+      clearRect() {}, strokeStyle: '', lineWidth: 0,
+      beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+      fillStyle: '', fill() {}, arc() {},
+      createRadialGradient() { return { addColorStop() {} }; },
+      setTransform() {},
+    };
+    const canvas = {
+      width: 0, height: 0,
+      getContext() { return ctx; },
+      style: { width: '', height: '' },
+      parentElement: { clientWidth: 800, clientHeight: 600 },
+    };
+    const nn = new NeuralNetwork2D(canvas);
+    assert.equal(typeof nn._minFrameTime, 'number',
+      'NeuralNetwork2D should expose a _minFrameTime');
+    assert.ok(nn._minFrameTime >= 1 / 30 - 1e-6,
+      `expected min frame time >= 1/30s, got ${nn._minFrameTime}`);
+  });
+});
+
+test('perf: Globe3D enforces an FPS cap (<=45 normal)', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    global.LOCATIONS = { pins: [], regions: [], trips: [] };
+    const ctx2d = {
+      fillStyle: '', strokeStyle: '', lineWidth: 0,
+      fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+      closePath() {}, fill() {}, stroke() {},
+      save() {}, restore() {}, rect() {}, clip() {},
+    };
+    global.document.getElementById = () => null;
+    global.document.createElement = (tag) => {
+      if (tag === 'canvas') return { width: 0, height: 0, getContext() { return ctx2d; } };
+      return {};
+    };
+    const canvas = {
+      addEventListener() {}, getContext() { return {}; },
+      style: {}, parentElement: { clientWidth: 800, clientHeight: 500 },
+    };
+    const globe = new Globe3D(canvas);
+    assert.equal(typeof globe._minFrameTime, 'number',
+      'Globe3D should expose a _minFrameTime to throttle rAF');
+    assert.ok(globe._minFrameTime >= 1 / 45 - 1e-6,
+      `expected min frame time >= 1/45s, got ${globe._minFrameTime}`);
+  });
+});
+
+test('perf: GlobeFallback2D enforces an FPS cap (<=30)', () => {
+  withPerfGlobals(() => {
+    global.LOCATIONS = { pins: [], regions: [], trips: [] };
+    const ctx = {
+      clearRect() {}, strokeStyle: '', lineWidth: 0, fillStyle: '',
+      globalAlpha: 1,
+      beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fill() {},
+      arc() {}, setTransform() {},
+      createRadialGradient() { return { addColorStop() {} }; },
+    };
+    const canvas = {
+      width: 0, height: 0,
+      style: { width: '', height: '' },
+      getContext() { return ctx; },
+      parentElement: { clientWidth: 800, clientHeight: 500 },
+      addEventListener() {},
+      getBoundingClientRect() { return { left: 0, top: 0, width: 800, height: 500 }; },
+    };
+    const g = new GlobeFallback2D(canvas);
+    assert.equal(typeof g._minFrameTime, 'number',
+      'GlobeFallback2D should expose a _minFrameTime');
+    assert.ok(g._minFrameTime >= 1 / 30 - 1e-6,
+      `expected min frame time >= 1/30s, got ${g._minFrameTime}`);
+  });
+});
+
+/* ─── pixelRatio caps (Tier 2) ─────────────────────────────── */
+
+test('perf: Globe3D pixelRatio cap is at most 1.5 on normal devices', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    global.LOCATIONS = { pins: [], regions: [], trips: [] };
+    const ctx2d = {
+      fillStyle: '', strokeStyle: '', lineWidth: 0,
+      fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+      closePath() {}, fill() {}, stroke() {},
+      save() {}, restore() {}, rect() {}, clip() {},
+    };
+    global.document.getElementById = () => null;
+    global.document.createElement = (tag) => {
+      if (tag === 'canvas') return { width: 0, height: 0, getContext() { return ctx2d; } };
+      return {};
+    };
+    const canvas = {
+      addEventListener() {}, getContext() { return {}; },
+      style: {}, parentElement: { clientWidth: 800, clientHeight: 500 },
+    };
+    const globe = new Globe3D(canvas);
+    assert.equal(globe._isLowPower, false,
+      'mock should not be detected as low-power');
+    assert.ok(globe._pixelRatioCap <= 1.5 + 1e-6,
+      `expected Globe3D pixelRatioCap <= 1.5, got ${globe._pixelRatioCap}`);
+  });
+});
+
+test('perf: HeroNameShader pixelRatio cap is at most 1.5 on normal devices', () => {
+  withPerfGlobals(() => {
+    const gl = {
+      VERTEX_SHADER: 1, FRAGMENT_SHADER: 2, COMPILE_STATUS: 3, LINK_STATUS: 4,
+      ARRAY_BUFFER: 5, STATIC_DRAW: 6, FLOAT: 7, TEXTURE_2D: 8,
+      TEXTURE_WRAP_S: 9, TEXTURE_WRAP_T: 10, CLAMP_TO_EDGE: 11,
+      TEXTURE_MIN_FILTER: 12, TEXTURE_MAG_FILTER: 13, LINEAR: 14,
+      BLEND: 15, SRC_ALPHA: 16, ONE_MINUS_SRC_ALPHA: 17, COLOR_BUFFER_BIT: 18,
+      TRIANGLE_STRIP: 19, RGBA: 20, UNSIGNED_BYTE: 21,
+      createShader() { return {}; }, shaderSource() {}, compileShader() {},
+      getShaderParameter() { return true; }, getShaderInfoLog() { return ''; },
+      createProgram() { return {}; }, attachShader() {}, linkProgram() {},
+      getProgramParameter() { return true; }, getProgramInfoLog() { return ''; },
+      useProgram() {}, createBuffer() { return {}; }, bindBuffer() {},
+      bufferData() {}, getAttribLocation() { return 0; },
+      enableVertexAttribArray() {}, vertexAttribPointer() {},
+      getUniformLocation() { return {}; }, uniform1i() {},
+      createTexture() { return {}; }, bindTexture() {}, texParameteri() {},
+      enable() {}, blendFunc() {}, viewport() {}, uniform2f() {},
+      texImage2D() {}, clear() {}, uniform1f() {}, drawArrays() {},
+    };
+    const h1 = { offsetWidth: 500, offsetHeight: 180, classList: { add() {} } };
+    const canvas = {
+      offsetWidth: 500, offsetHeight: 180, style: {},
+      getContext(kind) { return kind === 'webgl' ? gl : null; },
+      getBoundingClientRect() { return { left: 0, top: 0, width: 500, height: 180 }; },
+    };
+    /* never-resolving promise — keeps the boot path synchronous-only and
+       avoids "asynchronous activity after the test ended" warnings when
+       document/createElement get restored. */
+    global.document.fonts = { ready: new Promise(() => {}) };
+    setSafe('getComputedStyle', () => ({ fontSize: '96px' }));
+    setSafe('setTimeout', (fn) => { fn(); return 1; });
+    const shader = new HeroNameShader(h1, canvas);
+    assert.ok(shader._pixelRatioCap <= 1.5 + 1e-6,
+      `expected HeroNameShader pixelRatioCap <= 1.5, got ${shader._pixelRatioCap}`);
+  });
+});
+
+/* ─── Particle / connection trim (Tier 3) ─────────────────── */
+
+test('perf: NeuralNetwork default particle count is at most 90 / connection dist <=150', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    const canvas = { addEventListener() {}, getContext() { return {}; } };
+    const nn = new NeuralNetwork(canvas);
+    assert.ok(!nn._isLowPower, 'mock should be detected as normal-power');
+    assert.ok(nn.particleCount <= 90,
+      `expected <=90 particles, got ${nn.particleCount}`);
+    assert.ok(nn.connectionDist <= 150,
+      `expected connection dist <=150, got ${nn.connectionDist}`);
+  });
+});
+
+/* ─── Passive listener flags (Tier 4) ─────────────────────── */
+
+test('perf: NeuralNetwork registers mousemove/touchmove with { passive: true }', () => {
+  withPerfGlobals(() => {
+    global.THREE = createMinimalThree();
+    const events = [];
+    global.window.addEventListener = (type, _fn, opts) => events.push({ type, opts });
+    const canvas = { addEventListener() {}, getContext() { return {}; } };
+    new NeuralNetwork(canvas);
+    const mm = events.find(e => e.type === 'mousemove');
+    const tm = events.find(e => e.type === 'touchmove');
+    assert.ok(mm, 'mousemove must be registered');
+    assert.ok(mm.opts && mm.opts.passive === true,
+      `mousemove should be { passive: true }, got ${JSON.stringify(mm.opts)}`);
+    assert.ok(tm, 'touchmove must be registered');
+    assert.ok(tm.opts && tm.opts.passive === true,
+      `touchmove should be { passive: true }, got ${JSON.stringify(tm.opts)}`);
+  });
+});
+
+test('perf: NeuralNetwork2D registers mousemove/touchmove with { passive: true }', () => {
+  withPerfGlobals(() => {
+    const events = [];
+    global.window.addEventListener = (type, _fn, opts) => events.push({ type, opts });
+    const ctx = {
+      clearRect() {}, strokeStyle: '', lineWidth: 0,
+      beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+      fillStyle: '', fill() {}, arc() {},
+      createRadialGradient() { return { addColorStop() {} }; },
+      setTransform() {},
+    };
+    const canvas = {
+      width: 0, height: 0, getContext() { return ctx; },
+      style: { width: '', height: '' },
+      parentElement: { clientWidth: 800, clientHeight: 600 },
+    };
+    new NeuralNetwork2D(canvas);
+    const mm = events.find(e => e.type === 'mousemove');
+    assert.ok(mm && mm.opts && mm.opts.passive === true,
+      `NN2D mousemove should be { passive: true }, got ${JSON.stringify(mm && mm.opts)}`);
+  });
+});
