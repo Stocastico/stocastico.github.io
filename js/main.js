@@ -1607,6 +1607,7 @@ function initCommandPalette() {
     { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
     { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
     { id: 'projects',     label: 'Projects',      hint: 'Things I\u2019ve built', href: 'projects.html' },
+    { id: 'places',       label: 'Places',        hint: 'Where I\u2019ve been' },
     { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
   ];
 

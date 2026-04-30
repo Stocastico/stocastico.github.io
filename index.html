@@ -250,51 +250,6 @@
         </div>
       </div>
 
-      <!-- Bottom: globe + Europe map side by side -->
-      <div class="about-maps" data-animate data-delay="300">
-        <div class="globe-header">
-          <span class="section-tag">Places</span>
-          <h3 class="globe-title">Where I've Been</h3>
-          <p class="globe-intro">
-            Travelling is one of my greatest passions — I've been lucky enough to explore many countries
-            around the world, both on work assignments and personal adventures.
-          </p>
-        </div>
-
-        <div class="maps-row">
-          <!-- 3D Globe -->
-          <div class="maps-col maps-col--globe">
-            <div class="globe-scene">
-              <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
-              <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
-                <span class="gt-type"></span>
-                <strong class="gt-name"></strong>
-                <span class="gt-info"></span>
-              </div>
-              <div class="globe-legend">
-                <span class="gl-item"><span class="gl-dot gl-lived"></span>Lived</span>
-                <span class="gl-item"><span class="gl-dot gl-current"></span>Current</span>
-                <span class="gl-item"><span class="gl-dot gl-worktrip"></span>Worktrip</span>
-                <span class="gl-item"><span class="gl-dot gl-holiday"></span>Holiday</span>
-              </div>
-            </div>
-            <p class="globe-subtitle globe-subtitle--mouse">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
-            <p class="globe-subtitle globe-subtitle--touch">Drag to rotate &nbsp;·&nbsp; Tap a pin for details</p>
-          </div>
-
-          <!-- 2D Europe Map -->
-          <div class="maps-col maps-col--europe">
-            <div class="europe-scene">
-              <canvas id="europe-canvas" aria-label="2D map of Europe showing location details"></canvas>
-              <div class="europe-tooltip" id="europe-tooltip" aria-live="polite">
-                <span class="et-type"></span>
-                <strong class="et-name"></strong>
-                <span class="et-info"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -585,6 +540,56 @@
       </header>
       <!-- Items injected by JS — data source: PROJECTS in data/projects.js -->
       <div class="projects-grid" id="projects-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PLACES ═══════════════ -->
+  <section id="places" class="section" aria-label="Places">
+    <div class="container">
+      <div class="about-maps" data-animate data-delay="300">
+        <div class="globe-header">
+          <span class="section-tag">Places</span>
+          <h3 class="globe-title">Where I've Been</h3>
+          <p class="globe-intro">
+            Travelling is one of my greatest passions — I've been lucky enough to explore many countries
+            around the world, both on work assignments and personal adventures.
+          </p>
+        </div>
+
+        <div class="maps-row">
+          <!-- 3D Globe -->
+          <div class="maps-col maps-col--globe">
+            <div class="globe-scene">
+              <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
+              <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
+                <span class="gt-type"></span>
+                <strong class="gt-name"></strong>
+                <span class="gt-info"></span>
+              </div>
+              <div class="globe-legend">
+                <span class="gl-item"><span class="gl-dot gl-lived"></span>Lived</span>
+                <span class="gl-item"><span class="gl-dot gl-current"></span>Current</span>
+                <span class="gl-item"><span class="gl-dot gl-worktrip"></span>Worktrip</span>
+                <span class="gl-item"><span class="gl-dot gl-holiday"></span>Holiday</span>
+              </div>
+            </div>
+            <p class="globe-subtitle globe-subtitle--mouse">Drag to rotate &nbsp;·&nbsp; Hover a pin for details</p>
+            <p class="globe-subtitle globe-subtitle--touch">Drag to rotate &nbsp;·&nbsp; Tap a pin for details</p>
+          </div>
+
+          <!-- 2D Europe Map -->
+          <div class="maps-col maps-col--europe">
+            <div class="europe-scene">
+              <canvas id="europe-canvas" aria-label="2D map of Europe showing location details"></canvas>
+              <div class="europe-tooltip" id="europe-tooltip" aria-live="polite">
+                <span class="et-type"></span>
+                <strong class="et-name"></strong>
+                <span class="et-info"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

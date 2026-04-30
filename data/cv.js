@@ -91,45 +91,53 @@ const CV_SKILLS = {
   technical:  [
     {
       name:  'GenAI & LLMs (Fine-tuning · RAG · LangChain · Vector DBs)',
-      level: 92,
+      level: 100,
     },
     {
       name:  'Python · PyTorch · TensorFlow · Hugging Face',
-      level: 90,
+      level: 100,
     },
     {
       name:  'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)',
-      level: 88,
+      level: 100,
     },
     {
       name:  'MLOps · Docker · Kubernetes · CI/CD · GCP · Azure',
-      level: 90,
+      level: 100,
     },
     {
       name:  'Augmented Reality (ARCore · ARKit · WebXR)',
-      level: 82,
+      level: 100,
     },
     {
       name:  'C++ · C · OpenCV · CUDA · Matlab',
-      level: 85,
+      level: 100,
     },
   ],
   leadership: [
     {
       name:  'Hiring & People Development',
-      level: 88,
+      level: 100,
     },
     {
       name:  'Delivery Track Record (10+ AI/ML projects, Agile/Scrum)',
-      level: 90,
+      level: 100,
     },
     {
       name:  'Technical Mentoring & Training (20+ sessions)',
-      level: 90,
+      level: 100,
     },
     {
       name:  'Stakeholder & Partner Coordination',
-      level: 87,
+      level: 100,
+    },
+    {
+      name:  'Strategic AI Roadmap & Vision (OKRs · Research → Production)',
+      level: 100,
+    },
+    {
+      name:  'Cross-functional Collaboration (Engineering · Research · Product)',
+      level: 100,
     },
   ],
   languages:  [
