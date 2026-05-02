@@ -218,6 +218,58 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
     assert(usesDvh, '#hero { height } should use 100dvh, not 100svh');
   });
 
+  // Bug 8: when a research-card (#research-grid) is flipped to its back side,
+  // the long description + footer must not spill past the rounded card border.
+  // The two faces are absolutely positioned inside .card-inner, so before the
+  // grid-stack fix the parent card kept its 260px min-height and back-side
+  // text overflowed vertically on narrow phone widths.
+  await test('flipped research-card back content stays inside card bounds', async () => {
+    await page.evaluate(() => document.getElementById('research')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    // Flip every card so we cover all back-side text variants.
+    await page.evaluate(() => {
+      document.querySelectorAll('#research-grid .research-card')
+        .forEach(c => c.classList.add('is-flipped'));
+    });
+    await page.waitForTimeout(800); // wait for flip transition
+    const overflows = await page.evaluate(() => {
+      const cards = Array.from(document.querySelectorAll('#research-grid .research-card'));
+      const bad = [];
+      for (const card of cards) {
+        const cardRect = card.getBoundingClientRect();
+        const back     = card.querySelector('.card-back');
+        const body     = card.querySelector('.card-back-body');
+        const hint     = card.querySelector('.card-back-hint');
+        if (!back) continue;
+        const backRect = back.getBoundingClientRect();
+        const bodyRect = body?.getBoundingClientRect();
+        const hintRect = hint?.getBoundingClientRect();
+        // The back panel itself, the body text and the footer must all sit
+        // within the visible card rectangle (1px tolerance for sub-pixel).
+        const bottomOverflow = Math.max(
+          backRect.bottom - cardRect.bottom,
+          (bodyRect?.bottom ?? 0) - cardRect.bottom,
+          (hintRect?.bottom ?? 0) - cardRect.bottom,
+        );
+        if (bottomOverflow > 1) {
+          bad.push({
+            title: card.querySelector('.card-back-title')?.textContent.trim(),
+            cardBottom: Math.round(cardRect.bottom),
+            backBottom: Math.round(backRect.bottom),
+            bodyBottom: bodyRect ? Math.round(bodyRect.bottom) : null,
+            hintBottom: hintRect ? Math.round(hintRect.bottom) : null,
+            overflowPx: Math.round(bottomOverflow),
+          });
+        }
+      }
+      return bad;
+    });
+    assert(
+      overflows.length === 0,
+      `card-back content overflows research-card on iPhone: ${JSON.stringify(overflows)}`,
+    );
+  });
+
   // Bug 7: tap targets for inline tag-pills should be >=32px tall on touch
   // devices (Apple HIG suggests 44, but inline pills can be smaller; we
   // enforce a softer 32 to ensure reasonable touch comfort).

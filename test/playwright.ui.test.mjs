@@ -9,7 +9,7 @@
  *   • CV timeline entries rendered (on cv.html)
  *   • Skill groups rendered (on index.html)
  *   • Skill bars rendered (on cv.html)
- *   • Blog post cards rendered
+ *   • Project cards rendered
  *   • No console errors at page load
  *   • Mobile nav hamburger works
  *   • Scroll reaches bottom without JS errors
@@ -197,11 +197,15 @@ console.log('── Desktop (1280×800) — index.html ────────�
     assert(tags.length >= 3, `Skill tags: ${tags.length}`);
   });
 
-  await test('Blog section is present', async () => {
-    await page.evaluate(() => document.getElementById('blog')?.scrollIntoView());
-    await page.waitForTimeout(300);
-    const blog = await page.$('#blog');
-    assert(blog !== null, '#blog not found');
+  await test('Projects section renders project cards', async () => {
+    await page.evaluate(() => document.getElementById('projects')?.scrollIntoView());
+    await page.waitForTimeout(500); // allow JS to populate #projects-grid
+    const result = await page.evaluate(() => ({
+      sectionPresent: !!document.getElementById('projects'),
+      cardCount: document.querySelectorAll('#projects-grid .project-card').length,
+    }));
+    assert(result.sectionPresent, '#projects not found');
+    assert(result.cardCount > 0, `expected project cards, got ${result.cardCount}`);
   });
 
   await test('Contact section is present', async () => {
