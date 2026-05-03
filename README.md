@@ -23,7 +23,6 @@ My Personal website
 ├── js/
 │   ├── main.js                Three.js animations, UI init, renderProjects/Publications
 │   ├── main.min.js            Minified production build (auto-generated)
-│   ├── locations.js           Globe geocoding helper (browser)
 │   └── europe-map.js          Interactive 2D Canvas map of Europe
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
@@ -52,7 +51,8 @@ My Personal website
 │   ├── europe-map.test.js          Tests for js/europe-map.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── globe.test.html             Interactive globe visualisation tests
-│   └── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
+│   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
+│   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
 ├── .cache/
 │   └── locations-geocode-cache.json  Geocoding cache (auto-created; commit this to avoid re-querying the API in CI)
 ├── sitemap.xml                Generated sitemap
@@ -65,7 +65,7 @@ My Personal website
 ## Running tests
 
 ```bash
-npm test                       # run all tests (~195 tests)
+npm test                       # run all tests (206 tests)
 npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
