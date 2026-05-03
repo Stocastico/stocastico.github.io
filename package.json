@@ -4,6 +4,9 @@
   "description": "Personal website of Stefano Masneri — AI Engineer",
   "private": true,
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "node --test test/main.node.test.js test/europe-map.test.js test/locations-generator.test.js test/new-project.test.js test/cv.test.js test/generate-cv.test.js",
     "test:main": "node --test test/main.node.test.js",
     "test:locations": "node --test test/locations-generator.test.js",
@@ -21,6 +24,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "playwright": "^1.58.2"
+    "playwright": "^1.58.2",
+    "vite": "^8.0.10"
   }
 }
