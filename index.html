@@ -183,18 +183,21 @@
             <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" width="1088" height="1088" loading="lazy" />
           </div>
 
-          <!-- Quick stats -->
+          <!-- Quick stats — real values are baked into the HTML so search
+               crawlers (and users with JS disabled) see the numbers.  The
+               JS counter resets each value to 0 on viewport entry and
+               animates back up to the data-count target. -->
           <div class="stats-row">
             <div class="stat-item">
-              <span class="stat-number" data-count="3">0</span>
+              <span class="stat-number" data-count="3">3</span>
               <span class="stat-label">Countries</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number" data-count="30">0</span><span class="stat-suffix">+</span>
+              <span class="stat-number" data-count="30">30</span><span class="stat-suffix">+</span>
               <span class="stat-label">Publications</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number" data-count="15">0</span><span class="stat-suffix">+</span>
+              <span class="stat-number" data-count="15">15</span><span class="stat-suffix">+</span>
               <span class="stat-label">Years Exp.</span>
             </div>
           </div>

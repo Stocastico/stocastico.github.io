@@ -63,6 +63,11 @@ function initCounters() {
   const counters = document.querySelectorAll('.stat-number[data-count]');
   if (!counters.length) return;
 
+  /* The HTML ships with the real value already in textContent so search
+     crawlers see it.  Once JS takes over, reset to 0 so the count-up
+     animation has somewhere to start from. */
+  counters.forEach((el) => { el.textContent = '0'; });
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
