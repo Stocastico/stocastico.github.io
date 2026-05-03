@@ -17,8 +17,7 @@
     "new-project": "node scripts/new-project.js",
     "generate-cv": "node scripts/generate-cv.js",
     "generate-locations": "node scripts/generate-locations.js",
-    "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1",
-    "minify": "npx terser js/main.js -o js/main.min.js --compress --mangle"
+    "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },
   "engines": {
     "node": ">=18"

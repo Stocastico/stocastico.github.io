@@ -399,7 +399,7 @@ ${linksHtml}
     </svg>
   </button>
 
-  <script defer src="../js/main.min.js"></script>
+  <script type="module" src="/js/main.js"></script>
 </body>
 </html>
 `;

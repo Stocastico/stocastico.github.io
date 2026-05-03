@@ -159,8 +159,10 @@ test('project: buildProjectPage produces a full HTML document', () => {
   assert.match(html, /<title>[^<]*Test Project[^<]*<\/title>/);
 });
 
-test('project: buildProjectPage uses relative asset paths (one level up)', () => {
-  // Pages live at projects/<slug>.html so must reach css/js via ../
+test('project: buildProjectPage uses correct asset paths for project subdir', () => {
+  // CSS lives at the repo root, so pages under projects/<slug>.html reach it
+  // via ../.  The JS entry is loaded as a Vite ES module from the absolute
+  // path /js/main.js (Vite resolves the same path on every page).
   const fm = {
     id: 'x', title: 'X', year: '2024', tags: 'A',
     thumb: 'img/projects/x.jpg', description: 'D',
@@ -168,7 +170,7 @@ test('project: buildProjectPage uses relative asset paths (one level up)', () =>
   const html = buildProjectPage(fm, '<p>body</p>');
   assert.match(html, /href="\.\.\/css\/styles\.css"/);
   assert.match(html, /href="\.\.\/css\/fonts\.css"/);
-  assert.match(html, /src="\.\.\/js\/main\.min\.js"/);
+  assert.match(html, /<script\s+type="module"\s+src="\/js\/main\.js"/);
 });
 
 test('project: buildProjectPage includes title, year, tags, and body', () => {
