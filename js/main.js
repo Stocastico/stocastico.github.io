@@ -15,7 +15,26 @@
    CYAN_* constants inside the NeuralNetwork class below.
    ============================================================ */
 
-'use strict';
+/* ─── Three.js (npm package, bundled by Vite) ─────────────────
+   `THREE` is a module-local `let` so tests can swap it for a mock
+   via `__setThreeForTests` / `__resetThreeForTests` before
+   constructing classes (NeuralNetwork, Globe3D, etc.) that read it. */
+import * as _THREE_NPM from 'three';
+let THREE = _THREE_NPM;
+export function __setThreeForTests(mock) { THREE = mock; }
+export function __resetThreeForTests() { THREE = _THREE_NPM; }
+
+/* ─── Data files (side-effect imports: each file sets globalThis.X) ───
+   We import for the side-effect of populating globalThis so the
+   existing bare references in this module (e.g. `LOCATIONS`,
+   `CV_CAREER`, `PUBLICATIONS`, `PROJECTS`) resolve via the global
+   scope. This keeps the test mocking pattern (`global.X = mock`)
+   working while still letting Vite tree-shake the bundle. */
+import '../data/locations.js';
+import '../data/publications.js';
+import '../data/projects.js';
+import '../data/cv.js';
+import './europe-map.js';
 
 /* Shared TopoJSON cache — avoids double-fetching world-110m.json */
 if (typeof window !== 'undefined') {
@@ -3030,45 +3049,43 @@ class NoiseGradient {
   }
 }
 
-/* Expose a minimal test surface in Node without affecting browser usage */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    formatIsoDate,
-    geocodeLocations,
-    Globe3D,
-    renderPublications,
-    renderProjects,
-    renderProjectCard,
-    PROJECTS_MAX_HOMEPAGE,
-    renderCV,
-    renderSkills,
-    setFooterYear,
-    initTheme,
-    initCardTilt,
-    initSkillBars,
-    initTimelineScroll3D,
-    initAnimatedFavicon,
-    initMagneticButtons,
-    initScroll3D,
-    initNavbar,
-    initMobileMenu,
-    initBackToTop,
-    initScrollReveal,
-    initCounters,
-    animateCounter,
-    NeuralNetwork,
-    NeuralNetwork2D,
-    HeroNameShader,
-    NoiseGradient,
-    GlobeFallback2D,
-    decodeBase64,
-    getObfuscatedContactEmail,
-    initEmailObfuscation,
-    initResearchCarousel,
-    initCmdTriggerHint,
-    initCardFlip,
-  };
-}
+/* Test surface — ES module exports */
+export {
+  formatIsoDate,
+  geocodeLocations,
+  Globe3D,
+  renderPublications,
+  renderProjects,
+  renderProjectCard,
+  PROJECTS_MAX_HOMEPAGE,
+  renderCV,
+  renderSkills,
+  setFooterYear,
+  initTheme,
+  initCardTilt,
+  initSkillBars,
+  initTimelineScroll3D,
+  initAnimatedFavicon,
+  initMagneticButtons,
+  initScroll3D,
+  initNavbar,
+  initMobileMenu,
+  initBackToTop,
+  initScrollReveal,
+  initCounters,
+  animateCounter,
+  NeuralNetwork,
+  NeuralNetwork2D,
+  HeroNameShader,
+  NoiseGradient,
+  GlobeFallback2D,
+  decodeBase64,
+  getObfuscatedContactEmail,
+  initEmailObfuscation,
+  initResearchCarousel,
+  initCmdTriggerHint,
+  initCardFlip,
+};
 
 /* ═══════════════════════════════════════════════════════════
    RESEARCH CAROUSEL SCROLL BUTTONS

@@ -94,8 +94,9 @@ test('toLocationsJs returns executable JS declaration', () => {
     'data/locations.yaml',
   );
 
-  assert.match(js, /const LOCATIONS =/);
+  assert.match(js, /export const LOCATIONS =/);
   assert.match(js, /Crema, Italy/);
+  assert.match(js, /globalThis\.LOCATIONS = LOCATIONS/);
 });
 
 test('compileLocations reports place and YAML line when coordinates are missing with --no-geocode', async () => {

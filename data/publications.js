@@ -14,7 +14,7 @@
    The most recent papers should appear first.
    ============================================================ */
 
-const PUBLICATIONS = [
+export const PUBLICATIONS = [
     {
         year: '2024',
         title: 'A collaborative AR application for education: from architecture design to user evaluation',
@@ -37,3 +37,5 @@ const PUBLICATIONS = [
         url: 'https://lib.jucs.org/article/76535/',
     },
 ];
+
+if (typeof globalThis !== 'undefined') globalThis.PUBLICATIONS = PUBLICATIONS;

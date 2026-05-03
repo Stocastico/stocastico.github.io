@@ -1,11 +1,11 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(__dirname, '..');
-const {
+import {
   formatIsoDate,
   geocodeLocations,
   Globe3D,
@@ -37,7 +37,12 @@ const {
   initCardFlip,
   renderProjects,
   PROJECTS_MAX_HOMEPAGE,
-} = require('../js/main.js');
+  __setThreeForTests,
+  __resetThreeForTests,
+} from '../js/main.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
 
 function makeClassList(initial = []) {
   const s = new Set(initial);
@@ -59,7 +64,9 @@ function makeClassList(initial = []) {
 
 function loadConstFromScript(relPath, constName) {
   const abs = path.join(ROOT, relPath);
-  const code = fs.readFileSync(abs, 'utf8');
+  /* The data files are now ES modules (export const X = ...).  vm.runInContext
+     runs scripts, not modules, so strip the `export` keyword first. */
+  const code = fs.readFileSync(abs, 'utf8').replace(/^export /gm, '');
   const context = {};
   vm.createContext(context);
   vm.runInContext(`${code}\n;globalThis.__out = ${constName};`, context, { filename: abs });
@@ -529,9 +536,8 @@ test('NeuralNetwork constructs and updates with mocked THREE', () => {
   const prevObserver = global.IntersectionObserver;
   const prevRAF = global.requestAnimationFrame;
   const prevCancel = global.cancelAnimationFrame;
-  const prevThree = global.THREE;
 
-  global.THREE = createMinimalThree();
+  __setThreeForTests(createMinimalThree());
   global.window = {
     innerWidth: 1200,
     innerHeight: 800,
@@ -574,7 +580,7 @@ test('NeuralNetwork constructs and updates with mocked THREE', () => {
     global.IntersectionObserver = prevObserver;
     global.requestAnimationFrame = prevRAF;
     global.cancelAnimationFrame = prevCancel;
-    global.THREE = prevThree;
+    __resetThreeForTests();
   }
 });
 
@@ -585,10 +591,9 @@ test('Globe3D constructs with mocked THREE and location data', () => {
   const prevRAF = global.requestAnimationFrame;
   const prevPerf = global.performance;
   const prevDpr = global.devicePixelRatio;
-  const prevThree = global.THREE;
   const prevLocations = global.LOCATIONS;
 
-  global.THREE = createMinimalThree();
+  __setThreeForTests(createMinimalThree());
   global.LOCATIONS = {
     pins: [{ type: 'lived', name: 'A', lat: 40, lon: 2, info: 'Home' }],
     regions: [{ name: 'R', lat: 30, lon: 5, radius: 1.0, info: 'Region' }],
@@ -644,7 +649,7 @@ test('Globe3D constructs with mocked THREE and location data', () => {
     global.requestAnimationFrame = prevRAF;
     global.performance = prevPerf;
     global.devicePixelRatio = prevDpr;
-    global.THREE = prevThree;
+    __resetThreeForTests();
     global.LOCATIONS = prevLocations;
   }
 });
@@ -656,10 +661,9 @@ test('Globe3D: European worktrip/holiday pins are excluded from 3D globe markers
   const prevRAF = global.requestAnimationFrame;
   const prevPerf = global.performance;
   const prevDpr = global.devicePixelRatio;
-  const prevThree = global.THREE;
   const prevLocations = global.LOCATIONS;
 
-  global.THREE = createMinimalThree();
+  __setThreeForTests(createMinimalThree());
   global.LOCATIONS = {
     pins: [
       { type: 'lived', name: 'Bilbao', lat: 43.26, lon: -2.93, info: 'home' },
@@ -717,7 +721,7 @@ test('Globe3D: European worktrip/holiday pins are excluded from 3D globe markers
     global.requestAnimationFrame = prevRAF;
     global.performance = prevPerf;
     global.devicePixelRatio = prevDpr;
-    global.THREE = prevThree;
+    __resetThreeForTests();
     global.LOCATIONS = prevLocations;
   }
 });
@@ -1537,7 +1541,7 @@ test('NeuralNetwork2D constructs with particles and starts animation', () => {
     matchMedia() { return { matches: false }; },
   };
   global.devicePixelRatio = 1;
-  global.navigator = { hardwareConcurrency: 8 };
+  Object.defineProperty(global, 'navigator', { value: { hardwareConcurrency: 8 }, configurable: true });
   let rafCalled = false;
   global.requestAnimationFrame = () => { rafCalled = true; return 1; };
   global.IntersectionObserver = class {
@@ -1555,7 +1559,7 @@ test('NeuralNetwork2D constructs with particles and starts animation', () => {
     global.requestAnimationFrame = prevRAF;
     global.IntersectionObserver = prevIO;
     global.devicePixelRatio = prevDpr;
-    global.navigator = prevNav;
+    Object.defineProperty(global, 'navigator', { value: prevNav, configurable: true });
   }
 });
 
@@ -1747,7 +1751,7 @@ test('GlobeFallback2D constructs with pins and starts animation', () => {
     matchMedia() { return { matches: false }; },
   };
   global.devicePixelRatio = 1;
-  global.navigator = { hardwareConcurrency: 8 };
+  Object.defineProperty(global, 'navigator', { value: { hardwareConcurrency: 8 }, configurable: true });
   let rafCalled = false;
   global.requestAnimationFrame = () => { rafCalled = true; return 1; };
   global.IntersectionObserver = class {
@@ -1764,7 +1768,7 @@ test('GlobeFallback2D constructs with pins and starts animation', () => {
     global.requestAnimationFrame = prevRAF;
     global.IntersectionObserver = prevIO;
     global.devicePixelRatio = prevDpr;
-    global.navigator = prevNav;
+    Object.defineProperty(global, 'navigator', { value: prevNav, configurable: true });
     global.LOCATIONS = prevLoc;
   }
 });
@@ -1807,7 +1811,7 @@ test('GlobeFallback2D skips pins marked with _skip', () => {
     matchMedia() { return { matches: false }; },
   };
   global.devicePixelRatio = 1;
-  global.navigator = { hardwareConcurrency: 8 };
+  Object.defineProperty(global, 'navigator', { value: { hardwareConcurrency: 8 }, configurable: true });
   global.requestAnimationFrame = () => 1;
   global.IntersectionObserver = class {
     constructor(cb) { cb([{ isIntersecting: true }]); }
@@ -1823,7 +1827,7 @@ test('GlobeFallback2D skips pins marked with _skip', () => {
     global.requestAnimationFrame = prevRAF;
     global.IntersectionObserver = prevIO;
     global.devicePixelRatio = prevDpr;
-    global.navigator = prevNav;
+    Object.defineProperty(global, 'navigator', { value: prevNav, configurable: true });
     global.LOCATIONS = prevLoc;
   }
 });
@@ -2253,7 +2257,7 @@ function withPerfGlobals(fn, { lowPower = false } = {}) {
 
 test('perf: NeuralNetwork enforces an FPS cap (<=45 normal, <=30 low-power)', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     const canvas = {
       addEventListener() {},
       getContext() { return {}; },
@@ -2268,7 +2272,7 @@ test('perf: NeuralNetwork enforces an FPS cap (<=45 normal, <=30 low-power)', ()
 
 test('perf: NeuralNetwork low-power FPS cap is <=30', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     const canvas = { addEventListener() {}, getContext() { return {}; } };
     const nn = new NeuralNetwork(canvas);
     assert.ok(nn._isLowPower, 'mock should be detected as low-power');
@@ -2279,7 +2283,7 @@ test('perf: NeuralNetwork low-power FPS cap is <=30', () => {
 
 test('perf: NeuralNetwork _animate skips render when called faster than the cap', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     const canvas = { addEventListener() {}, getContext() { return {}; } };
     let renderCalls = 0;
     let now = 1.0;
@@ -2325,7 +2329,7 @@ test('perf: NeuralNetwork2D enforces an FPS cap (<=30)', () => {
 
 test('perf: Globe3D enforces an FPS cap (<=45 normal)', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     global.LOCATIONS = { pins: [], regions: [], trips: [] };
     const ctx2d = {
       fillStyle: '', strokeStyle: '', lineWidth: 0,
@@ -2380,7 +2384,7 @@ test('perf: GlobeFallback2D enforces an FPS cap (<=30)', () => {
 
 test('perf: Globe3D pixelRatio cap is at most 1.5 on normal devices', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     global.LOCATIONS = { pins: [], regions: [], trips: [] };
     const ctx2d = {
       fillStyle: '', strokeStyle: '', lineWidth: 0,
@@ -2448,7 +2452,7 @@ test('perf: HeroNameShader pixelRatio cap is at most 1.5 on normal devices', () 
 
 test('perf: NeuralNetwork default particle count is at most 90 / connection dist <=150', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     const canvas = { addEventListener() {}, getContext() { return {}; } };
     const nn = new NeuralNetwork(canvas);
     assert.ok(!nn._isLowPower, 'mock should be detected as normal-power');
@@ -2463,7 +2467,7 @@ test('perf: NeuralNetwork default particle count is at most 90 / connection dist
 
 test('perf: NeuralNetwork registers mousemove/touchmove with { passive: true }', () => {
   withPerfGlobals(() => {
-    global.THREE = createMinimalThree();
+    __setThreeForTests(createMinimalThree());
     const events = [];
     global.window.addEventListener = (type, _fn, opts) => events.push({ type, opts });
     const canvas = { addEventListener() {}, getContext() { return {}; } };

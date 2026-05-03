@@ -17,7 +17,7 @@
    The homepage shows up to 3 projects; the rest appear only on projects.html.
    ============================================================ */
 
-const PROJECTS = [
+export const PROJECTS = [
     {
             id: "aroundtheworld",
             title: "ARoundTheWorld: Collaborative AR for Education",
@@ -78,3 +78,5 @@ const PROJECTS = [
             description: "AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN — the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide — turning weeks of manual labelling into minutes of supervised review.",
             url: "projects/avatech.html",
         }];
+
+if (typeof globalThis !== 'undefined') globalThis.PROJECTS = PROJECTS;

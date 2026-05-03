@@ -330,6 +330,22 @@ test('project: updateProjectsJs throws when PROJECTS array not found', () => {
   assert.throws(() => updateProjectsJs('data/projects.js', entry, src), /PROJECTS/);
 });
 
+test('project: updateProjectsJs accepts ES module export form', () => {
+  const src = `export const PROJECTS = [];\n`;
+  const entry = {
+    id: 'esm-proj',
+    title: 'ESM Project',
+    year: '2024',
+    tags: ['ESM'],
+    thumb: 'img/projects/esm.jpg',
+    description: 'ES module form.',
+    url: 'projects/esm-proj.html',
+  };
+  const result = updateProjectsJs('data/projects.js', entry, src);
+  assert.match(result, /export const PROJECTS = \[/);
+  assert.match(result, /esm-proj/);
+});
+
 // ─── end-to-end: parse markdown file and generate outputs ─────────────────────
 
 test('project: end-to-end: parse markdown and generate a standalone HTML page', () => {
