@@ -1,6 +1,24 @@
 # stocastico.github.io
 
-My Personal website
+Personal website of **Stefano Masneri** — Senior AI Engineer based in San Sebastián, Spain — hosted at [stocastico.github.io](https://stocastico.github.io/).
+
+## About this site
+
+A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across four pages:
+
+- **`index.html`** — the main page, with the following sections:
+  - **Hero** — animated name rendered through a custom GLSL iridescence shader, layered over a domain-warped noise gradient and a Three.js neural-network particle field.
+  - **About** — short bio, key stats, and a split layout featuring an interactive 3-D globe (Three.js) and an interactive 2-D Canvas map of Europe. Both visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
+  - **Research** — horizontal-scroll carousel of research topics (computer vision, AR, video understanding, generative AI, etc.).
+  - **Publications** — filterable list of selected papers, generated from `data/publications.js`.
+  - **Skills** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
+  - **Projects** — up to four project cards from `data/projects.js`, with a link to the full listing.
+  - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
+- **`projects.html`** — full project listing, with one detail page per project under `projects/`.
+- **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
+- **`404.html`** — custom not-found page with the standard navbar.
+
+Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section navigation, a reading-progress bar, magnetic buttons, 3-D tilt-and-gloss cards, a back-to-top button, and full `prefers-reduced-motion` support throughout.
 
 ## Tech stack
 
@@ -23,7 +41,6 @@ My Personal website
 ├── js/
 │   ├── main.js                Three.js animations, UI init, renderProjects/Publications
 │   ├── main.min.js            Minified production build (auto-generated)
-│   ├── locations.js           Globe geocoding helper (browser)
 │   └── europe-map.js          Interactive 2D Canvas map of Europe
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
@@ -52,7 +69,8 @@ My Personal website
 │   ├── europe-map.test.js          Tests for js/europe-map.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── globe.test.html             Interactive globe visualisation tests
-│   └── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
+│   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
+│   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
 ├── .cache/
 │   └── locations-geocode-cache.json  Geocoding cache (auto-created; commit this to avoid re-querying the API in CI)
 ├── sitemap.xml                Generated sitemap
@@ -65,7 +83,7 @@ My Personal website
 ## Running tests
 
 ```bash
-npm test                       # run all tests (~195 tests)
+npm test                       # run all tests (206 tests)
 npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
@@ -433,25 +451,4 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 
 A `.claude/hooks/session-start.sh` hook verifies Node.js is available at the start of every Claude Code web session. Tests can be run immediately without any manual setup.
 
----
-
-## To-Do
-
-Before going live, complete the following tasks:
-
-- [x] Revise all text in index.html
-- [x] Add text in index.html where necessary (before the globe, etc)
-- [x] Complete locations list
-- [x] Select three papers and add correct links
-- [x] Update texts in the CV section (skills, languages etc)
-- [x] Replace blog section with projects section
-- [ ] Add project entries to data/projects.js
-- [ ] Write individual project detail pages
-
-And some ideas for future projects to document:
-
-- [ ] cleAR (AR for education)
-- [ ] ARoundTheWorld (location-aware AR)
-- [ ] RAG pipeline project
-- [ ] UFC fighter tracking (AGT International)
-- [ ] AVATecH / Audience Engagement
+Outstanding tasks and audit findings live in [`TODO.md`](TODO.md).
