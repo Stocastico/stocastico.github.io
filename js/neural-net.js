@@ -5,11 +5,29 @@
    - NeuralNetwork:   Three.js / WebGL particle + line graph
    - NeuralNetwork2D: Canvas2D fallback when WebGL is unavailable
    ═══════════════════════════════════════════════════════════ */
+import * as _THREE from 'three';
 import { onChange } from './three-context.js';
 import { isLowPowerDevice } from './utils.js';
 
-let THREE;
-onChange((t) => { THREE = t; });
+/* Named bindings (tree-shakable by Rollup) — re-destructured on test
+   THREE swaps so mocks still take effect. */
+let {
+  WebGLRenderer, Scene, PerspectiveCamera,
+  BufferGeometry, BufferAttribute,
+  PointsMaterial, Points,
+  LineBasicMaterial, LineSegments,
+  CanvasTexture, AdditiveBlending,
+} = _THREE;
+
+onChange((t) => {
+  ({
+    WebGLRenderer, Scene, PerspectiveCamera,
+    BufferGeometry, BufferAttribute,
+    PointsMaterial, Points,
+    LineBasicMaterial, LineSegments,
+    CanvasTexture, AdditiveBlending,
+  } = t);
+});
 
 export class NeuralNetwork {
   /* Tweak these to change the visual */
@@ -39,14 +57,14 @@ export class NeuralNetwork {
     this._minFrameTime = 1 / this._targetFps;
     this._lastDrawTime = 0;
 
-    this.renderer = new THREE.WebGLRenderer({
+    this.renderer = new WebGLRenderer({
       canvas,
       alpha: true,
       antialias: !this._isLowPower,
       powerPreference: this._isLowPower ? 'low-power' : 'high-performance',
     });
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 2000);
+    this.scene = new Scene();
+    this.camera = new PerspectiveCamera(60, 1, 0.1, 2000);
     this.camera.position.z = 600;
 
     this._initParticles();
@@ -106,7 +124,7 @@ export class NeuralNetwork {
     g.addColorStop(1, 'rgba(0,    0,   0, 0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, size, size);
-    return new THREE.CanvasTexture(c);
+    return new CanvasTexture(c);
   }
 
   _initParticles() {
@@ -130,19 +148,19 @@ export class NeuralNetwork {
       });
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(pos, 3));
 
-    const mat = new THREE.PointsMaterial({
+    const mat = new PointsMaterial({
       size: 6,
       map: this._glowTexture(),
-      blending: THREE.AdditiveBlending,
+      blending: AdditiveBlending,
       depthWrite: false,
       transparent: true,
       opacity: 0.85,
     });
 
-    this.points = new THREE.Points(geo, mat);
+    this.points = new Points(geo, mat);
     this.scene.add(this.points);
   }
 
@@ -153,20 +171,20 @@ export class NeuralNetwork {
     this.linePosArr = new Float32Array(maxPairs * 6);
     this.lineColArr = new Float32Array(maxPairs * 6);
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(this.linePosArr, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(this.lineColArr, 3));
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(this.linePosArr, 3));
+    geo.setAttribute('color', new BufferAttribute(this.lineColArr, 3));
 
-    const mat = new THREE.LineBasicMaterial({
+    const mat = new LineBasicMaterial({
       vertexColors: true,
-      blending: THREE.AdditiveBlending,
+      blending: AdditiveBlending,
       transparent: true,
       opacity: 1.0,
       depthWrite: false,
       linewidth: 2,   /* respected on some platforms; harmless no-op elsewhere */
     });
 
-    this.lines = new THREE.LineSegments(geo, mat);
+    this.lines = new LineSegments(geo, mat);
     this.scene.add(this.lines);
     this.lineGeo = geo;
   }

@@ -7,6 +7,7 @@
    - Globe3D: Three.js / WebGL interactive globe.
    - GlobeFallback2D: Canvas2D fallback when WebGL is unavailable.
    ═══════════════════════════════════════════════════════════ */
+import * as _THREE from 'three';
 import { onChange } from './three-context.js';
 import {
   isLowPowerDevice,
@@ -15,8 +16,37 @@ import {
   getTopoJSON,
 } from './utils.js';
 
-let THREE;
-onChange((t) => { THREE = t; });
+/* Named bindings (tree-shakable by Rollup) — re-destructured on test
+   THREE swaps so mocks still take effect. */
+let {
+  WebGLRenderer, Scene, PerspectiveCamera,
+  AmbientLight, DirectionalLight, PointLight,
+  Group, Mesh,
+  SphereGeometry, RingGeometry,
+  MeshBasicMaterial, LineBasicMaterial, PointsMaterial,
+  BufferGeometry, BufferAttribute,
+  Points, Line, LineSegments,
+  CanvasTexture,
+  Vector2, Vector3, QuadraticBezierCurve3,
+  Raycaster, Color,
+  AdditiveBlending, BackSide, DoubleSide,
+} = _THREE;
+
+onChange((t) => {
+  ({
+    WebGLRenderer, Scene, PerspectiveCamera,
+    AmbientLight, DirectionalLight, PointLight,
+    Group, Mesh,
+    SphereGeometry, RingGeometry,
+    MeshBasicMaterial, LineBasicMaterial, PointsMaterial,
+    BufferGeometry, BufferAttribute,
+    Points, Line, LineSegments,
+    CanvasTexture,
+    Vector2, Vector3, QuadraticBezierCurve3,
+    Raycaster, Color,
+    AdditiveBlending, BackSide, DoubleSide,
+  } = t);
+});
 
 /* ═══════════════════════════════════════════════════════════
    GEOCODING  (OpenStreetMap Nominatim — free, no key needed)
@@ -135,7 +165,7 @@ export class Globe3D {
   static TT_COLOR = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42', trip: '#e8edf8' };
 
   constructor(canvasEl) {
-    if (!canvasEl || typeof THREE === 'undefined') return;
+    if (!canvasEl || typeof Scene === 'undefined') return;
     if (typeof LOCATIONS === 'undefined') {
       console.warn('Globe3D: data/locations.js not loaded — globe will not render.');
       return;
@@ -144,9 +174,9 @@ export class Globe3D {
     this.canvas = canvasEl;
     this.parent = canvasEl.parentElement;
     this.tooltip = document.getElementById('globe-tooltip');
-    this.raycaster = new THREE.Raycaster();
+    this.raycaster = new Raycaster();
     this.raycaster.params.Mesh = { threshold: 0.012 };   /* generous hitbox for small pins */
-    this.mouse = new THREE.Vector2(-9, -9);
+    this.mouse = new Vector2(-9, -9);
     this._mpos = { x: 0, y: 0 };
     this.pulseRings = [];
     this.markerMeshes = [];
@@ -223,11 +253,11 @@ export class Globe3D {
   }
 
   _initScene() {
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(42, this.w / this.h, 0.01, 100);
+    this.scene = new Scene();
+    this.camera = new PerspectiveCamera(42, this.w / this.h, 0.01, 100);
     this.camera.position.z = 2.75;
 
-    this.renderer = new THREE.WebGLRenderer({
+    this.renderer = new WebGLRenderer({
       canvas: this.canvas,
       antialias: !this._isLowPower,
       alpha: true,
@@ -249,21 +279,21 @@ export class Globe3D {
     }
 
     /* Ambient: cool fill — keeps the dark ocean dark */
-    this.scene.add(new THREE.AmbientLight(0x0d1f3a, 1.2));
+    this.scene.add(new AmbientLight(0x0d1f3a, 1.2));
     /* Cool-blue key light — replaces the warm sun (no longer needed without photo texture) */
-    const key = new THREE.DirectionalLight(0x2255bb, 0.55);
+    const key = new DirectionalLight(0x2255bb, 0.55);
     key.position.set(4, 2, 3);
     this.scene.add(key);
     /* Cyan rim on the opposite side — stronger to complement the neon style */
-    const rim = new THREE.PointLight(0x00d4ff, 0.9, 14);
+    const rim = new PointLight(0x00d4ff, 0.9, 14);
     rim.position.set(-4, 1, -2);
     this.scene.add(rim);
     /* Purple fill from below — adds depth */
-    const fill = new THREE.PointLight(0x6c44ff, 0.45, 12);
+    const fill = new PointLight(0x6c44ff, 0.45, 12);
     fill.position.set(2, -2, -3);
     this.scene.add(fill);
 
-    this.pivot = new THREE.Group();
+    this.pivot = new Group();
     this.pivot.rotation.x = this.rotX;
     this.pivot.rotation.y = this.rotY;
     this.scene.add(this.pivot);
@@ -301,10 +331,10 @@ export class Globe3D {
   }
 
   /* rings: array of [[lon, lat], …] polygons (GeoJSON coordinate order).
-     cvs and _THREE are captured synchronously before any await so that the
-     async completion in _buildGlobe() never reads from globals after they
-     may have been restored (e.g. in test teardown).                         */
-  _buildGlobeTexture(rings, cvs, _THREE) {
+     cvs is captured synchronously before any await so that the async
+     completion in _buildGlobe() never reads from globals after they may
+     have been restored (e.g. in test teardown). */
+  _buildGlobeTexture(rings, cvs) {
     const W = 2048, H = 1024;
     cvs.width = W; cvs.height = H;
     const ctx = cvs.getContext('2d');
@@ -390,7 +420,7 @@ export class Globe3D {
     ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)';
     ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
 
-    return new _THREE.CanvasTexture(cvs);
+    return new CanvasTexture(cvs);
   }
 
   async _buildGlobe() {
@@ -400,26 +430,25 @@ export class Globe3D {
        texture, and maps it onto the sphere.  Falls back to the simplified
        GLOBE_CONTINENTS polygons if the fetch fails (e.g. file:// dev).
 
-       THREE and cvs are captured synchronously before any await so that the
-       async continuation never reads globals after test teardown restores them. */
-    const _THREE = THREE; /* eslint-disable-line no-undef */
+       cvs is captured synchronously before any await so that the async
+       continuation never reads stale DOM after test teardown. */
     const cvs = document.createElement('canvas');
 
-    const mat = new _THREE.MeshBasicMaterial({
+    const mat = new MeshBasicMaterial({
       color: 0xffffff,
     });
-    this.pivot.add(new _THREE.Mesh(new _THREE.SphereGeometry(1, 64, 64), mat));
+    this.pivot.add(new Mesh(new SphereGeometry(1, 64, 64), mat));
 
     try {
       const topo  = await getTopoJSON();
       const rings = this._decodeTopoJSON(topo);
-      const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
+      const tex   = this._buildGlobeTexture(rings, cvs);
       mat.map = tex;
       mat.needsUpdate = true;
     } catch (_) {
       /* Fallback: hand-drawn polygons (stored as [lat,lon] — swap to [lon,lat]) */
       const rings = GLOBE_CONTINENTS.map(pts => pts.map(([lat, lon]) => [lon, lat]));
-      const tex   = this._buildGlobeTexture(rings, cvs, _THREE);
+      const tex   = this._buildGlobeTexture(rings, cvs);
       mat.map = tex;
       mat.needsUpdate = true;
     }
@@ -427,19 +456,19 @@ export class Globe3D {
 
   _buildAtmosphere() {
     /* Inner surface glow — neon cyan tint */
-    this.pivot.add(new THREE.Mesh(
-      new THREE.SphereGeometry(1.007, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.07, depthWrite: false }),
+    this.pivot.add(new Mesh(
+      new SphereGeometry(1.007, 32, 32),
+      new MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.07, depthWrite: false }),
     ));
     /* Atmosphere shell — deep electric blue */
-    this.pivot.add(new THREE.Mesh(
-      new THREE.SphereGeometry(1.14, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x1166ee, transparent: true, opacity: 0.13, side: THREE.BackSide, depthWrite: false }),
+    this.pivot.add(new Mesh(
+      new SphereGeometry(1.14, 32, 32),
+      new MeshBasicMaterial({ color: 0x1166ee, transparent: true, opacity: 0.13, side: BackSide, depthWrite: false }),
     ));
     /* Wide outer halo — violet, additive */
-    this.scene.add(new THREE.Mesh(
-      new THREE.SphereGeometry(1.24, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.055, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+    this.scene.add(new Mesh(
+      new SphereGeometry(1.24, 32, 32),
+      new MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.055, side: BackSide, depthWrite: false, blending: AdditiveBlending }),
     ));
   }
 
@@ -455,43 +484,43 @@ export class Globe3D {
       pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       pos[i * 3 + 2] = r * Math.cos(phi);
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    this.scene.add(new THREE.Points(geo,
-      new THREE.PointsMaterial({ color: 0xffffff, size: 0.018, transparent: true, opacity: 0.5, sizeAttenuation: true }),
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(pos, 3));
+    this.scene.add(new Points(geo,
+      new PointsMaterial({ color: 0xffffff, size: 0.018, transparent: true, opacity: 0.5, sizeAttenuation: true }),
     ));
   }
 
   _buildGrid() {
     /* Neon cyan lat-lon grid with additive blending for glow */
-    const mat = (op, bright) => new THREE.LineBasicMaterial({
+    const mat = (op, bright) => new LineBasicMaterial({
       color: bright ? 0x00ffff : 0x00c8f0,
       transparent: true, opacity: op,
-      blending: THREE.AdditiveBlending, depthWrite: false,
+      blending: AdditiveBlending, depthWrite: false,
     });
     const R = 1.002;
     for (let lat = -80; lat <= 80; lat += 20) {
       const phi = (90 - lat) * Math.PI / 180;
       const r = R * Math.sin(phi), y = R * Math.cos(phi), pts = [];
-      for (let i = 0; i <= 64; i++) { const t = (i / 64) * Math.PI * 2; pts.push(new THREE.Vector3(r * Math.cos(t), y, r * Math.sin(t))); }
-      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(lat === 0 ? 0.55 : 0.20, lat === 0)));
+      for (let i = 0; i <= 64; i++) { const t = (i / 64) * Math.PI * 2; pts.push(new Vector3(r * Math.cos(t), y, r * Math.sin(t))); }
+      this.pivot.add(new Line(new BufferGeometry().setFromPoints(pts), mat(lat === 0 ? 0.55 : 0.20, lat === 0)));
     }
     for (let lon = 0; lon < 360; lon += 20) {
       const theta = lon * Math.PI / 180, pts = [];
-      for (let i = 0; i <= 64; i++) { const p = (i / 64) * Math.PI; pts.push(new THREE.Vector3(R * Math.sin(p) * Math.cos(theta), R * Math.cos(p), R * Math.sin(p) * Math.sin(theta))); }
-      this.pivot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat(0.20, false)));
+      for (let i = 0; i <= 64; i++) { const p = (i / 64) * Math.PI; pts.push(new Vector3(R * Math.sin(p) * Math.cos(theta), R * Math.cos(p), R * Math.sin(p) * Math.sin(theta))); }
+      this.pivot.add(new Line(new BufferGeometry().setFromPoints(pts), mat(0.20, false)));
     }
   }
 
-  /* Lat/lon → THREE.Vector3 on a sphere of radius r */
+  /* Lat/lon → Vector3 on a sphere of radius r */
   _ll(lat, lon, r) {
     const phi = (90 - lat) * Math.PI / 180, theta = (lon + 180) * Math.PI / 180;
-    return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+    return new Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
   }
 
   /* Orient a flat mesh (CircleGeometry / RingGeometry) to lie on the sphere surface */
   _faceOut(mesh, pos) {
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
+    mesh.quaternion.setFromUnitVectors(new Vector3(0, 0, 1), pos.clone().normalize());
   }
 
   /* ── Standard pins (lived / work / travel) ──────────────── */
@@ -509,21 +538,21 @@ export class Globe3D {
       })
       .forEach(loc => {
       const hex = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
-      const color = new THREE.Color(hex);
+      const color = new Color(hex);
       const pos = this._ll(loc.lat, loc.lon, 1.008);
       const surf = this._ll(loc.lat, loc.lon, 1.001);
       const isHome = (loc.type === 'lived' || loc.type === 'current');   /* bigger, pulsing — "I live/lived here" */
 
       /* Spike — thin line from globe surface up to the dot */
-      this.pivot.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([surf, pos]),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.55 : 0.30 }),
+      this.pivot.add(new Line(
+        new BufferGeometry().setFromPoints([surf, pos]),
+        new LineBasicMaterial({ color, transparent: true, opacity: isHome ? 0.55 : 0.30 }),
       ));
 
       /* Dot — small, similar to trip city-stop dots */
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(isHome ? 0.006 : 0.005, 10, 10),
-        new THREE.MeshBasicMaterial({ color }),
+      const dot = new Mesh(
+        new SphereGeometry(isHome ? 0.006 : 0.005, 10, 10),
+        new MeshBasicMaterial({ color }),
       );
       dot.position.copy(pos);
       this.pivot.add(dot);
@@ -531,9 +560,9 @@ export class Globe3D {
       /* Invisible hit-test sphere — much larger for reliable hover detection.
          Raycaster threshold is ignored for Mesh objects, so we need actual
          geometry large enough to intersect the ray. */
-      const hitArea = new THREE.Mesh(
-        new THREE.SphereGeometry(0.025, 8, 8),
-        new THREE.MeshBasicMaterial({ visible: false }),
+      const hitArea = new Mesh(
+        new SphereGeometry(0.025, 8, 8),
+        new MeshBasicMaterial({ visible: false }),
       );
       hitArea.position.copy(pos);
       hitArea.userData = { name: loc.name, info: loc.info, type: loc.type };
@@ -542,9 +571,9 @@ export class Globe3D {
 
       /* Subtle halo ring — just enough to make the dot readable */
       const [rIn, rOut, op] = isHome ? [0.006, 0.008, 0.30] : [0.005, 0.0065, 0.18];
-      const halo = new THREE.Mesh(
-        new THREE.RingGeometry(rIn, rOut, 32),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false }),
+      const halo = new Mesh(
+        new RingGeometry(rIn, rOut, 32),
+        new MeshBasicMaterial({ color, transparent: true, opacity: op, side: DoubleSide, depthWrite: false }),
       );
       halo.position.copy(pos);
       this._faceOut(halo, pos);
@@ -553,9 +582,9 @@ export class Globe3D {
       /* Single subtle pulse ring — only for lived/home pins */
       if (isHome) {
         [0, Math.PI].forEach(phaseOffset => {
-          const pulse = new THREE.Mesh(
-            new THREE.RingGeometry(0.004, 0.006, 32),
-            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+          const pulse = new Mesh(
+            new RingGeometry(0.004, 0.006, 32),
+            new MeshBasicMaterial({ color, transparent: true, opacity: 0, side: DoubleSide, depthWrite: false, blending: AdditiveBlending }),
           );
           pulse.position.copy(pos);
           this._faceOut(pulse, pos);
@@ -570,7 +599,7 @@ export class Globe3D {
   /* ── Trip paths with animated traveller + comet trail ───── */
   _buildTrips() {
     (LOCATIONS.trips || []).forEach(trip => {
-      const color = new THREE.Color(trip.color || '#ff8c42');
+      const color = new Color(trip.color || '#ff8c42');
       const cities = (trip.cities || []).filter(c => !c._skip);
       if (cities.length < 2) return;
 
@@ -593,7 +622,7 @@ export class Globe3D {
         else sum.normalize();
         const mid = sum.multiplyScalar(lift);
 
-        const curve = new THREE.QuadraticBezierCurve3(s, mid, e);
+        const curve = new QuadraticBezierCurve3(s, mid, e);
         curves.push(curve);
         const len = curve.getLength();
         segLens.push(len);
@@ -601,14 +630,14 @@ export class Globe3D {
 
         const pts = curve.getPoints(this._tripCurvePoints);
         /* Soft outer glow */
-        this.pivot.add(new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }),
+        this.pivot.add(new Line(
+          new BufferGeometry().setFromPoints(pts),
+          new LineBasicMaterial({ color, transparent: true, opacity: 0.08, blending: AdditiveBlending, depthWrite: false }),
         ));
         /* Bright core */
-        this.pivot.add(new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.38, blending: THREE.AdditiveBlending, depthWrite: false }),
+        this.pivot.add(new Line(
+          new BufferGeometry().setFromPoints(pts),
+          new LineBasicMaterial({ color, transparent: true, opacity: 0.38, blending: AdditiveBlending, depthWrite: false }),
         ));
       }
 
@@ -619,17 +648,17 @@ export class Globe3D {
         if (seen.has(key)) return;
         seen.add(key);
         const cpos = this._ll(city.lat, city.lon, 1.010);
-        const cdot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.006, 8, 8),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 }),
+        const cdot = new Mesh(
+          new SphereGeometry(0.006, 8, 8),
+          new MeshBasicMaterial({ color, transparent: true, opacity: 0.75 }),
         );
         cdot.position.copy(cpos);
         this.pivot.add(cdot);
 
         /* Invisible hit-test sphere for reliable hover */
-        const cHit = new THREE.Mesh(
-          new THREE.SphereGeometry(0.025, 8, 8),
-          new THREE.MeshBasicMaterial({ visible: false }),
+        const cHit = new Mesh(
+          new SphereGeometry(0.025, 8, 8),
+          new MeshBasicMaterial({ visible: false }),
         );
         cHit.position.copy(cpos);
         cHit.userData = { name: city.name, info: trip.name, type: 'trip' };
@@ -638,9 +667,9 @@ export class Globe3D {
       });
 
       /* Traveller dot — explicit opacity:0 to avoid a 1-frame opaque flash */
-      const traveller = new THREE.Mesh(
-        new THREE.SphereGeometry(0.009, 12, 12),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
+      const traveller = new Mesh(
+        new SphereGeometry(0.009, 12, 12),
+        new MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: AdditiveBlending }),
       );
       this.pivot.add(traveller);
 
@@ -649,9 +678,9 @@ export class Globe3D {
       const trail = [];
       for (let ti = 0; ti < TRAIL; ti++) {
         const frac = 1 - ti / TRAIL;
-        const td = new THREE.Mesh(
-          new THREE.SphereGeometry(Math.max(0.002, 0.008 * frac * 0.8), 8, 8),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending }),
+        const td = new Mesh(
+          new SphereGeometry(Math.max(0.002, 0.008 * frac * 0.8), 8, 8),
+          new MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: AdditiveBlending }),
         );
         this.pivot.add(td);
         trail.push(td);

@@ -15,13 +15,11 @@
    CYAN_* constants inside the NeuralNetwork class below.
    ============================================================ */
 
-/* ─── Three.js (via shared context, see three-context.js) ──────
-   Tests swap THREE through this module's exports; every consumer
-   module imports `onChange` and stays in sync. */
-import { onChange, __setThreeForTests, __resetThreeForTests } from './three-context.js';
-let THREE;
-onChange((t) => { THREE = t; });
-export { __setThreeForTests, __resetThreeForTests };
+/* ─── Three.js test mocking helpers ────────────────────────────
+   Re-exported from three-context.js so tests can swap THREE for a
+   minimal mock; every consumer module that uses Three.js subscribes
+   to the swap via the context. */
+export { __setThreeForTests, __resetThreeForTests } from './three-context.js';
 
 /* ─── Data files (side-effect imports: each file sets globalThis.X) ───
    We import for the side-effect of populating globalThis so the
@@ -1229,12 +1227,12 @@ if (typeof document !== 'undefined') {
     noiseCanvas.style.display = 'none';
   }
 
-  /* Three.js neural network — only when THREE is loaded */
+  /* Three.js neural network — falls back to Canvas2D when WebGL is missing */
   const canvas = document.getElementById('neural-canvas');
   if (canvas) {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
-    } else if (typeof THREE !== 'undefined' && hasWebGLSupport()) {
+    } else if (hasWebGLSupport()) {
       new NeuralNetwork(canvas);
     } else {
       new NeuralNetwork2D(canvas);
@@ -1245,12 +1243,11 @@ if (typeof document !== 'undefined') {
   const globeCanvas = document.getElementById('globe-canvas');
   if (globeCanvas && typeof LOCATIONS !== 'undefined') {
     geocodeLocations(LOCATIONS).then(() => {
-      if (prefersReducedMotion()) {
+      if (prefersReducedMotion() || !hasWebGLSupport()) {
         new GlobeFallback2D(globeCanvas);
-        return;
+      } else {
+        new Globe3D(globeCanvas);
       }
-      if (typeof THREE !== 'undefined' && hasWebGLSupport()) new Globe3D(globeCanvas);
-      else new GlobeFallback2D(globeCanvas);
     });
   }
 
