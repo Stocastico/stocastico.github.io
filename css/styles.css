@@ -1362,20 +1362,27 @@ h3 {
 }
 
 /* When a bg image is supplied, render it semi-transparent behind the content.
-   The image URL is injected by main.js as a CSS custom property (--card-bg). */
+   The image URL is injected by main.js as a CSS custom property (--card-bg).
+   We deliberately split the URL declaration from background-image so that
+   the browser only kicks off the fetch once JS adds .bg-loaded — see
+   _initLazyCardBackgrounds() in js/main.js. */
 .project-card--has-bg::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: var(--card-bg);
   background-size: cover;
   background-position: center;
-  opacity: 0.35;
+  opacity: 0;
   z-index: -2;
-  transition: opacity 0.3s ease, transform 0.4s ease;
+  transition: opacity 0.5s ease, transform 0.4s ease;
 }
 
-.project-card--has-bg:hover::before {
+.project-card--has-bg.bg-loaded::before {
+  background-image: var(--card-bg);
+  opacity: 0.35;
+}
+
+.project-card--has-bg.bg-loaded:hover::before {
   opacity: 0.5;
   transform: scale(1.04);
 }

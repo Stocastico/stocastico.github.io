@@ -757,6 +757,33 @@ function renderProjects() {
     footer.innerHTML = '<a href="projects.html" class="btn btn-ghost">View all projects &rarr;</a>';
     grid.parentNode.appendChild(footer);
   }
+
+  _initLazyCardBackgrounds(grid);
+}
+
+/* Defer the per-card background-image fetch until the card approaches the
+   viewport. CSS keeps `background-image: var(--card-bg)` gated behind a
+   `.bg-loaded` class; the IntersectionObserver below adds that class as
+   each card scrolls in. The full project listing page can have 6–10 cards
+   with multi-hundred-KB hero images each — eagerly fetching all of them
+   on page load wasted significant bandwidth. */
+function _initLazyCardBackgrounds(grid) {
+  if (typeof grid?.querySelectorAll !== 'function') return;
+  var cards = grid.querySelectorAll('.project-card--has-bg');
+  if (!cards.length) return;
+  if (typeof IntersectionObserver === 'undefined') {
+    /* Fallback: just load everything */
+    cards.forEach(function(c) { c.classList?.add('bg-loaded'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('bg-loaded');
+      io.unobserve(e.target);
+    });
+  }, { rootMargin: '300px 0px' });
+  cards.forEach(function(c) { io.observe(c); });
 }
 
 /* Footer year */
