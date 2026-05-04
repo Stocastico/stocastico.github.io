@@ -5,7 +5,7 @@ year:        "2020 – 2022"
 tags:        "Web Application, Co-creation, Social Inclusion"
 thumb:       "img/projects/traction-thumb.jpg"
 bg:          "img/projects/traction-bg.jpg"
-description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. I helped in the development of the Co-creation Stage — a web application enabling diverse communities to collaborate around multimedia content — and worked side by side with at-risk groups in Barcelona's Raval neighbourhood and Leiria's juvenile prison."
+description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage — the real-time distributed performance tool — spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland."
 link_demo:    "https://www.traction-project.eu/"
 link_paper:   "https://ieeexplore.ieee.org/abstract/document/9828558"
 ---
@@ -16,34 +16,30 @@ That ambition was tested in three very different places: the inner-city neighbou
 
 ## My Role
 
-My main contribution was to the **Co-creation Space** — the web application that enables content exchange, communication, and collaboration between professional artists and community participants around shared multimedia experiences. I was involved across the full lifecycle:
+My main contribution was to the **Co-creation Stage** — the real-time distributed performance tool that allowed a single opera to be staged simultaneously across multiple co-located venues, synchronising live video, audio and interaction between stages. I was involved across the full lifecycle, in a role that combined technical development with research and partnership activities:
 
-- **Development of the web application for sharing multimedia experiences via the web.** I worked on both the backend services and the frontend, designing and implementing the features that allowed community members to upload videos, audio recordings, lyrics, sketches and other media, comment and discuss around them, group them into threads, and progressively shape them into the building blocks of an opera performance.
-- **Defining the user requirements**, working closely with the artistic partners (Liceu in Barcelona, SAMP in Leiria, Irish National Opera in Ireland) and with sociologists and educators to translate what the communities actually needed into concrete software features.
-- **Evaluating the platform** through usability studies and field testing, gathering feedback and feeding it back into the design loop.
-- **Working side by side with the at-risk communities** during the trials — running on-site sessions in Barcelona and travelling to Leiria prison to support the inmates, their families and the prison staff while they used the platform. Seeing teenagers who had every reason to distrust strangers with cameras and laptops slowly take ownership of the tool and start producing their own material was one of the most rewarding experiences of my career.
+- **Development**: working on both the frontend and the backend of the Stage, contributing to the low-latency adaptive media transmission layer that made synchronised live performance across venues possible.
+- **User-requirements gathering**: working closely with the artistic partners — Liceu in Barcelona, SAMP in Leiria, Irish National Opera in Ireland — and with sociologists and community educators to translate what professional artists and community participants actually needed into concrete software features.
+- **Evaluation**: designing and running usability studies and field trials, collecting and analysing feedback, and feeding findings back into the design and development loop.
+- **Partner engagement**: maintaining ongoing dialogue with consortium partners across research, opera, education and prison-work organisations in five countries, bridging the gap between technical decisions and the realities of the artistic and community use cases.
 
-The Co-creation Space was conceived, in the words of the project, as a kind of **"private social media"** dedicated to a single artistic production: a safe, moderated space where conversation, asynchronous collaboration and active co-authorship could happen around the same media objects.
+The Co-creation Stage was the centrepiece of the live-performance moments: a production could be co-presented from a main opera house and from community sites at the same time, dissolving the traditional boundary between professional stage and audience or participant.
 
 ## Tech Stack
 
-The Co-creation Space is a full-stack web application:
+The Co-creation Stage is a real-time distributed performance application:
 
-- **Backend** — Node.js with TypeScript, Express.js as the web framework, and Sequelize as the ORM.
-- **Database** — PostgreSQL for relational data and MongoDB for less structured content.
-- **Frontend** — React with Redux for state management, SCSS for styling.
-- **Media pipeline** — Amazon S3 for media storage, AWS Elastic Transcoder for video transcoding, and Amazon SNS for asynchronous event handling between the transcoding pipeline and the application.
-- **Real-time features** — WebSockets for chat and live notifications.
-- **Deployment** — Docker and Docker Compose, with the production environment running on AWS.
-- **Tooling** — Webpack, Jest for testing, ESLint, Yarn.
+- **Frontend** — Angular with TypeScript, designed for multi-venue operator interfaces and audience-facing views.
+- **Backend** — low-latency adaptive media transmission to synchronise live video and audio across geographically separated stages in real time.
+- **Deployment** — containerised services orchestrated to support live events with strict latency requirements.
 
-The Co-creation Stage — the companion real-time performance tool, built mainly by colleagues — used a different stack (Angular / TypeScript on the frontend, with low-latency adaptive media transmission on the backend) and was designed for distributed live performances across multiple co-located stages.
+The companion **Co-creation Space** — the asynchronous collaboration platform built mainly by colleagues — used a different stack (Node.js / TypeScript / Express backend; React / Redux frontend; PostgreSQL + MongoDB for storage; AWS S3 + Elastic Transcoder for media; WebSockets for real-time notifications) and was designed for the ongoing creative process between live events.
 
 ## Outcomes
 
 By the end of the project, the two tools had supported three full community opera productions across **eleven locations**, engaging over **1,300 non-professional artists**, reaching more than **8,000 live audience members** across six languages, and registering more than **20,000 user interactions** on the platforms.
 
-- In **Barcelona**, *La Gata Perduda* was performed twice at the Liceu Opera House to sold-out audiences in October 2022, with a choir formed from twelve amateur choirs from the Raval. The Catalan public broadcast reached around 766,000 viewers.
+- In **Barcelona**, [*La Gata Perduda*](https://www.liceubarcelona.cat/en/liceu-apropa/la-gata-perduda) was performed twice at the Liceu Opera House to sold-out audiences in October 2022, with a choir formed from twelve amateur choirs from the Raval. The Catalan public broadcast reached around 766,000 viewers. The [TRACTION project page for the Liceu trial](https://www.traction-project.eu/trials/liceu/) documents the full co-creation process behind the production.
 - In **Leiria**, *O Tempo (Somos Nós)* — produced with SAMP and the young inmates, their relatives and prison workers — was performed four times in June 2022: twice inside the prison and twice at the Gulbenkian's main concert hall in Lisbon.
 - In **Ireland**, *Out of the Ordinary / As an nGnách* became the world's first virtual reality community opera, co-created with rural teenagers and toured around the country.
 
