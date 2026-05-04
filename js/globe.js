@@ -721,6 +721,10 @@ export class Globe3D {
         this.rotY += dx * 0.005;
         this.prevMouse = { x, y };
       }
+      /* Skip the rect read + raycast prep when the cursor isn't on the canvas
+         and the user isn't dragging — getBoundingClientRect() forces a layout
+         and the raycaster never fires anyway (gated by _mouseOver). */
+      if (!this._mouseOver && !this.isDragging) return;
       /* Refresh rect every move to avoid stale position after scroll/layout changes */
       this._rect = cv.getBoundingClientRect();
       const rect = this._rect;

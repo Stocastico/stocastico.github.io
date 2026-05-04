@@ -3,8 +3,8 @@ id:          ufc-fighter-tracking
 title:       "UFC Fighter Tracking: Multi-Modal Sensing in the Octagon"
 year:        "2017"
 tags:        "Computer Vision, Sensor Fusion, Sports Analytics"
-thumb:       "img/projects/ufc-octagon-thumb.png"
-bg:          "img/projects/ufc-octagon-bg.png"
+thumb:       "img/projects/ufc-octagon-thumb.webp"
+bg:          "img/projects/ufc-octagon-bg.webp"
 description: "End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017."
 link_video:  "https://www.youtube.com/watch?v=vataVq9gY_o"
 ---
@@ -13,7 +13,7 @@ This is one of the projects I tell people about when they ask what the most fun 
 
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 
-![UFC octagon from above — camera coverage](img/projects/ufc-octagon-overhead.jpg)
+![UFC octagon from above — camera coverage](img/projects/ufc-octagon-overhead.webp)
 
 ## What We Measured
 
@@ -43,7 +43,7 @@ We fused the two streams in real time:
 - The **accelerometer pipeline** detected the impact event, the magnitude of the deceleration, and the kinematic signature characteristic of different punch types (uppercut, hook, straight).
 - A **fusion layer** matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide *hit vs. miss* and to commit a final classification of the punch type.
 
-![Hardware setup and data processing](img/projects/ufc-octagon-bg.png)
+![Hardware setup and data processing](img/projects/ufc-octagon-bg.webp)
 
 ## Cloud and Delivery
 
