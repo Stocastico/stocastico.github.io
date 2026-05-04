@@ -30,10 +30,30 @@ function copyDocsPdfs() {
   };
 }
 
+/* Copy data/*.json into dist/data/ — globe.js fetches world-110m.json and
+   europe-map.js fetches land-50m.json at runtime via fetch(), so they are
+   not in the Rollup module graph and Vite won't include them automatically. */
+function copyDataJson() {
+  return {
+    name: 'copy-data-json',
+    apply: 'build',
+    closeBundle() {
+      const srcDir = resolve(__dirname, 'data');
+      const outDir = resolve(__dirname, 'dist', 'data');
+      mkdirSync(outDir, { recursive: true });
+      for (const f of readdirSync(srcDir)) {
+        if (f.toLowerCase().endsWith('.json')) {
+          copyFileSync(resolve(srcDir, f), resolve(outDir, f));
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig({
   base: '/',
   appType: 'mpa',
-  plugins: [copyDocsPdfs()],
+  plugins: [copyDocsPdfs(), copyDataJson()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
