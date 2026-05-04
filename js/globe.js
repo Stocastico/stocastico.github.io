@@ -334,7 +334,7 @@ export class Globe3D {
      cvs is captured synchronously before any await so that the async
      completion in _buildGlobe() never reads from globals after they may
      have been restored (e.g. in test teardown). */
-  _buildGlobeTexture(rings, cvs) {
+  _buildGlobeTexture(rings, cvs, CT = CanvasTexture) {
     const W = 2048, H = 1024;
     cvs.width = W; cvs.height = H;
     const ctx = cvs.getContext('2d');
@@ -420,7 +420,7 @@ export class Globe3D {
     ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)';
     ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
 
-    return new CanvasTexture(cvs);
+    return new CT(cvs);
   }
 
   async _buildGlobe() {
@@ -432,7 +432,10 @@ export class Globe3D {
 
        cvs is captured synchronously before any await so that the async
        continuation never reads stale DOM after test teardown. */
+    /* Both cvs and CT are captured synchronously before any await so that the
+       async continuation never reads stale values after test teardown. */
     const cvs = document.createElement('canvas');
+    const CT  = CanvasTexture;
 
     const mat = new MeshBasicMaterial({
       color: 0xffffff,
@@ -442,13 +445,13 @@ export class Globe3D {
     try {
       const topo  = await getTopoJSON();
       const rings = this._decodeTopoJSON(topo);
-      const tex   = this._buildGlobeTexture(rings, cvs);
+      const tex   = this._buildGlobeTexture(rings, cvs, CT);
       mat.map = tex;
       mat.needsUpdate = true;
     } catch (_) {
       /* Fallback: hand-drawn polygons (stored as [lat,lon] — swap to [lon,lat]) */
       const rings = GLOBE_CONTINENTS.map(pts => pts.map(([lat, lon]) => [lon, lat]));
-      const tex   = this._buildGlobeTexture(rings, cvs);
+      const tex   = this._buildGlobeTexture(rings, cvs, CT);
       mat.map = tex;
       mat.needsUpdate = true;
     }
