@@ -3,7 +3,7 @@ id:          traction
 title:       "TRACTION: Opera Co-creation for Social Transformation"
 year:        "2020 – 2022"
 tags:        "Web Application, Co-creation, Social Inclusion"
-thumb:       "img/projects/traction-thumb.jpg"
+thumb:       "img/projects/traction-thumb.png"
 bg:          "img/projects/traction-bg.jpg"
 description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage — the real-time distributed performance tool — spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland."
 link_demo:    "https://www.traction-project.eu/"
