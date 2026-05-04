@@ -3,16 +3,6 @@
 Outstanding items. Completed work and accepted trade-offs have been removed —
 see git history if you need the audit context.
 
-## Content
-
-- **PhD defense slides link.** The link was removed from the About paragraph
-  in `index.html` because it pointed to `href="#"`. If you have a public URL
-  (SlideShare, Google Slides, etc.), add it back:
-  ```html
-  researched collaborative, multi-user augmented reality experiences for education
-  (<a href="YOUR_URL_HERE" class="inline-link" target="_blank" rel="noopener">defense slides</a>).
-  ```
-
 ## Accessibility
 
 - **Globe canvas is not keyboard-navigable.** Interactive pins on the 3-D
