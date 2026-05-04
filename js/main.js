@@ -103,6 +103,23 @@ function initTheme() {
   /* Theme switching intentionally disabled: dark mode is fixed. */
 }
 
+/* rAF-throttling helper. In Node tests there is no requestAnimationFrame,
+   so we fall back to a synchronous pass-through — keeps existing tests
+   that call the captured scroll handler synchronously working unchanged,
+   while in real browsers it coalesces bursts of scroll events into one
+   layout/paint per frame. */
+function _rafThrottle(fn) {
+  let scheduled = false;
+  const raf = typeof requestAnimationFrame === 'function'
+    ? requestAnimationFrame
+    : (cb) => { cb(); return 0; };
+  return (...args) => {
+    if (scheduled) return;
+    scheduled = true;
+    raf(() => { scheduled = false; fn(...args); });
+  };
+}
+
 function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
@@ -128,7 +145,9 @@ function initNavbar() {
   const setActiveLink = () => {
     links.forEach((link) => {
       const isActive = link.getAttribute('href') === `#${activeId}`;
-      link.setAttribute('aria-current', isActive ? 'true' : 'false');
+      const cur = link.getAttribute('aria-current');
+      const next = isActive ? 'true' : 'false';
+      if (cur !== next) link.setAttribute('aria-current', next);
     });
   };
 
@@ -144,28 +163,63 @@ function initNavbar() {
     targets.forEach((t) => observer.observe(t));
   } else if (targets.length) {
     /* Fallback for browsers without IntersectionObserver */
-    window.addEventListener('scroll', () => {
+    window.addEventListener('scroll', _rafThrottle(() => {
       const checkpoint = window.scrollY + (window.innerHeight * 0.35);
       targets.forEach((section) => {
         if (checkpoint >= section.offsetTop) activeId = section.id;
       });
       setActiveLink();
-    }, { passive: true });
+    }), { passive: true });
   }
 
+  /* Cache docHeight — reading scrollHeight per scroll event forces a
+     synchronous layout flush. Recompute on resize and when content height
+     changes (font load, image load, dynamic injection). */
+  let _cachedDocHeight = 0;
+  const _recomputeDocHeight = () => {
+    const root = document?.documentElement;
+    const inner = (typeof window !== 'undefined' && typeof window.innerHeight === 'number') ? window.innerHeight : 0;
+    _cachedDocHeight = (root && typeof root.scrollHeight === 'number')
+      ? Math.max(0, root.scrollHeight - inner)
+      : 0;
+  };
+  _recomputeDocHeight();
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', _recomputeDocHeight, { passive: true });
+    window.addEventListener('load', _recomputeDocHeight, { passive: true });
+  }
+  if (typeof ResizeObserver !== 'undefined' && document?.body) {
+    /* Catch dynamic content height changes (image loads, late renders) */
+    new ResizeObserver(_recomputeDocHeight).observe(document.body);
+  }
+
+  let _lastPct = -1;
   const updateReadingProgress = () => {
     if (!progressBar) return;
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
-    progressBar.style.width = `${pct}%`;
+    const pct = _cachedDocHeight > 0
+      ? Math.min(1, (window.scrollY / _cachedDocHeight))
+      : 0;
+    /* Skip DOM writes when the rounded value hasn't changed (within 0.1%) */
+    const rounded = Math.round(pct * 1000) / 1000;
+    if (rounded === _lastPct) return;
+    _lastPct = rounded;
+    /* transform: scaleX is composited on the GPU — avoids layout/paint */
+    progressBar.style.transform = `scaleX(${rounded})`;
   };
 
-  window.addEventListener('scroll', () => {
+  let _lastScrolled = false;
+  const onScroll = _rafThrottle(() => {
     const y = window.scrollY;
-    nav.classList.toggle('scrolled', y > 20);
+    const scrolled = y > 20;
+    if (scrolled !== _lastScrolled) {
+      _lastScrolled = scrolled;
+      nav.classList.toggle('scrolled', scrolled);
+    }
     updateReadingProgress();
-  }, { passive: true });
+  });
+
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   setActiveLink();
   updateReadingProgress();
@@ -178,9 +232,14 @@ function initBackToTop() {
   const btn = document.getElementById('back-to-top');
   if (!btn) return;
 
-  window.addEventListener('scroll', () => {
-    btn.classList.toggle('visible', window.scrollY > window.innerHeight * 0.6);
-  }, { passive: true });
+  let _lastVisible = false;
+  window.addEventListener('scroll', _rafThrottle(() => {
+    const visible = window.scrollY > window.innerHeight * 0.6;
+    if (visible !== _lastVisible) {
+      _lastVisible = visible;
+      btn.classList.toggle('visible', visible);
+    }
+  }), { passive: true });
 
   btn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -415,25 +474,53 @@ function initSideDots() {
 
   const dots = Array.from(nav.querySelectorAll('.side-dot'));
 
-  /* Show nav after scrolling past the hero */
-  function onScroll() {
-    const scrolled = window.scrollY > window.innerHeight * 0.5;
-    nav.classList.toggle('visible', scrolled);
+  /* ── Active-dot tracking with IntersectionObserver ──
+     Each section reports its intersection with a horizontal slab anchored
+     at 50% viewport height. The deepest still-intersecting section wins.
+     This replaces a scroll handler that called getBoundingClientRect()
+     for every section on every scroll event (N forced layouts per scroll). */
+  const intersecting = new Set();
+  let activeIdx = 0;
+  const setActiveDot = (idx) => {
+    if (idx === activeIdx) return;
+    activeIdx = idx;
+    for (let i = 0; i < dots.length; i++) {
+      const want = String(i === idx);
+      if (dots[i].getAttribute('aria-current') !== want) {
+        dots[i].setAttribute('aria-current', want);
+      }
+    }
+  };
 
-    /* Determine the active section (first one whose top is ≤ 60% viewport height) */
-    let active = 0;
-    const threshold = window.innerHeight * 0.5;
-    sections.forEach((sec, i) => {
-      if (sec.getBoundingClientRect().top <= threshold) active = i;
-    });
-
-    dots.forEach((dot, i) => {
-      dot.setAttribute('aria-current', String(i === active));
-    });
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) intersecting.add(entry.target);
+        else intersecting.delete(entry.target);
+      }
+      /* Pick the last (deepest) section still intersecting. */
+      let last = 0;
+      for (let i = 0; i < sections.length; i++) {
+        if (intersecting.has(sections[i])) last = i;
+      }
+      setActiveDot(last);
+    }, { rootMargin: '-50% 0px -50% 0px' });
+    sections.forEach((s) => io.observe(s));
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll(); /* run once on init */
+  /* Show nav after scrolling past the hero — uses a single sentinel
+     IntersectionObserver instead of a per-scroll classList toggle. */
+  const heroEl = sections[0];
+  if (heroEl && 'IntersectionObserver' in window) {
+    const heroIo = new IntersectionObserver(([entry]) => {
+      /* Visible when hero is mostly out of view. */
+      const out = !entry.isIntersecting;
+      if (out !== nav.classList.contains('visible')) {
+        nav.classList.toggle('visible', out);
+      }
+    }, { rootMargin: '-50% 0px 0px 0px' });
+    heroIo.observe(heroEl);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -945,12 +1032,25 @@ class NoiseGradient {
     this.gl = gl;
     this._setup();
     this._resize();
-    window.addEventListener('resize', () => this._resize(), { passive: true });
     this._startTime = performance.now();
     this._lastT     = 0;
     this._framesLeft = 3; /* render a few frames then stop */
     this._tick      = this._tick.bind(this);
     this._raf       = requestAnimationFrame(this._tick);
+
+    /* Resize handler — debounced. Re-runs the 3-frame burst at the new size,
+       otherwise the canvas would stay blank after the user resizes their
+       window (changing canvas.width clears the WebGL buffer). The debounce
+       avoids spawning a new burst on every pixel of a drag-resize. */
+    let _rszTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(_rszTimer);
+      _rszTimer = setTimeout(() => {
+        this._resize();
+        this._framesLeft = Math.max(this._framesLeft, 2);
+        if (!this._raf) this._raf = requestAnimationFrame(this._tick);
+      }, 200);
+    }, { passive: true });
   }
 
   _compileShader(type, src) {
@@ -1244,22 +1344,45 @@ if (typeof document !== 'undefined') {
     }
   }
 
+  /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
+     canvas is about to enter the viewport. The maps live in the #places
+     section near the bottom of the page — eagerly building them costs a
+     545 KB TopoJSON fetch (Europe map), a Globe scene with stars/grids/pins,
+     and a Nominatim geocode round-trip, none of which the user sees until
+     they scroll there. */
+  const _lazyOnViewport = (canvas, build) => {
+    if (!canvas) return;
+    if (typeof IntersectionObserver === 'undefined') { build(); return; }
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          io.disconnect();
+          build();
+          return;
+        }
+      }
+    }, { rootMargin: '300px 0px' });
+    io.observe(canvas);
+  };
+
   /* Three.js Globe — geocode any entries missing lat/lon, then build */
   const globeCanvas = document.getElementById('globe-canvas');
   if (globeCanvas && typeof LOCATIONS !== 'undefined') {
-    geocodeLocations(LOCATIONS).then(() => {
-      if (prefersReducedMotion() || !hasWebGLSupport()) {
-        new GlobeFallback2D(globeCanvas);
-      } else {
-        new Globe3D(globeCanvas);
-      }
+    _lazyOnViewport(globeCanvas, () => {
+      geocodeLocations(LOCATIONS).then(() => {
+        if (prefersReducedMotion() || !hasWebGLSupport()) {
+          new GlobeFallback2D(globeCanvas);
+        } else {
+          new Globe3D(globeCanvas);
+        }
+      });
     });
   }
 
   /* 2D Europe Map — Canvas-based representation of European locations */
   const europeCanvas = document.getElementById('europe-canvas');
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
-    new EuropeMap2D(europeCanvas);
+    _lazyOnViewport(europeCanvas, () => new EuropeMap2D(europeCanvas));
   }
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
