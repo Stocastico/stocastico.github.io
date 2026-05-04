@@ -50,16 +50,3 @@ Survey data from participants reported that 94% felt actively involved, 89% lear
 What stayed with me long after the project finished is what the technology *enabled* rather than what the technology *was*. A platform for sharing videos, comments and audio clips is, in pure software terms, not a remarkable thing. But put it in the hands of a teenager in a juvenile detention centre who has spent years being told their voice does not matter, and the same software becomes a way to record a song that ends up performed at the Gulbenkian concert hall in front of their family. Put it in the hands of a migrant choir in Raval, and it becomes the connective tissue of an opera that fills the Liceu.
 
 That is also where the responsibility of the technical role becomes very tangible: every design choice — what is private and what is shared, who can comment on what, how reliable the upload is on a tablet on a slow connection inside a prison — has consequences that go far beyond a usability metric. Building software that is going to be used in those settings requires a different kind of attention than building software for a generic "user".
-
-## Working with the Consortium
-
-Beyond the technology and the social impact, what made TRACTION special for me was the **consortium itself** — eight partners spanning research, opera, education and prison work, in five countries:
-
-- **Vicomtech** (coordinator, Spain) — applied research in visual computing and media.
-- **Dublin City University** (Ireland) — research on participatory media and audience engagement.
-- **Irish National Opera** (Ireland) — opera production.
-- **Gran Teatre del Liceu** (Spain) — opera house.
-- **NWO-I / CWI** (Netherlands) — research in distributed systems and immersive media.
-- **SAMP — Sociedade Artística Musical dos Pousos** (Portugal) — music school and prison-based education.
-- **Universitat Autònoma de Barcelona** (Spain) — research in communication and media studies.
-- **Virtual Reality Ireland Media** (Ireland) — VR production.
