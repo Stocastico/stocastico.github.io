@@ -5,15 +5,14 @@ year:        "2020 – 2022"
 tags:        "Web Application, Co-creation, Social Inclusion"
 thumb:       "img/projects/traction-thumb.jpg"
 bg:          "img/projects/traction-bg.jpg"
-description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. I led the development of the Co-creation Space — a web application enabling diverse communities to collaborate around multimedia content — and worked side by side with at-risk groups in Barcelona's Raval neighbourhood and Leiria's juvenile prison."
-link_project:    "https://www.traction-project.eu/"
-link_cordis:     "https://cordis.europa.eu/project/id/870610"
-link_github:     "https://github.com/traction-project/CoCreationSpace"
+description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. I helped in the development of the Co-creation Stage — a web application enabling diverse communities to collaborate around multimedia content — and worked side by side with at-risk groups in Barcelona's Raval neighbourhood and Leiria's juvenile prison."
+link_demo:    "https://www.traction-project.eu/"
+link_paper:   "https://ieeexplore.ieee.org/abstract/document/9828558"
 ---
 
-TRACTION (*Opera co-creation for a social transformation*) was a three-year EU Horizon 2020 research and innovation action that ran from **January 2020 to December 2022**, coordinated by **Vicomtech** under grant agreement No 870610 and with a total budget of roughly **€3.75M**. The project set out to do something deceptively simple: take opera — an art form often perceived as elitist and inaccessible — and turn it back into a vehicle for social and cultural inclusion, by giving marginalised communities the tools to **co-create** opera performances alongside professional artists.
+TRACTION (*Opera co-creation for a social transformation*) was a three-year EU Horizon 2020 research and innovation action that ran from **January 2020 to December 2022**, coordinated by **Vicomtech** and with a total budget of roughly **€3.75M**. The project set out to do something deceptively simple: take opera — an art form often perceived as elitist and inaccessible — and turn it back into a vehicle for social and cultural inclusion, by giving marginalised communities the tools to **co-create** opera performances alongside professional artists.
 
-That ambition was tested in three very different places: the inner-city neighbourhoods of **Barcelona** (Raval), a youth prison in **Leiria, Portugal**, and the rural communities of **Ireland**. The technological backbone of the project was a pair of digital platforms developed at Vicomtech: the **Co-creation Space** and the **Co-creation Stage**.
+That ambition was tested in three very different places: the inner-city neighbourhoods of **Barcelona** (Raval), a youth prison in **Leiria, Portugal**, and the rural communities of **Ireland**. The technological backbone of the project was a pair of digital platforms developed at Vicomtech and CWI: the **Co-creation Space** and the **Co-creation Stage**.
 
 ## My Role
 
@@ -68,5 +67,3 @@ Beyond the technology and the social impact, what made TRACTION special for me w
 - **SAMP — Sociedade Artística Musical dos Pousos** (Portugal) — music school and prison-based education.
 - **Universitat Autònoma de Barcelona** (Spain) — research in communication and media studies.
 - **Virtual Reality Ireland Media** (Ireland) — VR production.
-
-It is unusual, in EU projects, to share a coffee break with an opera tenor, a sociologist studying prison populations, a VR producer, and a colleague debugging a WebSocket bug. The diversity was a constant reminder that the *meaningful* work happens at the boundaries between disciplines, and that the role of an engineer in this kind of project is as much about listening and translating as it is about writing code. TRACTION was one of the most genuinely *human* technical projects I have ever been part of, and I am grateful to every partner and every community member who let us be part of their story.
