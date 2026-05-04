@@ -5,19 +5,19 @@
    - NeuralNetwork:   Three.js / WebGL particle + line graph
    - NeuralNetwork2D: Canvas2D fallback when WebGL is unavailable
    ═══════════════════════════════════════════════════════════ */
-import * as _THREE from 'three';
 import { onChange } from './three-context.js';
 import { isLowPowerDevice } from './utils.js';
 
-/* Named bindings (tree-shakable by Rollup) — re-destructured on test
-   THREE swaps so mocks still take effect. */
-let {
-  WebGLRenderer, Scene, PerspectiveCamera,
+/* THREE bindings — declared without an initial value; the onChange callback
+   fires immediately on registration with the active THREE namespace and again
+   whenever tests swap it via __setThreeForTests().  No `import * as THREE`
+   here, so Rollup can tree-shake the library down to only what
+   three-context.js explicitly imports. */
+let WebGLRenderer, Scene, PerspectiveCamera,
   BufferGeometry, BufferAttribute,
   PointsMaterial, Points,
   LineBasicMaterial, LineSegments,
-  CanvasTexture, AdditiveBlending,
-} = _THREE;
+  CanvasTexture, AdditiveBlending;
 
 onChange((t) => {
   ({

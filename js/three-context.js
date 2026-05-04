@@ -9,13 +9,47 @@
    Pattern in consumer modules:
 
      import { onChange } from './three-context.js';
-     let THREE;
-     onChange((t) => { THREE = t; });   // sets THREE now and on every swap
+     let Scene, WebGLRenderer, ...;
+     onChange((t) => {
+       ({ Scene, WebGLRenderer, ... } = t);
+     });
 
-   Classes can then reference bare `THREE` exactly as if it were a top-level
-   import — including capturing it locally before async boundaries.
+   Classes can then reference bare `Scene`, `WebGLRenderer`, etc. exactly as
+   if they were top-level named imports — including capturing them locally
+   before async boundaries.
+
+   The named-imports below are the union of every Three.js symbol referenced
+   anywhere in the source tree.  Listing them explicitly (rather than
+   `import * as THREE from 'three'`) lets Rollup tree-shake the rest of the
+   library out of the production bundle.
    ───────────────────────────────────────────────────────────────────────── */
-import * as _THREE_NPM from 'three';
+import {
+  WebGLRenderer, Scene, PerspectiveCamera,
+  AmbientLight, DirectionalLight, PointLight,
+  Group, Mesh,
+  SphereGeometry, RingGeometry,
+  MeshBasicMaterial, LineBasicMaterial, PointsMaterial,
+  BufferGeometry, BufferAttribute,
+  Points, Line, LineSegments,
+  CanvasTexture,
+  Vector2, Vector3, QuadraticBezierCurve3,
+  Raycaster, Color,
+  AdditiveBlending, BackSide, DoubleSide,
+} from 'three';
+
+const _THREE_NPM = {
+  WebGLRenderer, Scene, PerspectiveCamera,
+  AmbientLight, DirectionalLight, PointLight,
+  Group, Mesh,
+  SphereGeometry, RingGeometry,
+  MeshBasicMaterial, LineBasicMaterial, PointsMaterial,
+  BufferGeometry, BufferAttribute,
+  Points, Line, LineSegments,
+  CanvasTexture,
+  Vector2, Vector3, QuadraticBezierCurve3,
+  Raycaster, Color,
+  AdditiveBlending, BackSide, DoubleSide,
+};
 
 let _current = _THREE_NPM;
 const _listeners = [];
