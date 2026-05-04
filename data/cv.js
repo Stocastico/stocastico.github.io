@@ -7,7 +7,7 @@
 ----------------------------------------------------------------------------*/
 
 /* ── Career ───────────────────────────────────────────────── */
-const CV_CAREER = [
+export const CV_CAREER = [
   {
     year:        '2024 – present',
     role:        'Senior AI Engineer',
@@ -63,7 +63,7 @@ const CV_CAREER = [
 ];
 
 /* ── Education ────────────────────────────────────────────── */
-const CV_EDUCATION = [
+export const CV_EDUCATION = [
   {
     year:            '2019 – 2024',
     degree:          'PhD — Computer Science',
@@ -87,7 +87,7 @@ const CV_EDUCATION = [
 ];
 
 /* ── Skills ───────────────────────────────────────────────── */
-const CV_SKILLS = {
+export const CV_SKILLS = {
   technical:  [
     {
       name:  'GenAI & LLMs (Fine-tuning · RAG · LangChain · Vector DBs)',
@@ -164,6 +164,8 @@ const CV_SKILLS = {
   ],
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { CV_CAREER, CV_EDUCATION, CV_SKILLS };
+if (typeof globalThis !== 'undefined') {
+  globalThis.CV_CAREER = CV_CAREER;
+  globalThis.CV_EDUCATION = CV_EDUCATION;
+  globalThis.CV_SKILLS = CV_SKILLS;
 }

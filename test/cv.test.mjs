@@ -1,20 +1,19 @@
-'use strict';
 /* ─────────────────────────────────────────────────────────────────────────────
    Tests for renderCV, renderSkills, initSkillBars, initTimelineScroll3D,
    and initAnimatedFavicon.
    TDD: these tests are written before (or alongside) the implementation.
    Run:  npm run test:cv
 ──────────────────────────────────────────────────────────────────────────────*/
-const test   = require('node:test');
-const assert = require('node:assert/strict');
+import test   from 'node:test';
+import assert from 'node:assert/strict';
 
-const {
+import {
   renderCV,
   renderSkills,
   initSkillBars,
   initTimelineScroll3D,
   initAnimatedFavicon,
-} = require('../js/main.js');
+} from '../js/main.js';
 
 /* ── DOM helpers ─────────────────────────────────────────────────────────── */
 

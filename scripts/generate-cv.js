@@ -273,22 +273,24 @@ function generateCvJs(data) {
 ${'-'.repeat(76)}*/
 
 /* ── Career ───────────────────────────────────────────────── */
-const CV_CAREER = [
+export const CV_CAREER = [
 ${careerBlock ? careerBlock + ',\n' : ''}];
 
 /* ── Education ────────────────────────────────────────────── */
-const CV_EDUCATION = [
+export const CV_EDUCATION = [
 ${eduBlock ? eduBlock + ',\n' : ''}];
 
 /* ── Skills ───────────────────────────────────────────────── */
-const CV_SKILLS = {
+export const CV_SKILLS = {
   technical:  ${tech},
   leadership: ${lead},
   languages:  ${langs},
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { CV_CAREER, CV_EDUCATION, CV_SKILLS };
+if (typeof globalThis !== 'undefined') {
+  globalThis.CV_CAREER = CV_CAREER;
+  globalThis.CV_EDUCATION = CV_EDUCATION;
+  globalThis.CV_SKILLS = CV_SKILLS;
 }
 `;
 }

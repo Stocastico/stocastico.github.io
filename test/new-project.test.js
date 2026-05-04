@@ -159,8 +159,10 @@ test('project: buildProjectPage produces a full HTML document', () => {
   assert.match(html, /<title>[^<]*Test Project[^<]*<\/title>/);
 });
 
-test('project: buildProjectPage uses relative asset paths (one level up)', () => {
-  // Pages live at projects/<slug>.html so must reach css/js via ../
+test('project: buildProjectPage uses correct asset paths for project subdir', () => {
+  // CSS lives at the repo root, so pages under projects/<slug>.html reach it
+  // via ../.  The JS entry is loaded as a Vite ES module from the absolute
+  // path /js/main.js (Vite resolves the same path on every page).
   const fm = {
     id: 'x', title: 'X', year: '2024', tags: 'A',
     thumb: 'img/projects/x.jpg', description: 'D',
@@ -168,7 +170,7 @@ test('project: buildProjectPage uses relative asset paths (one level up)', () =>
   const html = buildProjectPage(fm, '<p>body</p>');
   assert.match(html, /href="\.\.\/css\/styles\.css"/);
   assert.match(html, /href="\.\.\/css\/fonts\.css"/);
-  assert.match(html, /src="\.\.\/js\/main\.min\.js"/);
+  assert.match(html, /<script\s+type="module"\s+src="\/js\/main\.js"/);
 });
 
 test('project: buildProjectPage includes title, year, tags, and body', () => {
@@ -328,6 +330,22 @@ test('project: updateProjectsJs throws when PROJECTS array not found', () => {
   const src = 'const SOMETHING_ELSE = [];';
   const entry = { id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' };
   assert.throws(() => updateProjectsJs('data/projects.js', entry, src), /PROJECTS/);
+});
+
+test('project: updateProjectsJs accepts ES module export form', () => {
+  const src = `export const PROJECTS = [];\n`;
+  const entry = {
+    id: 'esm-proj',
+    title: 'ESM Project',
+    year: '2024',
+    tags: ['ESM'],
+    thumb: 'img/projects/esm.jpg',
+    description: 'ES module form.',
+    url: 'projects/esm-proj.html',
+  };
+  const result = updateProjectsJs('data/projects.js', entry, src);
+  assert.match(result, /export const PROJECTS = \[/);
+  assert.match(result, /esm-proj/);
 });
 
 // ─── end-to-end: parse markdown file and generate outputs ─────────────────────

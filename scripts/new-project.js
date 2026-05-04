@@ -399,7 +399,7 @@ ${linksHtml}
     </svg>
   </button>
 
-  <script defer src="../js/main.min.js"></script>
+  <script type="module" src="/js/main.js"></script>
 </body>
 </html>
 `;
@@ -409,7 +409,7 @@ ${linksHtml}
 
 function updateProjectsJs(projectsJsPath, entry, src) {
   if (src === undefined) src = fs.readFileSync(projectsJsPath, 'utf8');
-  const arrayStart = src.indexOf('const PROJECTS = [');
+  const arrayStart = src.search(/(?:export\s+)?const PROJECTS\s*=\s*\[/);
   if (arrayStart === -1) throw new Error(`Could not find PROJECTS array in ${projectsJsPath}`);
 
   // Skip if an entry with this id is already registered

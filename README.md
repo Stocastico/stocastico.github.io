@@ -22,10 +22,10 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 
 ## Tech stack
 
-- Pure HTML / CSS / JavaScript — no build step, no bundler
-- [Three.js](https://threejs.org/) r160 (CDN) for the 3-D neural-network background and interactive globe
+- Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
+- [Three.js](https://threejs.org/) (npm, bundled by Vite) for the 3-D neural-network background and interactive globe
 - Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
-- Node.js ≥ 18 for scripts and tests (built-in test runner, no extra dependencies)
+- Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies)
 - Self-hosted fonts: Inter (body) and Playfair Display (display / hero)
 
 ## Project structure
@@ -38,9 +38,15 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ├── 404.html                   Custom 404 page
 ├── css/
 │   └── styles.css             All styles, including shared project-page rules
+├── vite.config.js             Multi-page Vite config (index, projects, cv, 404, project pages)
 ├── js/
-│   ├── main.js                Three.js animations, UI init, renderProjects/Publications
-│   ├── main.min.js            Minified production build (auto-generated)
+│   ├── main.js                ESM entry — orchestrates DOMContentLoaded init
+│   ├── three-context.js       Shared THREE binding + test mocking hook
+│   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport
+│   ├── neural-net.js          NeuralNetwork (Three.js) + Canvas2D fallback
+│   ├── hero-shader.js         HeroNameShader (raw WebGL iridescent text)
+│   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
+│   ├── animations.js          Scroll reveal, card tilt, magnetic buttons, parallax
 │   └── europe-map.js          Interactive 2D Canvas map of Europe
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
@@ -62,12 +68,13 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   └── lib/
 │       └── yaml.js            Minimal YAML parser (no external dependencies)
 ├── test/
-│   ├── main.node.test.js           Tests for js/main.js
-│   ├── cv.test.js                  Tests for CV rendering
+│   ├── main.node.test.mjs          Tests for js/main.js
+│   ├── cv.test.mjs                 Tests for CV rendering
+│   ├── europe-map.test.mjs         Tests for js/europe-map.js
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
-│   ├── europe-map.test.js          Tests for js/europe-map.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
+│   ├── seo.test.js                 SEO regression tests (meta description, JSON-LD, stat counters)
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 │   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
@@ -83,13 +90,14 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ## Running tests
 
 ```bash
-npm test                       # run all tests (206 tests)
+npm test                       # run all tests (212 tests)
 npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
 npm run test:locations         # locations generator tests only
 npm run test:project           # new-project.js tests only
-# europe-map.test.js is included in `npm test` but has no dedicated shorthand
+npm run test:seo               # SEO regression tests only
+# europe-map.test.mjs is included in `npm test` but has no dedicated shorthand
 ```
 
 No external test dependencies are required — the Node.js built-in test runner (Node ≥ 18) handles everything.
@@ -157,13 +165,15 @@ node scripts/new-project.js project.md --dry-run    # preview without writing
 node scripts/new-project.js --help
 ```
 
-### `minify` — minify JavaScript for production
+### `dev` / `build` / `preview` — Vite
 
 ```bash
-npm run minify
+npm run dev        # local dev server with HMR
+npm run build      # production build → dist/
+npm run preview    # serve dist/ locally
 ```
 
-Runs `terser` on `js/main.js` → `js/main.min.js` with `--compress --mangle`. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for how to switch the HTML to use the minified file.
+GitHub Actions runs `npm test && npm run build` and publishes `dist/` on every push to `main` (see `.github/workflows/deploy.yml`).
 
 ---
 

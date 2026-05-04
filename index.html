@@ -183,18 +183,21 @@
             <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" width="1088" height="1088" loading="lazy" />
           </div>
 
-          <!-- Quick stats -->
+          <!-- Quick stats — real values are baked into the HTML so search
+               crawlers (and users with JS disabled) see the numbers.  The
+               JS counter resets each value to 0 on viewport entry and
+               animates back up to the data-count target. -->
           <div class="stats-row">
             <div class="stat-item">
-              <span class="stat-number" data-count="3">0</span>
+              <span class="stat-number" data-count="3">3</span>
               <span class="stat-label">Countries</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number" data-count="30">0</span><span class="stat-suffix">+</span>
+              <span class="stat-number" data-count="30">30</span><span class="stat-suffix">+</span>
               <span class="stat-label">Publications</span>
             </div>
             <div class="stat-item">
-              <span class="stat-number" data-count="15">0</span><span class="stat-suffix">+</span>
+              <span class="stat-number" data-count="15">15</span><span class="stat-suffix">+</span>
               <span class="stat-label">Years Exp.</span>
             </div>
           </div>
@@ -725,23 +728,10 @@
     </svg>
   </button>
 
-  <!-- All scripts are deferred: downloaded in parallel during HTML parsing,
-       executed in order after parsing completes, before DOMContentLoaded.
-       This keeps the critical rendering path clear of blocking JS.       -->
-  <!-- Three.js from CDN (deferred so it downloads in parallel with data files) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
-  <!-- ── Content data files ──────────────────────────────────────────────
-       Edit these files to update frequently-changing content:
-         data/locations.js    — 3D globe pins, trips, regions
-         data/publications.js — selected papers list
-         data/projects.js     — project cards (leave PROJECTS=[] for "Coming soon")
-         data/cv.js           — CV timeline + skills (CV_CAREER, CV_EDUCATION, CV_SKILLS)
-  ───────────────────────────────────────────────────────────────────── -->
-  <script defer src="data/locations.js"></script>
-  <script defer src="data/publications.js"></script>
-  <script defer src="data/projects.js"></script>
-  <script defer src="js/europe-map.js"></script>
-  <script defer src="js/main.min.js"></script>
+  <!-- ES module entry point. Vite bundles js/main.js, which imports Three.js
+       (npm package), all data/*.js modules, and js/europe-map.js. Module
+       scripts are implicitly deferred — execution waits until DOM is parsed. -->
+  <script type="module" src="/js/main.js"></script>
 </body>
 
 </html>

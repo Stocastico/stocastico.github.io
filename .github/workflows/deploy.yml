@@ -1,29 +1,26 @@
 # .github/workflows/deploy.yml
 #
-# Manual deployment to GitHub Pages.
+# Build + deploy to GitHub Pages.
 #
 # Setup:
 #   1. Go to Settings -> Pages -> Source -> "GitHub Actions"
-#   2. Run this workflow manually from the Actions tab.
-#
-# Later, to deploy automatically after a successful build workflow run,
-# enable the commented workflow_run trigger below.
+#   2. Either push to main, or run this workflow manually from the
+#      Actions tab.
 
 name: Deploy
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch: # allow manual trigger from the GitHub Actions UI
-  workflow_run:
-    workflows: [Build]
-    types: [completed]
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Only one deployment runs at a time; queued runs are cancelled if a newer
-# push arrives before they start.
+# Only one deployment runs at a time; queued runs are cancelled if a
+# newer push arrives before they start.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -32,10 +29,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # If workflow_run is enabled, keep deployment gated on successful builds.
   deploy:
-    name: Deploy to GitHub Pages
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    name: Build and deploy to GitHub Pages
     runs-on: ubuntu-latest
 
     environment:
@@ -46,16 +41,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm test` runs before the build — a red test blocks the deploy
+      # automatically.
+      - name: Run tests
+        run: npm test
+
+      - name: Build with Vite
+        run: npm run build
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
 
-      # Upload the entire repository as the Pages artifact.
-      # Files listed in .gitignore are NOT excluded here — only files
-      # that were never committed (e.g. node_modules) are absent.
+      # Upload the Vite output (dist/) as the Pages artifact.
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment

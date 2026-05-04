@@ -317,13 +317,20 @@ test('validateCv: accepts valid languages block', () => {
 
 // ─── generateCvJs ─────────────────────────────────────────────────────────────
 
-/* The generated JS uses `const` (not `var`), so declarations are NOT accessible
-   via ctx.*  Instead the file sets module.exports — we seed that in the context. */
+/* The generated JS is now an ES module (`export const ...`).  vm.runInContext
+   only runs scripts, not modules, so we strip the `export ` prefix and read
+   the values back from the context's globalThis (the file also sets them
+   onto globalThis at the bottom). */
 function evalCvJs(js) {
-  const ctx = { module: { exports: {} } };
+  const scriptLike = js.replace(/^export /gm, '');
+  const ctx = {};
   vm.createContext(ctx);
-  vm.runInContext(js, ctx);
-  return ctx.module.exports; /* { CV_CAREER, CV_EDUCATION, CV_SKILLS } */
+  vm.runInContext(scriptLike, ctx);
+  return {
+    CV_CAREER:    ctx.CV_CAREER,
+    CV_EDUCATION: ctx.CV_EDUCATION,
+    CV_SKILLS:    ctx.CV_SKILLS,
+  };
 }
 
 test('generateCvJs: output is valid JS that defines the three globals', () => {

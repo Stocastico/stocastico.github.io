@@ -4,23 +4,30 @@
   "description": "Personal website of Stefano Masneri — AI Engineer",
   "private": true,
   "scripts": {
-    "test": "node --test test/main.node.test.js test/europe-map.test.js test/locations-generator.test.js test/new-project.test.js test/cv.test.js test/generate-cv.test.js",
-    "test:main": "node --test test/main.node.test.js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/main.node.test.mjs test/europe-map.test.mjs test/locations-generator.test.js test/new-project.test.js test/cv.test.mjs test/generate-cv.test.js test/seo.test.js",
+    "test:seo": "node --test test/seo.test.js",
+    "test:main": "node --test test/main.node.test.mjs",
     "test:locations": "node --test test/locations-generator.test.js",
     "test:project": "node --test test/new-project.test.js",
-    "test:cv": "node --test test/cv.test.js",
+    "test:cv": "node --test test/cv.test.mjs",
     "test:generate-cv": "node --test test/generate-cv.test.js",
     "new-project": "node scripts/new-project.js",
     "generate-cv": "node scripts/generate-cv.js",
     "generate-locations": "node scripts/generate-locations.js",
-    "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1",
-    "minify": "npx terser js/main.js -o js/main.min.js --compress --mangle"
+    "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },
   "engines": {
     "node": ">=18"
   },
   "license": "MIT",
   "devDependencies": {
-    "playwright": "^1.58.2"
+    "playwright": "^1.58.2",
+    "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "three": "^0.184.0"
   }
 }

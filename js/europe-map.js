@@ -5,9 +5,8 @@
    Uses Canvas2D rendering with neon aesthetic matching the 3D globe
    ============================================================ */
 
-'use strict';
-
-class EuropeMap2D {
+/* eslint-disable */
+export class EuropeMap2D {
   /* Color scheme matches Globe3D */
   static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
   static PIN_SIZE = { lived: 1.8, current: 1.8, worktrip: 1.4, holiday: 1.4 };
@@ -592,3 +591,5 @@ class EuropeMap2D {
     ctx.fill();
   }
 }
+
+if (typeof globalThis !== 'undefined') globalThis.EuropeMap2D = EuropeMap2D;
