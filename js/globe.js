@@ -7,7 +7,6 @@
    - Globe3D: Three.js / WebGL interactive globe.
    - GlobeFallback2D: Canvas2D fallback when WebGL is unavailable.
    ═══════════════════════════════════════════════════════════ */
-import * as _THREE from 'three';
 import { onChange } from './three-context.js';
 import {
   isLowPowerDevice,
@@ -16,10 +15,12 @@ import {
   getTopoJSON,
 } from './utils.js';
 
-/* Named bindings (tree-shakable by Rollup) — re-destructured on test
-   THREE swaps so mocks still take effect. */
-let {
-  WebGLRenderer, Scene, PerspectiveCamera,
+/* THREE bindings — declared without an initial value; the onChange callback
+   fires immediately on registration with the active THREE namespace and again
+   whenever tests swap it via __setThreeForTests().  No `import * as THREE`
+   here, so Rollup can tree-shake the library down to only what
+   three-context.js explicitly imports. */
+let WebGLRenderer, Scene, PerspectiveCamera,
   AmbientLight, DirectionalLight, PointLight,
   Group, Mesh,
   SphereGeometry, RingGeometry,
@@ -29,8 +30,7 @@ let {
   CanvasTexture,
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
-  AdditiveBlending, BackSide, DoubleSide,
-} = _THREE;
+  AdditiveBlending, BackSide, DoubleSide;
 
 onChange((t) => {
   ({
