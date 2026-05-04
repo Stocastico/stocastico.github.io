@@ -744,9 +744,19 @@ function renderProjects() {
   }
 
   // On projects.html (listing page) the grid opts in via data-render="all"
-  // and shows every project. Elsewhere (homepage) we cap the count.
+  // and shows every project. Elsewhere (homepage) we pick a random subset.
   var showAll = grid.getAttribute && grid.getAttribute('data-render') === 'all';
-  var shown = showAll ? PROJECTS : PROJECTS.slice(0, PROJECTS_MAX_HOMEPAGE);
+  var shown;
+  if (showAll) {
+    shown = PROJECTS;
+  } else {
+    var pool = PROJECTS.slice();
+    for (var i = pool.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    shown = pool.slice(0, PROJECTS_MAX_HOMEPAGE);
+  }
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
   if (!showAll && PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {

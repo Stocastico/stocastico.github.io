@@ -19,6 +19,26 @@
 
 export const PROJECTS = [
     {
+            id: "mpi-brain-research",
+            title: "MPI for Brain Research: Software for Reptilian Neuroscience",
+            year: "2015 – 2017",
+            tags: ["Scientific Computing","Neuroscience","Data Analysis"],
+            thumb: "img/projects/mpi-brain-thumb.jpeg",
+            bg: "img/projects/mpi-brain-bg.jpeg",
+            description: "Two years as a scientific software developer in Gilles Laurent's department at the Max Planck Institute for Brain Research in Frankfurt, building MATLAB analysis pipelines and R/Shiny web apps for electrophysiologists studying sleep in bearded dragons and visual processing in ex-vivo turtle brains.",
+            url: "projects/mpi-brain-research.html",
+        },
+    {
+            id: "traction",
+            title: "TRACTION: Opera Co-creation for Social Transformation",
+            year: "2020 – 2022",
+            tags: ["Web Application","Co-creation","Social Inclusion"],
+            thumb: "img/projects/traction-thumb.png",
+            bg: "img/projects/traction-bg.jpg",
+            description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage — the real-time distributed performance tool — spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland.",
+            url: "projects/traction.html",
+        },
+    {
             id: "aroundtheworld",
             title: "ARoundTheWorld: Collaborative AR for Education",
             year: "2024",
