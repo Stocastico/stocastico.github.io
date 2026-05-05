@@ -270,6 +270,26 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
     );
   });
 
+  // Bug 9: on portrait iPhone widths the about-section profile photo was
+  // capped at 180px while sitting in a row next to the 3-up stats grid,
+  // making it look tiny.  The photo card should render at a comfortable
+  // size (>=220px wide) on a 375px-wide viewport.
+  await test('about-section photo-card is reasonably sized on portrait iPhone', async () => {
+    await page.evaluate(() => document.getElementById('about')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    const m = await page.evaluate(() => {
+      const card = document.querySelector('.about-photo-col .photo-card');
+      if (!card) return null;
+      const rect = card.getBoundingClientRect();
+      return { width: Math.round(rect.width), height: Math.round(rect.height) };
+    });
+    assert(m, '.about-photo-col .photo-card not found');
+    assert(
+      m.width >= 220,
+      `photo-card too small on portrait iPhone: rendered ${m.width}px wide (expected >=220)`,
+    );
+  });
+
   // Bug 7: tap targets for inline tag-pills should be >=32px tall on touch
   // devices (Apple HIG suggests 44, but inline pills can be smaller; we
   // enforce a softer 32 to ensure reasonable touch comfort).
