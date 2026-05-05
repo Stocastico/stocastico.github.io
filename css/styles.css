@@ -2383,6 +2383,18 @@ h3 {
   .hero-name { text-align: center; }
   .hero-name-canvas { left: 50%; transform: translateX(-50%); }
   .hero-actions { justify-content: center; }
+
+  /* Portrait phones: revert .about-photo-col to a column so the profile
+     photo gets the full content width instead of being squeezed next to
+     the stats grid (which collapses it to a sliver below ~400px). */
+  .about-photo-col {
+    flex-direction: column;
+    align-items: center;
+  }
+  .about-photo-col .photo-card {
+    max-width: 260px;
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
