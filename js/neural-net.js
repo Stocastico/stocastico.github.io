@@ -429,4 +429,9 @@ export class NeuralNetwork2D {
     this._lastDrawTime = now;
     this._draw();
   }
+
+  destroy() {
+    if (this.frameId) cancelAnimationFrame(this.frameId);
+    this.frameId = null;
+  }
 }

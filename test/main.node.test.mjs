@@ -37,6 +37,7 @@ import {
   initCardFlip,
   renderProjects,
   PROJECTS_MAX_HOMEPAGE,
+  initCommandPalette,
   __setThreeForTests,
   __resetThreeForTests,
 } from '../js/main.js';
@@ -163,27 +164,24 @@ test('LOCATIONS no longer require runtime geocoding in production data', () => {
 test('renderPublications injects publication cards into the container', () => {
   const list = { innerHTML: '' };
   const prevDocument = global.document;
-  const prevPublications = global.PUBLICATIONS;
   global.document = {
     getElementById(id) {
       if (id === 'publications-list') return list;
       return null;
     },
   };
-  global.PUBLICATIONS = [{
-    year: '2025',
-    title: 'Paper title',
-    authors: 'A. Author',
-    venue: 'Conference',
-    url: 'https://example.com',
-  }];
   try {
-    renderPublications();
+    renderPublications([{
+      year: '2025',
+      title: 'Paper title',
+      authors: 'A. Author',
+      venue: 'Conference',
+      url: 'https://example.com',
+    }]);
     assert.match(list.innerHTML, /Paper title/);
     assert.match(list.innerHTML, /Open paper: Paper title/);
   } finally {
     global.document = prevDocument;
-    global.PUBLICATIONS = prevPublications;
   }
 });
 
@@ -1010,27 +1008,26 @@ test('initEmailObfuscation reveals email on Enter key', () => {
 test('renderCV renders merged career and education entries sorted by year', () => {
   const timeline = { innerHTML: '' };
   const prevDoc = global.document;
-  const prevCareer = global.CV_CAREER;
-  const prevEdu = global.CV_EDUCATION;
   global.document = {
     getElementById(id) { return id === 'cv-timeline' ? timeline : null; },
   };
-  global.CV_CAREER = [{
-    year: '2020–2023',
-    role: 'Engineer',
-    company: 'Acme',
-    location: 'Berlin',
-    description: 'Built things',
-    tags: ['Python', 'ML'],
-  }];
-  global.CV_EDUCATION = [{
-    year: '2018',
-    degree: 'MSc CS',
-    institution: 'MIT',
-    location: 'Boston',
-  }];
   try {
-    renderCV();
+    renderCV(
+      [{
+        year: '2020–2023',
+        role: 'Engineer',
+        company: 'Acme',
+        location: 'Berlin',
+        description: 'Built things',
+        tags: ['Python', 'ML'],
+      }],
+      [{
+        year: '2018',
+        degree: 'MSc CS',
+        institution: 'MIT',
+        location: 'Boston',
+      }],
+    );
     /* Career entry should appear first (2020 > 2018) */
     assert.match(timeline.innerHTML, /Engineer/);
     assert.match(timeline.innerHTML, /Acme/);
@@ -1045,8 +1042,6 @@ test('renderCV renders merged career and education entries sorted by year', () =
     assert.ok(careerIdx < eduIdx, 'Career (2020) should be before education (2018)');
   } finally {
     global.document = prevDoc;
-    global.CV_CAREER = prevCareer;
-    global.CV_EDUCATION = prevEdu;
   }
 });
 
@@ -1060,23 +1055,17 @@ test('renderCV does nothing when timeline element is missing', () => {
   }
 });
 
-test('renderCV does nothing when CV_CAREER is undefined', () => {
-  const timeline = { innerHTML: '' };
+test('renderCV with empty arrays clears the timeline without throwing', () => {
+  const timeline = { innerHTML: 'old' };
   const prevDoc = global.document;
-  const prevCareer = global.CV_CAREER;
-  const prevEdu = global.CV_EDUCATION;
   global.document = {
     getElementById(id) { return id === 'cv-timeline' ? timeline : null; },
   };
-  delete global.CV_CAREER;
-  global.CV_EDUCATION = [];
   try {
-    renderCV();
+    renderCV([], []);
     assert.equal(timeline.innerHTML, '');
   } finally {
     global.document = prevDoc;
-    global.CV_CAREER = prevCareer;
-    global.CV_EDUCATION = prevEdu;
   }
 });
 
@@ -1085,17 +1074,15 @@ test('renderCV does nothing when CV_CAREER is undefined', () => {
 test('renderSkills renders technical bars and language pills', () => {
   const container = { innerHTML: '' };
   const prevDoc = global.document;
-  const prevSkills = global.CV_SKILLS;
   global.document = {
     getElementById(id) { return id === 'cv-skills' ? container : null; },
   };
-  global.CV_SKILLS = {
-    technical: [{ name: 'Python', level: 90 }],
-    leadership: [{ name: 'Mentoring', level: 75 }],
-    languages: [{ name: 'English', proficiency: 'Native' }],
-  };
   try {
-    renderSkills();
+    renderSkills({
+      technical: [{ name: 'Python', level: 90 }],
+      leadership: [{ name: 'Mentoring', level: 75 }],
+      languages: [{ name: 'English', proficiency: 'Native' }],
+    });
     assert.match(container.innerHTML, /Python/);
     assert.match(container.innerHTML, /skill-bar-fill/);
     assert.match(container.innerHTML, /--pct:90%/);
@@ -1105,7 +1092,6 @@ test('renderSkills renders technical bars and language pills', () => {
     assert.match(container.innerHTML, /lang-item/);
   } finally {
     global.document = prevDoc;
-    global.CV_SKILLS = prevSkills;
   }
 });
 
@@ -1119,20 +1105,17 @@ test('renderSkills does nothing when container is missing', () => {
   }
 });
 
-test('renderSkills renders empty when CV_SKILLS has no entries', () => {
+test('renderSkills renders empty when skills has no entries', () => {
   const container = { innerHTML: 'old' };
   const prevDoc = global.document;
-  const prevSkills = global.CV_SKILLS;
   global.document = {
     getElementById(id) { return id === 'cv-skills' ? container : null; },
   };
-  global.CV_SKILLS = { technical: [], leadership: [], languages: [] };
   try {
-    renderSkills();
+    renderSkills({ technical: [], leadership: [], languages: [] });
     assert.equal(container.innerHTML, '');
   } finally {
     global.document = prevDoc;
-    global.CV_SKILLS = prevSkills;
   }
 });
 
@@ -1980,27 +1963,23 @@ test('index.html card backs have back-title, back-body, and back-hint', () => {
 test('renderProjects shows empty state when PROJECTS is empty', () => {
   const grid = { innerHTML: '' };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
       return null;
     },
   };
-  global.PROJECTS = [];
   try {
-    renderProjects();
+    renderProjects([]);
     assert.match(grid.innerHTML, /Coming soon/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects injects project cards with title, year, and tags', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2010,17 +1989,16 @@ test('renderProjects injects project cards with title, year, and tags', () => {
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'test-project',
-    title: 'Test Project',
-    year: '2024',
-    tags: ['AI', 'CV'],
-    thumb: 'img/projects/test-thumb.jpg',
-    description: 'A test project description.',
-    url: 'projects/test-project.html',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'test-project',
+      title: 'Test Project',
+      year: '2024',
+      tags: ['AI', 'CV'],
+      thumb: 'img/projects/test-thumb.jpg',
+      description: 'A test project description.',
+      url: 'projects/test-project.html',
+    }]);
     assert.match(grid.innerHTML, /Test Project/);
     assert.match(grid.innerHTML, /2024/);
     assert.match(grid.innerHTML, /AI/);
@@ -2029,14 +2007,12 @@ test('renderProjects injects project cards with title, year, and tags', () => {
     assert.match(grid.innerHTML, /projects\/test-project\.html/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects uses bg image as CSS background when provided', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2046,32 +2022,29 @@ test('renderProjects uses bg image as CSS background when provided', () => {
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'with-bg',
-    title: 'Project With BG',
-    year: '2024',
-    tags: ['AR'],
-    thumb: 'img/projects/with-bg-thumb.jpg',
-    bg: 'img/projects/with-bg-hero.jpg',
-    description: 'A project with a background image.',
-    url: 'projects/with-bg.html',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'with-bg',
+      title: 'Project With BG',
+      year: '2024',
+      tags: ['AR'],
+      thumb: 'img/projects/with-bg-thumb.jpg',
+      bg: 'img/projects/with-bg-hero.jpg',
+      description: 'A project with a background image.',
+      url: 'projects/with-bg.html',
+    }]);
     // bg URL should end up as a CSS custom property on the card
     assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/with-bg-hero\.jpg['"]?\)/);
     // has-bg class toggled when bg is present
     assert.match(grid.innerHTML, /project-card--has-bg/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects falls back to thumb for background when bg is missing', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2081,21 +2054,19 @@ test('renderProjects falls back to thumb for background when bg is missing', () 
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'thumb-only',
-    title: 'Thumb Only',
-    year: '2024',
-    tags: ['AI'],
-    thumb: 'img/projects/thumb-only.jpg',
-    description: 'No bg, thumb only.',
-    url: 'projects/thumb-only.html',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'thumb-only',
+      title: 'Thumb Only',
+      year: '2024',
+      tags: ['AI'],
+      thumb: 'img/projects/thumb-only.jpg',
+      description: 'No bg, thumb only.',
+      url: 'projects/thumb-only.html',
+    }]);
     assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/thumb-only\.jpg['"]?\)/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
@@ -2103,7 +2074,6 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   const appended = [];
   const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2126,9 +2096,8 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
       url: `projects.html#project-${i}`,
     });
   }
-  global.PROJECTS = many;
   try {
-    renderProjects();
+    renderProjects(many);
     // Should only render PROJECTS_MAX_HOMEPAGE cards
     const cardCount = (grid.innerHTML.match(/<a[^>]*class="project-card(?:\s|")/g) || []).length;
     assert.equal(cardCount, PROJECTS_MAX_HOMEPAGE);
@@ -2137,7 +2106,6 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
     assert.match(appended[0].innerHTML, /View all projects/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
@@ -2145,7 +2113,6 @@ test('renderProjects does not show "View all" when projects fit within limit', (
   const appended = [];
   const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2155,37 +2122,32 @@ test('renderProjects does not show "View all" when projects fit within limit', (
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'solo',
-    title: 'Solo Project',
-    year: '2024',
-    tags: ['AI'],
-    thumb: 'img/projects/solo.jpg',
-    description: 'Only project.',
-    url: 'projects.html#solo',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'solo',
+      title: 'Solo Project',
+      year: '2024',
+      tags: ['AI'],
+      thumb: 'img/projects/solo.jpg',
+      description: 'Only project.',
+      url: 'projects.html#solo',
+    }]);
     assert.equal(appended.length, 0);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects skips if container element not found', () => {
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById() { return null; },
   };
-  global.PROJECTS = [{ id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' }];
   try {
     // Should not throw
-    renderProjects();
+    renderProjects([{ id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' }]);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
@@ -2504,4 +2466,438 @@ test('perf: NeuralNetwork2D registers mousemove/touchmove with { passive: true }
     assert.ok(mm && mm.opts && mm.opts.passive === true,
       `NN2D mousemove should be { passive: true }, got ${JSON.stringify(mm && mm.opts)}`);
   });
+});
+
+/* ─── Globe3D teardown ──────────────────────────────────────
+   Globe3D allocates a WebGL context, several geometries/materials,
+   an IntersectionObserver, plus window/document/canvas listeners.
+   destroy() must release every one of them so the page can be
+   torn down (pagehide / bfcache eviction) without leaking. */
+
+test('Globe3D.destroy() removes every listener it added and disposes Three.js resources', () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCAF = global.cancelAnimationFrame;
+  const prevPerf = global.performance;
+  const prevDpr = global.devicePixelRatio;
+  const prevLocations = global.LOCATIONS;
+
+  /* Mock THREE plus dispose-tracking on geometries/materials/textures
+     so we can assert the destructor walks the scene and frees them. */
+  const three = createMinimalThree();
+  const disposed = { geometries: 0, materials: 0, textures: 0, renderer: 0 };
+  three.BufferGeometry.prototype.dispose = function () { disposed.geometries++; };
+  /* Add a fake "Material" to the mock's Mesh children so traversal can find them. */
+  three.WebGLRenderer.prototype.dispose = function () { disposed.renderer++; };
+  three.WebGLRenderer.prototype.forceContextLoss = function () {};
+  __setThreeForTests(three);
+
+  global.LOCATIONS = {
+    pins: [{ type: 'lived', name: 'A', lat: 40, lon: 2, info: 'Home' }],
+    regions: [],
+    trips: [],
+  };
+
+  const tooltip = {
+    classList: makeClassList(),
+    style: {},
+    querySelector() { return { textContent: '', style: {} }; },
+  };
+
+  const trackedDoc = [];
+  const trackedWin = [];
+  /* Async _buildGlobe() draws on a created canvas; mock its 2D context so
+     a late-arriving fetch() rejection in the catch path doesn't crash. */
+  const ctx2d = {
+    fillStyle: '', strokeStyle: '', lineWidth: 0,
+    fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+    closePath() {}, fill() {}, stroke() {},
+    save() {}, restore() {}, rect() {}, clip() {},
+  };
+  global.document = {
+    hidden: false,
+    addEventListener(type, fn, opts) { trackedDoc.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedDoc.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+    getElementById(id) { return id === 'globe-tooltip' ? tooltip : null; },
+    createElement(tag) {
+      if (tag === 'canvas') return { width: 0, height: 0, getContext() { return ctx2d; } };
+      return {};
+    },
+  };
+  global.window = {
+    addEventListener(type, fn, opts) { trackedWin.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedWin.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+  };
+  global.performance = { now: () => 1000 };
+  global.devicePixelRatio = 2;
+  let observerDisconnected = false;
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+    disconnect() { observerDisconnected = true; }
+  };
+  global.requestAnimationFrame = () => 1;
+  let cafCalls = 0;
+  global.cancelAnimationFrame = () => { cafCalls += 1; };
+
+  const trackedCanvas = [];
+  const canvas = {
+    parentElement: { clientWidth: 680, clientHeight: 340 },
+    addEventListener(type, fn, opts) { trackedCanvas.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedCanvas.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 680, height: 340 }; },
+  };
+
+  try {
+    const globe = new Globe3D(canvas);
+    assert.ok(typeof globe.destroy === 'function', 'Globe3D must expose destroy()');
+    const winBefore = trackedWin.length;
+    const docBefore = trackedDoc.length;
+    const cvBefore = trackedCanvas.length;
+    assert.ok(winBefore > 0 && docBefore > 0 && cvBefore > 0,
+      'precondition: Globe3D should have registered listeners on window, document, and canvas');
+
+    globe.destroy();
+
+    assert.ok(cafCalls >= 1, 'destroy() must cancelAnimationFrame');
+    assert.ok(observerDisconnected, 'destroy() must disconnect the IntersectionObserver');
+    const stillBound = [
+      ...trackedWin.filter(e => !e.removed).map(e => `window:${e.type}`),
+      ...trackedDoc.filter(e => !e.removed).map(e => `document:${e.type}`),
+      ...trackedCanvas.filter(e => !e.removed).map(e => `canvas:${e.type}`),
+    ];
+    assert.equal(stillBound.length, 0,
+      `destroy() left listeners attached: ${stillBound.join(', ')}`);
+    assert.ok(disposed.renderer >= 1, 'destroy() must dispose the WebGLRenderer');
+    assert.ok(disposed.geometries >= 1, 'destroy() must dispose at least one BufferGeometry');
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCAF;
+    global.performance = prevPerf;
+    global.devicePixelRatio = prevDpr;
+    __resetThreeForTests();
+    global.LOCATIONS = prevLocations;
+  }
+});
+
+/* ─── Globe3D partial-construction teardown ─────────────────
+   When LOCATIONS is missing the constructor returns early before
+   assigning this._listeners / this.scene / etc. destroy() must
+   tolerate that partial instance — otherwise pagehide on a page
+   that loaded globe.js but not data/locations.js will throw. */
+
+test('Globe3D.destroy() is safe to call on a partial instance (LOCATIONS undefined)', () => {
+  const prevLocations = global.LOCATIONS;
+  __setThreeForTests(createMinimalThree());
+  /* Force the early-return path at js/globe.js:168. */
+  delete global.LOCATIONS;
+
+  const canvas = {
+    parentElement: { clientWidth: 680, clientHeight: 340 },
+    addEventListener() {},
+    removeEventListener() {},
+    getBoundingClientRect() { return { left: 0, top: 0, width: 680, height: 340 }; },
+  };
+
+  /* Silence the expected console.warn from the early-return branch. */
+  const prevWarn = console.warn;
+  console.warn = () => {};
+
+  try {
+    const globe = new Globe3D(canvas);
+    /* Precondition: constructor returned early — instance is partial. */
+    assert.equal(globe.scene, undefined,
+      'precondition: partial instance should have no scene');
+    assert.equal(globe._listeners, undefined,
+      'precondition: partial instance should have no _listeners');
+
+    /* Must not throw. Currently throws TypeError on `for ... of this._listeners`. */
+    assert.doesNotThrow(() => globe.destroy(),
+      'destroy() must tolerate a partial instance');
+  } finally {
+    console.warn = prevWarn;
+    __resetThreeForTests();
+    if (prevLocations === undefined) delete global.LOCATIONS;
+    else global.LOCATIONS = prevLocations;
+  }
+});
+
+/* ─── Globe screen-reader alternative ───────────────────────
+   The 3D globe is unreachable for keyboard-only and screen-reader
+   users. renderGlobeA11yList() must populate a visually-hidden
+   list grouping the location data so the same content is exposed
+   in plain text. */
+
+test('renderGlobeA11yList: populates a list with grouped pins, regions, and trips', async () => {
+  const { renderGlobeA11yList } = await import('../js/main.js');
+  assert.equal(typeof renderGlobeA11yList, 'function',
+    'main.js must export renderGlobeA11yList');
+
+  /* Minimal DOM stub for the section element. */
+  const container = {
+    innerHTML: '',
+    setAttribute() {},
+  };
+  const locations = {
+    pins: [
+      { type: 'lived',    name: 'Frankfurt',   info: 'Max Planck 2015–2017' },
+      { type: 'current',  name: 'San Sebastián', info: 'Current home' },
+      { type: 'worktrip', name: 'Cambridge',   info: 'AVATecH 2010' },
+      { type: 'holiday',  name: 'Reykjavík' },
+    ],
+    regions: [{ name: 'Iceland', info: 'Volcanoes' }],
+    trips:   [{ name: 'Around the World 2014', cities: [{ name: 'Tokyo' }, { name: 'Sydney' }] }],
+  };
+
+  renderGlobeA11yList(container, locations);
+
+  const html = container.innerHTML;
+  assert.ok(html.length > 0, 'list HTML should not be empty');
+  /* Group headings present. */
+  assert.ok(/Lived/.test(html), 'missing "Lived" group');
+  assert.ok(/Current/.test(html), 'missing "Current" group');
+  assert.ok(/Worktrip/.test(html), 'missing "Worktrip" group');
+  assert.ok(/Holiday/.test(html), 'missing "Holiday" group');
+  assert.ok(/Region/i.test(html), 'missing "Region" group');
+  assert.ok(/Trip/i.test(html), 'missing "Trip" group');
+  /* Sample names round-trip. */
+  for (const name of ['Frankfurt', 'San Sebastián', 'Cambridge', 'Reykjavík', 'Iceland', 'Tokyo', 'Sydney']) {
+    assert.ok(html.includes(name), `expected "${name}" in list`);
+  }
+});
+
+test('renderGlobeA11yList: omits empty groups and tolerates missing fields', async () => {
+  const { renderGlobeA11yList } = await import('../js/main.js');
+  const container = { innerHTML: '', setAttribute() {} };
+  renderGlobeA11yList(container, {
+    pins: [{ type: 'lived', name: 'A' }],
+    regions: [],
+    trips: [],
+  });
+  assert.ok(container.innerHTML.includes('Lived'));
+  assert.ok(!container.innerHTML.includes('Region'),
+    'empty regions group should be omitted');
+  assert.ok(!container.innerHTML.includes('Trip'),
+    'empty trips group should be omitted');
+});
+
+test('renderGlobeA11yList: escapes HTML in location names', async () => {
+  const { renderGlobeA11yList } = await import('../js/main.js');
+  const container = { innerHTML: '', setAttribute() {} };
+  renderGlobeA11yList(container, {
+    pins: [{ type: 'lived', name: '<script>alert(1)</script>' }],
+  });
+  assert.ok(!container.innerHTML.includes('<script>'),
+    'must escape HTML in untrusted location names');
+  assert.ok(container.innerHTML.includes('&lt;script'),
+    'expected escaped &lt;script in output');
+});
+
+/* ─── Page lifecycle cleanup ────────────────────────────────
+   initLifecycleCleanup() must register a pagehide listener that
+   fans out destroy() across the supplied disposables, idempotently. */
+
+test('initLifecycleCleanup: pagehide invokes destroy() on every disposable, exactly once', async () => {
+  const prevWindow = global.window;
+  const captured = [];
+  global.window = {
+    addEventListener(type, fn, opts) { captured.push({ type, fn, opts }); },
+    removeEventListener() {},
+  };
+  try {
+    const { initLifecycleCleanup } = await import('../js/main.js');
+    let aCalls = 0, bCalls = 0;
+    const disposables = [
+      { destroy() { aCalls += 1; } },
+      { destroy() { bCalls += 1; } },
+      null,            // tolerate nullish entries
+      { /* no destroy method */ },
+    ];
+    initLifecycleCleanup(disposables);
+    const ph = captured.find(e => e.type === 'pagehide');
+    assert.ok(ph, 'initLifecycleCleanup must register a pagehide listener');
+    ph.fn();
+    assert.equal(aCalls, 1);
+    assert.equal(bCalls, 1);
+    /* Idempotent: second pagehide should not double-destroy. */
+    ph.fn();
+    assert.equal(aCalls, 1);
+    assert.equal(bCalls, 1);
+  } finally {
+    global.window = prevWindow;
+  }
+});
+
+test('initLifecycleCleanup: a destroy() that throws does not block the others', async () => {
+  const prevWindow = global.window;
+  const captured = [];
+  global.window = {
+    addEventListener(type, fn) { captured.push({ type, fn }); },
+    removeEventListener() {},
+  };
+  try {
+    const { initLifecycleCleanup } = await import('../js/main.js');
+    let bCalls = 0;
+    initLifecycleCleanup([
+      { destroy() { throw new Error('boom'); } },
+      { destroy() { bCalls += 1; } },
+    ]);
+    const ph = captured.find(e => e.type === 'pagehide');
+    ph.fn();
+    assert.equal(bCalls, 1, 'a thrown destroy() must not stop the loop');
+  } finally {
+    global.window = prevWindow;
+  }
+});
+
+/* ─── No debug console output in production js/ ─────────────
+   console.warn and console.error gate on genuine error paths
+   (WebGL unavailable, shader compile failed, missing data) and
+   are kept. console.log/info/debug are noise — they should not
+   ship to production. */
+
+test('quality: no console.log / console.info / console.debug in js/', () => {
+  const jsDir = path.join(ROOT, 'js');
+  const files = fs.readdirSync(jsDir).filter(f => f.endsWith('.js'));
+  const offenders = [];
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(jsDir, f), 'utf8');
+    const lines = src.split('\n');
+    lines.forEach((line, i) => {
+      if (/\bconsole\.(log|info|debug)\s*\(/.test(line)) {
+        offenders.push(`${f}:${i + 1}: ${line.trim()}`);
+      }
+    });
+  }
+  assert.equal(offenders.length, 0,
+    `Found debug console output:\n  ${offenders.join('\n  ')}`);
+});
+
+/* ─── Command palette: filter must reuse list nodes ────────
+   Audit §2.5 — every keystroke previously did `listEl.innerHTML = ''`
+   and recreated every <li>. The refactor mounts items once and
+   toggles `hidden` on filter; assert that node identities are
+   stable across an input event. */
+
+function makeCmdPaletteDom() {
+  const items = [];
+  const overlay = {
+    hidden: true,
+    listeners: {},
+    addEventListener(type, fn) { this.listeners[type] = fn; },
+  };
+  const input = {
+    value: '',
+    listeners: {},
+    addEventListener(type, fn) { this.listeners[type] = fn; },
+    setAttribute() {},
+    removeAttribute() {},
+    focus() {},
+  };
+  const listEl = {
+    children: [],
+    set innerHTML(v) {
+      /* Mirror real DOM: setting innerHTML='' clears children. We track
+         this so the test can detect rebuild-on-keystroke. */
+      if (v === '') this.children.length = 0;
+      this._lastHtmlAssign = v;
+    },
+    get innerHTML() { return this._lastHtmlAssign || ''; },
+    appendChild(el) {
+      this.children.push(el);
+      el.parentNode = this;
+      return el;
+    },
+    querySelectorAll(sel) {
+      if (sel === '.cmd-item') return this.children.filter(c => c.className === 'cmd-item');
+      return [];
+    },
+  };
+  const created = [];
+  const doc = {
+    getElementById(id) {
+      if (id === 'cmd-overlay') return overlay;
+      if (id === 'cmd-input')   return input;
+      if (id === 'cmd-list')    return listEl;
+      return null;
+    },
+    createElement(tag) {
+      const el = {
+        tagName: tag.toUpperCase(),
+        className: '',
+        id: '',
+        innerHTML: '',
+        textContent: '',
+        style: {},
+        hidden: false,
+        attrs: {},
+        listeners: {},
+        children: [],
+        addEventListener(type, fn) { this.listeners[type] = fn; },
+        setAttribute(k, v) { this.attrs[k] = v; },
+        removeAttribute(k) { delete this.attrs[k]; },
+        getAttribute(k) { return this.attrs[k]; },
+        scrollIntoView() {},
+      };
+      created.push(el);
+      return el;
+    },
+    body: { style: {} },
+    addEventListener() {},
+    activeElement: null,
+  };
+  return { overlay, input, listEl, items, created, doc };
+}
+
+test('initCommandPalette: filtering reuses <li> nodes instead of recreating them', () => {
+  const prevDoc = global.document;
+  const prevRAF = global.requestAnimationFrame;
+  global.requestAnimationFrame = (fn) => { fn(); return 1; };
+
+  const { input, listEl, doc } = makeCmdPaletteDom();
+  global.document = doc;
+
+  try {
+    initCommandPalette();
+    /* The refactor builds items at init (so filtering doesn't need to). */
+    const initialItemNodes = listEl.children.filter(c => c.className === 'cmd-item');
+    assert.ok(initialItemNodes.length > 0,
+      'precondition: items should be mounted by init');
+    const firstNode = initialItemNodes[0];
+
+    /* Drive a filter that matches at least one item. */
+    input.value = 'cv';
+    input.listeners.input?.();
+
+    const afterFilterNodes = listEl.children.filter(c => c.className === 'cmd-item');
+    assert.equal(afterFilterNodes.length, initialItemNodes.length,
+      'filter must not change the number of mounted item nodes');
+    assert.strictEqual(afterFilterNodes[0], firstNode,
+      'filter must reuse existing <li> nodes (identity preserved)');
+
+    /* Items not matching the filter should be hidden, not detached. */
+    const visibleAfter = afterFilterNodes.filter(n => !n.hidden).length;
+    const hiddenAfter  = afterFilterNodes.filter(n =>  n.hidden).length;
+    assert.ok(hiddenAfter > 0,
+      'non-matching items should be hidden after filter');
+    assert.ok(visibleAfter > 0,
+      'matching items should remain visible');
+  } finally {
+    global.document = prevDoc;
+    global.requestAnimationFrame = prevRAF;
+  }
 });

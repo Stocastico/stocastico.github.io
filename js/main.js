@@ -21,16 +21,18 @@
    to the swap via the context. */
 export { __setThreeForTests, __resetThreeForTests } from './three-context.js';
 
-/* ─── Data files (side-effect imports: each file sets globalThis.X) ───
-   We import for the side-effect of populating globalThis so the
-   existing bare references in this module (e.g. `LOCATIONS`,
-   `CV_CAREER`, `PUBLICATIONS`, `PROJECTS`) resolve via the global
-   scope. This keeps the test mocking pattern (`global.X = mock`)
-   working while still letting Vite tree-shake the bundle. */
+/* ─── Data files ──────────────────────────────────────────
+   PROJECTS / PUBLICATIONS / CV_* are imported by name; render
+   functions take them as parameters (defaulting to these
+   imports) so tests can inject mocks without touching globals.
+
+   LOCATIONS still rides on globalThis because Globe3D and
+   EuropeMap2D read it as a bare global from constructor bodies;
+   migrating those is a separate refactor. */
 import '../data/locations.js';
-import '../data/publications.js';
-import '../data/projects.js';
-import '../data/cv.js';
+import { PUBLICATIONS as DEFAULT_PUBLICATIONS } from '../data/publications.js';
+import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
+import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
 import './europe-map.js';
 
 /* Shared environment helpers */
@@ -319,7 +321,7 @@ function initCommandPalette() {
   const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
   /* ── Build all command items ────────────────────────────── */
-  let allItems = [
+  const allItems = [
     ...SECTIONS.map(s => ({
       label: s.label,
       hint: s.hint,
@@ -337,44 +339,112 @@ function initCommandPalette() {
     ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
   ];
 
-  let filtered = allItems;
-  let activeIdx = 0;
+  /* allItems index → filtered set; activeIdx is an index into allItems. */
+  let visibleSet = new Set(allItems.map((_, i) => i));
+  let activeIdx = allItems.length > 0 ? 0 : -1;
+  /* Element to restore focus to when the palette closes (whatever the
+     user was on before they triggered ⌘K / hint / kbd shortcut). */
+  let _previouslyFocused = null;
 
-  /* ── Render list ────────────────────────────────────────── */
-  function render(items) {
-    listEl.innerHTML = '';
-    if (!items.length) {
-      const li = document.createElement('li');
-      li.className = 'cmd-item';
-      li.style.color = 'var(--text-faint)';
-      li.textContent = 'No results';
-      listEl.appendChild(li);
-      return;
+  /* ── Mount items + group labels ONCE ─────────────────────
+     Filtering toggles `hidden` on existing nodes instead of rebuilding
+     the list per keystroke. Every <li> persists for the lifetime of
+     the palette; only attribute writes change. */
+  const itemEls = new Array(allItems.length);
+  const groupBuckets = new Map(); /* group name -> { label, indices } */
+  const noResultsEl = document.createElement('li');
+  noResultsEl.className = 'cmd-item';
+  noResultsEl.style.color = 'var(--text-faint)';
+  noResultsEl.textContent = 'No results';
+  noResultsEl.hidden = true;
+
+  let lastGroup = null;
+  allItems.forEach((item, i) => {
+    if (item.group !== lastGroup) {
+      const label = document.createElement('li');
+      label.className = 'cmd-group-label';
+      label.setAttribute('role', 'presentation');
+      label.textContent = item.group;
+      listEl.appendChild(label);
+      groupBuckets.set(item.group, { label, indices: [] });
+      lastGroup = item.group;
+    }
+    groupBuckets.get(item.group).indices.push(i);
+    const li = document.createElement('li');
+    li.id = `cmd-opt-${i}`;
+    li.className = 'cmd-item';
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', String(i === activeIdx));
+    li.innerHTML = `
+      <span class="cmd-item-icon">${item.icon}</span>
+      <span class="cmd-item-label">${escapeHtml(item.label)}</span>
+      <span class="cmd-item-hint">${escapeHtml(item.hint || '')}</span>
+    `;
+    li.addEventListener('mouseenter', () => { setActive(i); });
+    li.addEventListener('click', () => { execute(item); });
+    listEl.appendChild(li);
+    itemEls[i] = li;
+  });
+  listEl.appendChild(noResultsEl);
+  syncActiveDescendant();
+
+  /* Set aria-selected on item nodes (single attribute write per change). */
+  function syncActiveDescendant() {
+    let activeId = null;
+    for (let i = 0; i < itemEls.length; i++) {
+      const isActive = i === activeIdx;
+      itemEls[i].setAttribute('aria-selected', String(isActive));
+      if (isActive) activeId = itemEls[i].id;
+    }
+    if (activeId) input.setAttribute('aria-activedescendant', activeId);
+    else input.removeAttribute('aria-activedescendant');
+  }
+
+  function setActive(i) {
+    if (i === activeIdx || !visibleSet.has(i)) return;
+    activeIdx = i;
+    syncActiveDescendant();
+  }
+
+  /* Apply the filter: toggle `hidden` on items + group labels, recompute
+     the visible set, and reset the active row to the first match. */
+  function applyFilter(q) {
+    if (q) {
+      visibleSet = new Set();
+      for (let i = 0; i < allItems.length; i++) {
+        const it = allItems[i];
+        if (it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q)) {
+          visibleSet.add(i);
+        }
+      }
+    } else {
+      visibleSet = new Set(allItems.map((_, i) => i));
     }
 
-    let lastGroup = null;
-    items.forEach((item, i) => {
-      if (item.group !== lastGroup) {
-        const label = document.createElement('li');
-        label.className = 'cmd-group-label';
-        label.setAttribute('role', 'presentation');
-        label.textContent = item.group;
-        listEl.appendChild(label);
-        lastGroup = item.group;
-      }
-      const li = document.createElement('li');
-      li.className = 'cmd-item';
-      li.setAttribute('role', 'option');
-      li.setAttribute('aria-selected', String(i === activeIdx));
-      li.innerHTML = `
-        <span class="cmd-item-icon">${item.icon}</span>
-        <span class="cmd-item-label">${item.label}</span>
-        <span class="cmd-item-hint">${item.hint || ''}</span>
-      `;
-      li.addEventListener('mouseenter', () => { activeIdx = i; render(filtered); });
-      li.addEventListener('click', () => { execute(item); });
-      listEl.appendChild(li);
-    });
+    for (let i = 0; i < itemEls.length; i++) {
+      itemEls[i].hidden = !visibleSet.has(i);
+    }
+    for (const { label, indices } of groupBuckets.values()) {
+      label.hidden = !indices.some(i => visibleSet.has(i));
+    }
+    noResultsEl.hidden = visibleSet.size > 0;
+
+    /* Active row → first visible item, or -1 if none. */
+    activeIdx = visibleSet.size > 0
+      ? Math.min(...visibleSet)
+      : -1;
+    syncActiveDescendant();
+  }
+
+  /* Move active row by +/- 1 within the filtered set. */
+  function moveActive(dir) {
+    const visible = [...visibleSet].sort((a, b) => a - b);
+    if (visible.length === 0) return;
+    const pos = visible.indexOf(activeIdx);
+    const next = Math.max(0, Math.min(visible.length - 1, pos + dir));
+    activeIdx = visible[next];
+    syncActiveDescendant();
+    itemEls[activeIdx]?.scrollIntoView({ block: 'nearest' });
   }
 
   /* ── Execute & close ────────────────────────────────────── */
@@ -385,41 +455,36 @@ function initCommandPalette() {
 
   /* ── Filter on input ────────────────────────────────────── */
   input.addEventListener('input', () => {
-    const q = input.value.toLowerCase().trim();
-    filtered = q
-      ? allItems.filter(it => it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q))
-      : allItems;
-    activeIdx = 0;
-    render(filtered);
+    applyFilter(input.value.toLowerCase().trim());
   });
 
   /* ── Keyboard navigation ────────────────────────────────── */
   input.addEventListener('keydown', (e) => {
-    const visibleItems = filtered.filter(Boolean); /* same array */
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      activeIdx = Math.min(activeIdx + 1, visibleItems.length - 1);
-      render(visibleItems);
-      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+      moveActive(+1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      activeIdx = Math.max(activeIdx - 1, 0);
-      render(visibleItems);
-      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+      moveActive(-1);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (visibleItems[activeIdx]) execute(visibleItems[activeIdx]);
+      const item = activeIdx >= 0 ? allItems[activeIdx] : null;
+      if (item) execute(item);
     } else if (e.key === 'Escape') {
       close();
+    } else if (e.key === 'Tab') {
+      /* The input is the only focusable element inside the overlay; keep
+         focus there so Tab/Shift+Tab can't escape the modal (focus trap). */
+      e.preventDefault();
     }
   });
 
   /* ── Open / close ───────────────────────────────────────── */
   function open() {
-    filtered = allItems;
-    activeIdx = 0;
+    /* Remember the trigger element so we can restore focus on close. */
+    _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
     input.value = '';
-    render(filtered);
+    applyFilter('');
     overlay.hidden = false;
     requestAnimationFrame(() => input.focus());
     document.body.style.overflow = 'hidden';
@@ -428,6 +493,12 @@ function initCommandPalette() {
   function close() {
     overlay.hidden = true;
     document.body.style.overflow = '';
+    /* Restore focus to whatever opened the palette so keyboard users
+       don't lose their place in the page. */
+    if (_previouslyFocused && typeof _previouslyFocused.focus === 'function') {
+      try { _previouslyFocused.focus(); } catch (_) { /* element may have unmounted */ }
+    }
+    _previouslyFocused = null;
   }
 
   /* Close on overlay click */
@@ -693,12 +764,13 @@ function initEmailObfuscation() {
   });
 }
 
-/* Publication items — data source: PUBLICATIONS (data/publications.js) */
-function renderPublications() {
+/* Publication items — data source: PUBLICATIONS (data/publications.js).
+   Tests pass a mock array as the first argument. */
+function renderPublications(publications = DEFAULT_PUBLICATIONS) {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
-  list.innerHTML = PUBLICATIONS.slice(0, 3).map((pub, i) => `
+  list.innerHTML = publications.slice(0, 3).map((pub, i) => `
     <a href="${escapeHtml(pub.url || '#')}" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="${i * 70}" aria-label="Open paper: ${escapeHtml(pub.title)}">
       <div class="pub-year">${escapeHtml(pub.year)}</div>
       <div class="pub-title">${escapeHtml(pub.title)}</div>
@@ -734,11 +806,11 @@ function renderProjectCard(project, i) {
   '</a>';
 }
 
-function renderProjects() {
+function renderProjects(projects = DEFAULT_PROJECTS) {
   var grid = document.getElementById('projects-grid');
   if (!grid) return;
 
-  if (!PROJECTS.length) {
+  if (!projects.length) {
     grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
     return;
   }
@@ -748,9 +820,9 @@ function renderProjects() {
   var showAll = grid.getAttribute && grid.getAttribute('data-render') === 'all';
   var shown;
   if (showAll) {
-    shown = PROJECTS;
+    shown = projects;
   } else {
-    var pool = PROJECTS.slice();
+    var pool = projects.slice();
     for (var i = pool.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
@@ -759,7 +831,7 @@ function renderProjects() {
   }
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
-  if (!showAll && PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
+  if (!showAll && projects.length > PROJECTS_MAX_HOMEPAGE) {
     var footer = document.createElement('div');
     footer.className = 'projects-view-all';
     footer.setAttribute('data-animate', '');
@@ -804,15 +876,13 @@ function setFooterYear() {
 
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
-   Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   Tests pass mocked career/education arrays as arguments.
    One card per job/degree — all details visible, no flipping.
    ═══════════════════════════════════════════════════════════ */
-function renderCV() {
+function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) {
   if (typeof document === 'undefined') return;
   const timeline = document.getElementById('cv-timeline');
   if (!timeline) return;
-  if (typeof CV_CAREER    === 'undefined') return;
-  if (typeof CV_EDUCATION === 'undefined') return;
 
   /* ── Build card HTML ────────────────────────────────── */
   function cardHtml(entry, type) {
@@ -851,7 +921,7 @@ function renderCV() {
   /* ── Separate concurrent from normal education entries ── */
   var concurrentEduEntries = [];
   var normalEduEntries     = [];
-  (CV_EDUCATION || []).forEach(function(e) {
+  (education || []).forEach(function(e) {
     if (Array.isArray(e.concurrent_with) && e.concurrent_with.length > 0) {
       concurrentEduEntries.push(e);
     } else {
@@ -870,7 +940,7 @@ function renderCV() {
   /* ── Partition career entries ── */
   var concurrentCareerEntries = [];
   var normalCareerEntries     = [];
-  (CV_CAREER || []).forEach(function(e) {
+  (career || []).forEach(function(e) {
     if (concurrentCareerSet[e.company]) {
       concurrentCareerEntries.push(e);
     } else {
@@ -948,15 +1018,14 @@ function renderCV() {
 
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — SKILLS PANELS
-   Reads CV_SKILLS global from data/cv.js.
+   Tests pass a mocked CV_SKILLS object as the first argument.
    ═══════════════════════════════════════════════════════════ */
-function renderSkills() {
+function renderSkills(skills = DEFAULT_CV_SKILLS) {
   if (typeof document === 'undefined') return;
   const container = document.getElementById('cv-skills');
   if (!container) return;
-  if (typeof CV_SKILLS === 'undefined') return;
 
-  const { technical = [], leadership = [], languages = [] } = CV_SKILLS;
+  const { technical = [], leadership = [], languages = [] } = skills;
 
   /* Progress-bar panel for technical / leadership */
   function barPanel(items, label) {
@@ -1230,6 +1299,7 @@ export {
   initNavbar,
   initMobileMenu,
   initBackToTop,
+  initCommandPalette,
   initScrollReveal,
   initCounters,
   animateCounter,
@@ -1301,6 +1371,76 @@ function initCmdTriggerHint() {
   });
 }
 
+/* Renders a screen-reader / keyboard-accessible alternative to the 3D
+   globe. The canvas itself is unreachable for non-pointer users; this
+   list exposes the same data (lived/current/worktrip/holiday pins,
+   regions, and multi-city trips) in plain semantic HTML. The container
+   is visually-hidden but discoverable by assistive tech via the
+   aria-describedby on the canvas. */
+export function renderGlobeA11yList(container, locations) {
+  if (!container || !locations) return;
+  const TYPE_LABEL = {
+    lived:    'Lived',
+    current:  'Current',
+    worktrip: 'Worktrip',
+    holiday:  'Holiday',
+  };
+
+  /* Group pins by type so screen-reader users hear them in a
+     predictable order: Lived → Current → Worktrip → Holiday. */
+  const grouped = { lived: [], current: [], worktrip: [], holiday: [] };
+  for (const p of (locations.pins || [])) {
+    if (grouped[p.type]) grouped[p.type].push(p);
+  }
+
+  const sections = [];
+  for (const [type, items] of Object.entries(grouped)) {
+    if (!items.length) continue;
+    const lis = items.map(p => {
+      const info = p.info ? ` &mdash; ${escapeHtml(p.info)}` : '';
+      return `<li>${escapeHtml(p.name)}${info}</li>`;
+    }).join('');
+    sections.push(
+      `<h4>${TYPE_LABEL[type]} (${items.length})</h4>` +
+      `<ul>${lis}</ul>`
+    );
+  }
+  if ((locations.regions || []).length) {
+    const lis = locations.regions.map(r => {
+      const info = r.info ? ` &mdash; ${escapeHtml(r.info)}` : '';
+      return `<li>${escapeHtml(r.name)}${info}</li>`;
+    }).join('');
+    sections.push(`<h4>Regions (${locations.regions.length})</h4><ul>${lis}</ul>`);
+  }
+  if ((locations.trips || []).length) {
+    const lis = locations.trips.map(t => {
+      const cities = (t.cities || []).map(c => escapeHtml(c.name)).join(', ');
+      return `<li>${escapeHtml(t.name)}${cities ? ': ' + cities : ''}</li>`;
+    }).join('');
+    sections.push(`<h4>Trips (${locations.trips.length})</h4><ul>${lis}</ul>`);
+  }
+  container.innerHTML = sections.join('');
+}
+
+/* Run destroy() on every disposable when the page is being torn down.
+   Wired to `pagehide` because it is the most reliable signal for both
+   classic unloads and bfcache evictions. visibilitychange would be too
+   aggressive — it fires on tab switches, where we want the canvases
+   to resume rather than disappear. */
+export function initLifecycleCleanup(disposables) {
+  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+  let disposed = false;
+  const cleanup = () => {
+    if (disposed) return;
+    disposed = true;
+    for (const d of disposables) {
+      if (!d || typeof d.destroy !== 'function') continue;
+      try { d.destroy(); } catch (_) { /* swallow — page is going away */ }
+    }
+  };
+  window.addEventListener('pagehide', cleanup);
+}
+
 /* ═══════════════════════════════════════════════════════════
    INIT — runs when DOM is ready
    ═══════════════════════════════════════════════════════════ */
@@ -1361,10 +1501,16 @@ if (typeof document !== 'undefined') {
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
 
+  /* Each WebGL/Canvas instance below is recorded so a single pagehide
+     handler at the end of init can release every WebGL context, RAF
+     loop, observer, and event listener in one go (avoids leaks when
+     bfcache evicts the page or the user reloads). */
+  const _disposables = [];
+
   /* Noise gradient — raw WebGL, runs on devices that support it */
   const noiseCanvas = document.getElementById('noise-canvas');
   if (noiseCanvas && !prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
-    new NoiseGradient(noiseCanvas);
+    _disposables.push(new NoiseGradient(noiseCanvas));
   } else if (noiseCanvas) {
     noiseCanvas.style.display = 'none';
   }
@@ -1375,9 +1521,9 @@ if (typeof document !== 'undefined') {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
     } else if (hasWebGLSupport()) {
-      new NeuralNetwork(canvas);
+      _disposables.push(new NeuralNetwork(canvas));
     } else {
-      new NeuralNetwork2D(canvas);
+      _disposables.push(new NeuralNetwork2D(canvas));
     }
   }
 
@@ -1407,11 +1553,14 @@ if (typeof document !== 'undefined') {
   if (globeCanvas && typeof LOCATIONS !== 'undefined') {
     _lazyOnViewport(globeCanvas, () => {
       geocodeLocations(LOCATIONS).then(() => {
-        if (prefersReducedMotion() || !hasWebGLSupport()) {
-          new GlobeFallback2D(globeCanvas);
-        } else {
-          new Globe3D(globeCanvas);
-        }
+        const inst = (prefersReducedMotion() || !hasWebGLSupport())
+          ? new GlobeFallback2D(globeCanvas)
+          : new Globe3D(globeCanvas);
+        _disposables.push(inst);
+        /* Render the SR-accessible alternative list once the location data
+           is final (i.e. all geocoding has resolved). */
+        const a11yList = document.getElementById('globe-a11y-list');
+        if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
       });
     });
   }
@@ -1419,15 +1568,19 @@ if (typeof document !== 'undefined') {
   /* 2D Europe Map — Canvas-based representation of European locations */
   const europeCanvas = document.getElementById('europe-canvas');
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
-    _lazyOnViewport(europeCanvas, () => new EuropeMap2D(europeCanvas));
+    _lazyOnViewport(europeCanvas, () => _disposables.push(new EuropeMap2D(europeCanvas)));
   }
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');
   const nameCanvas = document.getElementById('name-canvas');
   if (nameH1 && nameCanvas) {
-    if (!prefersReducedMotion() && hasWebGLSupport()) new HeroNameShader(nameH1, nameCanvas);
+    if (!prefersReducedMotion() && hasWebGLSupport()) {
+      _disposables.push(new HeroNameShader(nameH1, nameCanvas));
+    }
   }
+
+  initLifecycleCleanup(_disposables);
 
   });
 }

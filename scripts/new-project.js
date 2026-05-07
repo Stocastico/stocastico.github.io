@@ -501,6 +501,9 @@ function main() {
   }
 
   console.log(`\nProject added: ${fm.title} → ${projectEntry.url}`);
+  console.log('Next steps:');
+  console.log('  npm run generate-project-jsonld   # add Article + BreadcrumbList JSON-LD');
+  console.log('  npm run generate-sitemap          # add the new page to sitemap.xml');
 }
 
 if (require.main === module) {

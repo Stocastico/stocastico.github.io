@@ -38,4 +38,3 @@ export const PUBLICATIONS = [
     },
 ];
 
-if (typeof globalThis !== 'undefined') globalThis.PUBLICATIONS = PUBLICATIONS;

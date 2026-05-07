@@ -20,7 +20,7 @@ npm run dev                 # Vite dev server (HMR, serves source unbundled)
 npm run build               # Vite build → dist/
 npm run preview             # Preview the dist/ build locally
 
-npm test                    # Run all 212 tests (Node built-in runner)
+npm test                    # Run all tests (Node built-in runner)
 npm run test:main           # js/main.js tests only
 npm run test:cv             # CV rendering tests only
 npm run test:project        # new-project.js tests only
@@ -61,6 +61,8 @@ data/publications.js Publication entries — ESM (edit directly)
 scripts/            Generator scripts (new-project, generate-cv, generate-locations)
 test/               Tests for each script + main.js + europe-map.js + SEO + Playwright E2E
 docs/               DATA-FORMATS.md, DEPLOYMENT.md, project-template.md, cv.pdf, defense.pdf
+drafts/             Markdown source for projects/*.html — feed into `npm run new-project`. Not deployed.
+public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt).
 ```
 
 ## Coding Conventions
@@ -76,7 +78,7 @@ docs/               DATA-FORMATS.md, DEPLOYMENT.md, project-template.md, cv.pdf,
 
 ## Workflow Rules
 
-1. **Always run `npm test` after changes** to verify nothing breaks (212 tests, ~2s)
+1. **Always run `npm test` after changes** to verify nothing breaks
 2. **After editing `data/cv.yaml`**, run `npm run generate-cv`
 3. **After editing `data/locations.yaml`**, run `npm run generate-locations`
 4. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.

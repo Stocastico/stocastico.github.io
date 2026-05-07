@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- generated:csp-meta -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <!-- /generated:csp-meta -->
   <meta name="description"
     content="Stefano Masneri — Senior AI Lead specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="author" content="Stefano Masneri" />
@@ -80,9 +83,15 @@
   <!-- dns-prefetch: fallback for browsers that do not support preconnect -->
   <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
   <!-- Self-hosted fonts (no external requests to Google) -->
+  <!-- Preload the two weights used above the fold so text doesn't re-flow when
+       fonts arrive (Inter 400 for body, Outfit 700 for hero/display). -->
+  <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/outfit-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="css/fonts.css" />
   <link rel="icon"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -180,7 +189,10 @@
       <div class="about-top">
         <div class="about-photo-col" data-animate data-delay="100">
           <div class="photo-card">
-            <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" width="1088" height="1088" loading="lazy" />
+            <picture>
+              <source srcset="img/photo.webp" type="image/webp" />
+              <img src="img/photo.jpg" alt="Stefano Masneri" class="photo-img" width="1088" height="1088" loading="lazy" />
+            </picture>
           </div>
 
           <!-- Quick stats — real values are baked into the HTML so search
@@ -563,7 +575,10 @@
           <!-- 3D Globe -->
           <div class="maps-col maps-col--globe">
             <div class="globe-scene">
-              <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
+              <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited" aria-describedby="globe-a11y-list"></canvas>
+              <!-- Screen-reader / keyboard alternative to the canvas. Populated
+                   by renderGlobeA11yList() once LOCATIONS data is loaded. -->
+              <section id="globe-a11y-list" class="visually-hidden" aria-label="Places, list view"></section>
               <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
                 <span class="gt-type"></span>
                 <strong class="gt-name"></strong>

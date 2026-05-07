@@ -50,6 +50,12 @@ function copyDataJson() {
   };
 }
 
+/* sitemap.xml and robots.txt live in public/ — Vite copies anything under
+   public/ to dist/ verbatim. This is the standard mechanism; no plugin
+   needed. The two custom plugins above remain because data/*.json and
+   docs/*.pdf live alongside non-static siblings (ESM modules, markdown
+   notes), and splitting those directories would harm clarity. */
+
 export default defineConfig({
   base: '/',
   appType: 'mpa',
