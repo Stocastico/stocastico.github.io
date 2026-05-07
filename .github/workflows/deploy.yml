@@ -61,6 +61,11 @@ jobs:
       - name: Regenerate sitemap
         run: npm run generate-sitemap
 
+      # Re-render BreadcrumbList + Article JSON-LD on every project page.
+      # Idempotent — only updates the marker block in the <head>.
+      - name: Regenerate project JSON-LD
+        run: npm run generate-project-jsonld
+
       - name: Build with Vite
         run: npm run build
 
