@@ -86,7 +86,7 @@ async function main() {
   lines.push('');
   const xml = lines.join('\n');
 
-  const outPath = path.join(ROOT, 'sitemap.xml');
+  const outPath = path.join(ROOT, 'public', 'sitemap.xml');
   if (DRY_RUN) {
     process.stdout.write(xml);
     return;

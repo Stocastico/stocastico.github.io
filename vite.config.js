@@ -50,27 +50,16 @@ function copyDataJson() {
   };
 }
 
-/* Copy root-level static files (sitemap.xml, robots.txt) into dist/. These
-   live at the repository root for crawler discovery, but Rollup never sees
-   them, so Vite would otherwise leave them out of the deploy entirely. */
-function copyRootStatic() {
-  return {
-    name: 'copy-root-static',
-    apply: 'build',
-    closeBundle() {
-      const outDir = resolve(__dirname, 'dist');
-      for (const f of ['sitemap.xml', 'robots.txt']) {
-        const src = resolve(__dirname, f);
-        if (existsSync(src)) copyFileSync(src, resolve(outDir, f));
-      }
-    },
-  };
-}
+/* sitemap.xml and robots.txt live in public/ — Vite copies anything under
+   public/ to dist/ verbatim. This is the standard mechanism; no plugin
+   needed. The two custom plugins above remain because data/*.json and
+   docs/*.pdf live alongside non-static siblings (ESM modules, markdown
+   notes), and splitting those directories would harm clarity. */
 
 export default defineConfig({
   base: '/',
   appType: 'mpa',
-  plugins: [copyDocsPdfs(), copyDataJson(), copyRootStatic()],
+  plugins: [copyDocsPdfs(), copyDataJson()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

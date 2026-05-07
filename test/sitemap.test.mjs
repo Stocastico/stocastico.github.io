@@ -9,7 +9,7 @@ const ROOT = path.resolve(__dirname, '..');
 const SITE = 'https://stocastico.github.io';
 
 function readSitemap() {
-  return fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
+  return fs.readFileSync(path.join(ROOT, 'public', 'sitemap.xml'), 'utf8');
 }
 
 async function loadProjects() {
