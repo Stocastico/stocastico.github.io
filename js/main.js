@@ -1301,6 +1301,57 @@ function initCmdTriggerHint() {
   });
 }
 
+/* Renders a screen-reader / keyboard-accessible alternative to the 3D
+   globe. The canvas itself is unreachable for non-pointer users; this
+   list exposes the same data (lived/current/worktrip/holiday pins,
+   regions, and multi-city trips) in plain semantic HTML. The container
+   is visually-hidden but discoverable by assistive tech via the
+   aria-describedby on the canvas. */
+export function renderGlobeA11yList(container, locations) {
+  if (!container || !locations) return;
+  const TYPE_LABEL = {
+    lived:    'Lived',
+    current:  'Current',
+    worktrip: 'Worktrip',
+    holiday:  'Holiday',
+  };
+
+  /* Group pins by type so screen-reader users hear them in a
+     predictable order: Lived → Current → Worktrip → Holiday. */
+  const grouped = { lived: [], current: [], worktrip: [], holiday: [] };
+  for (const p of (locations.pins || [])) {
+    if (grouped[p.type]) grouped[p.type].push(p);
+  }
+
+  const sections = [];
+  for (const [type, items] of Object.entries(grouped)) {
+    if (!items.length) continue;
+    const lis = items.map(p => {
+      const info = p.info ? ` &mdash; ${escapeHtml(p.info)}` : '';
+      return `<li>${escapeHtml(p.name)}${info}</li>`;
+    }).join('');
+    sections.push(
+      `<h4>${TYPE_LABEL[type]} (${items.length})</h4>` +
+      `<ul>${lis}</ul>`
+    );
+  }
+  if ((locations.regions || []).length) {
+    const lis = locations.regions.map(r => {
+      const info = r.info ? ` &mdash; ${escapeHtml(r.info)}` : '';
+      return `<li>${escapeHtml(r.name)}${info}</li>`;
+    }).join('');
+    sections.push(`<h4>Regions (${locations.regions.length})</h4><ul>${lis}</ul>`);
+  }
+  if ((locations.trips || []).length) {
+    const lis = locations.trips.map(t => {
+      const cities = (t.cities || []).map(c => escapeHtml(c.name)).join(', ');
+      return `<li>${escapeHtml(t.name)}${cities ? ': ' + cities : ''}</li>`;
+    }).join('');
+    sections.push(`<h4>Trips (${locations.trips.length})</h4><ul>${lis}</ul>`);
+  }
+  container.innerHTML = sections.join('');
+}
+
 /* Run destroy() on every disposable when the page is being torn down.
    Wired to `pagehide` because it is the most reliable signal for both
    classic unloads and bfcache evictions. visibilitychange would be too
@@ -1436,6 +1487,10 @@ if (typeof document !== 'undefined') {
           ? new GlobeFallback2D(globeCanvas)
           : new Globe3D(globeCanvas);
         _disposables.push(inst);
+        /* Render the SR-accessible alternative list once the location data
+           is final (i.e. all geocoding has resolved). */
+        const a11yList = document.getElementById('globe-a11y-list');
+        if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
       });
     });
   }

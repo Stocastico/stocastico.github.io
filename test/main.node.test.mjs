@@ -2632,6 +2632,77 @@ test('Globe3D.destroy() removes every listener it added and disposes Three.js re
   }
 });
 
+/* ─── Globe screen-reader alternative ───────────────────────
+   The 3D globe is unreachable for keyboard-only and screen-reader
+   users. renderGlobeA11yList() must populate a visually-hidden
+   list grouping the location data so the same content is exposed
+   in plain text. */
+
+test('renderGlobeA11yList: populates a list with grouped pins, regions, and trips', async () => {
+  const { renderGlobeA11yList } = await import('../js/main.js');
+  assert.equal(typeof renderGlobeA11yList, 'function',
+    'main.js must export renderGlobeA11yList');
+
+  /* Minimal DOM stub for the section element. */
+  const container = {
+    innerHTML: '',
+    setAttribute() {},
+  };
+  const locations = {
+    pins: [
+      { type: 'lived',    name: 'Frankfurt',   info: 'Max Planck 2015–2017' },
+      { type: 'current',  name: 'San Sebastián', info: 'Current home' },
+      { type: 'worktrip', name: 'Cambridge',   info: 'AVATecH 2010' },
+      { type: 'holiday',  name: 'Reykjavík' },
+    ],
+    regions: [{ name: 'Iceland', info: 'Volcanoes' }],
+    trips:   [{ name: 'Around the World 2014', cities: [{ name: 'Tokyo' }, { name: 'Sydney' }] }],
+  };
+
+  renderGlobeA11yList(container, locations);
+
+  const html = container.innerHTML;
+  assert.ok(html.length > 0, 'list HTML should not be empty');
+  /* Group headings present. */
+  assert.ok(/Lived/.test(html), 'missing "Lived" group');
+  assert.ok(/Current/.test(html), 'missing "Current" group');
+  assert.ok(/Worktrip/.test(html), 'missing "Worktrip" group');
+  assert.ok(/Holiday/.test(html), 'missing "Holiday" group');
+  assert.ok(/Region/i.test(html), 'missing "Region" group');
+  assert.ok(/Trip/i.test(html), 'missing "Trip" group');
+  /* Sample names round-trip. */
+  for (const name of ['Frankfurt', 'San Sebastián', 'Cambridge', 'Reykjavík', 'Iceland', 'Tokyo', 'Sydney']) {
+    assert.ok(html.includes(name), `expected "${name}" in list`);
+  }
+});
+
+test('renderGlobeA11yList: omits empty groups and tolerates missing fields', async () => {
+  const { renderGlobeA11yList } = await import('../js/main.js');
+  const container = { innerHTML: '', setAttribute() {} };
+  renderGlobeA11yList(container, {
+    pins: [{ type: 'lived', name: 'A' }],
+    regions: [],
+    trips: [],
+  });
+  assert.ok(container.innerHTML.includes('Lived'));
+  assert.ok(!container.innerHTML.includes('Region'),
+    'empty regions group should be omitted');
+  assert.ok(!container.innerHTML.includes('Trip'),
+    'empty trips group should be omitted');
+});
+
+test('renderGlobeA11yList: escapes HTML in location names', async () => {
+  const { renderGlobeA11yList } = await import('../js/main.js');
+  const container = { innerHTML: '', setAttribute() {} };
+  renderGlobeA11yList(container, {
+    pins: [{ type: 'lived', name: '<script>alert(1)</script>' }],
+  });
+  assert.ok(!container.innerHTML.includes('<script>'),
+    'must escape HTML in untrusted location names');
+  assert.ok(container.innerHTML.includes('&lt;script'),
+    'expected escaped &lt;script in output');
+});
+
 /* ─── Page lifecycle cleanup ────────────────────────────────
    initLifecycleCleanup() must register a pagehide listener that
    fans out destroy() across the supplied disposables, idempotently. */

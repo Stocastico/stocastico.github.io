@@ -570,7 +570,10 @@
           <!-- 3D Globe -->
           <div class="maps-col maps-col--globe">
             <div class="globe-scene">
-              <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited"></canvas>
+              <canvas id="globe-canvas" aria-label="Interactive 3D globe showing places I have lived and visited" aria-describedby="globe-a11y-list"></canvas>
+              <!-- Screen-reader / keyboard alternative to the canvas. Populated
+                   by renderGlobeA11yList() once LOCATIONS data is loaded. -->
+              <section id="globe-a11y-list" class="visually-hidden" aria-label="Places, list view"></section>
               <div class="globe-tooltip" id="globe-tooltip" aria-live="polite">
                 <span class="gt-type"></span>
                 <strong class="gt-name"></strong>
