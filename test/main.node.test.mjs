@@ -37,6 +37,7 @@ import {
   initCardFlip,
   renderProjects,
   PROJECTS_MAX_HOMEPAGE,
+  initCommandPalette,
   __setThreeForTests,
   __resetThreeForTests,
 } from '../js/main.js';
@@ -2784,4 +2785,119 @@ test('quality: no console.log / console.info / console.debug in js/', () => {
   }
   assert.equal(offenders.length, 0,
     `Found debug console output:\n  ${offenders.join('\n  ')}`);
+});
+
+/* ─── Command palette: filter must reuse list nodes ────────
+   Audit §2.5 — every keystroke previously did `listEl.innerHTML = ''`
+   and recreated every <li>. The refactor mounts items once and
+   toggles `hidden` on filter; assert that node identities are
+   stable across an input event. */
+
+function makeCmdPaletteDom() {
+  const items = [];
+  const overlay = {
+    hidden: true,
+    listeners: {},
+    addEventListener(type, fn) { this.listeners[type] = fn; },
+  };
+  const input = {
+    value: '',
+    listeners: {},
+    addEventListener(type, fn) { this.listeners[type] = fn; },
+    setAttribute() {},
+    removeAttribute() {},
+    focus() {},
+  };
+  const listEl = {
+    children: [],
+    set innerHTML(v) {
+      /* Mirror real DOM: setting innerHTML='' clears children. We track
+         this so the test can detect rebuild-on-keystroke. */
+      if (v === '') this.children.length = 0;
+      this._lastHtmlAssign = v;
+    },
+    get innerHTML() { return this._lastHtmlAssign || ''; },
+    appendChild(el) {
+      this.children.push(el);
+      el.parentNode = this;
+      return el;
+    },
+    querySelectorAll(sel) {
+      if (sel === '.cmd-item') return this.children.filter(c => c.className === 'cmd-item');
+      return [];
+    },
+  };
+  const created = [];
+  const doc = {
+    getElementById(id) {
+      if (id === 'cmd-overlay') return overlay;
+      if (id === 'cmd-input')   return input;
+      if (id === 'cmd-list')    return listEl;
+      return null;
+    },
+    createElement(tag) {
+      const el = {
+        tagName: tag.toUpperCase(),
+        className: '',
+        id: '',
+        innerHTML: '',
+        textContent: '',
+        style: {},
+        hidden: false,
+        attrs: {},
+        listeners: {},
+        children: [],
+        addEventListener(type, fn) { this.listeners[type] = fn; },
+        setAttribute(k, v) { this.attrs[k] = v; },
+        removeAttribute(k) { delete this.attrs[k]; },
+        getAttribute(k) { return this.attrs[k]; },
+        scrollIntoView() {},
+      };
+      created.push(el);
+      return el;
+    },
+    body: { style: {} },
+    addEventListener() {},
+    activeElement: null,
+  };
+  return { overlay, input, listEl, items, created, doc };
+}
+
+test('initCommandPalette: filtering reuses <li> nodes instead of recreating them', () => {
+  const prevDoc = global.document;
+  const prevRAF = global.requestAnimationFrame;
+  global.requestAnimationFrame = (fn) => { fn(); return 1; };
+
+  const { input, listEl, doc } = makeCmdPaletteDom();
+  global.document = doc;
+
+  try {
+    initCommandPalette();
+    /* The refactor builds items at init (so filtering doesn't need to). */
+    const initialItemNodes = listEl.children.filter(c => c.className === 'cmd-item');
+    assert.ok(initialItemNodes.length > 0,
+      'precondition: items should be mounted by init');
+    const firstNode = initialItemNodes[0];
+
+    /* Drive a filter that matches at least one item. */
+    input.value = 'cv';
+    input.listeners.input?.();
+
+    const afterFilterNodes = listEl.children.filter(c => c.className === 'cmd-item');
+    assert.equal(afterFilterNodes.length, initialItemNodes.length,
+      'filter must not change the number of mounted item nodes');
+    assert.strictEqual(afterFilterNodes[0], firstNode,
+      'filter must reuse existing <li> nodes (identity preserved)');
+
+    /* Items not matching the filter should be hidden, not detached. */
+    const visibleAfter = afterFilterNodes.filter(n => !n.hidden).length;
+    const hiddenAfter  = afterFilterNodes.filter(n =>  n.hidden).length;
+    assert.ok(hiddenAfter > 0,
+      'non-matching items should be hidden after filter');
+    assert.ok(visibleAfter > 0,
+      'matching items should remain visible');
+  } finally {
+    global.document = prevDoc;
+    global.requestAnimationFrame = prevRAF;
+  }
 });

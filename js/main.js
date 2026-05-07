@@ -321,7 +321,7 @@ function initCommandPalette() {
   const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
   /* ── Build all command items ────────────────────────────── */
-  let allItems = [
+  const allItems = [
     ...SECTIONS.map(s => ({
       label: s.label,
       hint: s.hint,
@@ -339,56 +339,112 @@ function initCommandPalette() {
     ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
   ];
 
-  let filtered = allItems;
-  let activeIdx = 0;
+  /* allItems index → filtered set; activeIdx is an index into allItems. */
+  let visibleSet = new Set(allItems.map((_, i) => i));
+  let activeIdx = allItems.length > 0 ? 0 : -1;
   /* Element to restore focus to when the palette closes (whatever the
      user was on before they triggered ⌘K / hint / kbd shortcut). */
   let _previouslyFocused = null;
 
-  /* ── Render list ────────────────────────────────────────── */
-  function render(items) {
-    listEl.innerHTML = '';
-    if (!items.length) {
-      const li = document.createElement('li');
-      li.className = 'cmd-item';
-      li.style.color = 'var(--text-faint)';
-      li.textContent = 'No results';
-      listEl.appendChild(li);
-      input.removeAttribute('aria-activedescendant');
-      return;
-    }
+  /* ── Mount items + group labels ONCE ─────────────────────
+     Filtering toggles `hidden` on existing nodes instead of rebuilding
+     the list per keystroke. Every <li> persists for the lifetime of
+     the palette; only attribute writes change. */
+  const itemEls = new Array(allItems.length);
+  const groupBuckets = new Map(); /* group name -> { label, indices } */
+  const noResultsEl = document.createElement('li');
+  noResultsEl.className = 'cmd-item';
+  noResultsEl.style.color = 'var(--text-faint)';
+  noResultsEl.textContent = 'No results';
+  noResultsEl.hidden = true;
 
-    let lastGroup = null;
+  let lastGroup = null;
+  allItems.forEach((item, i) => {
+    if (item.group !== lastGroup) {
+      const label = document.createElement('li');
+      label.className = 'cmd-group-label';
+      label.setAttribute('role', 'presentation');
+      label.textContent = item.group;
+      listEl.appendChild(label);
+      groupBuckets.set(item.group, { label, indices: [] });
+      lastGroup = item.group;
+    }
+    groupBuckets.get(item.group).indices.push(i);
+    const li = document.createElement('li');
+    li.id = `cmd-opt-${i}`;
+    li.className = 'cmd-item';
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', String(i === activeIdx));
+    li.innerHTML = `
+      <span class="cmd-item-icon">${item.icon}</span>
+      <span class="cmd-item-label">${escapeHtml(item.label)}</span>
+      <span class="cmd-item-hint">${escapeHtml(item.hint || '')}</span>
+    `;
+    li.addEventListener('mouseenter', () => { setActive(i); });
+    li.addEventListener('click', () => { execute(item); });
+    listEl.appendChild(li);
+    itemEls[i] = li;
+  });
+  listEl.appendChild(noResultsEl);
+  syncActiveDescendant();
+
+  /* Set aria-selected on item nodes (single attribute write per change). */
+  function syncActiveDescendant() {
     let activeId = null;
-    items.forEach((item, i) => {
-      if (item.group !== lastGroup) {
-        const label = document.createElement('li');
-        label.className = 'cmd-group-label';
-        label.setAttribute('role', 'presentation');
-        label.textContent = item.group;
-        listEl.appendChild(label);
-        lastGroup = item.group;
-      }
-      const li = document.createElement('li');
-      const id = `cmd-opt-${i}`;
-      li.id = id;
-      li.className = 'cmd-item';
-      li.setAttribute('role', 'option');
-      li.setAttribute('aria-selected', String(i === activeIdx));
-      if (i === activeIdx) activeId = id;
-      li.innerHTML = `
-        <span class="cmd-item-icon">${item.icon}</span>
-        <span class="cmd-item-label">${escapeHtml(item.label)}</span>
-        <span class="cmd-item-hint">${escapeHtml(item.hint || '')}</span>
-      `;
-      li.addEventListener('mouseenter', () => { activeIdx = i; render(filtered); });
-      li.addEventListener('click', () => { execute(item); });
-      listEl.appendChild(li);
-    });
-    /* aria-activedescendant points at the currently highlighted option so
-       screen readers announce it as the user arrows through the list. */
+    for (let i = 0; i < itemEls.length; i++) {
+      const isActive = i === activeIdx;
+      itemEls[i].setAttribute('aria-selected', String(isActive));
+      if (isActive) activeId = itemEls[i].id;
+    }
     if (activeId) input.setAttribute('aria-activedescendant', activeId);
     else input.removeAttribute('aria-activedescendant');
+  }
+
+  function setActive(i) {
+    if (i === activeIdx || !visibleSet.has(i)) return;
+    activeIdx = i;
+    syncActiveDescendant();
+  }
+
+  /* Apply the filter: toggle `hidden` on items + group labels, recompute
+     the visible set, and reset the active row to the first match. */
+  function applyFilter(q) {
+    if (q) {
+      visibleSet = new Set();
+      for (let i = 0; i < allItems.length; i++) {
+        const it = allItems[i];
+        if (it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q)) {
+          visibleSet.add(i);
+        }
+      }
+    } else {
+      visibleSet = new Set(allItems.map((_, i) => i));
+    }
+
+    for (let i = 0; i < itemEls.length; i++) {
+      itemEls[i].hidden = !visibleSet.has(i);
+    }
+    for (const { label, indices } of groupBuckets.values()) {
+      label.hidden = !indices.some(i => visibleSet.has(i));
+    }
+    noResultsEl.hidden = visibleSet.size > 0;
+
+    /* Active row → first visible item, or -1 if none. */
+    activeIdx = visibleSet.size > 0
+      ? Math.min(...visibleSet)
+      : -1;
+    syncActiveDescendant();
+  }
+
+  /* Move active row by +/- 1 within the filtered set. */
+  function moveActive(dir) {
+    const visible = [...visibleSet].sort((a, b) => a - b);
+    if (visible.length === 0) return;
+    const pos = visible.indexOf(activeIdx);
+    const next = Math.max(0, Math.min(visible.length - 1, pos + dir));
+    activeIdx = visible[next];
+    syncActiveDescendant();
+    itemEls[activeIdx]?.scrollIntoView({ block: 'nearest' });
   }
 
   /* ── Execute & close ────────────────────────────────────── */
@@ -399,30 +455,21 @@ function initCommandPalette() {
 
   /* ── Filter on input ────────────────────────────────────── */
   input.addEventListener('input', () => {
-    const q = input.value.toLowerCase().trim();
-    filtered = q
-      ? allItems.filter(it => it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q))
-      : allItems;
-    activeIdx = 0;
-    render(filtered);
+    applyFilter(input.value.toLowerCase().trim());
   });
 
   /* ── Keyboard navigation ────────────────────────────────── */
   input.addEventListener('keydown', (e) => {
-    const visibleItems = filtered.filter(Boolean); /* same array */
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      activeIdx = Math.min(activeIdx + 1, visibleItems.length - 1);
-      render(visibleItems);
-      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+      moveActive(+1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      activeIdx = Math.max(activeIdx - 1, 0);
-      render(visibleItems);
-      listEl.querySelectorAll('.cmd-item')[activeIdx]?.scrollIntoView({ block: 'nearest' });
+      moveActive(-1);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (visibleItems[activeIdx]) execute(visibleItems[activeIdx]);
+      const item = activeIdx >= 0 ? allItems[activeIdx] : null;
+      if (item) execute(item);
     } else if (e.key === 'Escape') {
       close();
     } else if (e.key === 'Tab') {
@@ -434,12 +481,10 @@ function initCommandPalette() {
 
   /* ── Open / close ───────────────────────────────────────── */
   function open() {
-    filtered = allItems;
-    activeIdx = 0;
-    input.value = '';
     /* Remember the trigger element so we can restore focus on close. */
     _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
-    render(filtered);
+    input.value = '';
+    applyFilter('');
     overlay.hidden = false;
     requestAnimationFrame(() => input.focus());
     document.body.style.overflow = 'hidden';
@@ -1254,6 +1299,7 @@ export {
   initNavbar,
   initMobileMenu,
   initBackToTop,
+  initCommandPalette,
   initScrollReveal,
   initCounters,
   animateCounter,
