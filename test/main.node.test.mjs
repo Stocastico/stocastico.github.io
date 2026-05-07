@@ -2506,6 +2506,132 @@ test('perf: NeuralNetwork2D registers mousemove/touchmove with { passive: true }
   });
 });
 
+/* ─── Globe3D teardown ──────────────────────────────────────
+   Globe3D allocates a WebGL context, several geometries/materials,
+   an IntersectionObserver, plus window/document/canvas listeners.
+   destroy() must release every one of them so the page can be
+   torn down (pagehide / bfcache eviction) without leaking. */
+
+test('Globe3D.destroy() removes every listener it added and disposes Three.js resources', () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCAF = global.cancelAnimationFrame;
+  const prevPerf = global.performance;
+  const prevDpr = global.devicePixelRatio;
+  const prevLocations = global.LOCATIONS;
+
+  /* Mock THREE plus dispose-tracking on geometries/materials/textures
+     so we can assert the destructor walks the scene and frees them. */
+  const three = createMinimalThree();
+  const disposed = { geometries: 0, materials: 0, textures: 0, renderer: 0 };
+  three.BufferGeometry.prototype.dispose = function () { disposed.geometries++; };
+  /* Add a fake "Material" to the mock's Mesh children so traversal can find them. */
+  three.WebGLRenderer.prototype.dispose = function () { disposed.renderer++; };
+  three.WebGLRenderer.prototype.forceContextLoss = function () {};
+  __setThreeForTests(three);
+
+  global.LOCATIONS = {
+    pins: [{ type: 'lived', name: 'A', lat: 40, lon: 2, info: 'Home' }],
+    regions: [],
+    trips: [],
+  };
+
+  const tooltip = {
+    classList: makeClassList(),
+    style: {},
+    querySelector() { return { textContent: '', style: {} }; },
+  };
+
+  const trackedDoc = [];
+  const trackedWin = [];
+  /* Async _buildGlobe() draws on a created canvas; mock its 2D context so
+     a late-arriving fetch() rejection in the catch path doesn't crash. */
+  const ctx2d = {
+    fillStyle: '', strokeStyle: '', lineWidth: 0,
+    fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {},
+    closePath() {}, fill() {}, stroke() {},
+    save() {}, restore() {}, rect() {}, clip() {},
+  };
+  global.document = {
+    hidden: false,
+    addEventListener(type, fn, opts) { trackedDoc.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedDoc.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+    getElementById(id) { return id === 'globe-tooltip' ? tooltip : null; },
+    createElement(tag) {
+      if (tag === 'canvas') return { width: 0, height: 0, getContext() { return ctx2d; } };
+      return {};
+    },
+  };
+  global.window = {
+    addEventListener(type, fn, opts) { trackedWin.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedWin.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+  };
+  global.performance = { now: () => 1000 };
+  global.devicePixelRatio = 2;
+  let observerDisconnected = false;
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+    disconnect() { observerDisconnected = true; }
+  };
+  global.requestAnimationFrame = () => 1;
+  let cafCalls = 0;
+  global.cancelAnimationFrame = () => { cafCalls += 1; };
+
+  const trackedCanvas = [];
+  const canvas = {
+    parentElement: { clientWidth: 680, clientHeight: 340 },
+    addEventListener(type, fn, opts) { trackedCanvas.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedCanvas.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 680, height: 340 }; },
+  };
+
+  try {
+    const globe = new Globe3D(canvas);
+    assert.ok(typeof globe.destroy === 'function', 'Globe3D must expose destroy()');
+    const winBefore = trackedWin.length;
+    const docBefore = trackedDoc.length;
+    const cvBefore = trackedCanvas.length;
+    assert.ok(winBefore > 0 && docBefore > 0 && cvBefore > 0,
+      'precondition: Globe3D should have registered listeners on window, document, and canvas');
+
+    globe.destroy();
+
+    assert.ok(cafCalls >= 1, 'destroy() must cancelAnimationFrame');
+    assert.ok(observerDisconnected, 'destroy() must disconnect the IntersectionObserver');
+    const stillBound = [
+      ...trackedWin.filter(e => !e.removed).map(e => `window:${e.type}`),
+      ...trackedDoc.filter(e => !e.removed).map(e => `document:${e.type}`),
+      ...trackedCanvas.filter(e => !e.removed).map(e => `canvas:${e.type}`),
+    ];
+    assert.equal(stillBound.length, 0,
+      `destroy() left listeners attached: ${stillBound.join(', ')}`);
+    assert.ok(disposed.renderer >= 1, 'destroy() must dispose the WebGLRenderer');
+    assert.ok(disposed.geometries >= 1, 'destroy() must dispose at least one BufferGeometry');
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCAF;
+    global.performance = prevPerf;
+    global.devicePixelRatio = prevDpr;
+    __resetThreeForTests();
+    global.LOCATIONS = prevLocations;
+  }
+});
+
 /* ─── No debug console output in production js/ ─────────────
    console.warn and console.error gate on genuine error paths
    (WebGL unavailable, shader compile failed, missing data) and

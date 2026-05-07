@@ -200,6 +200,8 @@ export class Globe3D {
     this._rafId = null;
     /* Visibility flags */
     this._globeVisible = true;
+    /* Tracks every listener registration so destroy() can remove them. */
+    this._listeners = [];
 
     /* The mesh the cursor is currently hovering (scaled up for feedback) */
     this._hoveredMesh = null;
@@ -232,16 +234,24 @@ export class Globe3D {
     this.canvas._globe = this;
 
     /* Pause when canvas is out of the viewport */
-    const _ioGlobe = new IntersectionObserver(([e]) => {
+    this._ioGlobe = new IntersectionObserver(([e]) => {
       this._globeVisible = e.isIntersecting;
       if (this._globeVisible && !this._rafId) this._animate();
     }, { threshold: 0 });
-    _ioGlobe.observe(canvasEl);
+    this._ioGlobe.observe(canvasEl);
 
     /* Pause when the browser tab is hidden */
-    document.addEventListener('visibilitychange', () => {
+    this._onVisibilityChange = () => {
       if (!document.hidden && !this._rafId) this._animate();
-    });
+    };
+    this._addListener(document, 'visibilitychange', this._onVisibilityChange);
+  }
+
+  /* Track + register a listener so destroy() can later remove it. */
+  _addListener(target, type, fn, opts) {
+    if (!target || typeof target.addEventListener !== 'function') return;
+    target.addEventListener(type, fn, opts);
+    this._listeners.push({ target, type, fn, opts });
   }
 
   /* ── Internals ──────────────────────────────────────────── */
@@ -267,14 +277,16 @@ export class Globe3D {
     this.renderer.setClearColor(0x000000, 0);
 
     if (typeof this.canvas.addEventListener === 'function') {
-      this.canvas.addEventListener('webglcontextlost', (e) => {
+      this._onContextLost = (e) => {
         e.preventDefault();
         this._rafId = null;
-      }, false);
-      this.canvas.addEventListener('webglcontextrestored', () => {
+      };
+      this._onContextRestored = () => {
         this.renderer.setSize(this.w, this.h);
         if (!this._rafId) this._animate();
-      }, false);
+      };
+      this._addListener(this.canvas, 'webglcontextlost', this._onContextLost, false);
+      this._addListener(this.canvas, 'webglcontextrestored', this._onContextRestored, false);
     }
 
     /* Ambient: cool fill — keeps the dark ocean dark */
@@ -736,31 +748,42 @@ export class Globe3D {
     };
     const end = () => { this.isDragging = false; };
 
-    cv.addEventListener('mousedown', e => start(e.clientX, e.clientY));
-    window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
-    window.addEventListener('mouseup', end);
-    /* mouseenter / mouseleave gate raycasting to when the cursor is
-       actually over the canvas — huge win when browsing other sections */
-    cv.addEventListener('mouseenter', () => { this._mouseOver = true; });
-    cv.addEventListener('mouseleave', () => {
+    /* Bound handlers stored so destroy() can remove them. */
+    this._onMouseDown   = (e) => start(e.clientX, e.clientY);
+    this._onMouseMove   = (e) => move(e.clientX, e.clientY);
+    this._onMouseUp     = end;
+    this._onMouseEnter  = () => { this._mouseOver = true; };
+    this._onMouseLeave  = () => {
       this._mouseOver = false;
       if (this._hoveredMesh) {
         this._hoveredMesh.scale.setScalar(1);
         this._hoveredMesh = null;
       }
       this.tooltip?.classList.remove('visible');
-    });
-    cv.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    cv.addEventListener('touchmove', e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-    cv.addEventListener('touchend', end);
-    window.addEventListener('resize', () => {
+    };
+    this._onTouchStart  = (e) => start(e.touches[0].clientX, e.touches[0].clientY);
+    this._onTouchMove   = (e) => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); };
+    this._onTouchEnd    = end;
+    this._onResize      = () => {
       this._rect = null;   /* invalidate cached bounding rect */
       this._resize();
       this.camera.aspect = this.w / this.h;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(this.w, this.h);
       this.renderer.setPixelRatio(Math.min((typeof devicePixelRatio === 'number' ? devicePixelRatio : 1), this._pixelRatioCap));
-    });
+    };
+
+    this._addListener(cv, 'mousedown', this._onMouseDown);
+    this._addListener(window, 'mousemove', this._onMouseMove);
+    this._addListener(window, 'mouseup', this._onMouseUp);
+    /* mouseenter / mouseleave gate raycasting to when the cursor is
+       actually over the canvas — huge win when browsing other sections */
+    this._addListener(cv, 'mouseenter', this._onMouseEnter);
+    this._addListener(cv, 'mouseleave', this._onMouseLeave);
+    this._addListener(cv, 'touchstart', this._onTouchStart, { passive: true });
+    this._addListener(cv, 'touchmove', this._onTouchMove, { passive: false });
+    this._addListener(cv, 'touchend', this._onTouchEnd);
+    this._addListener(window, 'resize', this._onResize);
   }
 
   /* ── Render loop ────────────────────────────────────────── */
@@ -847,6 +870,63 @@ export class Globe3D {
     }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /* ── Teardown ──────────────────────────────────────────────
+     Called from pagehide / before bfcache eviction. Cancels the
+     RAF loop, removes every event listener registered through
+     _addListener, disconnects the IntersectionObserver, walks the
+     scene to dispose geometries / materials / textures, and asks
+     the renderer to free its WebGL context. */
+  destroy() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+
+    if (this._ioGlobe) {
+      this._ioGlobe.disconnect();
+      this._ioGlobe = null;
+    }
+
+    for (const { target, type, fn, opts } of this._listeners) {
+      try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
+    }
+    this._listeners = [];
+
+    /* Walk the scene tree and free GPU resources. */
+    if (this.scene && Array.isArray(this.scene.children)) {
+      const visit = (obj) => {
+        if (!obj) return;
+        if (obj.geometry && typeof obj.geometry.dispose === 'function') obj.geometry.dispose();
+        const mat = obj.material;
+        if (mat) {
+          const mats = Array.isArray(mat) ? mat : [mat];
+          for (const m of mats) {
+            if (m && typeof m.dispose === 'function') m.dispose();
+            /* Common Three.js material textures — dispose if present. */
+            for (const key of ['map', 'alphaMap', 'normalMap', 'bumpMap', 'envMap']) {
+              if (m && m[key] && typeof m[key].dispose === 'function') m[key].dispose();
+            }
+          }
+        }
+        if (Array.isArray(obj.children)) obj.children.forEach(visit);
+      };
+      this.scene.children.forEach(visit);
+    }
+
+    if (this.renderer) {
+      try {
+        if (typeof this.renderer.dispose === 'function') this.renderer.dispose();
+        if (typeof this.renderer.forceContextLoss === 'function') this.renderer.forceContextLoss();
+      } catch (_) { /* ignore */ }
+    }
+
+    /* Drop large refs so the GC can collect everything else. */
+    this.scene = null;
+    this.renderer = null;
+    this.markerMeshes = [];
+    this.pulseRings = [];
+    this.tripAnimations = [];
+    if (this.canvas) delete this.canvas._globe;
   }
 }
 
