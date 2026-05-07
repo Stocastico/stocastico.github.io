@@ -120,6 +120,43 @@ for (const { rel, label } of indexableTopLevel) {
   });
 }
 
+function cspMeta(html) {
+  /* The CSP value contains single quotes (e.g. 'self'), so the content
+     capture must be tied to the surrounding double quotes only. */
+  const m = html.match(/<meta\s+(?=[^>]*\bhttp-equiv=["']Content-Security-Policy["'])(?=[^>]*\bcontent="([^"]+)")[^>]*>/i)
+    || html.match(/<meta\s+(?=[^>]*\bcontent="([^"]+)")(?=[^>]*\bhttp-equiv=["']Content-Security-Policy["'])[^>]*>/i);
+  return m ? m[1] : null;
+}
+
+const allRoutes = [
+  'index.html',
+  'cv.html',
+  'projects.html',
+  '404.html',
+  'projects/aroundtheworld.html',
+  'projects/audience-engagement.html',
+  'projects/avatech.html',
+  'projects/clear-architecture.html',
+  'projects/mpi-brain-research.html',
+  'projects/rag-document-qa.html',
+  'projects/traction.html',
+  'projects/ufc-fighter-tracking.html',
+];
+
+for (const rel of allRoutes) {
+  test(`security: ${rel} ships a Content-Security-Policy meta tag`, () => {
+    const csp = cspMeta(read(rel));
+    assert.ok(csp, `${rel} missing <meta http-equiv="Content-Security-Policy">`);
+    /* Basic shape: must lock down default-src and only let connect-src
+       reach the Nominatim geocoder (no other third parties allowed). */
+    assert.match(csp, /default-src\s+'self'/, `${rel} CSP missing default-src 'self'`);
+    assert.match(csp, /base-uri\s+'self'/, `${rel} CSP missing base-uri 'self'`);
+    assert.match(csp, /frame-ancestors\s+'self'/, `${rel} CSP missing frame-ancestors`);
+    assert.match(csp, /connect-src[^;]*nominatim\.openstreetmap\.org/,
+      `${rel} CSP must allow nominatim.openstreetmap.org for the geocoder`);
+  });
+}
+
 test('SEO: index.html stat counters have non-zero values baked into HTML', () => {
   const html = read('index.html');
   /* Capture each <span class="stat-number" data-count="N">M</span> pair. */

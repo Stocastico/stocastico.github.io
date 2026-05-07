@@ -21,6 +21,7 @@
     "generate-locations": "node scripts/generate-locations.js",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-project-jsonld": "node scripts/generate-project-jsonld.mjs",
+    "generate-csp-meta": "node scripts/generate-csp-meta.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },
   "engines": {
