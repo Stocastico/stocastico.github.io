@@ -90,7 +90,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ## Running tests
 
 ```bash
-npm test                       # run all tests (212 tests)
+npm test                       # run all tests
 npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
