@@ -164,8 +164,3 @@ export const CV_SKILLS = {
   ],
 };
 
-if (typeof globalThis !== 'undefined') {
-  globalThis.CV_CAREER = CV_CAREER;
-  globalThis.CV_EDUCATION = CV_EDUCATION;
-  globalThis.CV_SKILLS = CV_SKILLS;
-}

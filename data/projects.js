@@ -99,4 +99,3 @@ export const PROJECTS = [
             url: "projects/avatech.html",
         }];
 
-if (typeof globalThis !== 'undefined') globalThis.PROJECTS = PROJECTS;

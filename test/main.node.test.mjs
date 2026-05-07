@@ -163,27 +163,24 @@ test('LOCATIONS no longer require runtime geocoding in production data', () => {
 test('renderPublications injects publication cards into the container', () => {
   const list = { innerHTML: '' };
   const prevDocument = global.document;
-  const prevPublications = global.PUBLICATIONS;
   global.document = {
     getElementById(id) {
       if (id === 'publications-list') return list;
       return null;
     },
   };
-  global.PUBLICATIONS = [{
-    year: '2025',
-    title: 'Paper title',
-    authors: 'A. Author',
-    venue: 'Conference',
-    url: 'https://example.com',
-  }];
   try {
-    renderPublications();
+    renderPublications([{
+      year: '2025',
+      title: 'Paper title',
+      authors: 'A. Author',
+      venue: 'Conference',
+      url: 'https://example.com',
+    }]);
     assert.match(list.innerHTML, /Paper title/);
     assert.match(list.innerHTML, /Open paper: Paper title/);
   } finally {
     global.document = prevDocument;
-    global.PUBLICATIONS = prevPublications;
   }
 });
 
@@ -1010,27 +1007,26 @@ test('initEmailObfuscation reveals email on Enter key', () => {
 test('renderCV renders merged career and education entries sorted by year', () => {
   const timeline = { innerHTML: '' };
   const prevDoc = global.document;
-  const prevCareer = global.CV_CAREER;
-  const prevEdu = global.CV_EDUCATION;
   global.document = {
     getElementById(id) { return id === 'cv-timeline' ? timeline : null; },
   };
-  global.CV_CAREER = [{
-    year: '2020–2023',
-    role: 'Engineer',
-    company: 'Acme',
-    location: 'Berlin',
-    description: 'Built things',
-    tags: ['Python', 'ML'],
-  }];
-  global.CV_EDUCATION = [{
-    year: '2018',
-    degree: 'MSc CS',
-    institution: 'MIT',
-    location: 'Boston',
-  }];
   try {
-    renderCV();
+    renderCV(
+      [{
+        year: '2020–2023',
+        role: 'Engineer',
+        company: 'Acme',
+        location: 'Berlin',
+        description: 'Built things',
+        tags: ['Python', 'ML'],
+      }],
+      [{
+        year: '2018',
+        degree: 'MSc CS',
+        institution: 'MIT',
+        location: 'Boston',
+      }],
+    );
     /* Career entry should appear first (2020 > 2018) */
     assert.match(timeline.innerHTML, /Engineer/);
     assert.match(timeline.innerHTML, /Acme/);
@@ -1045,8 +1041,6 @@ test('renderCV renders merged career and education entries sorted by year', () =
     assert.ok(careerIdx < eduIdx, 'Career (2020) should be before education (2018)');
   } finally {
     global.document = prevDoc;
-    global.CV_CAREER = prevCareer;
-    global.CV_EDUCATION = prevEdu;
   }
 });
 
@@ -1060,23 +1054,17 @@ test('renderCV does nothing when timeline element is missing', () => {
   }
 });
 
-test('renderCV does nothing when CV_CAREER is undefined', () => {
-  const timeline = { innerHTML: '' };
+test('renderCV with empty arrays clears the timeline without throwing', () => {
+  const timeline = { innerHTML: 'old' };
   const prevDoc = global.document;
-  const prevCareer = global.CV_CAREER;
-  const prevEdu = global.CV_EDUCATION;
   global.document = {
     getElementById(id) { return id === 'cv-timeline' ? timeline : null; },
   };
-  delete global.CV_CAREER;
-  global.CV_EDUCATION = [];
   try {
-    renderCV();
+    renderCV([], []);
     assert.equal(timeline.innerHTML, '');
   } finally {
     global.document = prevDoc;
-    global.CV_CAREER = prevCareer;
-    global.CV_EDUCATION = prevEdu;
   }
 });
 
@@ -1085,17 +1073,15 @@ test('renderCV does nothing when CV_CAREER is undefined', () => {
 test('renderSkills renders technical bars and language pills', () => {
   const container = { innerHTML: '' };
   const prevDoc = global.document;
-  const prevSkills = global.CV_SKILLS;
   global.document = {
     getElementById(id) { return id === 'cv-skills' ? container : null; },
   };
-  global.CV_SKILLS = {
-    technical: [{ name: 'Python', level: 90 }],
-    leadership: [{ name: 'Mentoring', level: 75 }],
-    languages: [{ name: 'English', proficiency: 'Native' }],
-  };
   try {
-    renderSkills();
+    renderSkills({
+      technical: [{ name: 'Python', level: 90 }],
+      leadership: [{ name: 'Mentoring', level: 75 }],
+      languages: [{ name: 'English', proficiency: 'Native' }],
+    });
     assert.match(container.innerHTML, /Python/);
     assert.match(container.innerHTML, /skill-bar-fill/);
     assert.match(container.innerHTML, /--pct:90%/);
@@ -1105,7 +1091,6 @@ test('renderSkills renders technical bars and language pills', () => {
     assert.match(container.innerHTML, /lang-item/);
   } finally {
     global.document = prevDoc;
-    global.CV_SKILLS = prevSkills;
   }
 });
 
@@ -1119,20 +1104,17 @@ test('renderSkills does nothing when container is missing', () => {
   }
 });
 
-test('renderSkills renders empty when CV_SKILLS has no entries', () => {
+test('renderSkills renders empty when skills has no entries', () => {
   const container = { innerHTML: 'old' };
   const prevDoc = global.document;
-  const prevSkills = global.CV_SKILLS;
   global.document = {
     getElementById(id) { return id === 'cv-skills' ? container : null; },
   };
-  global.CV_SKILLS = { technical: [], leadership: [], languages: [] };
   try {
-    renderSkills();
+    renderSkills({ technical: [], leadership: [], languages: [] });
     assert.equal(container.innerHTML, '');
   } finally {
     global.document = prevDoc;
-    global.CV_SKILLS = prevSkills;
   }
 });
 
@@ -1980,27 +1962,23 @@ test('index.html card backs have back-title, back-body, and back-hint', () => {
 test('renderProjects shows empty state when PROJECTS is empty', () => {
   const grid = { innerHTML: '' };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
       return null;
     },
   };
-  global.PROJECTS = [];
   try {
-    renderProjects();
+    renderProjects([]);
     assert.match(grid.innerHTML, /Coming soon/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects injects project cards with title, year, and tags', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2010,17 +1988,16 @@ test('renderProjects injects project cards with title, year, and tags', () => {
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'test-project',
-    title: 'Test Project',
-    year: '2024',
-    tags: ['AI', 'CV'],
-    thumb: 'img/projects/test-thumb.jpg',
-    description: 'A test project description.',
-    url: 'projects/test-project.html',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'test-project',
+      title: 'Test Project',
+      year: '2024',
+      tags: ['AI', 'CV'],
+      thumb: 'img/projects/test-thumb.jpg',
+      description: 'A test project description.',
+      url: 'projects/test-project.html',
+    }]);
     assert.match(grid.innerHTML, /Test Project/);
     assert.match(grid.innerHTML, /2024/);
     assert.match(grid.innerHTML, /AI/);
@@ -2029,14 +2006,12 @@ test('renderProjects injects project cards with title, year, and tags', () => {
     assert.match(grid.innerHTML, /projects\/test-project\.html/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects uses bg image as CSS background when provided', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2046,32 +2021,29 @@ test('renderProjects uses bg image as CSS background when provided', () => {
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'with-bg',
-    title: 'Project With BG',
-    year: '2024',
-    tags: ['AR'],
-    thumb: 'img/projects/with-bg-thumb.jpg',
-    bg: 'img/projects/with-bg-hero.jpg',
-    description: 'A project with a background image.',
-    url: 'projects/with-bg.html',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'with-bg',
+      title: 'Project With BG',
+      year: '2024',
+      tags: ['AR'],
+      thumb: 'img/projects/with-bg-thumb.jpg',
+      bg: 'img/projects/with-bg-hero.jpg',
+      description: 'A project with a background image.',
+      url: 'projects/with-bg.html',
+    }]);
     // bg URL should end up as a CSS custom property on the card
     assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/with-bg-hero\.jpg['"]?\)/);
     // has-bg class toggled when bg is present
     assert.match(grid.innerHTML, /project-card--has-bg/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects falls back to thumb for background when bg is missing', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2081,21 +2053,19 @@ test('renderProjects falls back to thumb for background when bg is missing', () 
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'thumb-only',
-    title: 'Thumb Only',
-    year: '2024',
-    tags: ['AI'],
-    thumb: 'img/projects/thumb-only.jpg',
-    description: 'No bg, thumb only.',
-    url: 'projects/thumb-only.html',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'thumb-only',
+      title: 'Thumb Only',
+      year: '2024',
+      tags: ['AI'],
+      thumb: 'img/projects/thumb-only.jpg',
+      description: 'No bg, thumb only.',
+      url: 'projects/thumb-only.html',
+    }]);
     assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/thumb-only\.jpg['"]?\)/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
@@ -2103,7 +2073,6 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   const appended = [];
   const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2126,9 +2095,8 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
       url: `projects.html#project-${i}`,
     });
   }
-  global.PROJECTS = many;
   try {
-    renderProjects();
+    renderProjects(many);
     // Should only render PROJECTS_MAX_HOMEPAGE cards
     const cardCount = (grid.innerHTML.match(/<a[^>]*class="project-card(?:\s|")/g) || []).length;
     assert.equal(cardCount, PROJECTS_MAX_HOMEPAGE);
@@ -2137,7 +2105,6 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
     assert.match(appended[0].innerHTML, /View all projects/);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
@@ -2145,7 +2112,6 @@ test('renderProjects does not show "View all" when projects fit within limit', (
   const appended = [];
   const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById(id) {
       if (id === 'projects-grid') return grid;
@@ -2155,37 +2121,32 @@ test('renderProjects does not show "View all" when projects fit within limit', (
       return { className: '', setAttribute() {}, innerHTML: '' };
     },
   };
-  global.PROJECTS = [{
-    id: 'solo',
-    title: 'Solo Project',
-    year: '2024',
-    tags: ['AI'],
-    thumb: 'img/projects/solo.jpg',
-    description: 'Only project.',
-    url: 'projects.html#solo',
-  }];
   try {
-    renderProjects();
+    renderProjects([{
+      id: 'solo',
+      title: 'Solo Project',
+      year: '2024',
+      tags: ['AI'],
+      thumb: 'img/projects/solo.jpg',
+      description: 'Only project.',
+      url: 'projects.html#solo',
+    }]);
     assert.equal(appended.length, 0);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 
 test('renderProjects skips if container element not found', () => {
   const prevDocument = global.document;
-  const prevProjects = global.PROJECTS;
   global.document = {
     getElementById() { return null; },
   };
-  global.PROJECTS = [{ id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' }];
   try {
     // Should not throw
-    renderProjects();
+    renderProjects([{ id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' }]);
   } finally {
     global.document = prevDocument;
-    global.PROJECTS = prevProjects;
   }
 });
 

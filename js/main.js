@@ -21,16 +21,18 @@
    to the swap via the context. */
 export { __setThreeForTests, __resetThreeForTests } from './three-context.js';
 
-/* ─── Data files (side-effect imports: each file sets globalThis.X) ───
-   We import for the side-effect of populating globalThis so the
-   existing bare references in this module (e.g. `LOCATIONS`,
-   `CV_CAREER`, `PUBLICATIONS`, `PROJECTS`) resolve via the global
-   scope. This keeps the test mocking pattern (`global.X = mock`)
-   working while still letting Vite tree-shake the bundle. */
+/* ─── Data files ──────────────────────────────────────────
+   PROJECTS / PUBLICATIONS / CV_* are imported by name; render
+   functions take them as parameters (defaulting to these
+   imports) so tests can inject mocks without touching globals.
+
+   LOCATIONS still rides on globalThis because Globe3D and
+   EuropeMap2D read it as a bare global from constructor bodies;
+   migrating those is a separate refactor. */
 import '../data/locations.js';
-import '../data/publications.js';
-import '../data/projects.js';
-import '../data/cv.js';
+import { PUBLICATIONS as DEFAULT_PUBLICATIONS } from '../data/publications.js';
+import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
+import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
 import './europe-map.js';
 
 /* Shared environment helpers */
@@ -717,12 +719,13 @@ function initEmailObfuscation() {
   });
 }
 
-/* Publication items — data source: PUBLICATIONS (data/publications.js) */
-function renderPublications() {
+/* Publication items — data source: PUBLICATIONS (data/publications.js).
+   Tests pass a mock array as the first argument. */
+function renderPublications(publications = DEFAULT_PUBLICATIONS) {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
-  list.innerHTML = PUBLICATIONS.slice(0, 3).map((pub, i) => `
+  list.innerHTML = publications.slice(0, 3).map((pub, i) => `
     <a href="${escapeHtml(pub.url || '#')}" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="${i * 70}" aria-label="Open paper: ${escapeHtml(pub.title)}">
       <div class="pub-year">${escapeHtml(pub.year)}</div>
       <div class="pub-title">${escapeHtml(pub.title)}</div>
@@ -758,11 +761,11 @@ function renderProjectCard(project, i) {
   '</a>';
 }
 
-function renderProjects() {
+function renderProjects(projects = DEFAULT_PROJECTS) {
   var grid = document.getElementById('projects-grid');
   if (!grid) return;
 
-  if (!PROJECTS.length) {
+  if (!projects.length) {
     grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
     return;
   }
@@ -772,9 +775,9 @@ function renderProjects() {
   var showAll = grid.getAttribute && grid.getAttribute('data-render') === 'all';
   var shown;
   if (showAll) {
-    shown = PROJECTS;
+    shown = projects;
   } else {
-    var pool = PROJECTS.slice();
+    var pool = projects.slice();
     for (var i = pool.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
@@ -783,7 +786,7 @@ function renderProjects() {
   }
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
-  if (!showAll && PROJECTS.length > PROJECTS_MAX_HOMEPAGE) {
+  if (!showAll && projects.length > PROJECTS_MAX_HOMEPAGE) {
     var footer = document.createElement('div');
     footer.className = 'projects-view-all';
     footer.setAttribute('data-animate', '');
@@ -828,15 +831,13 @@ function setFooterYear() {
 
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
-   Reads CV_CAREER / CV_EDUCATION globals from data/cv.js.
+   Tests pass mocked career/education arrays as arguments.
    One card per job/degree — all details visible, no flipping.
    ═══════════════════════════════════════════════════════════ */
-function renderCV() {
+function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) {
   if (typeof document === 'undefined') return;
   const timeline = document.getElementById('cv-timeline');
   if (!timeline) return;
-  if (typeof CV_CAREER    === 'undefined') return;
-  if (typeof CV_EDUCATION === 'undefined') return;
 
   /* ── Build card HTML ────────────────────────────────── */
   function cardHtml(entry, type) {
@@ -875,7 +876,7 @@ function renderCV() {
   /* ── Separate concurrent from normal education entries ── */
   var concurrentEduEntries = [];
   var normalEduEntries     = [];
-  (CV_EDUCATION || []).forEach(function(e) {
+  (education || []).forEach(function(e) {
     if (Array.isArray(e.concurrent_with) && e.concurrent_with.length > 0) {
       concurrentEduEntries.push(e);
     } else {
@@ -894,7 +895,7 @@ function renderCV() {
   /* ── Partition career entries ── */
   var concurrentCareerEntries = [];
   var normalCareerEntries     = [];
-  (CV_CAREER || []).forEach(function(e) {
+  (career || []).forEach(function(e) {
     if (concurrentCareerSet[e.company]) {
       concurrentCareerEntries.push(e);
     } else {
@@ -972,15 +973,14 @@ function renderCV() {
 
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — SKILLS PANELS
-   Reads CV_SKILLS global from data/cv.js.
+   Tests pass a mocked CV_SKILLS object as the first argument.
    ═══════════════════════════════════════════════════════════ */
-function renderSkills() {
+function renderSkills(skills = DEFAULT_CV_SKILLS) {
   if (typeof document === 'undefined') return;
   const container = document.getElementById('cv-skills');
   if (!container) return;
-  if (typeof CV_SKILLS === 'undefined') return;
 
-  const { technical = [], leadership = [], languages = [] } = CV_SKILLS;
+  const { technical = [], leadership = [], languages = [] } = skills;
 
   /* Progress-bar panel for technical / leadership */
   function barPanel(items, label) {
