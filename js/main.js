@@ -339,6 +339,9 @@ function initCommandPalette() {
 
   let filtered = allItems;
   let activeIdx = 0;
+  /* Element to restore focus to when the palette closes (whatever the
+     user was on before they triggered ⌘K / hint / kbd shortcut). */
+  let _previouslyFocused = null;
 
   /* ── Render list ────────────────────────────────────────── */
   function render(items) {
@@ -349,10 +352,12 @@ function initCommandPalette() {
       li.style.color = 'var(--text-faint)';
       li.textContent = 'No results';
       listEl.appendChild(li);
+      input.removeAttribute('aria-activedescendant');
       return;
     }
 
     let lastGroup = null;
+    let activeId = null;
     items.forEach((item, i) => {
       if (item.group !== lastGroup) {
         const label = document.createElement('li');
@@ -363,18 +368,25 @@ function initCommandPalette() {
         lastGroup = item.group;
       }
       const li = document.createElement('li');
+      const id = `cmd-opt-${i}`;
+      li.id = id;
       li.className = 'cmd-item';
       li.setAttribute('role', 'option');
       li.setAttribute('aria-selected', String(i === activeIdx));
+      if (i === activeIdx) activeId = id;
       li.innerHTML = `
         <span class="cmd-item-icon">${item.icon}</span>
-        <span class="cmd-item-label">${item.label}</span>
-        <span class="cmd-item-hint">${item.hint || ''}</span>
+        <span class="cmd-item-label">${escapeHtml(item.label)}</span>
+        <span class="cmd-item-hint">${escapeHtml(item.hint || '')}</span>
       `;
       li.addEventListener('mouseenter', () => { activeIdx = i; render(filtered); });
       li.addEventListener('click', () => { execute(item); });
       listEl.appendChild(li);
     });
+    /* aria-activedescendant points at the currently highlighted option so
+       screen readers announce it as the user arrows through the list. */
+    if (activeId) input.setAttribute('aria-activedescendant', activeId);
+    else input.removeAttribute('aria-activedescendant');
   }
 
   /* ── Execute & close ────────────────────────────────────── */
@@ -411,6 +423,10 @@ function initCommandPalette() {
       if (visibleItems[activeIdx]) execute(visibleItems[activeIdx]);
     } else if (e.key === 'Escape') {
       close();
+    } else if (e.key === 'Tab') {
+      /* The input is the only focusable element inside the overlay; keep
+         focus there so Tab/Shift+Tab can't escape the modal (focus trap). */
+      e.preventDefault();
     }
   });
 
@@ -419,6 +435,8 @@ function initCommandPalette() {
     filtered = allItems;
     activeIdx = 0;
     input.value = '';
+    /* Remember the trigger element so we can restore focus on close. */
+    _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
     render(filtered);
     overlay.hidden = false;
     requestAnimationFrame(() => input.focus());
@@ -428,6 +446,12 @@ function initCommandPalette() {
   function close() {
     overlay.hidden = true;
     document.body.style.overflow = '';
+    /* Restore focus to whatever opened the palette so keyboard users
+       don't lose their place in the page. */
+    if (_previouslyFocused && typeof _previouslyFocused.focus === 'function') {
+      try { _previouslyFocused.focus(); } catch (_) { /* element may have unmounted */ }
+    }
+    _previouslyFocused = null;
   }
 
   /* Close on overlay click */
