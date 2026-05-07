@@ -23,6 +23,7 @@
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-project-jsonld": "node scripts/generate-project-jsonld.mjs",
     "generate-csp-meta": "node scripts/generate-csp-meta.mjs",
+    "generate-favicons": "node scripts/generate-favicons.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },
   "engines": {
@@ -31,6 +32,7 @@
   "license": "MIT",
   "devDependencies": {
     "playwright": "^1.58.2",
+    "sharp": "^0.34.5",
     "vite": "^8.0.10"
   },
   "dependencies": {

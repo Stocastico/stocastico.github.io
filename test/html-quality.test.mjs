@@ -71,7 +71,24 @@ for (const rel of PAGES) {
     assert.match(html, /<html\b[^>]*\blang=("[^"]+"|'[^']+')/i,
       `${rel} <html> tag is missing lang attribute`);
   });
+
+  test(`html: ${rel} ships favicon.ico and apple-touch-icon fallbacks`, () => {
+    /* Modern browsers prefer the inline data: SVG icon, but Safari pinned
+       tabs / iOS Add-to-Home-Screen / older Android need PNG + ICO files.
+       Audit §6.2 — verify every page references both fallbacks. */
+    assert.match(html, /<link[^>]+rel="icon"[^>]+href="\/favicon\.ico"/i,
+      `${rel} missing <link rel="icon" href="/favicon.ico">`);
+    assert.match(html, /<link[^>]+rel="apple-touch-icon"[^>]+href="\/apple-touch-icon\.png"/i,
+      `${rel} missing <link rel="apple-touch-icon" href="/apple-touch-icon.png">`);
+  });
 }
+
+test('html: favicon assets exist in public/ for Vite to copy at build', () => {
+  for (const f of ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png']) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'public', f)),
+      `public/${f} is missing — run \`npm run generate-favicons\``);
+  }
+});
 
 test('html: <title> values are unique across indexable pages', () => {
   const indexable = PAGES.filter(r => r !== '404.html');
