@@ -50,10 +50,27 @@ function copyDataJson() {
   };
 }
 
+/* Copy root-level static files (sitemap.xml, robots.txt) into dist/. These
+   live at the repository root for crawler discovery, but Rollup never sees
+   them, so Vite would otherwise leave them out of the deploy entirely. */
+function copyRootStatic() {
+  return {
+    name: 'copy-root-static',
+    apply: 'build',
+    closeBundle() {
+      const outDir = resolve(__dirname, 'dist');
+      for (const f of ['sitemap.xml', 'robots.txt']) {
+        const src = resolve(__dirname, f);
+        if (existsSync(src)) copyFileSync(src, resolve(outDir, f));
+      }
+    },
+  };
+}
+
 export default defineConfig({
   base: '/',
   appType: 'mpa',
-  plugins: [copyDocsPdfs(), copyDataJson()],
+  plugins: [copyDocsPdfs(), copyDataJson(), copyRootStatic()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

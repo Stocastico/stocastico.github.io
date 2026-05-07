@@ -55,6 +55,12 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # Regenerate sitemap.xml so <lastmod> reflects the latest commit dates.
+      # The test suite already asserts the on-disk sitemap is correct; this
+      # just refreshes lastmod for any pages touched in this push.
+      - name: Regenerate sitemap
+        run: npm run generate-sitemap
+
       - name: Build with Vite
         run: npm run build
 

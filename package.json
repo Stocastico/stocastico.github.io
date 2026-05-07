@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test test/main.node.test.mjs test/europe-map.test.mjs test/locations-generator.test.js test/new-project.test.js test/cv.test.mjs test/generate-cv.test.js test/seo.test.js",
+    "test": "node --test test/main.node.test.mjs test/europe-map.test.mjs test/locations-generator.test.js test/new-project.test.js test/cv.test.mjs test/generate-cv.test.js test/seo.test.js test/sitemap.test.mjs",
     "test:seo": "node --test test/seo.test.js",
+    "test:sitemap": "node --test test/sitemap.test.mjs",
     "test:main": "node --test test/main.node.test.mjs",
     "test:locations": "node --test test/locations-generator.test.js",
     "test:project": "node --test test/new-project.test.js",
@@ -17,6 +18,7 @@
     "new-project": "node scripts/new-project.js",
     "generate-cv": "node scripts/generate-cv.js",
     "generate-locations": "node scripts/generate-locations.js",
+    "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },
   "engines": {
