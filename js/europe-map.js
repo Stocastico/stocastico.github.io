@@ -590,6 +590,11 @@ export class EuropeMap2D {
     ctx.arc(pin.x, pin.y, size * 0.35, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  destroy() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+  }
 }
 
 if (typeof globalThis !== 'undefined') globalThis.EuropeMap2D = EuropeMap2D;

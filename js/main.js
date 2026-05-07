@@ -1301,6 +1301,25 @@ function initCmdTriggerHint() {
   });
 }
 
+/* Run destroy() on every disposable when the page is being torn down.
+   Wired to `pagehide` because it is the most reliable signal for both
+   classic unloads and bfcache evictions. visibilitychange would be too
+   aggressive — it fires on tab switches, where we want the canvases
+   to resume rather than disappear. */
+export function initLifecycleCleanup(disposables) {
+  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+  let disposed = false;
+  const cleanup = () => {
+    if (disposed) return;
+    disposed = true;
+    for (const d of disposables) {
+      if (!d || typeof d.destroy !== 'function') continue;
+      try { d.destroy(); } catch (_) { /* swallow — page is going away */ }
+    }
+  };
+  window.addEventListener('pagehide', cleanup);
+}
+
 /* ═══════════════════════════════════════════════════════════
    INIT — runs when DOM is ready
    ═══════════════════════════════════════════════════════════ */
@@ -1361,10 +1380,16 @@ if (typeof document !== 'undefined') {
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
 
+  /* Each WebGL/Canvas instance below is recorded so a single pagehide
+     handler at the end of init can release every WebGL context, RAF
+     loop, observer, and event listener in one go (avoids leaks when
+     bfcache evicts the page or the user reloads). */
+  const _disposables = [];
+
   /* Noise gradient — raw WebGL, runs on devices that support it */
   const noiseCanvas = document.getElementById('noise-canvas');
   if (noiseCanvas && !prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
-    new NoiseGradient(noiseCanvas);
+    _disposables.push(new NoiseGradient(noiseCanvas));
   } else if (noiseCanvas) {
     noiseCanvas.style.display = 'none';
   }
@@ -1375,9 +1400,9 @@ if (typeof document !== 'undefined') {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
     } else if (hasWebGLSupport()) {
-      new NeuralNetwork(canvas);
+      _disposables.push(new NeuralNetwork(canvas));
     } else {
-      new NeuralNetwork2D(canvas);
+      _disposables.push(new NeuralNetwork2D(canvas));
     }
   }
 
@@ -1407,11 +1432,10 @@ if (typeof document !== 'undefined') {
   if (globeCanvas && typeof LOCATIONS !== 'undefined') {
     _lazyOnViewport(globeCanvas, () => {
       geocodeLocations(LOCATIONS).then(() => {
-        if (prefersReducedMotion() || !hasWebGLSupport()) {
-          new GlobeFallback2D(globeCanvas);
-        } else {
-          new Globe3D(globeCanvas);
-        }
+        const inst = (prefersReducedMotion() || !hasWebGLSupport())
+          ? new GlobeFallback2D(globeCanvas)
+          : new Globe3D(globeCanvas);
+        _disposables.push(inst);
       });
     });
   }
@@ -1419,15 +1443,19 @@ if (typeof document !== 'undefined') {
   /* 2D Europe Map — Canvas-based representation of European locations */
   const europeCanvas = document.getElementById('europe-canvas');
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
-    _lazyOnViewport(europeCanvas, () => new EuropeMap2D(europeCanvas));
+    _lazyOnViewport(europeCanvas, () => _disposables.push(new EuropeMap2D(europeCanvas)));
   }
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');
   const nameCanvas = document.getElementById('name-canvas');
   if (nameH1 && nameCanvas) {
-    if (!prefersReducedMotion() && hasWebGLSupport()) new HeroNameShader(nameH1, nameCanvas);
+    if (!prefersReducedMotion() && hasWebGLSupport()) {
+      _disposables.push(new HeroNameShader(nameH1, nameCanvas));
+    }
   }
+
+  initLifecycleCleanup(_disposables);
 
   });
 }

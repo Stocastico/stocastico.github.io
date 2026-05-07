@@ -2632,6 +2632,63 @@ test('Globe3D.destroy() removes every listener it added and disposes Three.js re
   }
 });
 
+/* ─── Page lifecycle cleanup ────────────────────────────────
+   initLifecycleCleanup() must register a pagehide listener that
+   fans out destroy() across the supplied disposables, idempotently. */
+
+test('initLifecycleCleanup: pagehide invokes destroy() on every disposable, exactly once', async () => {
+  const prevWindow = global.window;
+  const captured = [];
+  global.window = {
+    addEventListener(type, fn, opts) { captured.push({ type, fn, opts }); },
+    removeEventListener() {},
+  };
+  try {
+    const { initLifecycleCleanup } = await import('../js/main.js');
+    let aCalls = 0, bCalls = 0;
+    const disposables = [
+      { destroy() { aCalls += 1; } },
+      { destroy() { bCalls += 1; } },
+      null,            // tolerate nullish entries
+      { /* no destroy method */ },
+    ];
+    initLifecycleCleanup(disposables);
+    const ph = captured.find(e => e.type === 'pagehide');
+    assert.ok(ph, 'initLifecycleCleanup must register a pagehide listener');
+    ph.fn();
+    assert.equal(aCalls, 1);
+    assert.equal(bCalls, 1);
+    /* Idempotent: second pagehide should not double-destroy. */
+    ph.fn();
+    assert.equal(aCalls, 1);
+    assert.equal(bCalls, 1);
+  } finally {
+    global.window = prevWindow;
+  }
+});
+
+test('initLifecycleCleanup: a destroy() that throws does not block the others', async () => {
+  const prevWindow = global.window;
+  const captured = [];
+  global.window = {
+    addEventListener(type, fn) { captured.push({ type, fn }); },
+    removeEventListener() {},
+  };
+  try {
+    const { initLifecycleCleanup } = await import('../js/main.js');
+    let bCalls = 0;
+    initLifecycleCleanup([
+      { destroy() { throw new Error('boom'); } },
+      { destroy() { bCalls += 1; } },
+    ]);
+    const ph = captured.find(e => e.type === 'pagehide');
+    ph.fn();
+    assert.equal(bCalls, 1, 'a thrown destroy() must not stop the loop');
+  } finally {
+    global.window = prevWindow;
+  }
+});
+
 /* ─── No debug console output in production js/ ─────────────
    console.warn and console.error gate on genuine error paths
    (WebGL unavailable, shader compile failed, missing data) and

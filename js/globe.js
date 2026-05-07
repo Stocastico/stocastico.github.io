@@ -1091,5 +1091,10 @@ export class GlobeFallback2D {
     if (!this._drag) this._rot += this._spin;
     this._draw();
   }
+
+  destroy() {
+    if (this._rafId) cancelAnimationFrame(this._rafId);
+    this._rafId = null;
+  }
 }
 
