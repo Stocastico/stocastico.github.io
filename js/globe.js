@@ -76,7 +76,6 @@ export async function geocodeLocations(locs) {
       if (!json.length) throw new Error('no results');
       item.lat = parseFloat(json[0].lat);
       item.lon = parseFloat(json[0].lon);
-      console.info(`[Globe] geocoded "${item.name}" → (${item.lat.toFixed(3)}, ${item.lon.toFixed(3)})`);
     } catch (e) {
       console.warn(`[Globe] geocoding failed for "${item.name}": ${e.message} — pin skipped`);
       item._skip = true;

@@ -2505,3 +2505,26 @@ test('perf: NeuralNetwork2D registers mousemove/touchmove with { passive: true }
       `NN2D mousemove should be { passive: true }, got ${JSON.stringify(mm && mm.opts)}`);
   });
 });
+
+/* ─── No debug console output in production js/ ─────────────
+   console.warn and console.error gate on genuine error paths
+   (WebGL unavailable, shader compile failed, missing data) and
+   are kept. console.log/info/debug are noise — they should not
+   ship to production. */
+
+test('quality: no console.log / console.info / console.debug in js/', () => {
+  const jsDir = path.join(ROOT, 'js');
+  const files = fs.readdirSync(jsDir).filter(f => f.endsWith('.js'));
+  const offenders = [];
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(jsDir, f), 'utf8');
+    const lines = src.split('\n');
+    lines.forEach((line, i) => {
+      if (/\bconsole\.(log|info|debug)\s*\(/.test(line)) {
+        offenders.push(`${f}:${i + 1}: ${line.trim()}`);
+      }
+    });
+  }
+  assert.equal(offenders.length, 0,
+    `Found debug console output:\n  ${offenders.join('\n  ')}`);
+});
