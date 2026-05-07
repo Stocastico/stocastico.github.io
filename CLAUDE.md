@@ -61,6 +61,7 @@ data/publications.js Publication entries — ESM (edit directly)
 scripts/            Generator scripts (new-project, generate-cv, generate-locations)
 test/               Tests for each script + main.js + europe-map.js + SEO + Playwright E2E
 docs/               DATA-FORMATS.md, DEPLOYMENT.md, project-template.md, cv.pdf, defense.pdf
+drafts/             Markdown source for projects/*.html — feed into `npm run new-project`. Not deployed.
 ```
 
 ## Coding Conventions

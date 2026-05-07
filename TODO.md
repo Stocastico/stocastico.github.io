@@ -14,10 +14,9 @@ see git history if you need the audit context.
 
 ## Code structure
 
-- **Split `js/main.js`.** It is ~3000 lines containing 5 WebGL classes plus
-  most UI logic. As the site grows, consider splitting into separate modules
-  (no bundler needed — `<script defer>` tags preserve execution order):
-  - `js/neural-network.js` — hero animation
-  - `js/globe.js` — `Globe3D` + `GlobeFallback2D`
-  - `js/hero-shader.js` — `HeroNameShader` + `NoiseGradient`
+- **Continue extracting from `js/main.js`.** It is ~1450 lines and still owns
+  most UI logic plus the `NoiseGradient` class. The Three.js classes have
+  already moved into their own modules (`globe.js`, `neural-net.js`,
+  `hero-shader.js`). Remaining candidate splits:
+  - `js/noise-gradient.js` — pull `NoiseGradient` out of main.js
   - `js/ui.js` — navigation, command palette, scroll effects, etc.
