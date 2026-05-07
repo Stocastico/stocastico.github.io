@@ -1,5 +1,5 @@
 # robots.txt — stocastico.github.io
-# Last updated: 2026-02-28
+# Last updated: 2026-05-07
 
 # ── Standard search engine bots (allowed) ─────────────────────────────────────
 User-agent: Googlebot
