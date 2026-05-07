@@ -57,3 +57,15 @@ test('sitemap: 404.html is NOT listed', () => {
   const xml = readSitemap();
   assert.ok(!xml.includes('404.html'), '404.html must not appear in sitemap.xml');
 });
+
+test('projects.html ItemList JSON-LD lists every entry from data/projects.js', async () => {
+  const projects = await loadProjects();
+  const html = fs.readFileSync(path.join(ROOT, 'projects.html'), 'utf8');
+  const expected = projects
+    .filter(p => p.url && p.url.startsWith('projects/'))
+    .map(p => `${SITE}/${p.url}`);
+  for (const url of expected) {
+    assert.ok(html.includes(`"url": "${url}"`),
+      `projects.html ItemList missing "${url}" — regenerate JSON-LD or update data/projects.js`);
+  }
+});

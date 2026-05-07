@@ -44,17 +44,52 @@ for (const { rel, label } of pages) {
   });
 }
 
+function readJsonLd(html) {
+  /* Returns a flat array of every parsed JSON-LD block in the document. */
+  const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  const out = [];
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const json = JSON.parse(m[1]);
+    if (Array.isArray(json)) out.push(...json);
+    else out.push(json);
+  }
+  return out;
+}
+
 test('SEO: index.html includes a JSON-LD Person schema', () => {
-  const html = read('index.html');
-  const m = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-  assert.ok(m, 'No <script type="application/ld+json"> block found in index.html');
-  /* Allow either a single object or an array of structured-data objects. */
-  const json = JSON.parse(m[1]);
-  const items = Array.isArray(json) ? json : [json];
+  const items = readJsonLd(read('index.html'));
   const person = items.find((it) => it && it['@type'] === 'Person');
   assert.ok(person, 'JSON-LD does not contain a Person entry');
   assert.equal(typeof person.name, 'string', 'Person.name must be a string');
   assert.ok(person.name.length > 0, 'Person.name must be non-empty');
+});
+
+test('SEO: cv.html includes a JSON-LD ProfilePage with mainEntity Person', () => {
+  const items = readJsonLd(read('cv.html'));
+  const profile = items.find((it) => it && it['@type'] === 'ProfilePage');
+  assert.ok(profile, 'cv.html missing ProfilePage JSON-LD');
+  const person = profile.mainEntity;
+  assert.ok(person && person['@type'] === 'Person', 'ProfilePage.mainEntity must be a Person');
+  assert.equal(typeof person.name, 'string');
+  assert.ok(person.name.length > 0);
+});
+
+test('SEO: projects.html includes a JSON-LD CollectionPage with ItemList', () => {
+  const items = readJsonLd(read('projects.html'));
+  const page = items.find((it) => it && it['@type'] === 'CollectionPage');
+  assert.ok(page, 'projects.html missing CollectionPage JSON-LD');
+  assert.ok(page.mainEntity && page.mainEntity['@type'] === 'ItemList',
+    'CollectionPage.mainEntity must be an ItemList');
+  const list = page.mainEntity.itemListElement;
+  assert.ok(Array.isArray(list) && list.length >= 8,
+    `ItemList should contain >=8 entries, got ${list ? list.length : 'none'}`);
+  for (const entry of list) {
+    assert.equal(entry['@type'], 'ListItem');
+    assert.equal(typeof entry.position, 'number');
+    assert.ok(typeof entry.url === 'string' && entry.url.length > 0,
+      `ListItem ${entry.position} missing url`);
+  }
 });
 
 function ogTag(html, property) {
