@@ -57,6 +57,34 @@ test('SEO: index.html includes a JSON-LD Person schema', () => {
   assert.ok(person.name.length > 0, 'Person.name must be non-empty');
 });
 
+function ogTag(html, property) {
+  const re = new RegExp(
+    `<meta\\s+(?=[^>]*\\bproperty=["']${property}["'])(?=[^>]*\\bcontent=["']([^"']+)["'])[^>]*>`,
+    'i'
+  );
+  const re2 = new RegExp(
+    `<meta\\s+(?=[^>]*\\bcontent=["']([^"']+)["'])(?=[^>]*\\bproperty=["']${property}["'])[^>]*>`,
+    'i'
+  );
+  const m = html.match(re) || html.match(re2);
+  return m ? m[1].trim() : null;
+}
+
+const indexableTopLevel = [
+  { rel: 'index.html',    label: 'home' },
+  { rel: 'cv.html',       label: 'cv' },
+  { rel: 'projects.html', label: 'projects' },
+];
+
+for (const { rel, label } of indexableTopLevel) {
+  test(`SEO: ${label} (${rel}) has og:image, og:image:alt, and og:locale`, () => {
+    const html = read(rel);
+    assert.ok(ogTag(html, 'og:image'),     `${rel} missing og:image`);
+    assert.ok(ogTag(html, 'og:image:alt'), `${rel} missing og:image:alt`);
+    assert.ok(ogTag(html, 'og:locale'),    `${rel} missing og:locale`);
+  });
+}
+
 test('SEO: index.html stat counters have non-zero values baked into HTML', () => {
   const html = read('index.html');
   /* Capture each <span class="stat-number" data-count="N">M</span> pair. */
