@@ -879,6 +879,11 @@ export class Globe3D {
      scene to dispose geometries / materials / textures, and asks
      the renderer to free its WebGL context. */
   destroy() {
+    /* If the constructor returned early (Scene undefined or LOCATIONS missing)
+       this instance has no scene/_listeners. Bail before iterating undefined.
+       Also makes destroy() idempotent — a second call sees scene = null. */
+    if (!this.scene) return;
+
     if (this._rafId) cancelAnimationFrame(this._rafId);
     this._rafId = null;
 

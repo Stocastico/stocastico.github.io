@@ -2632,6 +2632,48 @@ test('Globe3D.destroy() removes every listener it added and disposes Three.js re
   }
 });
 
+/* ─── Globe3D partial-construction teardown ─────────────────
+   When LOCATIONS is missing the constructor returns early before
+   assigning this._listeners / this.scene / etc. destroy() must
+   tolerate that partial instance — otherwise pagehide on a page
+   that loaded globe.js but not data/locations.js will throw. */
+
+test('Globe3D.destroy() is safe to call on a partial instance (LOCATIONS undefined)', () => {
+  const prevLocations = global.LOCATIONS;
+  __setThreeForTests(createMinimalThree());
+  /* Force the early-return path at js/globe.js:168. */
+  delete global.LOCATIONS;
+
+  const canvas = {
+    parentElement: { clientWidth: 680, clientHeight: 340 },
+    addEventListener() {},
+    removeEventListener() {},
+    getBoundingClientRect() { return { left: 0, top: 0, width: 680, height: 340 }; },
+  };
+
+  /* Silence the expected console.warn from the early-return branch. */
+  const prevWarn = console.warn;
+  console.warn = () => {};
+
+  try {
+    const globe = new Globe3D(canvas);
+    /* Precondition: constructor returned early — instance is partial. */
+    assert.equal(globe.scene, undefined,
+      'precondition: partial instance should have no scene');
+    assert.equal(globe._listeners, undefined,
+      'precondition: partial instance should have no _listeners');
+
+    /* Must not throw. Currently throws TypeError on `for ... of this._listeners`. */
+    assert.doesNotThrow(() => globe.destroy(),
+      'destroy() must tolerate a partial instance');
+  } finally {
+    console.warn = prevWarn;
+    __resetThreeForTests();
+    if (prevLocations === undefined) delete global.LOCATIONS;
+    else global.LOCATIONS = prevLocations;
+  }
+});
+
 /* ─── Globe screen-reader alternative ───────────────────────
    The 3D globe is unreachable for keyboard-only and screen-reader
    users. renderGlobeA11yList() must populate a visually-hidden
