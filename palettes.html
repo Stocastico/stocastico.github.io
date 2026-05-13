@@ -87,6 +87,82 @@
       --grad-to:   #c8553d;
     }
 
+    [data-palette="signal"] {
+      --bg:        #0a0a0a;
+      --bg-alt:    #141414;
+      --bg-card:   rgba(237 237 237 / 0.04);
+      --bg-card-h: rgba(237 237 237 / 0.07);
+      --border:    rgba(237 237 237 / 0.09);
+      --border-h:  rgba(255 77 0 / 0.5);
+      --accent:    #ff4d00;
+      --accent2:   #d4d4d4;
+      --accent-tx: #0a0a0a;
+      --text:      #ededed;
+      --text-muted:#9a9a9a;
+      --text-faint:#6e6e6e;
+      --orb-1:     rgba(255, 77, 0, 0.16);
+      --orb-2:     rgba(212, 212, 212, 0.10);
+      --grad-from: #f5f5f5;
+      --grad-to:   #ff4d00;
+    }
+
+    [data-palette="crimson"] {
+      --bg:        #0d0a0a;
+      --bg-alt:    #1a1212;
+      --bg-card:   rgba(240 230 210 / 0.04);
+      --bg-card-h: rgba(240 230 210 / 0.07);
+      --border:    rgba(240 230 210 / 0.09);
+      --border-h:  rgba(193 39 45 / 0.5);
+      --accent:    #c1272d;
+      --accent2:   #e8d8b5;
+      --accent-tx: #f0e6d2;
+      --text:      #f0e6d2;
+      --text-muted:#a09080;
+      --text-faint:#6e6258;
+      --orb-1:     rgba(193, 39, 45, 0.18);
+      --orb-2:     rgba(232, 216, 181, 0.10);
+      --grad-from: #f0e0c6;
+      --grad-to:   #c1272d;
+    }
+
+    [data-palette="bauhaus"] {
+      --bg:        #0c0c0e;
+      --bg-alt:    #16161a;
+      --bg-card:   rgba(240 238 234 / 0.04);
+      --bg-card-h: rgba(240 238 234 / 0.07);
+      --border:    rgba(240 238 234 / 0.09);
+      --border-h:  rgba(255 206 0 / 0.45);
+      --accent:    #ffce00;
+      --accent2:   #2540ce;
+      --accent-tx: #0c0c0e;
+      --text:      #f0eeea;
+      --text-muted:#9a9794;
+      --text-faint:#6c6a67;
+      --orb-1:     rgba(255, 206, 0, 0.14);
+      --orb-2:     rgba(37, 64, 206, 0.18);
+      --grad-from: #ffd84d;
+      --grad-to:   #2540ce;
+    }
+
+    [data-palette="forest"] {
+      --bg:        #0a120e;
+      --bg-alt:    #0f1a14;
+      --bg-card:   rgba(232 238 229 / 0.04);
+      --bg-card-h: rgba(232 238 229 / 0.07);
+      --border:    rgba(232 238 229 / 0.08);
+      --border-h:  rgba(200 164 77 / 0.45);
+      --accent:    #c8a44d;
+      --accent2:   #6db088;
+      --accent-tx: #1a1408;
+      --text:      #e8eee5;
+      --text-muted:#8a948b;
+      --text-faint:#5e6862;
+      --orb-1:     rgba(200, 164, 77, 0.16);
+      --orb-2:     rgba(109, 176, 136, 0.14);
+      --grad-from: #e6d4a4;
+      --grad-to:   #6db088;
+    }
+
     /* ── Reset / base ───────────────────────────────────────── */
     *,
     *::before,
@@ -487,6 +563,18 @@
       <button class="chip" type="button" data-target="concrete" aria-pressed="false">
         <span class="chip-dot" style="background:#c8553d"></span>Concrete &amp; Rust
       </button>
+      <button class="chip" type="button" data-target="signal" aria-pressed="false">
+        <span class="chip-dot" style="background:#ff4d00"></span>Monochrome Signal
+      </button>
+      <button class="chip" type="button" data-target="crimson" aria-pressed="false">
+        <span class="chip-dot" style="background:#c1272d"></span>Crimson Lab
+      </button>
+      <button class="chip" type="button" data-target="bauhaus" aria-pressed="false">
+        <span class="chip-dot" style="background:#ffce00"></span>Bauhaus
+      </button>
+      <button class="chip" type="button" data-target="forest" aria-pressed="false">
+        <span class="chip-dot" style="background:#c8a44d"></span>Forest &amp; Brass
+      </button>
     </div>
   </div>
 
@@ -639,6 +727,50 @@
           { name: 'Slate Blue',  hex: '#8da9c4' },
         ],
       },
+      signal: {
+        name: 'Monochrome Signal',
+        summary: 'Pure neutrals with one saturated signal accent.',
+        blurb: 'Greyscale base with a single signal-orange accent — the restrained Vercel/Rauno school. Confident, design-led, and ages well; the whole site rests on typography and rhythm rather than color.',
+        swatches: [
+          { name: 'Background',  hex: '#0a0a0a' },
+          { name: 'Surface',     hex: '#141414' },
+          { name: 'Signal',      hex: '#ff4d00' },
+          { name: 'Steel',       hex: '#d4d4d4' },
+        ],
+      },
+      crimson: {
+        name: 'Crimson Lab',
+        summary: 'Vintage scientific — oxblood on parchment cream.',
+        blurb: 'Deep oxblood accent with a parchment-cream secondary on a near-black warm base. Reads as academic, archival, lab-notebook — a fit for a researcher rather than a startup.',
+        swatches: [
+          { name: 'Background',  hex: '#0d0a0a' },
+          { name: 'Surface',     hex: '#1a1212' },
+          { name: 'Oxblood',     hex: '#c1272d' },
+          { name: 'Parchment',   hex: '#e8d8b5' },
+        ],
+      },
+      bauhaus: {
+        name: 'Bauhaus',
+        summary: 'Architectural — primary yellow meets cobalt.',
+        blurb: 'Bauhaus yellow paired with cobalt blue on a cool ink-black. A century of design pedigree behind it; instantly legible and bold, but only works if you commit to confident typography.',
+        swatches: [
+          { name: 'Background',  hex: '#0c0c0e' },
+          { name: 'Surface',     hex: '#16161a' },
+          { name: 'Yellow',      hex: '#ffce00' },
+          { name: 'Cobalt',      hex: '#2540ce' },
+        ],
+      },
+      forest: {
+        name: 'Forest & Brass',
+        summary: 'Natural — brass and jade in a deep-forest base.',
+        blurb: 'Aged-brass accent with a jade-green secondary on a near-black forest base. European, grounded, slightly classical — pairs well with photographs of mountains, libraries, or your travel globe.',
+        swatches: [
+          { name: 'Background',  hex: '#0a120e' },
+          { name: 'Surface',     hex: '#0f1a14' },
+          { name: 'Brass',       hex: '#c8a44d' },
+          { name: 'Jade',        hex: '#6db088' },
+        ],
+      },
     };
 
     const body       = document.body;
@@ -655,8 +787,9 @@
 
       body.setAttribute('data-palette', palette);
 
-      const idx = Object.keys(PALETTES).indexOf(palette) + 1;
-      eyebrowEl.textContent = `${meta.name} — palette ${idx} of 4`;
+      const total = Object.keys(PALETTES).length;
+      const idx   = Object.keys(PALETTES).indexOf(palette) + 1;
+      eyebrowEl.textContent = `${meta.name} — palette ${idx} of ${total}`;
       tagEl.textContent     = `Palette · ${meta.name}`;
       summaryEl.textContent = meta.summary;
       blurbEl.textContent   = meta.blurb;
