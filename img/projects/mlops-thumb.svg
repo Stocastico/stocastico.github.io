@@ -1,0 +1,86 @@
+<svg width="800" height="450" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#101732"/>
+      <stop offset="60%" stop-color="#0a0e1c"/>
+      <stop offset="100%" stop-color="#05070d"/>
+    </radialGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6c63ff"/>
+      <stop offset="50%" stop-color="#00d4ff"/>
+      <stop offset="100%" stop-color="#ff9457"/>
+    </linearGradient>
+    <marker id="ringArr" markerWidth="10" markerHeight="8" refX="6" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#00d4ff"/>
+    </marker>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#bgGrad)"/>
+
+  <!-- subtle grid -->
+  <g stroke="rgba(108,99,255,0.05)" stroke-width="1">
+    <line x1="0" y1="50" x2="800" y2="50"/>
+    <line x1="0" y1="100" x2="800" y2="100"/>
+    <line x1="0" y1="150" x2="800" y2="150"/>
+    <line x1="0" y1="200" x2="800" y2="200"/>
+    <line x1="0" y1="250" x2="800" y2="250"/>
+    <line x1="0" y1="300" x2="800" y2="300"/>
+    <line x1="0" y1="350" x2="800" y2="350"/>
+    <line x1="0" y1="400" x2="800" y2="400"/>
+    <line x1="50" y1="0" x2="50" y2="450"/>
+    <line x1="150" y1="0" x2="150" y2="450"/>
+    <line x1="250" y1="0" x2="250" y2="450"/>
+    <line x1="350" y1="0" x2="350" y2="450"/>
+    <line x1="450" y1="0" x2="450" y2="450"/>
+    <line x1="550" y1="0" x2="550" y2="450"/>
+    <line x1="650" y1="0" x2="650" y2="450"/>
+    <line x1="750" y1="0" x2="750" y2="450"/>
+  </g>
+
+  <!-- Main lifecycle ring -->
+  <g transform="translate(400 225)" filter="url(#softGlow)">
+    <circle r="170" fill="none" stroke="url(#ringGrad)" stroke-width="2.2" stroke-dasharray="14,6" opacity="0.85"/>
+    <circle r="170" fill="none" stroke="rgba(0,212,255,0.18)" stroke-width="22"/>
+  </g>
+
+  <!-- Six lifecycle nodes -->
+  <g font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="600">
+    <!-- top: Data -->
+    <circle cx="400" cy="55" r="22" fill="#0c1020" stroke="#6c63ff" stroke-width="2"/>
+    <text x="400" y="59" text-anchor="middle" fill="#e8edf8" font-size="10">DATA</text>
+
+    <!-- top-right: Train -->
+    <circle cx="547" cy="140" r="22" fill="#0c1020" stroke="#00d4ff" stroke-width="2"/>
+    <text x="547" y="144" text-anchor="middle" fill="#e8edf8" font-size="10">TRAIN</text>
+
+    <!-- bottom-right: Register -->
+    <circle cx="547" cy="310" r="22" fill="#0c1020" stroke="#00d4ff" stroke-width="2"/>
+    <text x="547" y="314" text-anchor="middle" fill="#e8edf8" font-size="9">REGISTER</text>
+
+    <!-- bottom: Deploy -->
+    <circle cx="400" cy="395" r="22" fill="#0c1020" stroke="#ff9457" stroke-width="2"/>
+    <text x="400" y="399" text-anchor="middle" fill="#e8edf8" font-size="10">DEPLOY</text>
+
+    <!-- bottom-left: Monitor -->
+    <circle cx="253" cy="310" r="22" fill="#0c1020" stroke="#ff9457" stroke-width="2"/>
+    <text x="253" y="314" text-anchor="middle" fill="#e8edf8" font-size="10">MONITOR</text>
+
+    <!-- top-left: Validate -->
+    <circle cx="253" cy="140" r="22" fill="#0c1020" stroke="#6c63ff" stroke-width="2"/>
+    <text x="253" y="144" text-anchor="middle" fill="#e8edf8" font-size="9">VALIDATE</text>
+  </g>
+
+  <!-- centre label -->
+  <text x="400" y="218" text-anchor="middle" fill="#e8edf8" font-size="22" font-weight="700" letter-spacing="0.05em">MLOPS</text>
+  <text x="400" y="242" text-anchor="middle" fill="#8893a4" font-size="11" letter-spacing="0.18em">ON  ·  GCP</text>
+
+  <!-- corner labels -->
+  <text x="30" y="35" fill="#8893a4" font-size="9.5" font-weight="500" letter-spacing="0.18em">NTT DATA · 2023</text>
+  <text x="770" y="35" text-anchor="end" fill="#8893a4" font-size="9.5" font-weight="500" letter-spacing="0.18em">VERTEX AI · KFP · BIGQUERY</text>
+  <text x="30" y="425" fill="#6c63ff" font-size="9.5" font-weight="500" letter-spacing="0.18em">CHURN · RECOMMENDER · NEWS</text>
+  <text x="770" y="425" text-anchor="end" fill="#00d4ff" font-size="9.5" font-weight="500" letter-spacing="0.18em">CI/CD · DRIFT · LINEAGE</text>
+</svg>
