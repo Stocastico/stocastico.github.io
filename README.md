@@ -12,7 +12,7 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
   - **Research** — horizontal-scroll carousel of research topics (computer vision, AR, video understanding, generative AI, etc.).
   - **Publications** — filterable list of selected papers, generated from `data/publications.js`.
   - **Skills** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
-  - **Projects** — up to four project cards from `data/projects.js`, with a link to the full listing.
+  - **Projects** — up to three project cards from `data/projects.js`, with a link to the full listing.
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
 - **`projects.html`** — full project listing, with one detail page per project under `projects/`.
 - **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
@@ -23,9 +23,10 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ## Tech stack
 
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
-- [Three.js](https://threejs.org/) (npm, bundled by Vite) for the 3-D neural-network background and interactive globe
+- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the 3-D neural-network background and interactive globe
 - Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies)
+- [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
 - Self-hosted fonts: Inter (body) and Playfair Display (display / hero)
 
 ## Project structure
@@ -59,14 +60,28 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   └── land-50m.json          TopoJSON land data for Europe 2D map (50m, finer coastlines)
 ├── projects/
 │   └── *.html                 Individual project detail pages
+├── drafts/
+│   └── *.md                   Markdown sources for projects/*.html (not deployed)
+├── public/
+│   ├── favicon.svg            Inline-friendly primary favicon
+│   ├── favicon.ico            Multi-resolution 16/32/48 fallback
+│   ├── apple-touch-icon.png   iOS Add-to-Home-Screen icon (180×180)
+│   ├── icon-192.png           Android / PWA manifest (192×192)
+│   ├── icon-512.png           Android splash / PWA manifest (512×512)
+│   ├── sitemap.xml            Generated sitemap (copied verbatim into dist/)
+│   └── robots.txt             SEO robot rules
 ├── scripts/
-│   ├── new-project.js         Convert a Markdown file → project HTML + update projects.js
-│   ├── generate-cv.js         Build data/cv.js from data/cv.yaml
-│   ├── generate-locations.js  Generate data/locations.js from data/locations.yaml
-│   ├── update-locations.sh    Convenience wrapper for generate-locations.js
-│   ├── update-locations.ps1   PowerShell wrapper for generate-locations.js
+│   ├── new-project.js               Convert a Markdown draft → project HTML + update projects.js
+│   ├── generate-cv.js               Build data/cv.js from data/cv.yaml
+│   ├── generate-locations.js        Generate data/locations.js from data/locations.yaml
+│   ├── generate-sitemap.mjs         Rebuild public/sitemap.xml from projects.js + git mtimes
+│   ├── generate-project-jsonld.mjs  Inject/refresh BreadcrumbList + Article JSON-LD on every projects/*.html
+│   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
+│   ├── generate-favicons.mjs        Rasterise public/favicon.svg → ico + apple-touch + 192/512 PNGs (uses sharp)
+│   ├── update-locations.sh          Convenience wrapper for generate-locations.js
+│   ├── update-locations.ps1         PowerShell wrapper for generate-locations.js
 │   └── lib/
-│       └── yaml.js            Minimal YAML parser (no external dependencies)
+│       └── yaml.js                  Minimal YAML parser (no external dependencies)
 ├── test/
 │   ├── main.node.test.mjs          Tests for js/main.js
 │   ├── cv.test.mjs                 Tests for CV rendering
@@ -75,14 +90,15 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── seo.test.js                 SEO regression tests (meta description, JSON-LD, stat counters)
+│   ├── sitemap.test.mjs            Regression tests for the generated sitemap.xml
+│   ├── project-jsonld.test.mjs     Regression tests for BreadcrumbList + Article JSON-LD on project pages
+│   ├── html-quality.test.mjs       html-validate / a11y regression checks on every HTML page
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 │   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
 ├── .cache/
 │   └── locations-geocode-cache.json  Geocoding cache (auto-created; commit this to avoid re-querying the API in CI)
-├── sitemap.xml                Generated sitemap
-├── robots.txt                 SEO robot rules
-└── package.json               npm scripts (no runtime dependencies)
+└── package.json               three.js as the only runtime dependency
 ```
 
 ---
@@ -97,8 +113,13 @@ npm run test:generate-cv       # generate-cv.js tests only
 npm run test:locations         # locations generator tests only
 npm run test:project           # new-project.js tests only
 npm run test:seo               # SEO regression tests only
+npm run test:sitemap           # sitemap.xml regression tests only
+npm run test:project-jsonld    # project-page JSON-LD regression tests only
+npm run test:html-quality      # html-validate / a11y checks only
 # europe-map.test.mjs is included in `npm test` but has no dedicated shorthand
 ```
+
+The Playwright suites (`playwright.ui.test.mjs`, `playwright.iphone.test.mjs`) are not wired into `npm test` — run them manually with `npx playwright test test/playwright.ui.test.mjs` once the dev server is up.
 
 No external test dependencies are required — the Node.js built-in test runner (Node ≥ 18) handles everything.
 
@@ -165,6 +186,50 @@ node scripts/new-project.js project.md --dry-run    # preview without writing
 node scripts/new-project.js --help
 ```
 
+### `generate-sitemap` — rebuild sitemap.xml
+
+Reads `data/projects.js` and the HTML files in the repo, writes `public/sitemap.xml`. `<lastmod>` is taken from the git commit date of each file (filesystem mtime as fallback).
+
+```bash
+npm run generate-sitemap
+# or:
+node scripts/generate-sitemap.mjs --dry-run
+```
+
+Run after adding new project pages so the sitemap stays in sync. CI re-runs this before every deploy so `<lastmod>` reflects the latest commit dates.
+
+### `generate-project-jsonld` — refresh project-page JSON-LD
+
+Walks every `projects/*.html` and injects (or replaces) a `<script type="application/ld+json">` block containing both a `BreadcrumbList` and an `Article` schema, sourced from the page's existing canonical URL, title, description, OG image and `<p class="project-detail__year">`.
+
+```bash
+npm run generate-project-jsonld
+# or:
+node scripts/generate-project-jsonld.mjs --dry-run
+```
+
+The block is wrapped in `<!-- generated:project-jsonld -->` markers so re-runs replace in place instead of appending duplicates. CI re-runs this before every deploy.
+
+### `generate-csp-meta` — refresh Content-Security-Policy meta tags
+
+Injects (or replaces) the CSP `<meta http-equiv="Content-Security-Policy">` tag on every indexable HTML page. Edit the policy constant at the top of the script and re-run.
+
+```bash
+npm run generate-csp-meta
+# or:
+node scripts/generate-csp-meta.mjs --dry-run
+```
+
+### `generate-favicons` — rasterise the favicon
+
+Uses [sharp](https://sharp.pixelplumbing.com/) to rasterise `public/favicon.svg` into the PNG + ICO sizes browsers expect (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`).
+
+```bash
+npm run generate-favicons
+```
+
+Run only when the SVG source changes — the rasterised files are committed and reused otherwise.
+
 ### `dev` / `build` / `preview` — Vite
 
 ```bash
@@ -173,7 +238,7 @@ npm run build      # production build → dist/
 npm run preview    # serve dist/ locally
 ```
 
-GitHub Actions runs `npm test && npm run build` and publishes `dist/` on every push to `main` (see `.github/workflows/deploy.yml`).
+GitHub Actions runs `npm test`, then `generate-sitemap`, then `generate-project-jsonld`, then `npm run build`, and finally publishes `dist/` on every push to `main` (see `.github/workflows/deploy.yml`).
 
 ---
 
@@ -328,7 +393,7 @@ The navbar contains three items: **About**, **Projects**, and **Contact**. The C
 
 | Page | Description |
 | ------ | ------------- |
-| `index.html` | Single-page application — Hero, About, Research, Publications, Skills, Projects, Contact sections |
+| `index.html` | Single-page application — Hero, About, Research, Skills, Publications, Projects, Contact sections |
 | `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
 | `404.html` | Custom 404 error page. |
@@ -342,7 +407,7 @@ The navbar contains three items: **About**, **Projects**, and **Contact**. The C
 | Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows |
 | Publications | Filterable list of papers, rendered from `data/publications.js` |
 | Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
-| Projects | Up to 4 project cards rendered from `data/projects.js`, with a "View all projects" link to `projects.html` |
+| Projects | Up to 3 project cards rendered from `data/projects.js`, with a "View all projects" link to `projects.html` |
 | Contact | 2×2 grid of contact cards; email address is obfuscated and revealed on click |
 
 ---
