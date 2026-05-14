@@ -25,6 +25,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
 - [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the 3-D neural-network background and interactive globe
 - Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
+- Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`)
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies)
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
 - Self-hosted fonts: Inter (body) and Playfair Display (display / hero)
@@ -48,7 +49,8 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── hero-shader.js         HeroNameShader (raw WebGL iridescent text)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
 │   ├── animations.js          Scroll reveal, card tilt, magnetic buttons, parallax
-│   └── europe-map.js          Interactive 2D Canvas map of Europe
+│   ├── europe-map.js          Interactive 2D Canvas map of Europe
+│   └── theme.js               Generated — active palette (hex/int/glvec) + helpers (do not edit manually)
 ├── data/
 │   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
 │   ├── cv.js                  Generated CV data (do not edit manually)
@@ -56,6 +58,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
 │   ├── locations.yaml         Source of truth for globe pins/trips/regions
 │   ├── locations.js           Generated file (do not edit manually)
+│   ├── palettes.yaml          Source of truth for the colour palette — edit then run generate-theme
 │   ├── world-110m.json        TopoJSON world map data (110m resolution)
 │   └── land-50m.json          TopoJSON land data for Europe 2D map (50m, finer coastlines)
 ├── projects/
@@ -74,6 +77,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── new-project.js               Convert a Markdown draft → project HTML + update projects.js
 │   ├── generate-cv.js               Build data/cv.js from data/cv.yaml
 │   ├── generate-locations.js        Generate data/locations.js from data/locations.yaml
+│   ├── generate-theme.js            Propagate data/palettes.yaml across CSS, js/theme.js, HTML + favicon
 │   ├── generate-sitemap.mjs         Rebuild public/sitemap.xml from projects.js + git mtimes
 │   ├── generate-project-jsonld.mjs  Inject/refresh BreadcrumbList + Article JSON-LD on every projects/*.html
 │   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
@@ -87,6 +91,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── cv.test.mjs                 Tests for CV rendering
 │   ├── europe-map.test.mjs         Tests for js/europe-map.js
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
+│   ├── generate-theme.test.js      Tests for scripts/generate-theme.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── seo.test.js                 SEO regression tests (meta description, JSON-LD, stat counters)
@@ -110,6 +115,7 @@ npm test                       # run all tests
 npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
+npm run test:generate-theme    # generate-theme.js tests only
 npm run test:locations         # locations generator tests only
 npm run test:project           # new-project.js tests only
 npm run test:seo               # SEO regression tests only
@@ -170,6 +176,29 @@ node scripts/generate-locations.js --help
 ```
 
 Geocoding results are cached in `.cache/locations-geocode-cache.json` so subsequent runs do not re-query the API. The Nominatim API has a 1-request-per-second rate limit; the script respects this automatically.
+
+### `generate-theme` — apply a colour palette site-wide
+
+Reads `data/palettes.yaml`, takes the `active` palette, and regenerates every place a colour is baked in — in one pass:
+
+- the `:root` colour block in `css/styles.css` (between the `@theme-generated` markers)
+- `js/theme.js` — the ESM module the WebGL / Canvas2D modules and GLSL shaders import
+- `<meta theme-color>`, the inline data-URI favicon, and the nav-logo gradient in every `*.html` page + the `scripts/new-project.js` template
+- `public/favicon.svg`
+
+```bash
+npm run generate-theme
+# or directly:
+node scripts/generate-theme.js
+
+# Options:
+node scripts/generate-theme.js --palette crimson   # preview a palette other than `active`
+node scripts/generate-theme.js --dry-run           # print what would change, write nothing
+node scripts/generate-theme.js --validate          # check palettes.yaml structure, exit
+node scripts/generate-theme.js --help
+```
+
+Switching the whole site to another palette = change the `active:` key in `data/palettes.yaml` (or add a new palette), run `npm run generate-theme`, then `npm run generate-favicons` to rebuild the raster icons.
 
 ### `new-project` — create a project page from Markdown
 
@@ -250,6 +279,7 @@ Quick summary:
 
 - **`data/cv.yaml`** — career, education, and skills. Edit then run `npm run generate-cv`.
 - **`data/locations.yaml`** — globe pins (`lived` / `work` / `travel`), animated trip routes, and highlighted regions. Edit then run `npm run generate-locations`.
+- **`data/palettes.yaml`** — named colour palettes plus an `active` key. Edit then run `npm run generate-theme`.
 - **`data/projects.js`** — project card entries. Edit directly, or use `npm run new-project` to generate from Markdown.
 
 ---
