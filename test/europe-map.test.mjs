@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { EuropeMap2D } from '../js/europe-map.js';
+import { THEME, rgba } from '../js/theme.js';
 
 /**
  * Set up the globals the EuropeMap2D class reads (LOCATIONS, document, window,
@@ -129,8 +130,9 @@ test('EuropeMap2D: drawPin uses valid rgba halo colors', () => {
 
     map._drawPin({ type: 'holiday', x: 200, y: 100 }, false);
 
-    assert.equal(fills[0], 'rgba(255, 140, 66, 0.12)');
-    assert.equal(fills[1], '#ff8c42');
+    /* Pin colours are palette-driven (data/palettes.yaml → js/theme.js). */
+    assert.equal(fills[0], rgba(THEME.pins.holiday, 0.12));
+    assert.equal(fills[1], THEME.pins.holiday);
   });
 });
 
@@ -197,7 +199,8 @@ test('EuropeMap2D: drawTrips renders layered neon arcs', () => {
     map._drawTrips(0);
 
     assert.ok(curves.length >= 3);
-    assert.ok(strokes.includes('rgba(130, 229, 255, 0.95)'));
+    /* Bright moving core — palette-driven (data/palettes.yaml → js/theme.js). */
+    assert.ok(strokes.includes(rgba(THEME.globe.coastBright, 0.95)));
   });
 });
 

@@ -269,15 +269,16 @@
       ? pass(t, `${n} marker meshes (Paris geocoded: ${paris && !paris._skip ? 'yes' : 'no'})`)
       : fail(t, `expected ≥${expectedMin}, got ${n}`);
   });
-  test('[marker] PIN_COLORS: lived and work both use cyan', function(t) {
-    const ok = Globe3D.PIN_COLORS.lived === 0x00d4ff && Globe3D.PIN_COLORS.work === 0x00d4ff;
-    ok ? pass(t, `lived=0x${Globe3D.PIN_COLORS.lived.toString(16)}, work=0x${Globe3D.PIN_COLORS.work.toString(16)}`)
-       : fail(t, `lived=0x${(Globe3D.PIN_COLORS.lived||0).toString(16)}, work=0x${(Globe3D.PIN_COLORS.work||0).toString(16)}`);
-  });
-  test('[marker] PIN_COLORS: travel uses coral', function(t) {
-    const ok = Globe3D.PIN_COLORS.travel === 0xff8c42;
-    ok ? pass(t, `travel=0x${Globe3D.PIN_COLORS.travel.toString(16)}`)
-       : fail(t, `travel=0x${(Globe3D.PIN_COLORS.travel||0).toString(16)}`);
+  test('[marker] PIN_COLORS: four pin types have distinct theme colours', function(t) {
+    /* Colours are palette-driven (data/palettes.yaml → js/theme.js), so the
+       test asserts shape — four valid, distinct 24-bit integers — not fixed hex. */
+    const c = Globe3D.PIN_COLORS;
+    const vals = [c.lived, c.current, c.worktrip, c.holiday];
+    const allNums = vals.every(v => typeof v === 'number' && v >= 0 && v <= 0xffffff);
+    const distinct = new Set(vals).size === 4;
+    allNums && distinct
+      ? pass(t, vals.map(v => '0x' + v.toString(16)).join(', '))
+      : fail(t, `vals=${JSON.stringify(vals)}`);
   });
 
   /* Trips */

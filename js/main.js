@@ -11,8 +11,9 @@
      data/publications.js — selected papers  (PUBLICATIONS array)
      data/projects.js     — projects         (PROJECTS array)
 
-   To change neural-network colours, adjust the ACCENT_* /
-   CYAN_* constants inside the NeuralNetwork class below.
+   To change any colour on the site — including the neural network,
+   shaders, and 3D globe — edit data/palettes.yaml and run
+   `npm run generate-theme`.
    ============================================================ */
 
 /* ─── Three.js test mocking helpers ────────────────────────────
@@ -37,6 +38,12 @@ import './europe-map.js';
 
 /* Shared environment helpers */
 import { getTopoJSON, isLowPowerDevice, prefersReducedMotion, hasWebGLSupport } from './utils.js';
+
+/* Theme colours — single source of truth (data/palettes.yaml → js/theme.js) */
+import { THEME, glvec, rgba } from './theme.js';
+
+/* '#rrggbb' → GLSL `vec3(r, g, b)` literal. */
+const v3 = (hex) => `vec3(${glvec(hex).join(', ')})`;
 
 /* Hero neural-network animation (extracted module) */
 import { NeuralNetwork, NeuralNetwork2D } from './neural-net.js';
@@ -1094,18 +1101,18 @@ function initAnimatedFavicon() {
   function render() {
     /* ── Background: dark rounded square ── */
     ctx.clearRect(0, 0, S, S);
-    ctx.fillStyle = '#080c14';
+    ctx.fillStyle = THEME.faviconBg;
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(0, 0, S, S, 13);
     else               ctx.rect(0, 0, S, S);
     ctx.fill();
 
-    /* ── Static "S" in accent purple ── */
+    /* ── Static "S" in the accent colour ── */
     ctx.save();
     ctx.translate(S / 2, S / 2);
     ctx.shadowBlur  = 10;
-    ctx.shadowColor = '#6c63ffbb';
-    ctx.fillStyle   = '#6c63ff';
+    ctx.shadowColor = rgba(THEME.faviconFg, 0.73);
+    ctx.fillStyle   = THEME.faviconFg;
     ctx.font        = 'bold 44px "Outfit", "Inter", system-ui, sans-serif';
     ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
@@ -1210,13 +1217,13 @@ class NoiseGradient {
          vec2 r=vec2(fbm(uv*1.4+2.0*q+vec2(1.7,9.2)+0.15*t),
                      fbm(uv*1.4+2.0*q+vec2(8.3,2.8)+0.126*t));
          float f=fbm(uv*1.4+2.5*r);
-         /* Palette: deep dark → muted indigo-violet → subdued cyan.
-            Toned down to avoid an overly blue wash over the hero. */
-         vec3 col=mix(vec3(0.035,0.040,0.068),
-                      vec3(0.300,0.270,0.700),
+         /* Palette: deep dark → mid tone → bright pop.
+            Colours injected from data/palettes.yaml via js/theme.js. */
+         vec3 col=mix(${v3(THEME.noise.dark)},
+                      ${v3(THEME.noise.mid)},
                       clamp(f*2.0-0.15,0.0,1.0));
          col=mix(col,
-                 vec3(0.000,0.580,0.720),
+                 ${v3(THEME.noise.bright)},
                  clamp(f*f*4.0-0.4,0.0,1.0));
          col*=f*1.05+0.08;
          gl_FragColor=vec4(col,1.0);

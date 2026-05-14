@@ -27,9 +27,11 @@ npm run test:project        # new-project.js tests only
 npm run test:locations      # locations generator tests only
 npm run test:seo            # SEO regression tests only
 npm run test:generate-cv    # generate-cv.js tests only
+npm run test:generate-theme # generate-theme.js tests only
 
 npm run generate-cv         # data/cv.yaml → data/cv.js
 npm run generate-locations  # data/locations.yaml → data/locations.js
+npm run generate-theme      # data/palettes.yaml → theme across CSS + JS + HTML
 npm run new-project -- file.md  # Markdown → projects/<slug>.html + updates data/projects.js
 ```
 
@@ -56,9 +58,11 @@ data/cv.yaml        Source of truth for CV → run generate-cv after editing
 data/cv.js          Generated ESM module (do not edit manually)
 data/locations.yaml Source of truth for globe pins/trips → run generate-locations after editing
 data/locations.js   Generated ESM module (do not edit manually)
+data/palettes.yaml  Source of truth for the colour palette → run generate-theme after editing
 data/projects.js    Project entries — ESM (edit directly or via `npm run new-project`)
 data/publications.js Publication entries — ESM (edit directly)
-scripts/            Generator scripts (new-project, generate-cv, generate-locations)
+js/theme.js         Generated ESM module — active palette in hex/int/glvec forms (do not edit manually)
+scripts/            Generator scripts (new-project, generate-cv, generate-locations, generate-theme)
 test/               Tests for each script + main.js + europe-map.js + SEO + Playwright E2E
 docs/               DATA-FORMATS.md, DEPLOYMENT.md, project-template.md, cv.pdf, defense.pdf
 drafts/             Markdown source for projects/*.html — feed into `npm run new-project`. Not deployed.
@@ -70,7 +74,7 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - **ES modules everywhere** — `js/` and `data/` directories have nested `package.json` with `"type": "module"`. Generator scripts and tests for them stay CJS.
 - **Test mocking for Three.js** — modules subscribe to `onChange` from `js/three-context.js`; tests call `__setThreeForTests(mock)` / `__resetThreeForTests()` (re-exported from `js/main.js`) to swap the active THREE.
 - All generator scripts support `--dry-run`, `--help`, and standard CLI flags
-- Generated files (`data/cv.js`, `data/locations.js`) should never be edited manually
+- Generated files (`data/cv.js`, `data/locations.js`, `js/theme.js`, and the `@theme-generated` block in `css/styles.css`) should never be edited manually
 - Tests use Node.js built-in test runner (`node --test`) — no Jest, no Mocha
 - YAML source files → JS ESM data files via generator scripts
 - Self-hosted fonts (no Google Fonts CDN)
@@ -81,7 +85,8 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 1. **Always run `npm test` after changes** to verify nothing breaks
 2. **After editing `data/cv.yaml`**, run `npm run generate-cv`
 3. **After editing `data/locations.yaml`**, run `npm run generate-locations`
-4. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.
+4. **After editing `data/palettes.yaml`** (or switching the `active` palette), run `npm run generate-theme`, then `npm run generate-favicons` to rebuild the raster icons
+5. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.
 
 ## Important Patterns
 
@@ -89,12 +94,15 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - **Globe data pipeline**: `locations.yaml` → geocode via Nominatim API (cached in `.cache/`) → `locations.js` (ESM module that also assigns `globalThis.LOCATIONS` so legacy bare-global reads keep working)
 - **Project pipeline**: Write Markdown with YAML frontmatter → `node scripts/new-project.js file.md` → generates HTML + updates `data/projects.js`
 - **THREE module bindings**: `js/neural-net.js` and `js/globe.js` use named-import destructuring (`let { Scene, WebGLRenderer, ... } = _THREE`) re-bound by `onChange` so test mocks still take effect
+- **Theme pipeline**: `data/palettes.yaml` (one `active` key + named palettes) → `npm run generate-theme` → rewrites the `@theme-generated` `:root` block in `css/styles.css`, regenerates `js/theme.js`, and updates `<meta theme-color>` / inline favicon / nav-logo gradient across every `*.html` + `public/favicon.svg`. CSS reads `var(--*)`; the WebGL/Canvas2D modules and GLSL shaders import `THEME` + the `int()` / `rgba()` / `glvec()` helpers from `js/theme.js` (the shader source is a JS template literal, so colours are interpolated at module load — no recompile, no uniforms). Switching the whole site's palette = edit one YAML key + run one command.
 - **Performance**: NoiseGradient renders 3 frames then stops; HeroNameShader capped at 30fps; favicon is static
 
 ## Things to Avoid
 
 - Don't bypass Vite — production HTML uses `<script type="module" src="/js/main.js">`; data files are imported by main.js, not loaded as standalone scripts
-- Don't edit generated files (`data/cv.js`, `data/locations.js`)
+- Don't edit generated files (`data/cv.js`, `data/locations.js`, `js/theme.js`)
+- Don't hardcode colours — add them to `data/palettes.yaml` and consume via `var(--*)` (CSS) or `THEME` from `js/theme.js` (JS/shaders), so palette switching stays consistent
+- Don't edit the `@theme-generated` block inside `css/styles.css` by hand — it's overwritten by `generate-theme`
 - Don't load external fonts or analytics — privacy-first, no tracking
 - Don't remove `prefers-reduced-motion` checks or accessibility attributes
 - Don't commit `.cache/` changes without verifying geocoding results

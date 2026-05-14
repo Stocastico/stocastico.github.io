@@ -8,6 +8,10 @@
    Pure raw WebGL — does NOT depend on Three.js.
    ═══════════════════════════════════════════════════════════ */
 import { isLowPowerDevice } from './utils.js';
+import { THEME, glvec } from './theme.js';
+
+/* '#rrggbb' → GLSL `vec3(r, g, b)` literal. */
+const v3 = (hex) => `vec3(${glvec(hex).join(', ')})`;
 
 export class HeroNameShader {
 
@@ -141,11 +145,12 @@ export class HeroNameShader {
 
         if (max(max(aR, aG), aB) < 0.004) discard;
 
-        /* stable dark-theme palette: violet -> cyan, no rainbow cycling */
+        /* stable dark-theme palette — accent -> accent2, no rainbow cycling.
+           Colours injected from data/palettes.yaml via js/theme.js. */
         float sweep = uv.x * 1.2 + uv.y * 0.55 + uTime * 0.04 + md * 0.25;
-        vec3 baseA = vec3(0.42, 0.39, 1.00);
-        vec3 baseB = vec3(0.00, 0.83, 1.00);
-        vec3 baseC = vec3(0.78, 0.90, 1.00);
+        vec3 baseA = ${v3(THEME.accent)};
+        vec3 baseB = ${v3(THEME.accent2)};
+        vec3 baseC = ${v3(THEME.heroGradFrom)};
         vec3 iri = mix(baseA, baseB, clamp(sweep, 0.0, 1.0));
         iri = mix(iri, baseC, 0.18 + 0.10 * sin(uTime * 0.25));
 
