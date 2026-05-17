@@ -452,9 +452,9 @@ export class Globe3D {
     const [clipX0, clipY0] = px(europeMinLon, europeMaxLat);
     const [clipX1, clipY1] = px(europeMaxLon, europeMinLat);
 
-    const overlapsEuropeBounds = (ring) => {
+    const overlapsEuropeBoundsAt = (ring, shift) => {
       for (let i = 0; i < ring.length; i++) {
-        const lon = ring[i][0];
+        const lon = ring[i][0] + shift;
         const lat = ring[i][1];
         if (lon >= europeMinLon && lon <= europeMaxLon && lat >= europeMinLat && lat <= europeMaxLat) {
           return true;
@@ -464,26 +464,44 @@ export class Globe3D {
     };
 
     rings.forEach((ring) => {
-      if (!overlapsEuropeBounds(ring)) return;
-      ctx.save();
-      /* Clip to the Europe rectangle first */
-      ctx.beginPath();
-      ctx.rect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
-      ctx.clip();
-      /* Then clip to the land polygon — intersection = land within Europe */
-      ctx.beginPath();
-      const [x0, y0] = px(ring[0][0], ring[0][1]);
-      ctx.moveTo(x0, y0);
-      for (let i = 1; i < ring.length; i++) {
-        const [x, y] = px(ring[i][0], ring[i][1]);
-        ctx.lineTo(x, y);
+      /* Unwrap before clipping. Without this, antimeridian-crossing rings
+         (Russia in particular has European territory) form a self-intersecting
+         path in 2D — the long closing edge cuts through the Europe rect and
+         the nonzero fill rule leaves spurious violet patches (e.g. between
+         Norway and Iceland). Drawing the unwrapped poly at the shift where it
+         actually covers Europe avoids the degenerate geometry. */
+      const unwrapped = unwrapRing(ring);
+      let minLon = Infinity, maxLon = -Infinity;
+      for (const p of unwrapped) {
+        if (p[0] < minLon) minLon = p[0];
+        if (p[0] > maxLon) maxLon = p[0];
       }
-      ctx.closePath();
-      ctx.clip();
-      /* Fill — only visible where both clips overlap (land in Europe) */
-      ctx.fillStyle = '#4e2870';
-      ctx.fillRect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
-      ctx.restore();
+
+      const fillAt = (shift) => {
+        ctx.save();
+        /* Clip to the Europe rectangle first */
+        ctx.beginPath();
+        ctx.rect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
+        ctx.clip();
+        /* Then clip to the land polygon — intersection = land within Europe */
+        ctx.beginPath();
+        const [x0, y0] = px(unwrapped[0][0] + shift, unwrapped[0][1]);
+        ctx.moveTo(x0, y0);
+        for (let i = 1; i < unwrapped.length; i++) {
+          const [x, y] = px(unwrapped[i][0] + shift, unwrapped[i][1]);
+          ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.clip();
+        /* Fill — only visible where both clips overlap (land in Europe) */
+        ctx.fillStyle = '#4e2870';
+        ctx.fillRect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
+        ctx.restore();
+      };
+
+      if (overlapsEuropeBoundsAt(unwrapped, 0)) fillAt(0);
+      if (maxLon > 180 && overlapsEuropeBoundsAt(unwrapped, -360)) fillAt(-360);
+      if (minLon < -180 && overlapsEuropeBoundsAt(unwrapped, 360)) fillAt(360);
     });
 
     /* Draw all land rings with neon glow (on top of the Europe violet fill).
