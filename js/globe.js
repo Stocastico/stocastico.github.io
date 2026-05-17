@@ -362,21 +362,60 @@ export class Globe3D {
     ctx.fillStyle = '#0e2640';
     ctx.fillRect(0, antY, W, H - antY);
 
+    /* Make a ring's longitudes continuous: when consecutive points jump by
+       more than 180° they're really crossing the antimeridian, so unwrap by
+       ±360°. Without this, drawing the ring on the equirectangular texture
+       would stretch the segment across the entire canvas — which then maps
+       to a spurious latitude circle on the sphere (Chukotka, Wrangel, Fiji
+       all do this). */
+    const unwrapRing = (ring) => {
+      if (ring.length === 0) return ring;
+      const out = [[ring[0][0], ring[0][1]]];
+      for (let i = 1; i < ring.length; i++) {
+        let lon = ring[i][0];
+        const prevLon = out[i - 1][0];
+        while (lon - prevLon > 180) lon -= 360;
+        while (lon - prevLon < -180) lon += 360;
+        out.push([lon, ring[i][1]]);
+      }
+      return out;
+    };
+
     /* Draw one ring with a multi-pass neon glow stroke */
     const drawRing = ring => {
-      ctx.beginPath();
-      const [x0, y0] = px(ring[0][0], ring[0][1]);
-      ctx.moveTo(x0, y0);
-      for (let i = 1; i < ring.length; i++) {
-        const [x, y] = px(ring[i][0], ring[i][1]);
-        ctx.lineTo(x, y);
+      /* Antarctica's single ring encloses the south pole, so it can't be
+         flattened cleanly into a 2D rectangle without bridging to lat=-90.
+         The antY band above already covers it — skip the detailed polygon. */
+      if (ring.some(p => p[1] < -65)) return;
+
+      const unwrapped = unwrapRing(ring);
+      let minLon = Infinity, maxLon = -Infinity;
+      for (const p of unwrapped) {
+        if (p[0] < minLon) minLon = p[0];
+        if (p[0] > maxLon) maxLon = p[0];
       }
-      ctx.closePath();
-      ctx.fillStyle = '#0e2640';
-      ctx.fill();
-      /* outer glow halo */ ctx.lineWidth = 5;   ctx.strokeStyle = 'rgba(0,185,235,0.25)'; ctx.stroke();
-      /* mid glow        */ ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,210,255,0.60)'; ctx.stroke();
-      /* bright core     */ ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(155,242,255,1.00)'; ctx.stroke();
+
+      const drawAt = (shift) => {
+        ctx.beginPath();
+        const [x0, y0] = px(unwrapped[0][0] + shift, unwrapped[0][1]);
+        ctx.moveTo(x0, y0);
+        for (let i = 1; i < unwrapped.length; i++) {
+          const [x, y] = px(unwrapped[i][0] + shift, unwrapped[i][1]);
+          ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#0e2640';
+        ctx.fill();
+        /* outer glow halo */ ctx.lineWidth = 5;   ctx.strokeStyle = 'rgba(0,185,235,0.25)'; ctx.stroke();
+        /* mid glow        */ ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,210,255,0.60)'; ctx.stroke();
+        /* bright core     */ ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(155,242,255,1.00)'; ctx.stroke();
+      };
+
+      drawAt(0);
+      /* If the unwrapped polygon spills past ±180°, redraw shifted so the
+         piece wrapping around to the other hemisphere is rendered as well. */
+      if (maxLon > 180) drawAt(-360);
+      if (minLon < -180) drawAt(360);
     };
 
     /* Paint European land with dark neon violet BEFORE the neon coastlines
