@@ -1640,6 +1640,10 @@ h3 {
   .section-header--left {
     text-align: center;
   }
+
+  .skills-sticky-desc {
+    margin-inline: auto;
+  }
 }
 
 .skill-group {
