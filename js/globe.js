@@ -357,11 +357,6 @@ export class Globe3D {
     /* lon, lat → canvas pixel (equirectangular) */
     const px = (lon, lat) => [(lon + 180) / 360 * W, (90 - lat) / 180 * H];
 
-    /* Antarctica: filled band at bottom of map */
-    const antY = (90 - (-68)) / 180 * H;
-    ctx.fillStyle = '#0e2640';
-    ctx.fillRect(0, antY, W, H - antY);
-
     /* Make a ring's longitudes continuous: when consecutive points jump by
        more than 180° they're really crossing the antimeridian, so unwrap by
        ±360°. Without this, drawing the ring on the equirectangular texture
@@ -381,12 +376,16 @@ export class Globe3D {
       return out;
     };
 
-    /* Draw one ring with a multi-pass neon glow stroke */
+    /* Draw one ring with a multi-pass neon glow stroke. Pole-enclosing rings
+       (odd number of antimeridian crossings — Antarctica is the only one in
+       Natural-Earth 110m) are filled by bridging to the relevant pole; their
+       stroke skips that bridge so the coastline stays the only visible edge. */
     const drawRing = ring => {
-      /* Antarctica's single ring encloses the south pole, so it can't be
-         flattened cleanly into a 2D rectangle without bridging to lat=-90.
-         The antY band above already covers it — skip the detailed polygon. */
-      if (ring.some(p => p[1] < -65)) return;
+      let crossings = 0;
+      for (let i = 1; i < ring.length; i++) {
+        if (Math.abs(ring[i][0] - ring[i - 1][0]) > 180) crossings++;
+      }
+      const polar = (crossings % 2) === 1;
 
       const unwrapped = unwrapRing(ring);
       let minLon = Infinity, maxLon = -Infinity;
@@ -395,7 +394,14 @@ export class Globe3D {
         if (p[0] > maxLon) maxLon = p[0];
       }
 
+      let pole = 0;
+      if (polar) {
+        const avgLat = ring.reduce((s, p) => s + p[1], 0) / ring.length;
+        pole = avgLat < 0 ? -90 : 90;
+      }
+
       const drawAt = (shift) => {
+        /* Fill path: coastline + bridge to the pole when polar. */
         ctx.beginPath();
         const [x0, y0] = px(unwrapped[0][0] + shift, unwrapped[0][1]);
         ctx.moveTo(x0, y0);
@@ -403,9 +409,28 @@ export class Globe3D {
           const [x, y] = px(unwrapped[i][0] + shift, unwrapped[i][1]);
           ctx.lineTo(x, y);
         }
+        if (polar) {
+          const last = unwrapped[unwrapped.length - 1];
+          const first = unwrapped[0];
+          const [xL, yP] = px(last[0] + shift, pole);
+          ctx.lineTo(xL, yP);
+          const [xF] = px(first[0] + shift, pole);
+          ctx.lineTo(xF, yP);
+        }
         ctx.closePath();
         ctx.fillStyle = '#0e2640';
         ctx.fill();
+
+        /* Stroke path: coastline only — the bridge to the pole would draw a
+           bright neon line straight through the pole and a vertical edge at
+           ±180°, neither of which is part of the real coast. */
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        for (let i = 1; i < unwrapped.length; i++) {
+          const [x, y] = px(unwrapped[i][0] + shift, unwrapped[i][1]);
+          ctx.lineTo(x, y);
+        }
+        if (!polar) ctx.closePath();
         /* outer glow halo */ ctx.lineWidth = 5;   ctx.strokeStyle = 'rgba(0,185,235,0.25)'; ctx.stroke();
         /* mid glow        */ ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,210,255,0.60)'; ctx.stroke();
         /* bright core     */ ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(155,242,255,1.00)'; ctx.stroke();
@@ -461,14 +486,11 @@ export class Globe3D {
       ctx.restore();
     });
 
-    /* Draw all land rings with neon glow (on top of the Europe violet fill) */
+    /* Draw all land rings with neon glow (on top of the Europe violet fill).
+       Antarctica is now drawn here too — its ring is detected as polar and
+       filled by bridging to the south pole, replacing the old rectangular
+       band + flat lat=-68 stroke that produced a spurious parallel circle. */
     rings.forEach(drawRing);
-
-    /* Antarctica border line */
-    ctx.lineWidth = 2;   ctx.strokeStyle = 'rgba(0,210,255,0.50)';
-    ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
-    ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(155,242,255,0.95)';
-    ctx.beginPath(); ctx.moveTo(0, antY); ctx.lineTo(W, antY); ctx.stroke();
 
     return new CT(cvs);
   }
