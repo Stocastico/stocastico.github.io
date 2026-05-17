@@ -2287,6 +2287,57 @@ h3 {
   .tl-card-single {
     padding: 1.1rem 1.25rem;
   }
+
+  /* Concurrent blocks: collapse 3-column grid to a single stacked column so
+     career cards and the paired education card don't squeeze side-by-side
+     and double up vertical spine lines. */
+  .tl-concurrent-block {
+    display:  block;
+    position: relative;
+  }
+
+  .tl-concurrent-block > .tl-left,
+  .tl-concurrent-block > .tl-right {
+    display:        block;
+    padding:        0 0 0 2rem;
+    margin-bottom:  1.5rem;
+    text-align:     left;
+    position:       relative;
+  }
+
+  .tl-concurrent-block > .tl-right:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Hide per-pair inner spines — each card gets its own dot via ::before
+     anchored on the main timeline spine. */
+  .tl-concurrent-block > .tl-spine {
+    display: none;
+  }
+
+  .tl-concurrent-block > .tl-left::before,
+  .tl-concurrent-block > .tl-right::before {
+    content:       '';
+    position:      absolute;
+    left:          6px;
+    top:           1.4rem;
+    width:         10px;
+    height:        10px;
+    border-radius: 50%;
+    border:        2px solid var(--bg-alt);
+    transform:     translateX(-50%);
+    z-index:       2;
+  }
+
+  .tl-concurrent-block > .tl-left::before {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .tl-concurrent-block > .tl-right::before {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2-glow);
+  }
 }
 
 /* ─── 16d. CV page layout ────────────────────────────────── */
