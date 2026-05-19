@@ -220,3 +220,6 @@ __marimo__/
 .playwright-cli/
 output/playwright/
 .codex/
+
+# Local-only screenshot scratch dir (e.g. PR review captures)
+screenshots/
