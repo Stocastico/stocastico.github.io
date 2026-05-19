@@ -7,6 +7,7 @@
    ═══════════════════════════════════════════════════════════ */
 import { onChange } from './three-context.js';
 import { isLowPowerDevice } from './utils.js';
+import { THEME, glvec, rgba } from './theme.js';
 
 /* THREE bindings — declared without an initial value; the onChange callback
    fires immediately on registration with the active THREE namespace and again
@@ -36,8 +37,10 @@ export class NeuralNetwork {
   static SPEED = 0.4;  /* particle drift speed             */
   static MOUSE_RADIUS = 220;  /* attraction zone around cursor    */
   static MOUSE_STRENGTH = 0.0008;
-  static ACCENT_R = 0.424; static ACCENT_G = 0.392; static ACCENT_B = 1.0;   /* #6c63ff */
-  static CYAN_R = 0.0; static CYAN_G = 0.831; static CYAN_B = 1.0;   /* #00d4ff */
+  /* Connection-line gradient endpoints — [r,g,b] floats from the active
+     theme palette (data/palettes.yaml → js/theme.js). */
+  static ACCENT  = glvec(THEME.accent);
+  static ACCENT2 = glvec(THEME.accent2);
 
   constructor(canvas) {
     this.canvas = canvas;
@@ -118,10 +121,10 @@ export class NeuralNetwork {
     const ctx = c.getContext('2d');
     const cx = size / 2;
     const g = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
-    g.addColorStop(0, 'rgba(108, 99, 255, 1)');
-    g.addColorStop(0.25, 'rgba(108, 99, 255, 0.7)');
-    g.addColorStop(0.6, 'rgba(0,  212, 255, 0.25)');
-    g.addColorStop(1, 'rgba(0,    0,   0, 0)');
+    g.addColorStop(0, rgba(THEME.accent, 1));
+    g.addColorStop(0.25, rgba(THEME.accent, 0.7));
+    g.addColorStop(0.6, rgba(THEME.accent2, 0.25));
+    g.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, size, size);
     return new CanvasTexture(c);
@@ -233,8 +236,8 @@ export class NeuralNetwork {
        called for pairs that actually connect (~5-10% of the total). */
     const lp = this.linePosArr;
     const lc = this.lineColArr;
-    const R1 = NeuralNetwork.ACCENT_R, G1 = NeuralNetwork.ACCENT_G, B1 = NeuralNetwork.ACCENT_B;
-    const R2 = NeuralNetwork.CYAN_R, G2 = NeuralNetwork.CYAN_G, B2 = NeuralNetwork.CYAN_B;
+    const [R1, G1, B1] = NeuralNetwork.ACCENT;
+    const [R2, G2, B2] = NeuralNetwork.ACCENT2;
     let seg = 0;
 
     for (let i = 0; i < n; i++) {
@@ -399,7 +402,7 @@ export class NeuralNetwork2D {
         const d2 = dx * dx + dy * dy;
         if (d2 >= this.maxDist2) continue;
         const alpha = 1 - (d2 / this.maxDist2);
-        ctx.strokeStyle = `rgba(120,130,255,${0.22 * alpha})`;
+        ctx.strokeStyle = rgba(THEME.accentHi, 0.22 * alpha);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
@@ -411,8 +414,8 @@ export class NeuralNetwork2D {
       const p = this.points[i];
       const r = 1.7 + p.z * 2.2;
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3);
-      g.addColorStop(0, 'rgba(180,190,255,0.95)');
-      g.addColorStop(0.5, 'rgba(85,210,255,0.35)');
+      g.addColorStop(0, rgba(THEME.accent2Hi, 0.95));
+      g.addColorStop(0.5, rgba(THEME.accent2, 0.35));
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g;
       ctx.beginPath();

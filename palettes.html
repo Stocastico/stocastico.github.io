@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Palette preview — Stefano Masneri</title>
+  <style>
+    /* ── Palette definitions ────────────────────────────────── */
+    /* Each [data-palette] block overrides the same set of vars,
+       so the entire mockup re-themes by toggling one attribute.   */
+
+    :root,
+    [data-palette="mocha"] {
+      --bg:        #0c0908;
+      --bg-alt:    #15110d;
+      --bg-card:   rgba(244 235 225 / 0.04);
+      --bg-card-h: rgba(244 235 225 / 0.07);
+      --border:    rgba(244 235 225 / 0.09);
+      --border-h:  rgba(244 162 97 / 0.45);
+      --accent:    #f4a261;
+      --accent2:   #e76f51;
+      --accent-tx: #2a1a0d;
+      --text:      #f4ebe1;
+      --text-muted:#a39588;
+      --text-faint:#7a6f64;
+      --orb-1:     rgba(244, 162, 97, 0.18);
+      --orb-2:     rgba(231, 111, 81, 0.13);
+      --grad-from: #f6d2a8;
+      --grad-to:   #e76f51;
+    }
+
+    [data-palette="sage"] {
+      --bg:        #0f1311;
+      --bg-alt:    #161b18;
+      --bg-card:   rgba(236 230 220 / 0.04);
+      --bg-card-h: rgba(236 230 220 / 0.07);
+      --border:    rgba(236 230 220 / 0.08);
+      --border-h:  rgba(212 165 116 / 0.45);
+      --accent:    #d4a574;
+      --accent2:   #88a596;
+      --accent-tx: #1a1410;
+      --text:      #ece6dc;
+      --text-muted:#9aa099;
+      --text-faint:#727872;
+      --orb-1:     rgba(212, 165, 116, 0.16);
+      --orb-2:     rgba(136, 165, 150, 0.14);
+      --grad-from: #e8d6b8;
+      --grad-to:   #88a596;
+    }
+
+    [data-palette="riso"] {
+      --bg:        #0e1117;
+      --bg-alt:    #141925;
+      --bg-card:   rgba(240 238 228 / 0.04);
+      --bg-card-h: rgba(240 238 228 / 0.07);
+      --border:    rgba(240 238 228 / 0.09);
+      --border-h:  rgba(255 93 77 / 0.5);
+      --accent:    #ff5d4d;
+      --accent2:   #ffd166;
+      --accent-tx: #1a0806;
+      --text:      #f0eee4;
+      --text-muted:#9aa1b0;
+      --text-faint:#6f7585;
+      --orb-1:     rgba(255, 93, 77, 0.18);
+      --orb-2:     rgba(255, 209, 102, 0.14);
+      --grad-from: #ffd9c7;
+      --grad-to:   #ffd166;
+    }
+
+    [data-palette="concrete"] {
+      --bg:        #0e0e10;
+      --bg-alt:    #17171a;
+      --bg-card:   rgba(236 233 227 / 0.04);
+      --bg-card-h: rgba(236 233 227 / 0.07);
+      --border:    rgba(236 233 227 / 0.08);
+      --border-h:  rgba(200 85 61 / 0.45);
+      --accent:    #c8553d;
+      --accent2:   #8da9c4;
+      --accent-tx: #f5efe6;
+      --text:      #ece9e3;
+      --text-muted:#9b9893;
+      --text-faint:#6e6c68;
+      --orb-1:     rgba(200, 85, 61, 0.16);
+      --orb-2:     rgba(141, 169, 196, 0.13);
+      --grad-from: #e8d8c8;
+      --grad-to:   #c8553d;
+    }
+
+    [data-palette="signal"] {
+      --bg:        #0a0a0a;
+      --bg-alt:    #141414;
+      --bg-card:   rgba(237 237 237 / 0.04);
+      --bg-card-h: rgba(237 237 237 / 0.07);
+      --border:    rgba(237 237 237 / 0.09);
+      --border-h:  rgba(255 77 0 / 0.5);
+      --accent:    #ff4d00;
+      --accent2:   #d4d4d4;
+      --accent-tx: #0a0a0a;
+      --text:      #ededed;
+      --text-muted:#9a9a9a;
+      --text-faint:#6e6e6e;
+      --orb-1:     rgba(255, 77, 0, 0.16);
+      --orb-2:     rgba(212, 212, 212, 0.10);
+      --grad-from: #f5f5f5;
+      --grad-to:   #ff4d00;
+    }
+
+    [data-palette="crimson"] {
+      --bg:        #0d0a0a;
+      --bg-alt:    #1a1212;
+      --bg-card:   rgba(240 230 210 / 0.04);
+      --bg-card-h: rgba(240 230 210 / 0.07);
+      --border:    rgba(240 230 210 / 0.09);
+      --border-h:  rgba(193 39 45 / 0.5);
+      --accent:    #c1272d;
+      --accent2:   #e8d8b5;
+      --accent-tx: #f0e6d2;
+      --text:      #f0e6d2;
+      --text-muted:#a09080;
+      --text-faint:#6e6258;
+      --orb-1:     rgba(193, 39, 45, 0.18);
+      --orb-2:     rgba(232, 216, 181, 0.10);
+      --grad-from: #f0e0c6;
+      --grad-to:   #c1272d;
+    }
+
+    [data-palette="bauhaus"] {
+      --bg:        #0c0c0e;
+      --bg-alt:    #16161a;
+      --bg-card:   rgba(240 238 234 / 0.04);
+      --bg-card-h: rgba(240 238 234 / 0.07);
+      --border:    rgba(240 238 234 / 0.09);
+      --border-h:  rgba(255 206 0 / 0.45);
+      --accent:    #ffce00;
+      --accent2:   #2540ce;
+      --accent-tx: #0c0c0e;
+      --text:      #f0eeea;
+      --text-muted:#9a9794;
+      --text-faint:#6c6a67;
+      --orb-1:     rgba(255, 206, 0, 0.14);
+      --orb-2:     rgba(37, 64, 206, 0.18);
+      --grad-from: #ffd84d;
+      --grad-to:   #2540ce;
+    }
+
+    [data-palette="forest"] {
+      --bg:        #0a120e;
+      --bg-alt:    #0f1a14;
+      --bg-card:   rgba(232 238 229 / 0.04);
+      --bg-card-h: rgba(232 238 229 / 0.07);
+      --border:    rgba(232 238 229 / 0.08);
+      --border-h:  rgba(200 164 77 / 0.45);
+      --accent:    #c8a44d;
+      --accent2:   #6db088;
+      --accent-tx: #1a1408;
+      --text:      #e8eee5;
+      --text-muted:#8a948b;
+      --text-faint:#5e6862;
+      --orb-1:     rgba(200, 164, 77, 0.16);
+      --orb-2:     rgba(109, 176, 136, 0.14);
+      --grad-from: #e6d4a4;
+      --grad-to:   #6db088;
+    }
+
+    /* ── Reset / base ───────────────────────────────────────── */
+    *,
+    *::before,
+    *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      transition: background 0.4s ease, color 0.4s ease;
+      min-height: 100vh;
+    }
+
+    /* ── Palette switcher (sticky) ──────────────────────────── */
+    .switcher {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(0 0 0 / 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem clamp(1rem, 4vw, 2rem);
+      transition: background 0.4s ease, border-color 0.4s ease;
+    }
+
+    .switcher-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .switcher-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-right: 0.4rem;
+    }
+
+    .chip {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .chip:hover {
+      border-color: var(--border-h);
+      background: var(--bg-card-h);
+    }
+
+    .chip[aria-pressed="true"] {
+      background: var(--accent);
+      color: var(--accent-tx);
+      border-color: var(--accent);
+    }
+
+    .chip-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 clamp(1rem, 4vw, 2rem);
+    }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      padding: clamp(3rem, 9vw, 6rem) 0 clamp(2rem, 6vw, 4rem);
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(50px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 60vw;
+      max-width: 500px;
+      aspect-ratio: 1;
+      top: -10%;
+      left: -10%;
+      background: radial-gradient(circle, var(--orb-1) 0%, transparent 70%);
+    }
+
+    .orb-2 {
+      width: 50vw;
+      max-width: 400px;
+      aspect-ratio: 1;
+      bottom: -15%;
+      right: -10%;
+      background: radial-gradient(circle, var(--orb-2) 0%, transparent 70%);
+    }
+
+    .hero-inner { position: relative; z-index: 2; }
+
+    .eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin: 0 0 1rem;
+      font-weight: 600;
+    }
+
+    .hero-name {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: clamp(2.6rem, 11vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.25rem;
+      background: linear-gradient(135deg, var(--grad-from) 30%, var(--grad-to) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-tagline {
+      font-size: clamp(0.85rem, 1.7vw, 1rem);
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      margin: 0 0 0.6rem;
+    }
+
+    .hero-location {
+      font-size: 0.85rem;
+      color: var(--text-faint);
+      margin: 0 0 1.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .hero-location::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 8px var(--accent2);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.7rem 1.25rem;
+      border-radius: 999px;
+      font-weight: 500;
+      font-size: 0.92rem;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-tx);
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover { border-color: var(--border-h); }
+
+    /* ── Section ────────────────────────────────────────────── */
+    .section {
+      padding: clamp(2.5rem, 7vw, 4.5rem) 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin: 0 0 0.6rem;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+      margin: 0 0 1.5rem;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+    }
+
+    /* ── Cards ──────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 880px) {
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-h);
+      background: var(--bg-card-h);
+      transform: translateY(-3px);
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: var(--accent-tx);
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      font-size: 1rem;
+    }
+
+    .card-title {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: 1.05rem;
+      margin: 0 0 0.4rem;
+      color: var(--text);
+    }
+
+    .card-body {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.85rem;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: var(--bg-card-h);
+      color: var(--accent2);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Swatch panel ───────────────────────────────────────── */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .swatches { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .swatch {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+
+    .swatch-chip {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+
+    .swatch-name {
+      display: block;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .swatch-hex {
+      display: block;
+      color: var(--text-faint);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Footer / blurb ─────────────────────────────────────── */
+    .blurb {
+      margin: 0 0 0.8rem;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      max-width: 60ch;
+    }
+
+    .palette-name {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      margin: 0 0 0.5rem;
+    }
+
+    .palette-summary {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: 1.4rem;
+      margin: 0 0 0.6rem;
+      letter-spacing: -0.01em;
+    }
+
+    .palette-summary .accent { color: var(--accent); }
+
+    footer.outro {
+      padding: 2rem 0 4rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body data-palette="mocha">
+  <!-- Palette switcher (sticky) ─────────────────────────────── -->
+  <div class="switcher" role="tablist" aria-label="Color palette">
+    <div class="switcher-inner">
+      <span class="switcher-label">Palette</span>
+      <button class="chip" type="button" data-target="mocha" aria-pressed="true">
+        <span class="chip-dot" style="background:#f4a261"></span>Mocha &amp; Apricot
+      </button>
+      <button class="chip" type="button" data-target="sage" aria-pressed="false">
+        <span class="chip-dot" style="background:#d4a574"></span>Sage Editorial
+      </button>
+      <button class="chip" type="button" data-target="riso" aria-pressed="false">
+        <span class="chip-dot" style="background:#ff5d4d"></span>Risograph
+      </button>
+      <button class="chip" type="button" data-target="concrete" aria-pressed="false">
+        <span class="chip-dot" style="background:#c8553d"></span>Concrete &amp; Rust
+      </button>
+      <button class="chip" type="button" data-target="signal" aria-pressed="false">
+        <span class="chip-dot" style="background:#ff4d00"></span>Monochrome Signal
+      </button>
+      <button class="chip" type="button" data-target="crimson" aria-pressed="false">
+        <span class="chip-dot" style="background:#c1272d"></span>Crimson Lab
+      </button>
+      <button class="chip" type="button" data-target="bauhaus" aria-pressed="false">
+        <span class="chip-dot" style="background:#ffce00"></span>Bauhaus
+      </button>
+      <button class="chip" type="button" data-target="forest" aria-pressed="false">
+        <span class="chip-dot" style="background:#c8a44d"></span>Forest &amp; Brass
+      </button>
+    </div>
+  </div>
+
+  <!-- Hero ──────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="wrap hero-inner">
+      <p class="eyebrow" id="palette-eyebrow">Mocha &amp; Apricot — palette 1 of 4</p>
+      <h1 class="hero-name">Stefano Masneri</h1>
+      <p class="hero-tagline">Senior AI Engineer · Computer Vision · Generative Models</p>
+      <p class="hero-location">Based in Berlin · open to remote</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="#">View projects</a>
+        <a class="btn btn-ghost" href="#">Read CV</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Palette description + swatches ────────────────────────── -->
+  <section class="section">
+    <div class="wrap">
+      <p class="palette-name" id="palette-tag">Palette</p>
+      <h2 class="palette-summary" id="palette-summary">Warm, human — departs from the cold AI blue.</h2>
+      <p class="blurb" id="palette-blurb">
+        A toasted-amber accent paired with a terracotta secondary on a near-black warm base.
+        Reads as approachable and editorial rather than corporate.
+      </p>
+      <div class="swatches" id="swatches">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Research / cards ──────────────────────────────────────── -->
+  <section class="section">
+    <div class="wrap">
+      <p class="section-eyebrow">Research</p>
+      <h2 class="section-title">Areas of focus</h2>
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="card-icon">01</div>
+          <h3 class="card-title">Computer Vision</h3>
+          <p class="card-body">Real-time perception pipelines, multi-view geometry, segmentation at scale.</p>
+          <div class="tag-row">
+            <span class="tag">PyTorch</span>
+            <span class="tag">CUDA</span>
+            <span class="tag">SLAM</span>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-icon">02</div>
+          <h3 class="card-title">Generative Models</h3>
+          <p class="card-body">Diffusion, transformers, and RAG systems for production deployments.</p>
+          <div class="tag-row">
+            <span class="tag">LLM</span>
+            <span class="tag">RAG</span>
+            <span class="tag">vLLM</span>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-icon">03</div>
+          <h3 class="card-title">Edge Inference</h3>
+          <p class="card-body">Model compression, quantization, and on-device deployment for low-power hardware.</p>
+          <div class="tag-row">
+            <span class="tag">ONNX</span>
+            <span class="tag">TensorRT</span>
+            <span class="tag">Embedded</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects ──────────────────────────────────────────────── -->
+  <section class="section">
+    <div class="wrap">
+      <p class="section-eyebrow">Projects</p>
+      <h2 class="section-title">Recent work</h2>
+      <div class="grid">
+        <article class="card">
+          <h3 class="card-title">RAG Document Q&amp;A</h3>
+          <p class="card-body">A retrieval-augmented question-answering system over a 50k-document private corpus, with hybrid BM25 + dense retrieval.</p>
+          <div class="tag-row">
+            <span class="tag">Python</span>
+            <span class="tag">FastAPI</span>
+            <span class="tag">Qdrant</span>
+          </div>
+        </article>
+        <article class="card">
+          <h3 class="card-title">UFC Fighter Tracking</h3>
+          <p class="card-body">Multi-camera tracking + pose estimation for live fight analytics, running at 60 fps on a single GPU.</p>
+          <div class="tag-row">
+            <span class="tag">YOLO</span>
+            <span class="tag">DeepSORT</span>
+            <span class="tag">Triton</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="outro">
+    <p>Palette preview · not part of the live site · tap a chip above to switch.</p>
+  </footer>
+
+  <script>
+    const PALETTES = {
+      mocha: {
+        name: 'Mocha & Apricot',
+        summary: 'Warm, human — departs from the cold AI blue.',
+        blurb: 'A toasted-amber accent paired with a terracotta secondary on a near-black warm base. Reads as approachable and editorial rather than corporate.',
+        swatches: [
+          { name: 'Background',  hex: '#0c0908' },
+          { name: 'Surface',     hex: '#15110d' },
+          { name: 'Apricot',     hex: '#f4a261' },
+          { name: 'Terracotta',  hex: '#e76f51' },
+        ],
+      },
+      sage: {
+        name: 'Sage Editorial',
+        summary: 'Quiet, confident — the literary-journal palette.',
+        blurb: 'Champagne gold alongside dusty sage on a charcoal base. Desaturated and grown-up; pairs well with serif typography if you ever go that direction.',
+        swatches: [
+          { name: 'Background',  hex: '#0f1311' },
+          { name: 'Surface',     hex: '#161b18' },
+          { name: 'Champagne',   hex: '#d4a574' },
+          { name: 'Sage',        hex: '#88a596' },
+        ],
+      },
+      riso: {
+        name: 'Risograph',
+        summary: 'Print-design heritage with a confident pop.',
+        blurb: 'Saturated coral with a warm canary yellow, against a deep blue-ink background. Borrows from risograph printing — playful but never juvenile.',
+        swatches: [
+          { name: 'Background',  hex: '#0e1117' },
+          { name: 'Surface',     hex: '#141925' },
+          { name: 'Coral',       hex: '#ff5d4d' },
+          { name: 'Canary',      hex: '#ffd166' },
+        ],
+      },
+      concrete: {
+        name: 'Concrete & Rust',
+        summary: 'Industrial, architectural — design-studio energy.',
+        blurb: 'Oxide-rust accent against a slate-blue secondary on neutral concrete grey. Material and grounded; reads as built rather than computed.',
+        swatches: [
+          { name: 'Background',  hex: '#0e0e10' },
+          { name: 'Surface',     hex: '#17171a' },
+          { name: 'Rust',        hex: '#c8553d' },
+          { name: 'Slate Blue',  hex: '#8da9c4' },
+        ],
+      },
+      signal: {
+        name: 'Monochrome Signal',
+        summary: 'Pure neutrals with one saturated signal accent.',
+        blurb: 'Greyscale base with a single signal-orange accent — the restrained Vercel/Rauno school. Confident, design-led, and ages well; the whole site rests on typography and rhythm rather than color.',
+        swatches: [
+          { name: 'Background',  hex: '#0a0a0a' },
+          { name: 'Surface',     hex: '#141414' },
+          { name: 'Signal',      hex: '#ff4d00' },
+          { name: 'Steel',       hex: '#d4d4d4' },
+        ],
+      },
+      crimson: {
+        name: 'Crimson Lab',
+        summary: 'Vintage scientific — oxblood on parchment cream.',
+        blurb: 'Deep oxblood accent with a parchment-cream secondary on a near-black warm base. Reads as academic, archival, lab-notebook — a fit for a researcher rather than a startup.',
+        swatches: [
+          { name: 'Background',  hex: '#0d0a0a' },
+          { name: 'Surface',     hex: '#1a1212' },
+          { name: 'Oxblood',     hex: '#c1272d' },
+          { name: 'Parchment',   hex: '#e8d8b5' },
+        ],
+      },
+      bauhaus: {
+        name: 'Bauhaus',
+        summary: 'Architectural — primary yellow meets cobalt.',
+        blurb: 'Bauhaus yellow paired with cobalt blue on a cool ink-black. A century of design pedigree behind it; instantly legible and bold, but only works if you commit to confident typography.',
+        swatches: [
+          { name: 'Background',  hex: '#0c0c0e' },
+          { name: 'Surface',     hex: '#16161a' },
+          { name: 'Yellow',      hex: '#ffce00' },
+          { name: 'Cobalt',      hex: '#2540ce' },
+        ],
+      },
+      forest: {
+        name: 'Forest & Brass',
+        summary: 'Natural — brass and jade in a deep-forest base.',
+        blurb: 'Aged-brass accent with a jade-green secondary on a near-black forest base. European, grounded, slightly classical — pairs well with photographs of mountains, libraries, or your travel globe.',
+        swatches: [
+          { name: 'Background',  hex: '#0a120e' },
+          { name: 'Surface',     hex: '#0f1a14' },
+          { name: 'Brass',       hex: '#c8a44d' },
+          { name: 'Jade',        hex: '#6db088' },
+        ],
+      },
+    };
+
+    const body       = document.body;
+    const chips      = document.querySelectorAll('.chip');
+    const swatchesEl = document.getElementById('swatches');
+    const tagEl      = document.getElementById('palette-tag');
+    const summaryEl  = document.getElementById('palette-summary');
+    const blurbEl    = document.getElementById('palette-blurb');
+    const eyebrowEl  = document.getElementById('palette-eyebrow');
+
+    function render(palette) {
+      const meta = PALETTES[palette];
+      if (!meta) return;
+
+      body.setAttribute('data-palette', palette);
+
+      const total = Object.keys(PALETTES).length;
+      const idx   = Object.keys(PALETTES).indexOf(palette) + 1;
+      eyebrowEl.textContent = `${meta.name} — palette ${idx} of ${total}`;
+      tagEl.textContent     = `Palette · ${meta.name}`;
+      summaryEl.textContent = meta.summary;
+      blurbEl.textContent   = meta.blurb;
+
+      swatchesEl.innerHTML = meta.swatches.map(s => `
+        <div class="swatch">
+          <span class="swatch-chip" style="background:${s.hex}"></span>
+          <span>
+            <span class="swatch-name">${s.name}</span>
+            <span class="swatch-hex">${s.hex.toUpperCase()}</span>
+          </span>
+        </div>
+      `).join('');
+
+      chips.forEach(c => {
+        c.setAttribute('aria-pressed', c.dataset.target === palette ? 'true' : 'false');
+      });
+
+      // Update browser theme-color so the iOS/Android URL bar matches
+      let meta_color = document.querySelector('meta[name="theme-color"]');
+      if (!meta_color) {
+        meta_color = document.createElement('meta');
+        meta_color.setAttribute('name', 'theme-color');
+        document.head.appendChild(meta_color);
+      }
+      meta_color.setAttribute('content', meta.swatches[0].hex);
+
+      // Persist between reloads
+      try { localStorage.setItem('palette-preview', palette); } catch (_) {}
+    }
+
+    chips.forEach(c => c.addEventListener('click', () => render(c.dataset.target)));
+
+    // Initial render — restore from localStorage if present
+    let initial = 'mocha';
+    try {
+      const saved = localStorage.getItem('palette-preview');
+      if (saved && PALETTES[saved]) initial = saved;
+    } catch (_) {}
+    render(initial);
+  </script>
+</body>
+</html>

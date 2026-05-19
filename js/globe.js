@@ -14,6 +14,7 @@ import {
   hasWebGLSupport,
   getTopoJSON,
 } from './utils.js';
+import { THEME, int, rgba } from './theme.js';
 
 /* THREE bindings — declared without an initial value; the onChange callback
    fires immediately on registration with the active THREE namespace and again
@@ -151,17 +152,29 @@ const GLOBE_CONTINENTS = [
    ═══════════════════════════════════════════════════════════ */
 export class Globe3D {
 
-  /* Four-colour scheme:
-       cyan   (#00d4ff) — lived places (past homes)
-       yellow (#ffeb00) — current home
-       blue   (#0099ff) — worktrips (work locations)
-       coral  (#ff8c42) — holidays + trips + regions (exploration)
+  /* Four-colour scheme — semantic pin types, re-tinted per palette
+     (data/palettes.yaml → js/theme.js):
+       lived    — past homes
+       current  — current home
+       worktrip — work locations
+       holiday  — holidays + trips + regions (exploration)
      Visual weight still differentiates lived/current (large, pulsing)
      from worktrip/holiday (small, static) even within colour groups. */
-  static PIN_COLORS = { lived: 0x00d4ff, current: 0xffeb00, worktrip: 0x0099ff, holiday: 0xff8c42 };
+  static PIN_COLORS = {
+    lived:    int(THEME.pins.lived),
+    current:  int(THEME.pins.current),
+    worktrip: int(THEME.pins.worktrip),
+    holiday:  int(THEME.pins.holiday),
+  };
 
   static TT_LABEL = { lived: '● Lived', current: '● Current', worktrip: '◆ Worktrip', holiday: '✦ Holiday', trip: '➜ Trip stop' };
-  static TT_COLOR = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42', trip: '#e8edf8' };
+  static TT_COLOR = {
+    lived:    THEME.pins.lived,
+    current:  THEME.pins.current,
+    worktrip: THEME.pins.worktrip,
+    holiday:  THEME.pins.holiday,
+    trip:     THEME.text,
+  };
 
   constructor(canvasEl) {
     if (!canvasEl || typeof Scene === 'undefined') return;
@@ -290,17 +303,17 @@ export class Globe3D {
     }
 
     /* Ambient: cool fill — keeps the dark ocean dark */
-    this.scene.add(new AmbientLight(0x0d1f3a, 1.2));
-    /* Cool-blue key light — replaces the warm sun (no longer needed without photo texture) */
-    const key = new DirectionalLight(0x2255bb, 0.55);
+    this.scene.add(new AmbientLight(int(THEME.globe.ambient), 1.2));
+    /* Key light — replaces the warm sun (no longer needed without photo texture) */
+    const key = new DirectionalLight(int(THEME.globe.keyLight), 0.55);
     key.position.set(4, 2, 3);
     this.scene.add(key);
-    /* Cyan rim on the opposite side — stronger to complement the neon style */
-    const rim = new PointLight(0x00d4ff, 0.9, 14);
+    /* Accent rim on the opposite side — complements the neon style */
+    const rim = new PointLight(int(THEME.globe.rimLight), 0.9, 14);
     rim.position.set(-4, 1, -2);
     this.scene.add(rim);
-    /* Purple fill from below — adds depth */
-    const fill = new PointLight(0x6c44ff, 0.45, 12);
+    /* Secondary fill from below — adds depth */
+    const fill = new PointLight(int(THEME.globe.fillLight), 0.45, 12);
     fill.position.set(2, -2, -3);
     this.scene.add(fill);
 
@@ -351,7 +364,7 @@ export class Globe3D {
     const ctx = cvs.getContext('2d');
 
     /* Deep-ocean background */
-    ctx.fillStyle = '#030d1c';
+    ctx.fillStyle = THEME.globe.ocean;
     ctx.fillRect(0, 0, W, H);
 
     /* lon, lat → canvas pixel (equirectangular) */
@@ -418,7 +431,7 @@ export class Globe3D {
           ctx.lineTo(xF, yP);
         }
         ctx.closePath();
-        ctx.fillStyle = '#0e2640';
+        ctx.fillStyle = THEME.globe.land;
         ctx.fill();
 
         /* Stroke path: coastline only — the bridge to the pole would draw a
@@ -431,9 +444,9 @@ export class Globe3D {
           ctx.lineTo(x, y);
         }
         if (!polar) ctx.closePath();
-        /* outer glow halo */ ctx.lineWidth = 5;   ctx.strokeStyle = 'rgba(0,185,235,0.25)'; ctx.stroke();
-        /* mid glow        */ ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,210,255,0.60)'; ctx.stroke();
-        /* bright core     */ ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(155,242,255,1.00)'; ctx.stroke();
+        /* outer glow halo */ ctx.lineWidth = 5;   ctx.strokeStyle = rgba(THEME.globe.coast, 0.25);       ctx.stroke();
+        /* mid glow        */ ctx.lineWidth = 2.5; ctx.strokeStyle = rgba(THEME.globe.coast, 0.60);       ctx.stroke();
+        /* bright core     */ ctx.lineWidth = 1.2; ctx.strokeStyle = rgba(THEME.globe.coastBright, 1.00); ctx.stroke();
       };
 
       drawAt(0);
@@ -494,7 +507,7 @@ export class Globe3D {
         ctx.closePath();
         ctx.clip();
         /* Fill — only visible where both clips overlap (land in Europe) */
-        ctx.fillStyle = '#4e2870';
+        ctx.fillStyle = THEME.globe.landEurope;
         ctx.fillRect(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
         ctx.restore();
       };
@@ -548,20 +561,20 @@ export class Globe3D {
   }
 
   _buildAtmosphere() {
-    /* Inner surface glow — neon cyan tint */
+    /* Inner surface glow — accent2 tint */
     this.pivot.add(new Mesh(
       new SphereGeometry(1.007, 32, 32),
-      new MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.07, depthWrite: false }),
+      new MeshBasicMaterial({ color: int(THEME.globe.atmInner), transparent: true, opacity: 0.07, depthWrite: false }),
     ));
-    /* Atmosphere shell — deep electric blue */
+    /* Atmosphere shell — deeper tone */
     this.pivot.add(new Mesh(
       new SphereGeometry(1.14, 32, 32),
-      new MeshBasicMaterial({ color: 0x1166ee, transparent: true, opacity: 0.13, side: BackSide, depthWrite: false }),
+      new MeshBasicMaterial({ color: int(THEME.globe.atmShell), transparent: true, opacity: 0.13, side: BackSide, depthWrite: false }),
     ));
-    /* Wide outer halo — violet, additive */
+    /* Wide outer halo — accent, additive */
     this.scene.add(new Mesh(
       new SphereGeometry(1.24, 32, 32),
-      new MeshBasicMaterial({ color: 0x6c63ff, transparent: true, opacity: 0.055, side: BackSide, depthWrite: false, blending: AdditiveBlending }),
+      new MeshBasicMaterial({ color: int(THEME.globe.atmHalo), transparent: true, opacity: 0.055, side: BackSide, depthWrite: false, blending: AdditiveBlending }),
     ));
   }
 
@@ -580,14 +593,14 @@ export class Globe3D {
     const geo = new BufferGeometry();
     geo.setAttribute('position', new BufferAttribute(pos, 3));
     this.scene.add(new Points(geo,
-      new PointsMaterial({ color: 0xffffff, size: 0.018, transparent: true, opacity: 0.5, sizeAttenuation: true }),
+      new PointsMaterial({ color: int(THEME.globe.stars), size: 0.018, transparent: true, opacity: 0.5, sizeAttenuation: true }),
     ));
   }
 
   _buildGrid() {
-    /* Neon cyan lat-lon grid with additive blending for glow */
+    /* Lat-lon grid with additive blending for glow */
     const mat = (op, bright) => new LineBasicMaterial({
-      color: bright ? 0x00ffff : 0x00c8f0,
+      color: bright ? int(THEME.globe.gridBright) : int(THEME.globe.grid),
       transparent: true, opacity: op,
       blending: AdditiveBlending, depthWrite: false,
     });
@@ -692,7 +705,7 @@ export class Globe3D {
   /* ── Trip paths with animated traveller + comet trail ───── */
   _buildTrips() {
     (LOCATIONS.trips || []).forEach(trip => {
-      const color = new Color(trip.color || '#ff8c42');
+      const color = new Color(trip.color || THEME.pins.holiday);
       const cities = (trip.cities || []).filter(c => !c._skip);
       if (cities.length < 2) return;
 
@@ -931,7 +944,7 @@ export class Globe3D {
         const { name, info, type } = hit.userData;
         if (this.tooltip) {
           this._ttType.textContent = Globe3D.TT_LABEL[type] || type;
-          this._ttType.style.color = Globe3D.TT_COLOR[type] || '#e8edf8';
+          this._ttType.style.color = Globe3D.TT_COLOR[type] || THEME.text;
           this._ttName.textContent = name;
           this._ttInfo.textContent = '';
           let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
@@ -1016,7 +1029,12 @@ export class Globe3D {
 
 /* CPU fallback when WebGL is unavailable: 2D orthographic globe */
 export class GlobeFallback2D {
-  static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
+  static PIN_COLORS = {
+    lived:    THEME.pins.lived,
+    current:  THEME.pins.current,
+    worktrip: THEME.pins.worktrip,
+    holiday:  THEME.pins.holiday,
+  };
 
   constructor(canvasEl) {
     this.canvas = canvasEl;
@@ -1105,7 +1123,7 @@ export class GlobeFallback2D {
 
   _drawGrid() {
     const ctx = this.ctx;
-    ctx.strokeStyle = 'rgba(210,220,255,0.14)';
+    ctx.strokeStyle = rgba(THEME.text, 0.14);
     ctx.lineWidth = 1;
     for (let lat = -60; lat <= 60; lat += 30) {
       let open = false;
@@ -1134,9 +1152,9 @@ export class GlobeFallback2D {
     ctx.clearRect(0, 0, this.w, this.h);
 
     const bg = ctx.createRadialGradient(this.cx - this.r * 0.25, this.cy - this.r * 0.35, this.r * 0.2, this.cx, this.cy, this.r * 1.25);
-    bg.addColorStop(0, 'rgba(56,96,170,0.9)');
-    bg.addColorStop(0.55, 'rgba(16,34,70,0.92)');
-    bg.addColorStop(1, 'rgba(5,14,34,0.96)');
+    bg.addColorStop(0, rgba(THEME.globe.fallback1, 0.9));
+    bg.addColorStop(0.55, rgba(THEME.globe.fallback2, 0.92));
+    bg.addColorStop(1, rgba(THEME.globe.fallback3, 0.96));
     ctx.fillStyle = bg;
     ctx.beginPath();
     ctx.arc(this.cx, this.cy, this.r, 0, Math.PI * 2);
@@ -1147,7 +1165,7 @@ export class GlobeFallback2D {
     this._points.forEach((pt) => {
       const p = this._project(pt.lat, pt.lon);
       if (p.z <= 0.02) return;
-      const col = GlobeFallback2D.PIN_COLORS[pt.type] || '#e8edf8';
+      const col = GlobeFallback2D.PIN_COLORS[pt.type] || THEME.text;
       const rr = (pt.type === 'lived' || pt.type === 'current') ? 2.9 : 2.2;
       ctx.fillStyle = col;
       ctx.globalAlpha = Math.max(0.22, p.z);
@@ -1158,8 +1176,8 @@ export class GlobeFallback2D {
     });
 
     const halo = ctx.createRadialGradient(this.cx, this.cy, this.r * 0.86, this.cx, this.cy, this.r * 1.35);
-    halo.addColorStop(0, 'rgba(108,99,255,0)');
-    halo.addColorStop(1, 'rgba(108,99,255,0.24)');
+    halo.addColorStop(0, rgba(THEME.accent, 0));
+    halo.addColorStop(1, rgba(THEME.accent, 0.24));
     ctx.fillStyle = halo;
     ctx.beginPath();
     ctx.arc(this.cx, this.cy, this.r * 1.35, 0, Math.PI * 2);

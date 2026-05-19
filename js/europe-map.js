@@ -6,9 +6,16 @@
    ============================================================ */
 
 /* eslint-disable */
+import { THEME, rgba } from './theme.js';
+
 export class EuropeMap2D {
-  /* Color scheme matches Globe3D */
-  static PIN_COLORS = { lived: '#00d4ff', current: '#ffeb00', worktrip: '#0099ff', holiday: '#ff8c42' };
+  /* Colour scheme matches Globe3D — semantic pins, re-tinted per palette */
+  static PIN_COLORS = {
+    lived:    THEME.pins.lived,
+    current:  THEME.pins.current,
+    worktrip: THEME.pins.worktrip,
+    holiday:  THEME.pins.holiday,
+  };
   static PIN_SIZE = { lived: 1.8, current: 1.8, worktrip: 1.4, holiday: 1.4 };
 
   constructor(canvasEl) {
@@ -139,7 +146,7 @@ export class EuropeMap2D {
 
         this.filteredTrips.push({
           name: trip.name || 'Trip',
-          stroke: trip.color || '#7ce8ff',
+          stroke: trip.color || THEME.globe.coastBright,
           x0,
           y0,
           x1,
@@ -317,7 +324,7 @@ export class EuropeMap2D {
       : Date.now();
 
     /* Clear */
-    ctx.fillStyle = '#020b18';
+    ctx.fillStyle = THEME.mapBg;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     /* Draw continental Europe with neon glow */
@@ -332,7 +339,7 @@ export class EuropeMap2D {
     });
 
     /* Draw map border */
-    ctx.strokeStyle = 'rgba(0,210,255,0.3)';
+    ctx.strokeStyle = rgba(THEME.accent2, 0.3);
     ctx.lineWidth = 1.5;
     ctx.strokeRect(this._offsetX || 0, this._offsetY || 0, this.w, this.h);
   }
@@ -371,7 +378,7 @@ export class EuropeMap2D {
       ctx.lineDashOffset = dashOffset;
       ctx.moveTo(seg.x0, seg.y0);
       ctx.quadraticCurveTo(seg.cpX, seg.cpY, seg.x1, seg.y1);
-      ctx.strokeStyle = 'rgba(130, 229, 255, 0.95)';
+      ctx.strokeStyle = rgba(THEME.globe.coastBright, 0.95);
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.setLineDash([]);
@@ -380,7 +387,7 @@ export class EuropeMap2D {
   }
 
   _colorToRgba(color, alpha) {
-    if (typeof color !== 'string') return `rgba(124, 232, 255, ${alpha})`;
+    if (typeof color !== 'string') return rgba(THEME.globe.coastBright, alpha);
 
     const hex = color.trim().replace('#', '');
     if (hex.length === 3) {
@@ -453,7 +460,7 @@ export class EuropeMap2D {
     const ctx = this.ctx;
 
     /* Draw grid lines (skip exact boundary values to avoid doubling the border) */
-    ctx.strokeStyle = 'rgba(0,210,255,0.08)';
+    ctx.strokeStyle = rgba(THEME.accent2, 0.08);
     ctx.lineWidth = 0.5;
 
     const ox = this._offsetX || 0;
@@ -500,7 +507,7 @@ export class EuropeMap2D {
       lat >= nearMinLat && lat <= nearMaxLat;
 
     /* Pass 1: fill only local rings (small islands that fill correctly) */
-    ctx.fillStyle = '#081624';
+    ctx.fillStyle = THEME.globe.land;
     for (const ring of this._europeRings) {
       if (!isLocal(ring)) continue;
       ctx.beginPath();
@@ -516,9 +523,9 @@ export class EuropeMap2D {
        Local rings: draw all segments normally.
        Global rings: only draw segments near Europe (eliminates cross-map artifacts). */
     const strokes = [
-      [2.5, 'rgba(0,185,235,0.15)'],
-      [1.5, 'rgba(0,210,255,0.40)'],
-      [0.7, 'rgba(155,242,255,0.85)'],
+      [2.5, rgba(THEME.globe.coast, 0.15)],
+      [1.5, rgba(THEME.globe.coast, 0.40)],
+      [0.7, rgba(THEME.globe.coastBright, 0.85)],
     ];
     for (const [lw, color] of strokes) {
       ctx.lineWidth = lw;
@@ -563,7 +570,7 @@ export class EuropeMap2D {
 
   _drawPin(pin, isHovered) {
     const ctx = this.ctx;
-    const color = EuropeMap2D.PIN_COLORS[pin.type] || '#ffffff';
+    const color = EuropeMap2D.PIN_COLORS[pin.type] || THEME.text;
     const isLarge = pin.type === 'lived' || pin.type === 'current';
     const size = isHovered ? (isLarge ? 2.8 : 2.2) : EuropeMap2D.PIN_SIZE[pin.type];
 
@@ -585,7 +592,7 @@ export class EuropeMap2D {
     ctx.fill();
 
     /* Bright inner core for emphasis */
-    ctx.fillStyle = `rgba(255,255,255,${isHovered ? 0.7 : 0.5})`;
+    ctx.fillStyle = rgba(THEME.text, isHovered ? 0.7 : 0.5);
     ctx.beginPath();
     ctx.arc(pin.x, pin.y, size * 0.35, 0, Math.PI * 2);
     ctx.fill();

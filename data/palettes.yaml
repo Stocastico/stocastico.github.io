@@ -1,0 +1,189 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# THEME PALETTES — single source of truth for every colour on the site.
+#
+# Edit a palette (or switch the `active` key) then run:
+#
+#     npm run generate-theme
+#
+# That regenerates, in one pass:
+#   • the :root colour block in css/styles.css
+#   • js/theme.js                (consumed by the WebGL/Canvas modules + shaders)
+#   • <meta theme-color>, the inline favicon, and the nav-logo gradient
+#     in every *.html file + the scripts/new-project.js template
+#   • public/favicon.svg
+#
+# Colour formats: all values are #rrggbb hex. The generator derives the
+# rgba()/0xRRGGBB/[r,g,b] forms each layer needs.
+# ─────────────────────────────────────────────────────────────────────────────
+
+active: forest
+
+palettes:
+
+  forest:
+    name: Forest & Brass
+    # ── Core surfaces ──
+    bg: '#0a120e'
+    bgAlt: '#0f1a14'
+    # ── Text tiers ──
+    text: '#e8eee5'
+    textMuted: '#8a948b'
+    textFaint: '#5e6862'
+    # ── Accents ──
+    accent: '#c8a44d'
+    accentHi: '#dcb968'
+    accent2: '#6db088'
+    accent2Hi: '#9bd4b0'
+    onAccent: '#1a1408'
+    # ── Hero name gradient ──
+    heroGradFrom: '#e6d4a4'
+    heroGradTo: '#6db088'
+    # ── Map container background ──
+    mapBg: '#08100c'
+    # ── Browser chrome + inline favicon ──
+    themeColor: '#0a120e'
+    faviconBg: '#0a120e'
+    faviconFg: '#c8a44d'
+    # ── Map pins (semantic, re-tinted per palette) ──
+    pins:
+      lived: '#6db088'
+      current: '#e8c468'
+      worktrip: '#4a9e8f'
+      holiday: '#d98e54'
+    # ── 3D globe + 2D map aesthetic ──
+    globe:
+      ocean: '#07140d'
+      land: '#13251a'
+      landEurope: '#2e3d1c'
+      coast: '#2f8f6e'
+      coastBright: '#b8e8cf'
+      ambient: '#10241a'
+      keyLight: '#2f5a3e'
+      rimLight: '#6db088'
+      fillLight: '#c8a44d'
+      atmInner: '#6db088'
+      atmShell: '#1f4a33'
+      atmHalo: '#c8a44d'
+      grid: '#3f8f72'
+      gridBright: '#6dd0a8'
+      stars: '#e8eee5'
+      fallback1: '#46785a'
+      fallback2: '#163424'
+      fallback3: '#08140d'
+    # ── GLSL noise-gradient background (hero) ──
+    noise:
+      dark: '#0a120e'
+      mid: '#2c5e42'
+      bright: '#7a9e4a'
+
+  apricot:
+    name: Mocha & Apricot
+    # ── Core surfaces ──
+    bg: '#0c0908'
+    bgAlt: '#15110d'
+    # ── Text tiers ──
+    text: '#f4ebe1'
+    textMuted: '#a39588'
+    textFaint: '#7a6f64'
+    # ── Accents ──
+    accent: '#f4a261'
+    accentHi: '#f7b67f'
+    accent2: '#e76f51'
+    accent2Hi: '#f08b70'
+    onAccent: '#2a1a0d'
+    # ── Hero name gradient ──
+    heroGradFrom: '#f6d2a8'
+    heroGradTo: '#e76f51'
+    # ── Map container background ──
+    mapBg: '#0a0706'
+    # ── Browser chrome + inline favicon ──
+    themeColor: '#0c0908'
+    faviconBg: '#0c0908'
+    faviconFg: '#f4a261'
+    # ── Map pins (semantic, re-tinted per palette) ──
+    pins:
+      lived: '#f4a261'
+      current: '#ffd166'
+      worktrip: '#c97b4a'
+      holiday: '#e76f51'
+    # ── 3D globe + 2D map aesthetic ──
+    globe:
+      ocean: '#140b07'
+      land: '#2a1810'
+      landEurope: '#4a2818'
+      coast: '#d98a52'
+      coastBright: '#ffe0c0'
+      ambient: '#241410'
+      keyLight: '#5a3a28'
+      rimLight: '#f4a261'
+      fillLight: '#e76f51'
+      atmInner: '#f4a261'
+      atmShell: '#5a2e1f'
+      atmHalo: '#e76f51'
+      grid: '#b06a3f'
+      gridBright: '#f4b87f'
+      stars: '#f4ebe1'
+      fallback1: '#965f3c'
+      fallback2: '#462819'
+      fallback3: '#140b07'
+    # ── GLSL noise-gradient background (hero) ──
+    noise:
+      dark: '#0c0908'
+      mid: '#7a4424'
+      bright: '#d98a52'
+
+  crimson:
+    name: Crimson & Rust
+    # ── Core surfaces ──
+    bg: '#120a0a'
+    bgAlt: '#1a0f0e'
+    # ── Text tiers ──
+    text: '#f0e6e3'
+    textMuted: '#a3908c'
+    textFaint: '#6e5d5a'
+    # ── Accents ──
+    accent: '#d64550'
+    accentHi: '#e86a64'
+    accent2: '#c2632e'
+    accent2Hi: '#d98a52'
+    onAccent: '#fbeae9'
+    # ── Hero name gradient ──
+    heroGradFrom: '#f2c9b0'
+    heroGradTo: '#c2632e'
+    # ── Map container background ──
+    mapBg: '#0e0808'
+    # ── Browser chrome + inline favicon ──
+    themeColor: '#120a0a'
+    faviconBg: '#120a0a'
+    faviconFg: '#d64550'
+    # ── Map pins (semantic, re-tinted per palette) ──
+    pins:
+      lived: '#d64550'
+      current: '#f2b56a'
+      worktrip: '#a8516b'
+      holiday: '#c2632e'
+    # ── 3D globe + 2D map aesthetic ──
+    globe:
+      ocean: '#140807'
+      land: '#2a1310'
+      landEurope: '#3d1f1a'
+      coast: '#b85040'
+      coastBright: '#f0c0b0'
+      ambient: '#241010'
+      keyLight: '#5a2a28'
+      rimLight: '#d64550'
+      fillLight: '#c2632e'
+      atmInner: '#d64550'
+      atmShell: '#4a1f1c'
+      atmHalo: '#c2632e'
+      grid: '#a04a40'
+      gridBright: '#e08070'
+      stars: '#f0e6e3'
+      fallback1: '#8a4540'
+      fallback2: '#3a1815'
+      fallback3: '#140807'
+    # ── GLSL noise-gradient background (hero) ──
+    noise:
+      dark: '#120a0a'
+      mid: '#6e2828'
+      bright: '#b8543a'

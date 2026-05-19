@@ -327,11 +327,11 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   <meta name="twitter:title"       content="${titleEsc} — Stefano Masneri" />
   <meta name="twitter:description" content="${descEsc}" />
 
-  <meta name="theme-color" content="#080c14" />
+  <meta name="theme-color" content="#0a120e" />
 
   <link rel="stylesheet" href="../css/fonts.css" />
   <link rel="icon"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080c14'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%2300d4ff' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a120e'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23c8a44d' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
@@ -344,8 +344,8 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
         <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <defs>
             <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#6c63ff"/>
-              <stop offset="100%" stop-color="#00d4ff"/>
+              <stop offset="0%" stop-color="#c8a44d"/>
+              <stop offset="100%" stop-color="#6db088"/>
             </linearGradient>
           </defs>
           <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
