@@ -1,0 +1,122 @@
+# .github/workflows/rotate-palette.yml
+#
+# Periodically rotate the site's colour palette and redeploy.
+#
+# Every Monday ~06:00 UTC this:
+#   1. advances data/palettes.yaml `active` to the next palette (cycling)
+#   2. regenerates the theme (CSS/JS/HTML/favicon.svg) + raster favicons
+#   3. runs the test suite as a gate
+#   4. commits the change back to main
+#   5. builds and deploys to GitHub Pages
+#
+# It is self-contained on purpose: the commit is pushed with the default
+# GITHUB_TOKEN, which does NOT re-trigger the `on: push` workflows
+# (deploy.yml / build.yml), so this job does the deploy itself — no extra
+# deploy runs, no personal access token required.
+#
+# Run it manually from the Actions tab any time; optionally force a specific
+# palette via the `palette` input.
+
+name: Rotate palette
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC — edit to change cadence
+  workflow_dispatch:
+    inputs:
+      palette:
+        description: 'Force a specific palette id (blank = cycle to next)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write # commit + push the rotated palette to main
+  pages: write
+  id-token: write
+
+# Share the "pages" concurrency group with deploy.yml so palette rotations
+# and push deploys never race each other.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  rotate-and-deploy:
+    name: Rotate palette and deploy
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rotate active palette
+        id: rotate
+        run: node scripts/rotate-palette.js ${{ inputs.palette && format('--palette {0}', inputs.palette) || '' }}
+
+      - name: Regenerate theme + raster favicons
+        if: steps.rotate.outputs.changed == 'true'
+        run: |
+          npm run generate-theme
+          npm run generate-favicons
+
+      # Test suite gates the deploy: a red test stops the rotation here, before
+      # anything is committed or published.
+      - name: Run tests
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm test
+
+      - name: Commit rotated palette to main
+        if: steps.rotate.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: rotate theme palette to ${{ steps.rotate.outputs.palette_name }} (${{ steps.rotate.outputs.palette }})"
+          git push origin HEAD:main
+
+      # ── Mirror deploy.yml's build-time refresh steps (these outputs are
+      #    rebuilt for the artifact but, like deploy.yml, are not committed). ──
+      - name: Regenerate sitemap
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm run generate-sitemap
+
+      - name: Regenerate project JSON-LD
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm run generate-project-jsonld
+
+      - name: Build with Vite
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Configure GitHub Pages
+        if: steps.rotate.outputs.changed == 'true'
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        if: steps.rotate.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: steps.rotate.outputs.changed == 'true'
+        uses: actions/deploy-pages@v4
