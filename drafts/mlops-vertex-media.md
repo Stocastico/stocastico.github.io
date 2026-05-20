@@ -26,7 +26,7 @@ It is worth being concrete about the starting point, because the gap between *ha
 - **CI/CD**: manual. Promoting a new model meant copying a file and restarting a service.
 - **Retraining**: semi-automatic. Models were retrained periodically, with the time interval depending on the model.
 
-This is not a criticism of the client, it is just the way things were at that time in the organization, which at that time was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
+This is not meant as a criticism of the client, it is just the way things were at that time in the organization, which at that time was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
 
 ## Target Architecture
 
@@ -60,11 +60,11 @@ The pipeline runs on a schedule (typically weekly for churn, daily for the recom
 6. **Register** — if the candidate is at least as good as production on the agreed metrics, it is registered in the Model Registry and tagged as a candidate. If not, the run halts and an alert is raised — no silent regressions.
 7. **Deploy** — a candidate that passes the offline gate is rolled out to a canary endpoint with a small slice of live traffic, monitored for a defined window, and either promoted to take 100% of traffic or rolled back automatically.
 
-The full cycle runs without human intervention on the happy path; the human work is concentrated where it actually adds value — reviewing the model card before promotion, investigating drift alerts, deciding whether a borderline candidate is worth shipping.
+The full cycle runs without human intervention on the happy path; the human work is concentrated where it actually adds value: reviewing the model card before promotion, investigating drift alerts, deciding whether a borderline candidate is worth shipping.
 
 ## Refactoring the Existing Models
 
-The architecture diagram is the easy part. The substantive work was rebuilding the existing models — code that had grown organically and was not written for containerised, parameterised pipeline execution — into something the platform could run.
+The architecture diagram was the "easy" part. The substantive work was rebuilding the existing model: code that had grown organically and was not written for containerised, parameterised pipeline execution, into something the platform could run.
 
 For each model we worked through the same pattern:
 
@@ -72,9 +72,7 @@ For each model we worked through the same pattern:
 - Split the monolithic training script into the pipeline steps above, so the expensive parts (training, evaluation) could be cached and re-run independently.
 - Replace direct database reads with parameterised BigQuery queries that produced dated snapshots.
 - Migrate feature engineering into reusable components and, where the same feature was used by multiple models, push it into the Feature Store.
-- Wrap everything in a container, register it in **Artifact Registry**, and submit it as a Vertex AI Pipeline.
-
-The refactor took longer than the platform work itself, which is the lesson I would draw out for anyone planning a similar engagement: the MLOps platform is the smaller part of the project. Bringing existing models up to a standard where they *fit on* the platform is the larger one.
+- Wrap everything in a container, register it in **Artifact Registry**, and submit it as a Vertex AI.
 
 ## Outcomes
 
@@ -84,5 +82,3 @@ By the end of the engagement, all the models in scope were running on Vertex AI 
 - Promoting a new model version went from copying files to opening a pull request and approving the candidate in the Model Registry.
 - Drift detection that previously did not exist now caught two distinct feature-distribution shifts on the recommender during the first months of operation — one of them traced back to an upstream change in how article tags were generated, which would otherwise have quietly degraded recommendations.
 - Onboarding a new model became a question of cloning a pipeline template and filling in the model-specific bits, rather than designing the operational story from scratch.
-
-Beyond the technical deliverable, what stayed with me from this project was the management side of it: keeping a team of engineers, scientists and architects pointing in roughly the same direction across several months, with a client that — like every client — had stronger opinions about some parts of the stack than others. The technology decisions matter, but the work of an MLOps platform is at least as much about the operating model around the models as it is about the pipelines themselves.
