@@ -134,6 +134,23 @@ test('project: markdownToHtml converts unordered lists', () => {
   assert.match(html, /<li>item one<\/li>/);
 });
 
+test('project: markdownToHtml keeps a loose ordered list as one <ol>', () => {
+  /* Blank lines between numbered items must not restart the list at 1. */
+  const html = markdownToHtml('1. first\n\n2. second\n\n3. third');
+  assert.equal((html.match(/<ol>/g) || []).length, 1);
+  assert.equal((html.match(/<li>/g) || []).length, 3);
+});
+
+test('project: markdownToHtml renders a Markdown table as an HTML table', () => {
+  const md = '| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |';
+  const html = markdownToHtml(md);
+  assert.match(html, /<table>/);
+  assert.match(html, /<thead>[\s\S]*<th>A<\/th><th>B<\/th>[\s\S]*<\/thead>/);
+  assert.match(html, /<td>1<\/td><td>2<\/td>/);
+  assert.match(html, /<td>3<\/td><td>4<\/td>/);
+  assert.doesNotMatch(html, /\|/); // no raw pipes leak through
+});
+
 // ─── deriveOutputPath ─────────────────────────────────────────────────────────
 
 test('project: deriveOutputPath defaults to projects/<id>.html', () => {
@@ -157,6 +174,19 @@ test('project: buildProjectPage produces a full HTML document', () => {
   assert.match(html, /<html[^>]*lang="en"/);
   assert.match(html, /<\/html>/);
   assert.match(html, /<title>[^<]*Test Project[^<]*<\/title>/);
+});
+
+test('project: buildProjectPage includes social-card meta (twitter:image, og:site_name)', () => {
+  const fm = {
+    id: 'social', title: 'Social', year: '2024', tags: 'A',
+    bg: 'img/projects/social.webp', description: 'D',
+  };
+  const html = buildProjectPage(fm, '<p>body</p>');
+  assert.match(html, /<meta property="og:site_name"\s+content="Stefano Masneri"/);
+  assert.match(html, /<meta property="og:locale"\s+content="en_GB"/);
+  assert.match(html, /<meta property="og:image:alt"\s+content="Social"/);
+  assert.match(html, /<meta name="twitter:image"\s+content="[^"]+img\/projects\/social\.webp"/);
+  assert.match(html, /<meta name="twitter:image:alt"\s+content="Social"/);
 });
 
 test('project: buildProjectPage uses correct asset paths for project subdir', () => {

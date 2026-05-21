@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'node:path';
+import { resolve, extname, dirname } from 'node:path';
 import { readdirSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
 
 const projectsDir = resolve(__dirname, 'projects');
@@ -50,16 +50,45 @@ function copyDataJson() {
   };
 }
 
+/* Copy img/ into dist/img/ verbatim. The page <img>/CSS references are hashed
+   into dist/assets/ by Rollup, but the og:image / twitter:image meta tags use
+   absolute URLs (https://<site>/img/projects/...) that Vite never rewrites —
+   so without this the social-card images would 404 in production. */
+function copyOgImages() {
+  const exts = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif']);
+  return {
+    name: 'copy-og-images',
+    apply: 'build',
+    closeBundle() {
+      const srcRoot = resolve(__dirname, 'img');
+      const outRoot = resolve(__dirname, 'dist', 'img');
+      if (!existsSync(srcRoot)) return;
+      const walk = (relDir) => {
+        for (const ent of readdirSync(resolve(srcRoot, relDir), { withFileTypes: true })) {
+          const rel = relDir ? `${relDir}/${ent.name}` : ent.name;
+          if (ent.isDirectory()) { walk(rel); continue; }
+          if (exts.has(extname(ent.name).toLowerCase())) {
+            const dest = resolve(outRoot, rel);
+            mkdirSync(dirname(dest), { recursive: true });
+            copyFileSync(resolve(srcRoot, rel), dest);
+          }
+        }
+      };
+      walk('');
+    },
+  };
+}
+
 /* sitemap.xml and robots.txt live in public/ — Vite copies anything under
    public/ to dist/ verbatim. This is the standard mechanism; no plugin
-   needed. The two custom plugins above remain because data/*.json and
-   docs/*.pdf live alongside non-static siblings (ESM modules, markdown
+   needed. The custom plugins above remain because data/*.json, docs/*.pdf
+   and img/* live alongside non-static siblings (ESM modules, markdown
    notes), and splitting those directories would harm clarity. */
 
 export default defineConfig({
   base: '/',
   appType: 'mpa',
-  plugins: [copyDocsPdfs(), copyDataJson()],
+  plugins: [copyDocsPdfs(), copyDataJson(), copyOgImages()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

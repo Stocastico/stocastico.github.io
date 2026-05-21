@@ -15,7 +15,7 @@ The application is a collaborative geography quiz. Once the teacher starts a ses
 
 ## Implementation
 
-ARoundTheWorld is built on the four design objectives (DOs) defined in the cleAR architecture:
+ARoundTheWorld is built on the design objectives (DOs) defined in the [cleAR architecture](clear-architecture.html). The architecture defines six DOs; for this evaluation, three of them — long-term storage, data visualisation and AI integration — were grouped into a single data-analytics objective, leaving the four below:
 
 - **DO1 — Interoperability**: the application runs on tablets and smartphones (iOS and Android) as a native AR app, and on laptops and desktops as a browser-based 3D experience, without degrading the collaborative experience.
 - **DO2 — Multi-user capabilities**: state is synchronised across all connected devices at 30 updates per second, with end-to-end latency consistently below 15 ms on both Wi-Fi and mobile networks.

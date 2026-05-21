@@ -22,7 +22,10 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const SITE = 'https://stocastico.github.io';
+// Single source of truth for the site origin — see scripts/lib/site.json.
+const SITE = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'lib', 'site.json'), 'utf8'),
+).url;
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');

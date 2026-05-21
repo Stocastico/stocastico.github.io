@@ -36,6 +36,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+// Single source of truth for the site origin — see scripts/lib/site.json.
+// Run `npm run set-domain -- <new-domain>` to migrate to a custom domain.
+const { url: SITE_URL } = require('./lib/site.json');
+
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
@@ -209,7 +213,42 @@ function markdownToHtml(md) {
     if (inBlockquote) closeBlockquote();
 
     if (raw.trim() === '') {
+      closeParagraph();
+      /* Keep an open list alive across a blank line when the next non-blank
+         line continues it (loose lists), so 1./2./3. don't each become a new
+         <ol> that restarts at 1. */
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() === '') j += 1;
+      const after = j < lines.length ? lines[j] : '';
+      if (inUl && !/^[-*+] /.test(after)) closeUl();
+      if (inOl && !/^\d+\. /.test(after)) closeOl();
+      continue;
+    }
+
+    /* Markdown table: a header row, a |---|---| delimiter, then body rows. */
+    if (
+      /^\s*\|.*\|\s*$/.test(raw) &&
+      i + 1 < lines.length &&
+      /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1]) &&
+      lines[i + 1].includes('-')
+    ) {
       closeParagraph(); closeUl(); closeOl();
+      const splitRow = (line) =>
+        line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+      const headers = splitRow(raw);
+      i += 1; // consume the delimiter row
+      const bodyRows = [];
+      while (i + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[i + 1])) {
+        i += 1;
+        bodyRows.push(splitRow(lines[i]));
+      }
+      const thead = `  <thead>\n    <tr>${headers
+        .map((h) => `<th>${applyInline(escapeHtml(h))}</th>`)
+        .join('')}</tr>\n  </thead>`;
+      const tbody = `  <tbody>\n${bodyRows
+        .map((r) => `    <tr>${r.map((c) => `<td>${applyInline(escapeHtml(c))}</td>`).join('')}</tr>`)
+        .join('\n')}\n  </tbody>`;
+      out.push(`<table>\n${thead}\n${tbody}\n</table>`);
       continue;
     }
 
@@ -313,16 +352,21 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow, noai, noimageai" />
   <title>${titleEsc} — Stefano Masneri</title>
-  <link rel="canonical" href="https://stocastico.github.io/projects/${escapeHtml(fm.id)}.html" />
+  <link rel="canonical" href="${SITE_URL}/projects/${escapeHtml(fm.id)}.html" />
 
   <meta property="og:type"        content="article" />
-  <meta property="og:url"         content="https://stocastico.github.io/projects/${escapeHtml(fm.id)}.html" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta property="og:locale"      content="en_GB" />
+  <meta property="og:url"         content="${SITE_URL}/projects/${escapeHtml(fm.id)}.html" />
   <meta property="og:title"       content="${titleEsc} — Stefano Masneri" />
   <meta property="og:description" content="${descEsc}" />
-  <meta property="og:image"       content="https://stocastico.github.io/${heroImgEsc}" />
+  <meta property="og:image"       content="${SITE_URL}/${heroImgEsc}" />
+  <meta property="og:image:alt"   content="${titleEsc}" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${titleEsc} — Stefano Masneri" />
   <meta name="twitter:description" content="${descEsc}" />
+  <meta name="twitter:image"       content="${SITE_URL}/${heroImgEsc}" />
+  <meta name="twitter:image:alt"   content="${titleEsc}" />
 
   <meta name="theme-color" content="#0a120e" />
 
@@ -331,6 +375,7 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a120e'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23c8a44d' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
   <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>

@@ -11,7 +11,7 @@ export const CV_CAREER = [
   {
     year:        '2024 – present',
     role:        'Senior AI Engineer',
-    company:     'MediaPro',
+    company:     'Mediapro',
     location:    'Donostia, ES',
     description: 'Designed and deployed GenAI solutions for audiovisual production, including automatic detection of commercial in live sport events. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.',
     tags:        ['GenAI', 'LLMs', 'NeRF', 'Gaussian Splatting', 'Computer Vision', 'Python'],
@@ -164,3 +164,8 @@ export const CV_SKILLS = {
   ],
 };
 
+if (typeof globalThis !== 'undefined') {
+  globalThis.CV_CAREER = CV_CAREER;
+  globalThis.CV_EDUCATION = CV_EDUCATION;
+  globalThis.CV_SKILLS = CV_SKILLS;
+}

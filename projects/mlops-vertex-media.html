@@ -13,13 +13,18 @@
   <link rel="canonical" href="https://stocastico.github.io/projects/mlops-vertex-media.html" />
 
   <meta property="og:type"        content="article" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta property="og:locale"      content="en_GB" />
   <meta property="og:url"         content="https://stocastico.github.io/projects/mlops-vertex-media.html" />
   <meta property="og:title"       content="MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri" />
   <meta property="og:description" content="End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle." />
   <meta property="og:image"       content="https://stocastico.github.io/img/projects/mlops-bg.webp" />
+  <meta property="og:image:alt"   content="MLOps Platform on GCP for a Spanish Media Group" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri" />
   <meta name="twitter:description" content="End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle." />
+  <meta name="twitter:image"       content="https://stocastico.github.io/img/projects/mlops-bg.webp" />
+  <meta name="twitter:image:alt"   content="MLOps Platform on GCP for a Spanish Media Group" />
 
   <meta name="theme-color" content="#0a120e" />
 
@@ -28,6 +33,7 @@
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a120e'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23c8a44d' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
   <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="stylesheet" href="../css/styles.css" />
 <!-- generated:project-jsonld -->
 <script type="application/ld+json">
@@ -130,13 +136,13 @@
     <div class="post-lead">End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle.</div>
 
     <p>
-This was my first project as <strong>technical manager</strong> at <strong>NTT Data</strong>, working with one of the largest media groups in Spain. The client already had a respectable portfolio of machine-learning models in production: a churn predictor for their subscription business, an article recommender for the news portal, and a handful of smaller models around content tagging and engagement. Each of them, though, had been built in isolation, by different teams, at different times, with different tools. Training a model meant a data scientist running a notebook on their laptop and copying the resulting pickle file to a server somewhere. It was difficult to reliably reproduce a model from six months earlier, or knowing when a model's performance had drifted in production. There was no shared way to version a dataset, promote a model, or roll one back.
+This was my first project as <strong>technical manager</strong> at <strong>NTT DATA</strong>, working with one of the largest media groups in Spain. The client already had a respectable portfolio of machine-learning models in production: a churn predictor for their subscription business, an article recommender for the news portal, and a handful of smaller models around content tagging and engagement. Each of them, though, had been built in isolation, by different teams, at different times, with different tools. Training a model meant a data scientist running a notebook on their laptop and copying the resulting pickle file to a server somewhere. It was difficult to reliably reproduce a model from six months earlier, or to know when a model's performance had drifted in production. There was no shared way to version a dataset, promote a model, or roll one back.
 </p>
 <p>
 The brief was to fix all of that without throwing the existing work away. Move every model onto a single MLOps platform, refactor the code so it could run as scheduled pipelines, and put the usual instrumentation around it: monitoring, CI/CD, drift detection, lineage. The project was paid in part by Google, so it was natural to choose, as platform for MLOps, <strong>Google Cloud</strong>, with <strong>Vertex AI</strong> as the backbone.
 </p>
 <p>
-I led a cross-functional team of ML engineers, data scientists and data architects spanning both NTT Data and the client. My job was the usual mix that comes with that role: scoping the architecture, breaking the work into different tasks, negotiating priorities with the client, unblocking people, and keeping the technical decisions consistent across all of the workstreams.
+I led a cross-functional team of ML engineers, data scientists and data architects spanning both NTT DATA and the client. My job was the usual mix that comes with that role: scoping the architecture, breaking the work into different tasks, negotiating priorities with the client, unblocking people, and keeping the technical decisions consistent across all of the workstreams.
 </p>
 <h2>What &quot;no MLOps&quot; actually meant</h2>
 <p>
@@ -152,7 +158,7 @@ It is worth being concrete about the starting point, because the gap between <em
   <li><strong>Retraining</strong>: semi-automatic. Models were retrained periodically, with the time interval depending on the model.</li>
 </ul>
 <p>
-This is not meant as a criticism of the client, it is just the way things were at that time in the organization, which at that time was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
+This is not meant as a criticism of the client; it is just the way things were at that time in the organisation, which was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
 </p>
 <h2>Target Architecture</h2>
 <p>
@@ -200,7 +206,7 @@ The full cycle runs without human intervention on the happy path; the human work
 </p>
 <h2>Refactoring the Existing Models</h2>
 <p>
-The architecture diagram was the &quot;easy&quot; part. The substantive work was rebuilding the existing model: code that had grown organically and was not written for containerised, parameterised pipeline execution, into something the platform could run.
+The architecture diagram was the &quot;easy&quot; part. The substantive work was rebuilding the existing models: code that had grown organically and was not written for containerised, parameterised pipeline execution, into something the platform could run.
 </p>
 <p>
 For each model we worked through the same pattern:
@@ -210,7 +216,7 @@ For each model we worked through the same pattern:
   <li>Split the monolithic training script into the pipeline steps above, so the expensive parts (training, evaluation) could be cached and re-run independently.</li>
   <li>Replace direct database reads with parameterised BigQuery queries that produced dated snapshots.</li>
   <li>Migrate feature engineering into reusable components and, where the same feature was used by multiple models, push it into the Feature Store.</li>
-  <li>Wrap everything in a container, register it in <strong>Artifact Registry</strong>, and submit it as a Vertex AI.</li>
+  <li>Wrap everything in a container, register it in <strong>Artifact Registry</strong>, and submit it as a Vertex AI pipeline.</li>
 </ul>
 <h2>Outcomes</h2>
 <p>

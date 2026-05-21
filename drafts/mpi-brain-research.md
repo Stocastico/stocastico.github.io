@@ -33,9 +33,9 @@ The headline result is in the paper *"Spatial Information in a Non-retinotopic V
 
 My job description was much more mundane than the science, but it was indispensable to it.
 
-- **MATLAB analysis code.** Most of the lab's electrophysiology pipeline lived in MATLAB. I helped develop scripts and functions depending on the researcher needs
+- **MATLAB analysis code.** Most of the lab's electrophysiology pipeline lived in MATLAB. I helped develop scripts and functions depending on the researchers' needs.
 - **Web apps in R / Shiny.** Several of the lab's analysis dashboards were built in **R with Shiny**: interactive visualisations of long electrophysiology recordings that let researchers scrub through nights of sleep data, mark interesting events, compare animals, and pull statistics on the fly without having to write a fresh script every time. Building those felt closer to product engineering than to research, and was very much my comfort zone.
-- **Development best practices.** As an expert developer I was tasked with providing training and teaching how to write clean code and apply devops practices that guarantee reproducibility and simplify maintenance of the codebase
+- **Development best practices.** As an expert developer I was tasked with providing training and teaching how to write clean code and apply DevOps practices that guarantee reproducibility and simplify maintenance of the codebase.
 
 ## Personal Reflection
 

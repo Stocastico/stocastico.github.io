@@ -12,7 +12,12 @@ export function getTopoJSON() {
   if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
   if (!window._topoPromise) {
     window._topoPromise = fetch('./data/world-110m.json')
-      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .catch((err) => {
+        /* Don't cache a rejection — let a later call retry the fetch. */
+        window._topoPromise = null;
+        throw err;
+      });
   }
   return window._topoPromise;
 }

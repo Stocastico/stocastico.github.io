@@ -31,6 +31,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const PROJECTS_DIR = path.join(ROOT, 'projects');
 
+// Single source of truth for the site origin — see scripts/lib/site.json.
+const SITE_URL = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'lib', 'site.json'), 'utf8'),
+).url;
+
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 
@@ -42,17 +47,20 @@ if (args.includes('--help') || args.includes('-h')) {
 const START_MARKER = '<!-- generated:project-jsonld -->';
 const END_MARKER   = '<!-- /generated:project-jsonld -->';
 
-function attrLookup(html, regex) {
+function attrLookup(html, regex, group = 1) {
   const m = html.match(regex);
-  return m ? m[1].trim() : null;
+  return m ? m[group].trim() : null;
 }
 
 function parsePage(html) {
   const canonical = attrLookup(html,
     /<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i);
   const title = attrLookup(html, /<title>([^<]+)<\/title>/i);
+  /* Capture the content up to the matching quote (group 2) so apostrophes
+     inside the description — e.g. "Gilles Laurent's department" — aren't
+     truncated, which a [^"'] class would do. */
   const description = attrLookup(html,
-    /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
+    /<meta\s+name=["']description["']\s+content=(["'])([\s\S]*?)\1/i, 2);
   const ogImage = attrLookup(html,
     /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
   const yearText = attrLookup(html,
@@ -77,8 +85,8 @@ function buildJsonLd({ canonical, headline, description, ogImage, year }) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home',     item: 'https://stocastico.github.io/' },
-      { '@type': 'ListItem', position: 2, name: 'Projects', item: 'https://stocastico.github.io/projects.html' },
+      { '@type': 'ListItem', position: 1, name: 'Home',     item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Projects', item: `${SITE_URL}/projects.html` },
       { '@type': 'ListItem', position: 3, name: headline,   item: canonical },
     ],
   };
@@ -91,7 +99,7 @@ function buildJsonLd({ canonical, headline, description, ogImage, year }) {
     author: {
       '@type': 'Person',
       name: 'Stefano Masneri',
-      url: 'https://stocastico.github.io/',
+      url: `${SITE_URL}/`,
     },
     publisher: {
       '@type': 'Person',
