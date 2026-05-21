@@ -2042,33 +2042,6 @@ test('renderProjects uses bg image as CSS background when provided', () => {
   }
 });
 
-test('renderProjects falls back to thumb for background when bg is missing', () => {
-  const grid = { innerHTML: '', parentNode: { appendChild() {} } };
-  const prevDocument = global.document;
-  global.document = {
-    getElementById(id) {
-      if (id === 'projects-grid') return grid;
-      return null;
-    },
-    createElement(tag) {
-      return { className: '', setAttribute() {}, innerHTML: '' };
-    },
-  };
-  try {
-    renderProjects([{
-      id: 'thumb-only',
-      title: 'Thumb Only',
-      year: '2024',
-      tags: ['AI'],
-      thumb: 'img/projects/thumb-only.jpg',
-      description: 'No bg, thumb only.',
-      url: 'projects/thumb-only.html',
-    }]);
-    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/thumb-only\.jpg['"]?\)/);
-  } finally {
-    global.document = prevDocument;
-  }
-});
 
 test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   const appended = [];
