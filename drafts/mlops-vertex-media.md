@@ -3,8 +3,7 @@ id:          mlops-vertex-media
 title:       "MLOps Platform on GCP for a Spanish Media Group"
 year:        "2022 – 2023"
 tags:        "MLOps, Vertex AI, GCP"
-bg:       "img/projects/mlops-thumb.svg"
-bg:          "img/projects/mlops-bg.svg"
+bg:          "img/projects/mlops-bg.webp"
 description: "End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle."
 ---
 
@@ -32,7 +31,7 @@ This is not meant as a criticism of the client, it is just the way things were a
 
 We designed the platform around the standard MLOps lifecycle: data, training, registry, serving, monitoring. We used Vertex AI as the glue between all of them, with the rest of GCP filling in the supporting infrastructure.
 
-![MLOps architecture on GCP](img/projects/mlops-architecture.svg)
+![MLOps architecture on GCP](img/projects/mlops-architecture.webp)
 
 **Data layer.** All training and serving data flows through **BigQuery**, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the **Vertex AI Feature Store** so the same definitions can serve both training and online inference — closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in **GCS** with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
 
@@ -48,7 +47,7 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
 
 Each model — churn, recommender, the rest — ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
 
-![Vertex AI pipeline run](img/projects/mlops-pipeline.svg)
+![Vertex AI pipeline run](img/projects/mlops-pipeline.webp)
 
 The pipeline runs on a schedule (typically weekly for churn, daily for the recommender) or whenever Model Monitoring raises a drift alert against the corresponding production endpoint. A typical run goes through:
 
