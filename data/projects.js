@@ -19,6 +19,15 @@
 
 export const PROJECTS = [
     {
+            id: "mlops-vertex-media",
+            title: "MLOps Platform on GCP for a Spanish Media Group",
+            year: "2022 – 2023",
+            tags: ["MLOps","Vertex AI","GCP"],
+            bg: "img/projects/mlops-bg.webp",
+            description: "End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle.",
+            url: "projects/mlops-vertex-media.html",
+        },
+    {
             id: "mpi-brain-research",
             title: "MPI for Brain Research: Software for Reptilian Neuroscience",
             year: "2015 – 2017",
