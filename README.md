@@ -294,7 +294,7 @@ Quick summary:
    title:       "My Project Title"
    year:        "2024"
    tags:        "AI, CV, Python"
-   thumb:       "img/projects/my-thumb.jpg"
+   bg:          "img/projects/my-bg.jpg"
    description: "Short 2–3 sentence summary shown on the homepage card."
    ---
 
@@ -334,9 +334,8 @@ Prints the generated HTML and the `data/projects.js` entry without writing any f
 | `title`       | string | Yes      | Project title                                        |
 | `year`        | string | Yes      | Year of the project, e.g. `"2024"`                   |
 | `tags`        | string | Yes      | Comma-separated keyword badges, e.g. `"AI, CV"`      |
-| `thumb`       | string | Yes      | Path to 16:9 thumbnail image                         |
+| `bg`          | string | Yes      | Card background + hero image on the detail page      |
 | `description` | string | Yes      | Short summary shown on the homepage and listing card |
-| `bg`          | string | No       | Semi-transparent background image for the card       |
 | `url`         | string | No       | Override the output URL path                         |
 
 ### Supported Markdown syntax

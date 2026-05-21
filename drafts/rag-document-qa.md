@@ -3,7 +3,7 @@ id:          rag-document-qa
 title:       "RAG Document Assistant for Financial Services"
 year:        "2023"
 tags:        "RAG, LLM, NLP"
-thumb:       "img/projects/rag-query.svg"
+bg:       "img/projects/rag-query.svg"
 bg:          "img/projects/rag-query.svg"
 description: "A retrieval-augmented generation system built for a large European bank, replacing manual SharePoint search with a conversational assistant that answers questions and cites the exact document and page where each answer was found."
 ---

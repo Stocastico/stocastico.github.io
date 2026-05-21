@@ -796,7 +796,7 @@ function renderProjectCard(project, i) {
   const tagsHtml = (project.tags || [])
     .map(function(t) { return '<span class="project-tag">' + escapeHtml(t) + '</span>'; })
     .join('');
-  const bgSrc = project.bg || project.thumb || '';
+  const bgSrc = project.bg || '';
   const hasBg = Boolean(bgSrc);
   const style = hasBg
     ? ' style="--card-bg: url(\'' + escapeHtml(bgSrc) + '\')"'
