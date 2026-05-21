@@ -81,3 +81,5 @@ By the end of the engagement, all the models in scope were running on Vertex AI 
 - Promoting a new model version went from copying files to opening a pull request and approving the candidate in the Model Registry.
 - Drift detection that previously did not exist now caught two distinct feature-distribution shifts on the recommender during the first months of operation — one of them traced back to an upstream change in how article tags were generated, which would otherwise have quietly degraded recommendations.
 - Onboarding a new model became a question of cloning a pipeline template and filling in the model-specific bits, rather than designing the operational story from scratch.
+
+*Note: the hero image and the architecture and pipeline diagrams on this page were generated with AI.*
