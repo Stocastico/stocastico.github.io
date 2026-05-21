@@ -7,11 +7,11 @@ bg:          "img/projects/mlops-bg.webp"
 description: "End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle."
 ---
 
-This was my first project as **technical manager** at **NTT Data**, working with one of the largest media groups in Spain. The client already had a respectable portfolio of machine-learning models in production: a churn predictor for their subscription business, an article recommender for the news portal, and a handful of smaller models around content tagging and engagement. Each of them, though, had been built in isolation, by different teams, at different times, with different tools. Training a model meant a data scientist running a notebook on their laptop and copying the resulting pickle file to a server somewhere. It was difficult to reliably reproduce a model from six months earlier, or knowing when a model's performance had drifted in production. There was no shared way to version a dataset, promote a model, or roll one back.
+This was my first project as **technical manager** at **NTT DATA**, working with one of the largest media groups in Spain. The client already had a respectable portfolio of machine-learning models in production: a churn predictor for their subscription business, an article recommender for the news portal, and a handful of smaller models around content tagging and engagement. Each of them, though, had been built in isolation, by different teams, at different times, with different tools. Training a model meant a data scientist running a notebook on their laptop and copying the resulting pickle file to a server somewhere. It was difficult to reliably reproduce a model from six months earlier, or to know when a model's performance had drifted in production. There was no shared way to version a dataset, promote a model, or roll one back.
 
 The brief was to fix all of that without throwing the existing work away. Move every model onto a single MLOps platform, refactor the code so it could run as scheduled pipelines, and put the usual instrumentation around it: monitoring, CI/CD, drift detection, lineage. The project was paid in part by Google, so it was natural to choose, as platform for MLOps, **Google Cloud**, with **Vertex AI** as the backbone.
 
-I led a cross-functional team of ML engineers, data scientists and data architects spanning both NTT Data and the client. My job was the usual mix that comes with that role: scoping the architecture, breaking the work into different tasks, negotiating priorities with the client, unblocking people, and keeping the technical decisions consistent across all of the workstreams.
+I led a cross-functional team of ML engineers, data scientists and data architects spanning both NTT DATA and the client. My job was the usual mix that comes with that role: scoping the architecture, breaking the work into different tasks, negotiating priorities with the client, unblocking people, and keeping the technical decisions consistent across all of the workstreams.
 
 ## What "no MLOps" actually meant
 
@@ -25,7 +25,7 @@ It is worth being concrete about the starting point, because the gap between *ha
 - **CI/CD**: manual. Promoting a new model meant copying a file and restarting a service.
 - **Retraining**: semi-automatic. Models were retrained periodically, with the time interval depending on the model.
 
-This is not meant as a criticism of the client, it is just the way things were at that time in the organization, which at that time was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
+This is not meant as a criticism of the client; it is just the way things were at that time in the organisation, which was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
 
 ## Target Architecture
 
@@ -63,7 +63,7 @@ The full cycle runs without human intervention on the happy path; the human work
 
 ## Refactoring the Existing Models
 
-The architecture diagram was the "easy" part. The substantive work was rebuilding the existing model: code that had grown organically and was not written for containerised, parameterised pipeline execution, into something the platform could run.
+The architecture diagram was the "easy" part. The substantive work was rebuilding the existing models: code that had grown organically and was not written for containerised, parameterised pipeline execution, into something the platform could run.
 
 For each model we worked through the same pattern:
 
@@ -71,7 +71,7 @@ For each model we worked through the same pattern:
 - Split the monolithic training script into the pipeline steps above, so the expensive parts (training, evaluation) could be cached and re-run independently.
 - Replace direct database reads with parameterised BigQuery queries that produced dated snapshots.
 - Migrate feature engineering into reusable components and, where the same feature was used by multiple models, push it into the Feature Store.
-- Wrap everything in a container, register it in **Artifact Registry**, and submit it as a Vertex AI.
+- Wrap everything in a container, register it in **Artifact Registry**, and submit it as a Vertex AI pipeline.
 
 ## Outcomes
 

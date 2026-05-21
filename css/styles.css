@@ -2864,6 +2864,31 @@ h3 {
   font-style: italic;
 }
 
+.post table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.post table th,
+.post table td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+
+.post table th {
+  color: var(--text);
+  font-weight: 600;
+  background: rgb(var(--text-rgb) / 0.05);
+}
+
+.post table tbody tr:nth-child(even) {
+  background: rgb(var(--text-rgb) / 0.025);
+}
+
 .post figure {
   margin: 2rem 0;
   text-align: center;

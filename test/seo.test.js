@@ -120,6 +120,41 @@ for (const { rel, label } of indexableTopLevel) {
   });
 }
 
+function nameTag(html, name) {
+  const re = new RegExp(
+    `<meta\\s+(?=[^>]*\\bname=["']${name}["'])(?=[^>]*\\bcontent=["']([^"']+)["'])[^>]*>`, 'i');
+  const re2 = new RegExp(
+    `<meta\\s+(?=[^>]*\\bcontent=["']([^"']+)["'])(?=[^>]*\\bname=["']${name}["'])[^>]*>`, 'i');
+  const m = html.match(re) || html.match(re2);
+  return m ? m[1].trim() : null;
+}
+
+/* The og:image / twitter:image URLs are absolute (https://<site>/img/...).
+   Vite hashes referenced images into dist/assets/, but these meta strings are
+   never rewritten, so the literal file must exist under img/ (and ship to
+   dist/img/ via the copy-og-images plugin) or the social card 404s — and an
+   SVG is not a valid social-card image. */
+const imageBearingPages = [
+  'index.html', 'cv.html', 'projects.html', '404.html',
+  ...fs.readdirSync(path.join(ROOT, 'projects'))
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => `projects/${f}`),
+];
+
+for (const rel of imageBearingPages) {
+  test(`SEO: ${rel} social images resolve to real raster files`, () => {
+    const html = read(rel);
+    const urls = [ogTag(html, 'og:image'), nameTag(html, 'twitter:image')].filter(Boolean);
+    for (const url of urls) {
+      const localPath = new URL(url).pathname.replace(/^\//, '');
+      assert.ok(fs.existsSync(path.join(ROOT, localPath)),
+        `${rel}: ${url} → file missing at ${localPath}`);
+      assert.doesNotMatch(localPath, /\.svg$/i,
+        `${rel}: ${url} is an SVG; social cards need a raster (png/jpg/webp)`);
+    }
+  });
+}
+
 function cspMeta(html) {
   /* The CSP value contains single quotes (e.g. 'self'), so the content
      capture must be tied to the surrounding double quotes only. */

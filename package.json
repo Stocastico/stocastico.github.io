@@ -28,6 +28,7 @@
     "generate-project-jsonld": "node scripts/generate-project-jsonld.mjs",
     "generate-csp-meta": "node scripts/generate-csp-meta.mjs",
     "generate-favicons": "node scripts/generate-favicons.mjs",
+    "set-domain": "node scripts/set-domain.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },
   "engines": {

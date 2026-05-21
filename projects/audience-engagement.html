@@ -13,13 +13,18 @@
   <link rel="canonical" href="https://stocastico.github.io/projects/audience-engagement.html" />
 
   <meta property="og:type"        content="article" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta property="og:locale"      content="en_GB" />
   <meta property="og:url"         content="https://stocastico.github.io/projects/audience-engagement.html" />
   <meta property="og:title"       content="Multi-modal Audience Engagement Measurement System — Stefano Masneri" />
   <meta property="og:description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
   <meta property="og:image"       content="https://stocastico.github.io/img/projects/audience-engagement-bg.webp" />
+  <meta property="og:image:alt"   content="Multi-modal Audience Engagement Measurement System" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="Multi-modal Audience Engagement Measurement System — Stefano Masneri" />
   <meta name="twitter:description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
+  <meta name="twitter:image"       content="https://stocastico.github.io/img/projects/audience-engagement-bg.webp" />
+  <meta name="twitter:image:alt"   content="Multi-modal Audience Engagement Measurement System" />
 
   <meta name="theme-color" content="#0a120e" />
 
@@ -194,11 +199,7 @@ Three things made this project interesting beyond the engagement-metric angle:
 </p>
 <ol>
   <li><strong>Multi-modal sensor fusion done pragmatically.</strong> Academic papers on multi-modal systems often fuse modalities that share a common machine-learning formulation. Here the channels had completely different statistical properties, completely different hardware requirements, and different failure modes. The fusion had to respect that asymmetry.</li>
-</ol>
-<ol>
   <li><strong>Open-source release.</strong> The entire stack — scanner firmware, server, vision pipeline, MQTT plumbing, Docker files — is on GitHub and was designed for reproducibility. At the time, very little open tooling existed in the audience-analytics space outside of proprietary, closed commercial offerings.</li>
-</ol>
-<ol>
   <li><strong>Privacy-aware by design.</strong> The wireless channel uses <strong>MAC addresses as transient identifiers only</strong>, and all personal identifiers are dropped before aggregation. The visual channel produces only zone-level statistics, not per-person records. This was a deliberate response to the GDPR landscape that was crystallising in Europe in 2019–2020.</li>
 </ol>
 <p>
