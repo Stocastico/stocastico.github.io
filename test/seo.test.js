@@ -111,6 +111,16 @@ const indexableTopLevel = [
   { rel: 'projects.html', label: 'projects' },
 ];
 
+test('SEO: manifest.webmanifest is valid JSON with name and icons', () => {
+  const manifest = JSON.parse(read('public/manifest.webmanifest'));
+  assert.ok(manifest.name && manifest.name.length > 0, 'manifest.name missing');
+  assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 1, 'manifest.icons missing');
+  for (const icon of manifest.icons) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'public', icon.src.replace(/^\//, ''))),
+      `manifest icon missing on disk: ${icon.src}`);
+  }
+});
+
 for (const { rel, label } of indexableTopLevel) {
   test(`SEO: ${label} (${rel}) has og:image, og:image:alt, and og:locale`, () => {
     const html = read(rel);
@@ -152,6 +162,13 @@ for (const rel of imageBearingPages) {
       assert.doesNotMatch(localPath, /\.svg$/i,
         `${rel}: ${url} is an SVG; social cards need a raster (png/jpg/webp)`);
     }
+  });
+}
+
+for (const rel of imageBearingPages) {
+  test(`SEO: ${rel} links the web app manifest`, () => {
+    assert.match(read(rel), /<link\s+rel=["']manifest["']\s+href=["']\/manifest\.webmanifest["']/i,
+      `${rel} missing <link rel="manifest">`);
   });
 }
 
