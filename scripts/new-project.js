@@ -22,13 +22,11 @@
  *   title:       "My Project Title"
  *   year:        "2024"
  *   tags:        "AI, CV, Unity"         # comma-separated
- *   thumb:       "img/projects/my.jpg"   # card thumbnail
+ *   bg:          "img/projects/my-bg.jpg"   # card bg + project-page hero
  *   description: "Short 2–3 sentence summary for the homepage card."
  *   ---
  *
  * Optional frontmatter:
- *   bg:          "img/projects/my-bg.jpg"   # semi-transparent card bg /
- *                                            # project-page hero image
  *   link_paper:  "https://..."
  *   link_github: "https://..."
  *   link_demo:   "https://..."
@@ -76,9 +74,8 @@ Frontmatter fields (YAML between --- delimiters):
   title        (required)  Project title
   year         (required)  Project year
   tags         (required)  Comma-separated tag keywords
-  thumb        (required)  Path to card thumbnail image
+  bg           (required)  Card background + project detail hero image
   description  (required)  Short summary for the homepage card
-  bg                       Semi-transparent card bg + detail hero image
   link_paper              URL to paper (optional)
   link_github             URL to GitHub repo (optional)
   link_demo               URL to live demo (optional)
@@ -123,7 +120,7 @@ function parseFrontmatter(text) {
 }
 
 function validateProjectFrontmatter(fm, filePath) {
-  const required = ['id', 'title', 'year', 'tags', 'thumb', 'description'];
+  const required = ['id', 'title', 'year', 'tags', 'bg', 'description'];
   for (const field of required) {
     if (fm[field] === undefined || fm[field] === '') {
       throw new Error(`Missing required frontmatter field "${field}" in ${filePath}`);
@@ -285,7 +282,7 @@ function deriveOutputPath(id, outDir = 'projects') {
 
 function buildProjectPage(fm, bodyHtml) {
   const tags = parseTags(fm.tags);
-  const heroImg = fm.bg || fm.thumb;
+  const heroImg = fm.bg;
   const tagsHtml = tags
     .map(t => `        <span class="project-tag">${escapeHtml(t)}</span>`)
     .join('\n');
@@ -425,9 +422,8 @@ function updateProjectsJs(projectsJsPath, entry, src) {
     `        title: ${JSON.stringify(entry.title)},`,
     `        year: ${JSON.stringify(entry.year)},`,
     `        tags: ${tagsStr},`,
-    `        thumb: ${JSON.stringify(entry.thumb)},`,
+    `        bg: ${JSON.stringify(entry.bg)},`,
   ];
-  if (entry.bg) lines.push(`        bg: ${JSON.stringify(entry.bg)},`);
   lines.push(`        description: ${JSON.stringify(entry.description)},`);
   lines.push(`        url: ${JSON.stringify(entry.url)},`);
   lines.push('    }');
@@ -470,11 +466,10 @@ function main() {
     title: String(fm.title),
     year: String(fm.year),
     tags: tags,
-    thumb: String(fm.thumb),
+    bg: String(fm.bg),
     description: String(fm.description),
     url: `${opts.outDir.replace(/\\/g, '/')}/${fm.id}.html`,
   };
-  if (fm.bg) projectEntry.bg = String(fm.bg);
 
   if (opts.dryRun) {
     console.log('=== Generated project page HTML ===');

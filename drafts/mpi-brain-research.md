@@ -3,7 +3,7 @@ id:          mpi-brain-research
 title:       "MPI for Brain Research: Software for Reptilian Neuroscience"
 year:        "2015 – 2017"
 tags:        "Scientific Computing, Neuroscience, Data Analysis"
-thumb:       "img/projects/mpi-brain-thumb.jpeg"
+bg:       "img/projects/mpi-brain-thumb.jpeg"
 bg:          "img/projects/mpi-brain-bg.jpeg"
 description: "Two years as a scientific software developer in Gilles Laurent's department at the Max Planck Institute for Brain Research in Frankfurt, building MATLAB analysis pipelines and R/Shiny web apps for electrophysiologists studying sleep in bearded dragons and visual processing in ex-vivo turtle brains."
 link_paper:  "https://www.science.org/doi/10.1126/science.aaf3621"

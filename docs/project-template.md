@@ -8,13 +8,11 @@
 #   title:       Project title (quoted string)
 #   year:        Project year (quoted string)
 #   tags:        Comma-separated keywords, 1–3 (quoted string)
-#   thumb:       Path to 16:9 thumbnail (used as card bg if `bg` is omitted)
+#   bg:          Path to image used semi-transparently behind the homepage
+#                card AND as the hero banner on the detail page.
 #   description: Short 2–3 sentence summary shown on the homepage card
 #
 # Optional:
-#   bg:          Path to a background image used semi-transparently behind
-#                the homepage card AND as the hero banner on the detail page.
-#                Falls back to `thumb` when omitted.
 #   link_paper:  "https://link.springer.com/..."
 #   link_github: "https://github.com/..."
 #   link_demo:   "https://..."
@@ -24,7 +22,6 @@ id:          my-project-slug
 title:       "My Project Title"
 year:        "2024"
 tags:        "AI, Computer Vision"
-thumb:       "img/projects/my-thumb.jpg"
 bg:          "img/projects/my-bg.jpg"
 description: "Short 2–3 sentence summary shown on the homepage project card."
 ---

@@ -3,7 +3,7 @@ id:          clear-architecture
 title:       "cleAR: Interoperable Architecture for Multi-User AR"
 year:        "2023"
 tags:        "AR, Education, Architecture"
-thumb:       "img/projects/clear-architecture.jpg"
+bg:       "img/projects/clear-architecture.jpg"
 bg:          "img/projects/clear-architecture.jpg"
 description: "cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research."
 link_paper:  "https://link.springer.com/article/10.1007/s10055-023-00764-5"

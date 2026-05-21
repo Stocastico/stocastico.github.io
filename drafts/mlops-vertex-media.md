@@ -3,7 +3,7 @@ id:          mlops-vertex-media
 title:       "MLOps Platform on GCP for a Spanish Media Group"
 year:        "2022 – 2023"
 tags:        "MLOps, Vertex AI, GCP"
-thumb:       "img/projects/mlops-thumb.svg"
+bg:       "img/projects/mlops-thumb.svg"
 bg:          "img/projects/mlops-bg.svg"
 description: "End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle."
 ---

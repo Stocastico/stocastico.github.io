@@ -74,24 +74,24 @@ test('project: validateProjectFrontmatter passes with all required fields', () =
     title: 'My Project',
     year: '2024',
     tags: 'AR, CV',
-    thumb: 'img/projects/my-thumb.jpg',
+    bg: 'img/projects/my-bg.jpg',
     description: 'A test project.',
   };
   validateProjectFrontmatter(fm, 'test.md');
 });
 
 test('project: validateProjectFrontmatter throws on missing id', () => {
-  const fm = { title: 'X', year: '2024', tags: 'A', thumb: 'x.jpg', description: 'D' };
+  const fm = { title: 'X', year: '2024', tags: 'A', bg: 'x.jpg', description: 'D' };
   assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /id/);
 });
 
-test('project: validateProjectFrontmatter throws on missing thumb', () => {
+test('project: validateProjectFrontmatter throws on missing bg', () => {
   const fm = { id: 'x', title: 'X', year: '2024', tags: 'A', description: 'D' };
-  assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /thumb/);
+  assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /bg/);
 });
 
 test('project: validateProjectFrontmatter throws on missing description', () => {
-  const fm = { id: 'x', title: 'X', year: '2024', tags: 'A', thumb: 'x.jpg' };
+  const fm = { id: 'x', title: 'X', year: '2024', tags: 'A', bg: 'x.jpg' };
   assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /description/);
 });
 
@@ -149,7 +149,7 @@ test('project: buildProjectPage produces a full HTML document', () => {
     title: 'Test Project',
     year: '2024',
     tags: 'AI, CV',
-    thumb: 'img/projects/test.jpg',
+    bg: 'img/projects/test.jpg',
     description: 'A short description.',
   };
   const html = buildProjectPage(fm, '<p>Full body.</p>');
@@ -165,7 +165,7 @@ test('project: buildProjectPage uses correct asset paths for project subdir', ()
   // path /js/main.js (Vite resolves the same path on every page).
   const fm = {
     id: 'x', title: 'X', year: '2024', tags: 'A',
-    thumb: 'img/projects/x.jpg', description: 'D',
+    bg: 'img/projects/x.jpg', description: 'D',
   };
   const html = buildProjectPage(fm, '<p>body</p>');
   assert.match(html, /href="\.\.\/css\/styles\.css"/);
@@ -176,7 +176,7 @@ test('project: buildProjectPage uses correct asset paths for project subdir', ()
 test('project: buildProjectPage includes title, year, tags, and body', () => {
   const fm = {
     id: 'y', title: 'Cool Project', year: '2023', tags: 'AR, Unity',
-    thumb: 'img/projects/y.jpg', description: 'Description.',
+    bg: 'img/projects/y.jpg', description: 'Description.',
   };
   const html = buildProjectPage(fm, '<p>Inner body.</p>');
   assert.match(html, /Cool Project/);
@@ -189,7 +189,6 @@ test('project: buildProjectPage includes title, year, tags, and body', () => {
 test('project: buildProjectPage renders bg as hero banner when provided', () => {
   const fm = {
     id: 'z', title: 'Z', year: '2024', tags: 'A',
-    thumb: 'img/projects/z.jpg',
     bg: 'img/projects/z-bg.jpg',
     description: 'D',
   };
@@ -199,21 +198,10 @@ test('project: buildProjectPage renders bg as hero banner when provided', () => 
   assert.match(html, /project-hero/);
 });
 
-test('project: buildProjectPage falls back to thumb when bg is not set', () => {
-  const fm = {
-    id: 'w', title: 'W', year: '2024', tags: 'A',
-    thumb: 'img/projects/w.jpg',
-    description: 'D',
-  };
-  const html = buildProjectPage(fm, '<p>b</p>');
-  // No bg → hero uses the thumb
-  assert.match(html, /img\/projects\/w\.jpg/);
-});
-
 test('project: buildProjectPage includes optional link_paper', () => {
   const fm = {
     id: 'x', title: 'X', year: '2024', tags: 'A',
-    thumb: 'x.jpg', description: 'D',
+    bg: 'x.jpg', description: 'D',
     link_paper: 'https://example.com/paper',
   };
   const html = buildProjectPage(fm, '<p>Body</p>');
@@ -224,7 +212,7 @@ test('project: buildProjectPage includes optional link_paper', () => {
 test('project: buildProjectPage includes optional link_github', () => {
   const fm = {
     id: 'x', title: 'X', year: '2024', tags: 'A',
-    thumb: 'x.jpg', description: 'D',
+    bg: 'x.jpg', description: 'D',
     link_github: 'https://github.com/user/repo',
   };
   const html = buildProjectPage(fm, '<p>Body</p>');
@@ -235,7 +223,7 @@ test('project: buildProjectPage includes optional link_github', () => {
 test('project: buildProjectPage includes a back-to-projects link', () => {
   const fm = {
     id: 'x', title: 'X', year: '2024', tags: 'A',
-    thumb: 'x.jpg', description: 'D',
+    bg: 'x.jpg', description: 'D',
   };
   const html = buildProjectPage(fm, '<p>Body</p>');
   // Relative link back to projects listing
@@ -245,7 +233,7 @@ test('project: buildProjectPage includes a back-to-projects link', () => {
 test('project: buildProjectPage escapes HTML in tags/title', () => {
   const fm = {
     id: 'x', title: 'A & B <script>', year: '2024', tags: 'Tag<x>',
-    thumb: 'x.jpg', description: 'D',
+    bg: 'x.jpg', description: 'D',
   };
   const html = buildProjectPage(fm, '<p>body</p>');
   assert.ok(!html.includes('<script>A'), 'Title should be escaped');
@@ -261,7 +249,6 @@ test('project: updateProjectsJs prepends entry to empty PROJECTS array', () => {
     title: 'New Project',
     year: '2024',
     tags: ['AI', 'CV'],
-    thumb: 'img/projects/new.jpg',
     bg: 'img/projects/new-bg.jpg',
     description: 'A new project.',
     url: 'projects/new-proj.html',
@@ -274,21 +261,6 @@ test('project: updateProjectsJs prepends entry to empty PROJECTS array', () => {
   assert.match(result, /bg:/);
 });
 
-test('project: updateProjectsJs omits bg key when not provided', () => {
-  const src = `const PROJECTS = [];\n`;
-  const entry = {
-    id: 'new-proj',
-    title: 'New Project',
-    year: '2024',
-    tags: ['AI'],
-    thumb: 'img/projects/new.jpg',
-    description: 'A new project.',
-    url: 'projects/new-proj.html',
-  };
-  const result = updateProjectsJs('data/projects.js', entry, src);
-  assert.ok(!/bg:/.test(result), 'bg should not appear when undefined');
-});
-
 test('project: updateProjectsJs entry url points to projects/<slug>.html', () => {
   const src = `const PROJECTS = [];\n`;
   const entry = {
@@ -296,7 +268,7 @@ test('project: updateProjectsJs entry url points to projects/<slug>.html', () =>
     title: 'T',
     year: '2024',
     tags: ['AI'],
-    thumb: 't.jpg',
+    bg: 't.jpg',
     description: 'D',
     url: 'projects/slug-x.html',
   };
@@ -316,7 +288,7 @@ test('project: updateProjectsJs prepends entry before existing entries', () => {
     title: 'New Project',
     year: '2024',
     tags: ['AI'],
-    thumb: 'img/projects/new.jpg',
+    bg: 'img/projects/new.jpg',
     description: 'A new project.',
     url: 'projects/new-proj.html',
   };
@@ -328,7 +300,7 @@ test('project: updateProjectsJs prepends entry before existing entries', () => {
 
 test('project: updateProjectsJs throws when PROJECTS array not found', () => {
   const src = 'const SOMETHING_ELSE = [];';
-  const entry = { id: 'x', title: 'X', year: '2024', tags: [], thumb: '', description: '', url: '' };
+  const entry = { id: 'x', title: 'X', year: '2024', tags: [], bg: '', description: '', url: '' };
   assert.throws(() => updateProjectsJs('data/projects.js', entry, src), /PROJECTS/);
 });
 
@@ -339,7 +311,7 @@ test('project: updateProjectsJs accepts ES module export form', () => {
     title: 'ESM Project',
     year: '2024',
     tags: ['ESM'],
-    thumb: 'img/projects/esm.jpg',
+    bg: 'img/projects/esm.jpg',
     description: 'ES module form.',
     url: 'projects/esm-proj.html',
   };
@@ -356,7 +328,6 @@ id: e2e-test
 title: "End-to-End Test Project"
 year: "2024"
 tags: "AI, Testing"
-thumb: "img/projects/e2e.jpg"
 bg:    "img/projects/e2e-bg.jpg"
 description: "An end-to-end test project."
 link_github: "https://github.com/test/repo"
