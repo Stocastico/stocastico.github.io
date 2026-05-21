@@ -28,7 +28,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 - Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`)
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies)
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
-- Self-hosted fonts: Inter (body) and Playfair Display (display / hero)
+- Self-hosted fonts: Inter (body) and Outfit (headings + the hero name shader)
 
 ## Project structure
 
@@ -71,6 +71,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── apple-touch-icon.png   iOS Add-to-Home-Screen icon (180×180)
 │   ├── icon-192.png           Android / PWA manifest (192×192)
 │   ├── icon-512.png           Android splash / PWA manifest (512×512)
+│   ├── manifest.webmanifest   PWA web app manifest (name, icons, theme colour)
 │   ├── sitemap.xml            Generated sitemap (copied verbatim into dist/)
 │   └── robots.txt             SEO robot rules
 ├── scripts/
@@ -82,16 +83,20 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── generate-project-jsonld.mjs  Inject/refresh BreadcrumbList + Article JSON-LD on every projects/*.html
 │   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
 │   ├── generate-favicons.mjs        Rasterise public/favicon.svg → ico + apple-touch + 192/512 PNGs (uses sharp)
+│   ├── rotate-palette.js            Advance data/palettes.yaml `active` to the next palette (used by CI)
+│   ├── set-domain.mjs               Migrate the site to a custom domain (rewrites URLs + writes public/CNAME)
 │   ├── update-locations.sh          Convenience wrapper for generate-locations.js
 │   ├── update-locations.ps1         PowerShell wrapper for generate-locations.js
 │   └── lib/
-│       └── yaml.js                  Minimal YAML parser (no external dependencies)
+│       ├── yaml.js                  Minimal YAML parser (no external dependencies)
+│       └── site.json                Single source of truth for the site origin (used by the URL generators)
 ├── test/
 │   ├── main.node.test.mjs          Tests for js/main.js
 │   ├── cv.test.mjs                 Tests for CV rendering
 │   ├── europe-map.test.mjs         Tests for js/europe-map.js
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
 │   ├── generate-theme.test.js      Tests for scripts/generate-theme.js
+│   ├── rotate-palette.test.js      Tests for scripts/rotate-palette.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── seo.test.js                 SEO regression tests (meta description, JSON-LD, stat counters)
@@ -116,6 +121,7 @@ npm run test:main              # js/main.js tests only
 npm run test:cv                # CV rendering tests only
 npm run test:generate-cv       # generate-cv.js tests only
 npm run test:generate-theme    # generate-theme.js tests only
+npm run test:rotate-palette    # rotate-palette.js tests only
 npm run test:locations         # locations generator tests only
 npm run test:project           # new-project.js tests only
 npm run test:seo               # SEO regression tests only
@@ -200,6 +206,19 @@ node scripts/generate-theme.js --help
 
 Switching the whole site to another palette = change the `active:` key in `data/palettes.yaml` (or add a new palette), run `npm run generate-theme`, then `npm run generate-favicons` to rebuild the raster icons.
 
+### `rotate-palette` — cycle to the next palette
+
+Rewrites only the `active:` key in `data/palettes.yaml` to the next palette in document order (wrapping at the end); every palette definition and comment is preserved byte-for-byte. A scheduled GitHub Actions workflow (`.github/workflows/rotate-palette.yml`) uses this to rotate the site's colours automatically.
+
+```bash
+npm run rotate-palette
+# or directly:
+node scripts/rotate-palette.js --palette crimson   # force a specific palette
+node scripts/rotate-palette.js --dry-run
+```
+
+After rotating, run `npm run generate-theme` then `npm run generate-favicons` to propagate the colours.
+
 ### `new-project` — create a project page from Markdown
 
 Converts a Markdown file to a styled `projects/<id>.html` and registers the entry in `data/projects.js` so the card appears on the homepage and on `projects.html`.
@@ -259,6 +278,24 @@ npm run generate-favicons
 
 Run only when the SVG source changes — the rasterised files are committed and reused otherwise.
 
+### `set-domain` — migrate to a custom domain
+
+The site origin lives in one place — `scripts/lib/site.json` — which the sitemap, project-JSON-LD and `new-project` generators read. `set-domain` flips it and rewrites the hardcoded origin (canonical, Open Graph, JSON-LD, sitemap, robots) across every static page in one step, then writes `public/CNAME` for GitHub Pages. The GitHub repository URL is deliberately left untouched.
+
+```bash
+npm run set-domain -- example.com
+# accepts a bare domain or full URL:
+npm run set-domain -- https://www.example.com
+```
+
+After running, refresh the generated files and verify:
+
+```bash
+npm run generate-sitemap
+npm run generate-project-jsonld
+npm test
+```
+
 ### `dev` / `build` / `preview` — Vite
 
 ```bash
@@ -266,6 +303,8 @@ npm run dev        # local dev server with HMR
 npm run build      # production build → dist/
 npm run preview    # serve dist/ locally
 ```
+
+The build also copies `img/`, `data/*.json` and `docs/*.pdf` into `dist/` verbatim (via small Vite plugins in `vite.config.js`). These are referenced by absolute URL — `og:image`/`twitter:image`, runtime `fetch()` of the TopoJSON, and the CV/defence PDF links — so they are not part of the Rollup graph and Vite would otherwise drop them from the deploy.
 
 GitHub Actions runs `npm test`, then `generate-sitemap`, then `generate-project-jsonld`, then `npm run build`, and finally publishes `dist/` on every push to `main` (see `.github/workflows/deploy.yml`).
 
@@ -313,7 +352,7 @@ Quick summary:
    ```
 
    This will:
-   - Create `projects/<id>.html` from the template (with OG tags, canonical, and syntax highlighting already included)
+   - Create `projects/<id>.html` from the template (with OG/Twitter tags, canonical, theme-color and the PWA manifest link already included)
    - Register the entry in `data/projects.js` so the card appears on the homepage (up to 4) and on `projects.html`
 
 3. Preview locally by opening `index.html` in a browser, then commit both generated files.
@@ -348,8 +387,9 @@ Prints the generated HTML and the `data/projects.js` entry without writing any f
 | `` `inline code` `` | `<code>` |
 | `[text](url)` | `<a>` |
 | `- item` | `<ul><li>` |
-| `1. item` | `<ol><li>` |
-| ` ```lang … ``` ` | `<pre><code class="language-lang">` (syntax-highlighted by highlight.js) |
+| `1. item` | `<ol><li>` (blank lines between items are kept in one list) |
+| `\| a \| b \|` + `\|---\|---\|` row | `<table>` with `<thead>` / `<tbody>` |
+| ` ```lang … ``` ` | `<pre><code class="language-lang">` |
 | `> quote` | `<blockquote>` |
 
 ---
@@ -416,7 +456,7 @@ Edit `data/publications.js` directly. Each entry:
 
 ### Navigation
 
-The navbar contains three items: **About**, **Projects**, and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically.
+The navbar contains four items: **About**, **Work** (the Research section), **Projects**, and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically.
 
 ### Pages
 
