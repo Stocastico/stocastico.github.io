@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const PROJECTS_DIR = path.join(ROOT, 'projects');
-const SITE = 'https://stocastico.github.io';
+/* Single source of truth for the site origin — see scripts/lib/site.json. */
+const SITE = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'scripts', 'lib', 'site.json'), 'utf8'),
+).url;
 
 function readJsonLd(html) {
   const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
