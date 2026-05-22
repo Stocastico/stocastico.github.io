@@ -37,7 +37,7 @@ import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, C
 import './europe-map.js';
 
 /* Shared environment helpers */
-import { getTopoJSON, isLowPowerDevice, prefersReducedMotion, hasWebGLSupport } from './utils.js';
+import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport } from './utils.js';
 
 /* Theme colours — single source of truth (data/palettes.yaml → js/theme.js) */
 import { THEME, glvec, rgba } from './theme.js';

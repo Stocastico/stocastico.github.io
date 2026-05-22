@@ -109,6 +109,7 @@ test('geocodeLocations fills coordinates on successful lookup', async () => {
   const sample = { pins: [{ name: 'Paris, France', info: 'Holiday' }] };
   const prevFetch = global.fetch;
   global.fetch = async () => ({
+    ok: true,
     json: async () => [{ lat: '48.8566', lon: '2.3522' }],
   });
   try {
@@ -116,6 +117,26 @@ test('geocodeLocations fills coordinates on successful lookup', async () => {
     assert.equal(sample.pins[0].lat, 48.8566);
     assert.equal(sample.pins[0].lon, 2.3522);
     assert.equal(sample.pins[0]._skip, undefined);
+  } finally {
+    global.fetch = prevFetch;
+  }
+});
+
+test('geocodeLocations marks item as skipped on HTTP error response', async () => {
+  const sample = { pins: [{ name: 'Paris, France', info: 'Holiday' }] };
+  const prevFetch = global.fetch;
+  /* A 429/5xx returns ok:false; res.json() would parse a non-JSON body —
+     the guard must skip the pin rather than throw an unhandled error. */
+  global.fetch = async () => ({
+    ok: false,
+    status: 429,
+    json: async () => { throw new Error('Unexpected token < in JSON'); },
+  });
+  try {
+    await geocodeLocations(sample);
+    assert.equal(sample.pins[0]._skip, true);
+    assert.equal(sample.pins[0].lat, undefined);
+    assert.equal(sample.pins[0].lon, undefined);
   } finally {
     global.fetch = prevFetch;
   }
@@ -1817,13 +1838,18 @@ test('GlobeFallback2D skips pins marked with _skip', () => {
 
 /* ─── initCardFlip tests ──────────────────────────────────── */
 
-function makeCard(id) {
+function makeCard(id, title = 'Sample') {
   const listeners = {};
+  const attributes = {};
   const card = {
     id,
     classList: makeClassList(),
     style: { transform: '', transition: '' },
+    attributes,
     addEventListener(type, fn) { listeners[type] = fn; },
+    setAttribute(name, value) { attributes[name] = String(value); },
+    getAttribute(name) { return attributes[name]; },
+    querySelector(sel) { return sel === '.card-title' ? { textContent: title } : null; },
     _listeners: listeners,
   };
   return card;
@@ -1910,6 +1936,33 @@ test('initCardFlip attaches listeners to all research grid cards', () => {
       assert.equal(card.classList.contains('is-flipped'), true,
         `Card ${card.id} should be flippable`);
     });
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initCardFlip makes cards keyboard-operable with ARIA disclosure state', () => {
+  const prevDoc = global.document;
+  const card = makeCard('k1', 'Generative AI & LLMs');
+  global.document = {
+    querySelectorAll(sel) {
+      return sel === '#research-grid .research-card' ? [card] : [];
+    },
+  };
+  try {
+    initCardFlip();
+    assert.equal(card.getAttribute('role'), 'button');
+    assert.equal(card.getAttribute('tabindex'), '0');
+    assert.equal(card.getAttribute('aria-expanded'), 'false');
+    assert.equal(card.getAttribute('aria-label'), 'Generative AI & LLMs — show details');
+    /* Enter flips the card and reflects expanded state */
+    card._listeners.keydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(card.classList.contains('is-flipped'), true);
+    assert.equal(card.getAttribute('aria-expanded'), 'true');
+    /* Space flips back */
+    card._listeners.keydown({ key: ' ', preventDefault() {} });
+    assert.equal(card.classList.contains('is-flipped'), false);
+    assert.equal(card.getAttribute('aria-expanded'), 'false');
   } finally {
     global.document = prevDoc;
   }
