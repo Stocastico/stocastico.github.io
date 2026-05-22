@@ -50,7 +50,7 @@ export const PROJECTS = [
             title: "ARoundTheWorld: Collaborative AR for Education",
             year: "2024",
             tags: ["AR","Education","User Study"],
-            bg: "img/projects/ARound_the_world_2.png",
+            bg: "img/projects/ARound_the_world_2.webp",
             description: "ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula.",
             url: "projects/aroundtheworld.html",
         },

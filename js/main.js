@@ -846,6 +846,11 @@ function renderProjects(projects = DEFAULT_PROJECTS) {
   }
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
+  /* Drop any footer from a previous render so re-renders don't stack it. */
+  var existingFooter = grid.parentNode && grid.parentNode.querySelector
+    ? grid.parentNode.querySelector('.projects-view-all') : null;
+  if (existingFooter) existingFooter.remove();
+
   if (!showAll && projects.length > PROJECTS_MAX_HOMEPAGE) {
     var footer = document.createElement('div');
     footer.className = 'projects-view-all';

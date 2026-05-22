@@ -1383,7 +1383,7 @@ h3 {
   min-height: 260px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-lg);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
@@ -1394,7 +1394,7 @@ h3 {
 .project-card:hover {
   transform: translateY(-5px);
   border-color: var(--accent);
-  background: var(--bg-card-hover, var(--bg-card));
+  background: var(--bg-card-hov);
 }
 
 /* When a bg image is supplied, render it semi-transparent behind the content.
@@ -2719,7 +2719,7 @@ h3 {
   border-radius: 0.5rem;
   padding: 0.6rem 0.9rem;
   font-size: 0.8rem;
-  color: var(--text-primary);
+  color: var(--text);
   white-space: nowrap;
   z-index: 20;
   opacity: 0;
@@ -2739,7 +2739,7 @@ h3 {
 
 .europe-tooltip > strong {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .europe-tooltip > span:last-child {
