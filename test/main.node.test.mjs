@@ -7,8 +7,6 @@ import { fileURLToPath } from 'node:url';
 
 import {
   formatIsoDate,
-  geocodeLocations,
-  Globe3D,
   renderPublications,
   setFooterYear,
   initNavbar,
@@ -16,7 +14,6 @@ import {
   initScrollReveal,
   initCounters,
   animateCounter,
-  NeuralNetwork,
   HeroNameShader,
   decodeBase64,
   getObfuscatedContactEmail,
@@ -31,16 +28,17 @@ import {
   initMagneticButtons,
   initScroll3D,
   initBackToTop,
-  NeuralNetwork2D,
   NoiseGradient,
-  GlobeFallback2D,
   initCardFlip,
   renderProjects,
   PROJECTS_MAX_HOMEPAGE,
   initCommandPalette,
-  __setThreeForTests,
-  __resetThreeForTests,
 } from '../js/main.js';
+/* Three.js-backed classes are now imported from their source modules — main.js
+   dynamically imports them so Three.js is not in the per-page bundle. */
+import { geocodeLocations, Globe3D, GlobeFallback2D } from '../js/globe.js';
+import { NeuralNetwork, NeuralNetwork2D } from '../js/neural-net.js';
+import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');

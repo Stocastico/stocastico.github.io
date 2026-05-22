@@ -16,11 +16,15 @@
    `npm run generate-theme`.
    ============================================================ */
 
-/* ─── Three.js test mocking helpers ────────────────────────────
-   Re-exported from three-context.js so tests can swap THREE for a
-   minimal mock; every consumer module that uses Three.js subscribes
-   to the swap via the context. */
-export { __setThreeForTests, __resetThreeForTests } from './three-context.js';
+/* ─── Three.js loading strategy ─────────────────────────────────
+   neural-net.js and globe.js (and through them three-context.js → the whole
+   `three` package) are loaded on demand via dynamic import() at their init
+   sites below. That keeps Three.js in a lazy chunk instead of the per-page
+   bundle, so it never ships to pages without a 3D canvas (cv, projects, 404,
+   project pages) and is off the critical path on the home page.
+   Do NOT statically import three-context.js / globe.js / neural-net.js here —
+   that pulls all of Three.js back into every page. Tests import the THREE
+   mock hook (__setThreeForTests) directly from ./three-context.js. */
 
 /* ─── Data files ──────────────────────────────────────────
    PROJECTS / PUBLICATIONS / CV_* are imported by name; render
@@ -45,14 +49,12 @@ import { THEME, glvec, rgba } from './theme.js';
 /* '#rrggbb' → GLSL `vec3(r, g, b)` literal. */
 const v3 = (hex) => `vec3(${glvec(hex).join(', ')})`;
 
-/* Hero neural-network animation (extracted module) */
-import { NeuralNetwork, NeuralNetwork2D } from './neural-net.js';
-
-/* Hero name iridescent WebGL shader (extracted module) */
+/* Hero name iridescent WebGL shader (raw WebGL, no Three.js) */
 import { HeroNameShader } from './hero-shader.js';
 
-/* 3D Globe + 2D fallback + geocoding (extracted module) */
-import { geocodeLocations, Globe3D, GlobeFallback2D } from './globe.js';
+/* neural-net.js (NeuralNetwork/NeuralNetwork2D) and globe.js (Globe3D/
+   GlobeFallback2D/geocodeLocations) are dynamically imported at their init
+   sites below — see the Three.js loading-strategy note at the top. */
 
 /* DOM animations: scroll-driven, card tilt, magnetic buttons, parallax (extracted) */
 import {
@@ -1284,11 +1286,14 @@ class NoiseGradient {
   }
 }
 
-/* Test surface — ES module exports */
+/* Test surface — ES module exports.
+   The Three.js-backed classes (Globe3D, GlobeFallback2D, NeuralNetwork,
+   NeuralNetwork2D) and geocodeLocations are intentionally NOT re-exported
+   here: doing so would static-link globe.js/neural-net.js (and all of
+   Three.js) back into the main chunk. Tests import them from their source
+   modules instead. */
 export {
   formatIsoDate,
-  geocodeLocations,
-  Globe3D,
   renderPublications,
   renderProjects,
   renderProjectCard,
@@ -1310,11 +1315,8 @@ export {
   initScrollReveal,
   initCounters,
   animateCounter,
-  NeuralNetwork,
-  NeuralNetwork2D,
   HeroNameShader,
   NoiseGradient,
-  GlobeFallback2D,
   decodeBase64,
   getObfuscatedContactEmail,
   initEmailObfuscation,
@@ -1522,15 +1524,18 @@ if (typeof document !== 'undefined') {
     noiseCanvas.style.display = 'none';
   }
 
-  /* Three.js neural network — falls back to Canvas2D when WebGL is missing */
+  /* Three.js neural network — falls back to Canvas2D when WebGL is missing.
+     Dynamically imported so Three.js stays out of the main chunk. */
   const canvas = document.getElementById('neural-canvas');
   if (canvas) {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
-    } else if (hasWebGLSupport()) {
-      _disposables.push(new NeuralNetwork(canvas));
     } else {
-      _disposables.push(new NeuralNetwork2D(canvas));
+      import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
+        _disposables.push(
+          hasWebGLSupport() ? new NeuralNetwork(canvas) : new NeuralNetwork2D(canvas),
+        );
+      });
     }
   }
 
@@ -1558,16 +1563,20 @@ if (typeof document !== 'undefined') {
   /* Three.js Globe — geocode any entries missing lat/lon, then build */
   const globeCanvas = document.getElementById('globe-canvas');
   if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+    /* Dynamically imported (Three.js) and only when the globe nears the
+       viewport — so Three.js downloads lazily, on scroll, not on load. */
     _lazyOnViewport(globeCanvas, () => {
-      geocodeLocations(LOCATIONS).then(() => {
-        const inst = (prefersReducedMotion() || !hasWebGLSupport())
-          ? new GlobeFallback2D(globeCanvas)
-          : new Globe3D(globeCanvas);
-        _disposables.push(inst);
-        /* Render the SR-accessible alternative list once the location data
-           is final (i.e. all geocoding has resolved). */
-        const a11yList = document.getElementById('globe-a11y-list');
-        if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
+      import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) => {
+        geocodeLocations(LOCATIONS).then(() => {
+          const inst = (prefersReducedMotion() || !hasWebGLSupport())
+            ? new GlobeFallback2D(globeCanvas)
+            : new Globe3D(globeCanvas);
+          _disposables.push(inst);
+          /* Render the SR-accessible alternative list once the location data
+             is final (i.e. all geocoding has resolved). */
+          const a11yList = document.getElementById('globe-a11y-list');
+          if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
+        });
       });
     });
   }
