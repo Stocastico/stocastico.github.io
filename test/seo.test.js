@@ -90,6 +90,16 @@ test('SEO: index.html includes a JSON-LD Person schema', () => {
   assert.ok(person.name.length > 0, 'Person.name must be non-empty');
 });
 
+test('SEO: index.html JSON-LD Person.url points to stefanomasneri.com', () => {
+  const raw = read('index.html');
+  /* Block must exist and be valid JSON (readJsonLd throws on malformed JSON). */
+  const items = readJsonLd(raw);
+  const person = items.find((it) => it && it['@type'] === 'Person');
+  assert.ok(person, 'JSON-LD Person block missing in index.html');
+  assert.equal(person.url, 'https://stefanomasneri.com',
+    `Person.url should be https://stefanomasneri.com, got "${person.url}"`);
+});
+
 test('SEO: cv.html includes a JSON-LD ProfilePage with mainEntity Person', () => {
   const items = readJsonLd(read('cv.html'));
   const profile = items.find((it) => it && it['@type'] === 'ProfilePage');
