@@ -29,17 +29,23 @@ export class HeroNameShader {
     this._targetFps = this._isLowPower ? 20 : 30;
     this._minFrameTime = 1 / this._targetFps;
     this._lastDrawTime = 0;
+    /* Track every listener registration so destroy() can remove them. */
+    this._listeners = [];
+    this._eventsBound = false;
 
     const gl = canvasEl.getContext('webgl', { alpha: true, premultipliedAlpha: false })
       || canvasEl.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
     if (!gl) { console.warn('[HeroName] WebGL unavailable — CSS fallback active'); return; }
     this.gl = gl;
     if (typeof this.canvas.addEventListener === 'function') {
-      this.canvas.addEventListener('webglcontextlost', (e) => {
+      this._addListener(this.canvas, 'webglcontextlost', (e) => {
         e.preventDefault();
         this.raf = null;
       }, false);
-      this.canvas.addEventListener('webglcontextrestored', () => {
+      this._addListener(this.canvas, 'webglcontextrestored', () => {
+        /* Free the resources orphaned by the lost context before rebuilding,
+           otherwise each restore leaks a program/buffer/texture. */
+        this._freeGLResources();
         if (!this._setupGL()) return;
         this._resize();
         if (!this.raf && !document.hidden && this._visible) this._animate();
@@ -164,6 +170,8 @@ export class HeroNameShader {
     const vs = this._compile(gl.VERTEX_SHADER, VS);
     const fs = this._compile(gl.FRAGMENT_SHADER, FS);
     if (!vs || !fs) return false;
+    this._vs = vs;
+    this._fs = fs;
 
     this.prog = gl.createProgram();
     gl.attachShader(this.prog, vs);
@@ -177,6 +185,7 @@ export class HeroNameShader {
 
     /* full-screen quad */
     const buf = gl.createBuffer();
+    this._buf = buf;
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const aPos = gl.getAttribLocation(this.prog, 'aPos');
@@ -266,13 +275,16 @@ export class HeroNameShader {
   }
 
   _bindEvents() {
-    window.addEventListener('mousemove', e => {
+    /* Idempotent — a webglcontextrestored after boot must not double-bind. */
+    if (this._eventsBound) return;
+    this._eventsBound = true;
+    this._addListener(window, 'mousemove', e => {
       if (!this._visible) return;
       const r = this.canvas.getBoundingClientRect();
       this.mx = (e.clientX - r.left) / (r.width || 1);
       this.my = (e.clientY - r.top) / (r.height || 1);
     });
-    window.addEventListener('touchmove', e => {
+    this._addListener(window, 'touchmove', e => {
       if (!this._visible) return;
       if (!e.touches[0]) return;
       const r = this.canvas.getBoundingClientRect();
@@ -281,15 +293,35 @@ export class HeroNameShader {
     }, { passive: true });
     /* debounce resize — avoids GL texture churn while the user drags the window */
     let _rszTimer = null;
-    window.addEventListener('resize', () => {
+    this._addListener(window, 'resize', () => {
       clearTimeout(_rszTimer);
       _rszTimer = setTimeout(() => this._resize(), 150);
     });
 
     /* pause RAF when the browser tab is hidden */
-    document.addEventListener('visibilitychange', () => {
+    this._addListener(document, 'visibilitychange', () => {
       if (!document.hidden && this._visible && !this.raf) this._animate();
     });
+  }
+
+  /* Track + register a listener so destroy() can later remove it. */
+  _addListener(target, type, fn, opts) {
+    target.addEventListener(type, fn, opts);
+    this._listeners.push({ target, type, fn, opts });
+  }
+
+  /* Delete the GL program / shaders / buffer / texture this instance owns. */
+  _freeGLResources() {
+    const gl = this.gl;
+    if (!gl) return;
+    try {
+      if (this.prog) gl.deleteProgram(this.prog);
+      if (this._vs) gl.deleteShader(this._vs);
+      if (this._fs) gl.deleteShader(this._fs);
+      if (this._buf) gl.deleteBuffer(this._buf);
+      if (this.tex) gl.deleteTexture(this.tex);
+    } catch (_) { /* mock / partial context — ignore */ }
+    this.prog = this._vs = this._fs = this._buf = this.tex = null;
   }
 
   _animate() {
@@ -310,6 +342,21 @@ export class HeroNameShader {
 
   destroy() {
     if (this.raf) cancelAnimationFrame(this.raf);
-    if (this._io) this._io.disconnect();
+    this.raf = null;
+    if (this._io) { this._io.disconnect(); this._io = null; }
+
+    if (this._listeners) {
+      for (const { target, type, fn, opts } of this._listeners) {
+        try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
+      }
+      this._listeners = [];
+    }
+    this._eventsBound = false;
+
+    this._freeGLResources();
+    if (this.gl && typeof this.gl.getExtension === 'function') {
+      try { this.gl.getExtension('WEBGL_lose_context')?.loseContext(); } catch (_) { /* ignore */ }
+    }
+    this.gl = null;
   }
 }

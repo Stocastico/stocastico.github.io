@@ -40,6 +40,36 @@ for (const rel of PAGES) {
       `${rel} <img> without alt:\n  ${missing.join('\n  ')}`);
   });
 
+  test(`html: every <img> in ${rel} declares width and height`, () => {
+    /* Intrinsic width/height (or aspect-ratio) lets the browser reserve space
+       before the image loads — without them lazy images cause layout shift. */
+    const imgs = html.match(/<img\b[^>]*>/gi) || [];
+    const missing = imgs.filter(t =>
+      !/\bwidth=("?\d+"?)/i.test(t) || !/\bheight=("?\d+"?)/i.test(t));
+    assert.equal(missing.length, 0,
+      `${rel} <img> missing width/height:\n  ${missing.join('\n  ')}`);
+  });
+
+  test(`html: external <a href="http..."> in ${rel} use rel="noopener"`, () => {
+    /* Covers in-prose external links that don't carry target="_blank" too —
+       rel="noopener" is harmless there and keeps the site convention uniform. */
+    const anchors = html.match(/<a\b[^>]*\bhref=("https?:\/\/[^"]*"|'https?:\/\/[^']*')[^>]*>/gi) || [];
+    const offenders = anchors.filter(a =>
+      !/\brel=("[^"]*\bnoopener\b[^"]*"|'[^']*\bnoopener\b[^']*')/i.test(a));
+    assert.equal(offenders.length, 0,
+      `${rel} external <a> without rel="noopener":\n  ${offenders.join('\n  ')}`);
+  });
+
+  test(`html: ${rel} preloads the two above-the-fold web fonts`, () => {
+    /* Every page loads css/fonts.css; preloading the two critical woff2 files
+       avoids FOUT/layout shift. One missing page = an inconsistent flash. */
+    for (const font of ['inter-latin-400-normal.woff2', 'outfit-latin-700-normal.woff2']) {
+      const re = new RegExp(
+        `<link[^>]*rel="preload"[^>]*href="[^"]*${font.replace(/\./g, '\\.')}"[^>]*as="font"`, 'i');
+      assert.match(html, re, `${rel} missing <link rel="preload"> for ${font}`);
+    }
+  });
+
   test(`html: external <a target="_blank"> in ${rel} use rel="noopener"`, () => {
     /* Anchor tags that open a new tab without rel="noopener" expose the
        previous page to window.opener tab-jacking on older browsers. */

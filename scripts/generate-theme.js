@@ -331,7 +331,7 @@ function rewriteFaviconSvg(text, p) {
 function listHtmlFiles() {
   const files = [];
   for (const entry of fs.readdirSync(ROOT)) {
-    if (entry.endsWith('.html') && entry !== 'palettes.html') files.push(path.join(ROOT, entry));
+    if (entry.endsWith('.html')) files.push(path.join(ROOT, entry));
   }
   const projDir = path.join(ROOT, 'projects');
   if (fs.existsSync(projDir)) {
