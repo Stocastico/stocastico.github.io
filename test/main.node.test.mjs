@@ -2084,8 +2084,8 @@ test('renderProjects uses bg image as CSS background when provided', () => {
       description: 'A project with a background image.',
       url: 'projects/with-bg.html',
     }]);
-    // bg URL should end up as a CSS custom property on the card
-    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?img\/projects\/with-bg-hero\.jpg['"]?\)/);
+    // bg URL should end up as a root-absolute CSS custom property on the card
+    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?\/img\/projects\/with-bg-hero\.jpg['"]?\)/);
     // has-bg class toggled when bg is present
     assert.match(grid.innerHTML, /project-card--has-bg/);
   } finally {

@@ -800,8 +800,14 @@ function renderProjectCard(project, i) {
     .join('');
   const bgSrc = project.bg || '';
   const hasBg = Boolean(bgSrc);
+  /* Make the url() root-absolute. Chromium resolves a relative url() inside a
+     CSS custom property against the stylesheet that *uses* var(--card-bg)
+     (the bundled /assets/styles.css), not the document — so a bare
+     "img/projects/…" path would 404 at /assets/img/projects/…. Leading "/"
+     pins it to the site root. */
+  const bgUrl = /^(https?:|data:|\/)/.test(bgSrc) ? bgSrc : '/' + bgSrc;
   const style = hasBg
-    ? ' style="--card-bg: url(\'' + escapeHtml(bgSrc) + '\')"'
+    ? ' style="--card-bg: url(\'' + escapeHtml(bgUrl) + '\')"'
     : '';
   const cls = 'project-card' + (hasBg ? ' project-card--has-bg' : '');
   return '<a href="' + escapeHtml(project.url || '#') + '" class="' + cls + '" data-animate data-delay="' + (i * 80) + '"' + style + '>' +
