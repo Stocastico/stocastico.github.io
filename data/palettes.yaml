@@ -28,7 +28,7 @@ palettes:
     # ── Text tiers ──
     text: '#e8eee5'
     textMuted: '#8a948b'
-    textFaint: '#5e6862'
+    textFaint: '#767f78'
     # ── Accents ──
     accent: '#c8a44d'
     accentHi: '#dcb968'
@@ -84,7 +84,7 @@ palettes:
     # ── Text tiers ──
     text: '#f4ebe1'
     textMuted: '#a39588'
-    textFaint: '#7a6f64'
+    textFaint: '#847868'
     # ── Accents ──
     accent: '#f4a261'
     accentHi: '#f7b67f'
@@ -140,7 +140,7 @@ palettes:
     # ── Text tiers ──
     text: '#f0e6e3'
     textMuted: '#a3908c'
-    textFaint: '#6e5d5a'
+    textFaint: '#8a7b78'
     # ── Accents ──
     accent: '#d64550'
     accentHi: '#e86a64'

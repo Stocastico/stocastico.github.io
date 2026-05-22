@@ -8,26 +8,26 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <meta name="description"
-    content="Stefano Masneri — Senior AI Lead specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+    content="Stefano Masneri — Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="keywords" content="Stefano Masneri, AI Engineer, Machine Learning, Computer Vision, Augmented Reality, Deep Learning, XR, ViT, Speaker Diarisation, San Sebastián" />
   <!-- Disallow AI/LLM training use of this page's content -->
   <meta name="robots" content="index, follow, noai, noimageai" />
-  <title>Stefano Masneri — ML, Vision &amp; AR</title>
+  <title>Stefano Masneri — Machine Learning, Computer Vision &amp; AR</title>
   <link rel="canonical" href="https://stefanomasneri.com/" />
 
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://stefanomasneri.com/" />
-  <meta property="og:title"       content="Stefano Masneri — ML, Vision &amp; AR" />
-  <meta property="og:description" content="Senior AI Lead specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta property="og:title"       content="Stefano Masneri — Machine Learning, Computer Vision &amp; AR" />
+  <meta property="og:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta property="og:image"       content="https://stefanomasneri.com/img/screenshot-hero.png" />
   <meta property="og:image:alt"   content="Stefano Masneri personal website hero section" />
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Stefano Masneri — ML, Vision &amp; AR" />
-  <meta name="twitter:description" content="Senior AI Lead specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
+  <meta name="twitter:title"       content="Stefano Masneri — Machine Learning, Computer Vision &amp; AR" />
+  <meta name="twitter:description" content="Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="twitter:image"       content="https://stefanomasneri.com/img/screenshot-hero.png" />
   <meta name="twitter:image:alt"   content="Stefano Masneri personal website" />
 
@@ -78,10 +78,6 @@
   <!-- Theme colour for browser chrome (Android, Safari PWA) -->
   <meta name="theme-color" content="#0a120e" />
 
-  <!-- Resource hints — pre-warm connections before the browser needs them -->
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-  <!-- dns-prefetch: fallback for browsers that do not support preconnect -->
-  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
   <!-- Self-hosted fonts (no external requests to Google) -->
   <!-- Preload the two weights used above the fold so text doesn't re-flow when
        fonts arrive (Inter 400 for body, Outfit 700 for hero/display). -->
@@ -290,9 +286,9 @@
       <button class="research-scroll-btn research-scroll-btn--right" id="research-scroll-right" aria-label="Scroll research cards right">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <div class="research-grid" id="research-grid" role="list">
+      <div class="research-grid" id="research-grid">
 
-        <div class="research-card" role="listitem" data-animate data-delay="0">
+        <div class="research-card" data-animate data-delay="0">
           <div class="card-inner">
             <div class="card-front">
               <span class="card-icon" aria-hidden="true">
@@ -316,7 +312,7 @@
           </div>
         </div>
 
-        <div class="research-card" role="listitem" data-animate data-delay="80">
+        <div class="research-card" data-animate data-delay="80">
           <div class="card-inner">
             <div class="card-front">
               <span class="card-icon" aria-hidden="true">
@@ -339,7 +335,7 @@
           </div>
         </div>
 
-        <div class="research-card" role="listitem" data-animate data-delay="160">
+        <div class="research-card" data-animate data-delay="160">
           <div class="card-inner">
             <div class="card-front">
               <span class="card-icon" aria-hidden="true">
@@ -363,7 +359,7 @@
           </div>
         </div>
 
-        <div class="research-card" role="listitem" data-animate data-delay="240">
+        <div class="research-card" data-animate data-delay="240">
           <div class="card-inner">
             <div class="card-front">
               <span class="card-icon" aria-hidden="true">
@@ -386,7 +382,7 @@
           </div>
         </div>
 
-        <div class="research-card" role="listitem" data-animate data-delay="320">
+        <div class="research-card" data-animate data-delay="320">
           <div class="card-inner">
             <div class="card-front">
               <span class="card-icon" aria-hidden="true">
@@ -408,7 +404,7 @@
           </div>
         </div>
 
-        <div class="research-card" role="listitem" data-animate data-delay="400">
+        <div class="research-card" data-animate data-delay="400">
           <div class="card-inner">
             <div class="card-front">
               <span class="card-icon" aria-hidden="true">
@@ -565,7 +561,7 @@
       <div class="about-maps" data-animate data-delay="300">
         <div class="globe-header">
           <span class="section-tag">Places</span>
-          <h3 class="globe-title">Where I've Been</h3>
+          <h2 class="globe-title">Where I've Been</h2>
           <p class="globe-intro">
             Travelling is one of my greatest passions — I've been lucky enough to explore many countries
             around the world, both on work assignments and personal adventures.
@@ -599,7 +595,9 @@
           <!-- 2D Europe Map -->
           <div class="maps-col maps-col--europe">
             <div class="europe-scene">
-              <canvas id="europe-canvas" aria-label="2D map of Europe showing location details"></canvas>
+              <!-- Decorative twin of the 3D globe; the globe already exposes
+                   a screen-reader list (#globe-a11y-list), so hide this from AT. -->
+              <canvas id="europe-canvas" aria-hidden="true"></canvas>
               <div class="europe-tooltip" id="europe-tooltip" aria-live="polite">
                 <span class="et-type"></span>
                 <strong class="et-name"></strong>

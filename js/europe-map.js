@@ -5,7 +5,6 @@
    Uses Canvas2D rendering with neon aesthetic matching the 3D globe
    ============================================================ */
 
-/* eslint-disable */
 import { THEME, rgba } from './theme.js';
 
 export class EuropeMap2D {
@@ -36,6 +35,9 @@ export class EuropeMap2D {
     this._rect = null;
     this._rafId = null;
     this._visible = true;
+    /* Track every listener + observer so destroy() can tear them all down. */
+    this._listeners = [];
+    this._io = null;
 
     /* Performance: cache tooltip refs */
     this._ttType = this.tooltip?.querySelector('.et-type') || null;
@@ -61,13 +63,13 @@ export class EuropeMap2D {
     this._loadTopoJSON();
 
     /* Pause when canvas is out of viewport */
-    const _ioEurope = new IntersectionObserver(([e]) => {
+    this._io = new IntersectionObserver(([e]) => {
       this._visible = e.isIntersecting;
       if (this._visible && !this._rafId) this._animate();
     }, { threshold: 0 });
-    _ioEurope.observe(canvasEl);
+    this._io.observe(canvasEl);
 
-    document.addEventListener('visibilitychange', () => {
+    this._addListener(document, 'visibilitychange', () => {
       if (!document.hidden && !this._rafId) this._animate();
     });
 
@@ -182,7 +184,7 @@ export class EuropeMap2D {
   _bindEvents() {
     if (typeof this.canvas.addEventListener !== 'function') return;
 
-    this.canvas.addEventListener('mousemove', (e) => {
+    this._addListener(this.canvas, 'mousemove', (e) => {
       this._rect = this.canvas.getBoundingClientRect();
       /* Scale from CSS pixels to canvas bitmap pixels */
       const scaleX = this.canvas.width / this._rect.width;
@@ -197,17 +199,24 @@ export class EuropeMap2D {
       this._ensureAnimating();
     }, false);
 
-    this.canvas.addEventListener('mouseleave', () => {
+    this._addListener(this.canvas, 'mouseleave', () => {
       this._mouseOver = false;
       this._hideTooltip();
     }, false);
 
-    window.addEventListener('resize', () => {
+    this._addListener(window, 'resize', () => {
       this._resize();
       this._buildFilteredPins();
       this._buildFilteredTrips();
       this._rect = null;
     }, false);
+  }
+
+  /* Track + register a listener so destroy() can later remove it. */
+  _addListener(target, type, fn, opts) {
+    if (!target || typeof target.addEventListener !== 'function') return;
+    target.addEventListener(type, fn, opts);
+    this._listeners.push({ target, type, fn, opts });
   }
 
   _rayhit() {
@@ -601,6 +610,11 @@ export class EuropeMap2D {
   destroy() {
     if (this._rafId) cancelAnimationFrame(this._rafId);
     this._rafId = null;
+    if (this._io) { this._io.disconnect(); this._io = null; }
+    for (const { target, type, fn, opts } of (this._listeners || [])) {
+      try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
+    }
+    this._listeners = [];
   }
 }
 

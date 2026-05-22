@@ -108,12 +108,31 @@ export function initCardTilt() {
 export function initCardFlip() {
   if (typeof document === 'undefined') return;
   document.querySelectorAll('#research-grid .research-card').forEach((card) => {
-    card.addEventListener('click', () => {
+    /* Expose the click-to-flip as a keyboard-operable control so keyboard and
+       screen-reader users can reach the back face (which holds links found
+       nowhere else). The back face is visibility:hidden until flipped, so its
+       links only enter the tab order once the card is expanded. */
+    const title = card.querySelector('.card-title')?.textContent?.trim();
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-expanded', 'false');
+    if (title) card.setAttribute('aria-label', `${title} — show details`);
+
+    const toggle = () => {
       const flipping = card.classList.toggle('is-flipped');
+      card.setAttribute('aria-expanded', flipping ? 'true' : 'false');
       /* Reset tilt state so the card springs back to neutral when flipped */
       if (flipping) {
         card.style.transform = '';
         card.style.transition = '';
+      }
+    };
+
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggle();
       }
     });
   });

@@ -73,6 +73,7 @@ export async function geocodeLocations(locs) {
     try {
       const url = `${API}?q=${encodeURIComponent(item.name)}&format=json&limit=1`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.length) throw new Error('no results');
       item.lat = parseFloat(json[0].lat);
@@ -1043,6 +1044,9 @@ export class GlobeFallback2D {
     if (!this.ctx) return;
     this._visible = true;
     this._rafId = null;
+    /* Track every listener + observer so destroy() can tear them all down. */
+    this._listeners = [];
+    this._io = null;
     this._isLowPower = isLowPowerDevice();
     this._rot = -1.55;
     this._spin = this._isLowPower ? 0.001 : 0.0016;
@@ -1058,15 +1062,22 @@ export class GlobeFallback2D {
     this._bindEvents();
     this._animate();
 
-    const io = new IntersectionObserver(([entry]) => {
+    this._io = new IntersectionObserver(([entry]) => {
       this._visible = entry.isIntersecting;
       if (this._visible && !this._rafId) this._animate();
     }, { threshold: 0 });
-    io.observe(canvasEl);
+    this._io.observe(canvasEl);
 
-    document.addEventListener('visibilitychange', () => {
+    this._addListener(document, 'visibilitychange', () => {
       if (!document.hidden && !this._rafId) this._animate();
     });
+  }
+
+  /* Track + register a listener so destroy() can later remove it. */
+  _addListener(target, type, fn, opts) {
+    if (!target || typeof target.addEventListener !== 'function') return;
+    target.addEventListener(type, fn, opts);
+    this._listeners.push({ target, type, fn, opts });
   }
 
   _collectPoints() {
@@ -1092,23 +1103,23 @@ export class GlobeFallback2D {
   }
 
   _bindEvents() {
-    this.canvas.addEventListener('mousedown', (e) => { this._drag = true; this._prevX = e.clientX; });
-    window.addEventListener('mousemove', (e) => {
+    this._addListener(this.canvas, 'mousedown', (e) => { this._drag = true; this._prevX = e.clientX; });
+    this._addListener(window, 'mousemove', (e) => {
       if (!this._drag) return;
       const dx = e.clientX - this._prevX;
       this._rot += dx * 0.0045;
       this._prevX = e.clientX;
     });
-    window.addEventListener('mouseup', () => { this._drag = false; });
-    this.canvas.addEventListener('touchstart', (e) => { if (e.touches[0]) { this._drag = true; this._prevX = e.touches[0].clientX; } }, { passive: true });
-    this.canvas.addEventListener('touchmove', (e) => {
+    this._addListener(window, 'mouseup', () => { this._drag = false; });
+    this._addListener(this.canvas, 'touchstart', (e) => { if (e.touches[0]) { this._drag = true; this._prevX = e.touches[0].clientX; } }, { passive: true });
+    this._addListener(this.canvas, 'touchmove', (e) => {
       if (!this._drag || !e.touches[0]) return;
       const dx = e.touches[0].clientX - this._prevX;
       this._rot += dx * 0.0045;
       this._prevX = e.touches[0].clientX;
     }, { passive: true });
-    this.canvas.addEventListener('touchend', () => { this._drag = false; });
-    window.addEventListener('resize', () => this._resize());
+    this._addListener(this.canvas, 'touchend', () => { this._drag = false; });
+    this._addListener(window, 'resize', () => this._resize());
   }
 
   _project(lat, lon) {
@@ -1197,6 +1208,11 @@ export class GlobeFallback2D {
   destroy() {
     if (this._rafId) cancelAnimationFrame(this._rafId);
     this._rafId = null;
+    if (this._io) { this._io.disconnect(); this._io = null; }
+    for (const { target, type, fn, opts } of (this._listeners || [])) {
+      try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
+    }
+    this._listeners = [];
   }
 }
 

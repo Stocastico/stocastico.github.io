@@ -74,24 +74,27 @@ export class NeuralNetwork {
     this._initLines();
     this._onResize();
 
+    /* Track every listener + observer so destroy() can tear them all down. */
+    this._listeners = [];
+
     if (typeof canvas.addEventListener === 'function') {
-      canvas.addEventListener('webglcontextlost', (e) => {
+      this._addListener(canvas, 'webglcontextlost', (e) => {
         e.preventDefault();
         this.frameId = null;
       }, false);
-      canvas.addEventListener('webglcontextrestored', () => {
+      this._addListener(canvas, 'webglcontextrestored', () => {
         this._onResize();
         if (!this.frameId) this._animate();
       }, false);
     }
 
-    window.addEventListener('resize', () => this._onResize());
-    window.addEventListener('mousemove', e => {
+    this._addListener(window, 'resize', () => this._onResize());
+    this._addListener(window, 'mousemove', e => {
       this.mouse.x = e.clientX - window.innerWidth / 2;
       this.mouse.y = -(e.clientY - window.innerHeight / 2);
     }, { passive: true });
     /* Touch support */
-    window.addEventListener('touchmove', e => {
+    this._addListener(window, 'touchmove', e => {
       if (!e.touches[0]) return;
       this.mouse.x = e.touches[0].clientX - window.innerWidth / 2;
       this.mouse.y = -(e.touches[0].clientY - window.innerHeight / 2);
@@ -99,18 +102,25 @@ export class NeuralNetwork {
 
     /* Pause rendering when the section scrolls out of view */
     this._visible = true;
-    const _ioNN = new IntersectionObserver(([e]) => {
+    this._io = new IntersectionObserver(([e]) => {
       this._visible = e.isIntersecting;
       if (this._visible && !this.frameId) this._animate();
     }, { threshold: 0 });
-    _ioNN.observe(canvas);
+    this._io.observe(canvas);
 
     /* Pause rendering when the browser tab is hidden */
-    document.addEventListener('visibilitychange', () => {
+    this._addListener(document, 'visibilitychange', () => {
       if (!document.hidden && !this.frameId) this._animate();
     });
 
     this._animate();
+  }
+
+  /* Track + register a listener so destroy() can later remove it. */
+  _addListener(target, type, fn, opts) {
+    if (!target || typeof target.addEventListener !== 'function') return;
+    target.addEventListener(type, fn, opts);
+    this._listeners.push({ target, type, fn, opts });
   }
 
   /* Create a soft glow disc texture for each particle */
@@ -301,6 +311,12 @@ export class NeuralNetwork {
 
   destroy() {
     if (this.frameId) cancelAnimationFrame(this.frameId);
+    this.frameId = null;
+    if (this._io) { this._io.disconnect(); this._io = null; }
+    for (const { target, type, fn, opts } of (this._listeners || [])) {
+      try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
+    }
+    this._listeners = [];
   }
 }
 
@@ -308,6 +324,8 @@ export class NeuralNetwork {
 export class NeuralNetwork2D {
   constructor(canvas) {
     this.canvas = canvas;
+    this._listeners = [];
+    this._io = null;
     this.ctx = canvas.getContext('2d', { alpha: true });
     if (!this.ctx) return;
     this.mouse = { x: 0, y: 0 };
@@ -325,28 +343,35 @@ export class NeuralNetwork2D {
     this._onResize();
     for (let i = 0; i < this.count; i++) this.points.push(this._newPoint());
 
-    window.addEventListener('resize', () => this._onResize());
-    window.addEventListener('mousemove', (e) => {
+    this._addListener(window, 'resize', () => this._onResize());
+    this._addListener(window, 'mousemove', (e) => {
       this.mouse.x = e.clientX;
       this.mouse.y = e.clientY;
     }, { passive: true });
-    window.addEventListener('touchmove', (e) => {
+    this._addListener(window, 'touchmove', (e) => {
       if (!e.touches[0]) return;
       this.mouse.x = e.touches[0].clientX;
       this.mouse.y = e.touches[0].clientY;
     }, { passive: true });
 
-    const io = new IntersectionObserver(([entry]) => {
+    this._io = new IntersectionObserver(([entry]) => {
       this._visible = entry.isIntersecting;
       if (this._visible && !this.frameId) this._animate();
     }, { threshold: 0 });
-    io.observe(canvas);
+    this._io.observe(canvas);
 
-    document.addEventListener('visibilitychange', () => {
+    this._addListener(document, 'visibilitychange', () => {
       if (!document.hidden && !this.frameId) this._animate();
     });
 
     this._animate();
+  }
+
+  /* Track + register a listener so destroy() can later remove it. */
+  _addListener(target, type, fn, opts) {
+    if (!target || typeof target.addEventListener !== 'function') return;
+    target.addEventListener(type, fn, opts);
+    this._listeners.push({ target, type, fn, opts });
   }
 
   _newPoint() {
@@ -436,5 +461,10 @@ export class NeuralNetwork2D {
   destroy() {
     if (this.frameId) cancelAnimationFrame(this.frameId);
     this.frameId = null;
+    if (this._io) { this._io.disconnect(); this._io = null; }
+    for (const { target, type, fn, opts } of (this._listeners || [])) {
+      try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
+    }
+    this._listeners = [];
   }
 }

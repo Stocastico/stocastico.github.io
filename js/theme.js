@@ -18,7 +18,7 @@ export const THEME = {
   bgAlt: '#0f1a14',
   text: '#e8eee5',
   textMuted: '#8a948b',
-  textFaint: '#5e6862',
+  textFaint: '#767f78',
   accent: '#c8a44d',
   accentHi: '#dcb968',
   accent2: '#6db088',
