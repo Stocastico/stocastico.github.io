@@ -1,4 +1,4 @@
-# robots.txt — stocastico.github.io
+# robots.txt — stefanomasneri.com
 # Last updated: 2026-05-07
 
 # ── Standard search engine bots (allowed) ─────────────────────────────────────
@@ -108,4 +108,4 @@ User-agent: omgilibot
 Disallow: /
 
 # ── Sitemap ────────────────────────────────────────────────────────────────────
-Sitemap: https://stocastico.github.io/sitemap.xml
+Sitemap: https://stefanomasneri.com/sitemap.xml

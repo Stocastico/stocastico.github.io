@@ -44,6 +44,31 @@ for (const { rel, label } of pages) {
   });
 }
 
+function canonicalHref(html) {
+  /* Tolerates attribute order and single/double quotes; matches the first
+     <link rel="canonical" href="..."> found. */
+  const m = html.match(/<link\s+(?=[^>]*\brel=["']canonical["'])(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>/i)
+    || html.match(/<link\s+(?=[^>]*\bhref=["']([^"']+)["'])(?=[^>]*\brel=["']canonical["'])[^>]*>/i);
+  return m ? m[1].trim() : null;
+}
+
+const canonicalExpected = [
+  { rel: 'index.html',    label: 'home',     href: 'https://stefanomasneri.com/' },
+  { rel: 'cv.html',       label: 'cv',       href: 'https://stefanomasneri.com/cv.html' },
+  { rel: 'projects.html', label: 'projects', href: 'https://stefanomasneri.com/projects.html' },
+];
+
+for (const { rel, label, href } of canonicalExpected) {
+  test(`SEO: ${label} (${rel}) has a canonical URL on stefanomasneri.com`, () => {
+    const html = read(rel);
+    const canon = canonicalHref(html);
+    assert.ok(canon, `<link rel="canonical"> missing in ${rel}`);
+    assert.match(canon, /^https:\/\/stefanomasneri\.com(\/|$)/,
+      `${rel} canonical not on stefanomasneri.com: "${canon}"`);
+    assert.equal(canon, href, `${rel} canonical should be ${href}, got "${canon}"`);
+  });
+}
+
 function readJsonLd(html) {
   /* Returns a flat array of every parsed JSON-LD block in the document. */
   const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
@@ -63,6 +88,16 @@ test('SEO: index.html includes a JSON-LD Person schema', () => {
   assert.ok(person, 'JSON-LD does not contain a Person entry');
   assert.equal(typeof person.name, 'string', 'Person.name must be a string');
   assert.ok(person.name.length > 0, 'Person.name must be non-empty');
+});
+
+test('SEO: index.html JSON-LD Person.url points to stefanomasneri.com', () => {
+  const raw = read('index.html');
+  /* Block must exist and be valid JSON (readJsonLd throws on malformed JSON). */
+  const items = readJsonLd(raw);
+  const person = items.find((it) => it && it['@type'] === 'Person');
+  assert.ok(person, 'JSON-LD Person block missing in index.html');
+  assert.equal(person.url, 'https://stefanomasneri.com',
+    `Person.url should be https://stefanomasneri.com, got "${person.url}"`);
 });
 
 test('SEO: cv.html includes a JSON-LD ProfilePage with mainEntity Person', () => {
