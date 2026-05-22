@@ -72,7 +72,12 @@ export async function geocodeLocations(locs) {
     const item = pending[i];
     try {
       const url = `${API}?q=${encodeURIComponent(item.name)}&format=json&limit=1`;
-      const res = await fetch(url);
+      /* Cap each request so one hung lookup can't stall the whole sequential
+         loop (and the globe build that waits on it) indefinitely. */
+      const opts = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+        ? { signal: AbortSignal.timeout(8000) }
+        : undefined;
+      const res = await fetch(url, opts);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (!json.length) throw new Error('no results');

@@ -154,6 +154,24 @@ test('geocodeLocations marks item as skipped on failed lookup', async () => {
   }
 });
 
+test('geocodeLocations passes an AbortSignal to fetch so a hung request times out', async () => {
+  const prevFetch = global.fetch;
+  const calls = [];
+  global.fetch = (url, opts) => {
+    calls.push({ url, opts });
+    return Promise.resolve({ ok: true, json: () => Promise.resolve([{ lat: '1', lon: '2' }]) });
+  };
+  try {
+    const sample = { pins: [{ name: 'Nowhere' }], regions: [], trips: [] };
+    await geocodeLocations(sample);
+    assert.equal(calls.length, 1, 'should issue one lookup');
+    assert.ok(calls[0].opts && calls[0].opts.signal,
+      'fetch must receive an options object carrying an AbortSignal (timeout)');
+  } finally {
+    global.fetch = prevFetch;
+  }
+});
+
 test('PUBLICATIONS entries have required fields', () => {
   const publications = loadConstFromScript('data/publications.js', 'PUBLICATIONS');
   assert.ok(Array.isArray(publications));
@@ -869,6 +887,132 @@ test('HeroNameShader boots with mocked WebGL context', async () => {
     global.getComputedStyle = prevGetComputed;
     global.setTimeout = prevSetTimeout;
     global.devicePixelRatio = prevDpr;
+  }
+});
+
+test('HeroNameShader.destroy() removes every listener and frees GL resources', async () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCancel = global.cancelAnimationFrame;
+  const prevGetComputed = global.getComputedStyle;
+  const prevDpr = global.devicePixelRatio;
+  const prevPerf = global.performance;
+
+  const del = { program: 0, shader: 0, buffer: 0, texture: 0, lose: 0 };
+  const gl = {
+    VERTEX_SHADER: 1, FRAGMENT_SHADER: 2, COMPILE_STATUS: 3, LINK_STATUS: 4,
+    ARRAY_BUFFER: 5, STATIC_DRAW: 6, FLOAT: 7, TEXTURE_2D: 8, TEXTURE_WRAP_S: 9,
+    TEXTURE_WRAP_T: 10, CLAMP_TO_EDGE: 11, TEXTURE_MIN_FILTER: 12, TEXTURE_MAG_FILTER: 13,
+    LINEAR: 14, BLEND: 15, SRC_ALPHA: 16, ONE_MINUS_SRC_ALPHA: 17, COLOR_BUFFER_BIT: 18,
+    TRIANGLE_STRIP: 19, RGBA: 20, UNSIGNED_BYTE: 21,
+    createShader() { return {}; }, shaderSource() {}, compileShader() {},
+    getShaderParameter() { return true; }, getShaderInfoLog() { return ''; },
+    createProgram() { return {}; }, attachShader() {}, linkProgram() {},
+    getProgramParameter() { return true; }, getProgramInfoLog() { return ''; },
+    useProgram() {}, createBuffer() { return {}; }, bindBuffer() {}, bufferData() {},
+    getAttribLocation() { return 0; }, enableVertexAttribArray() {}, vertexAttribPointer() {},
+    getUniformLocation() { return {}; }, uniform1i() {}, createTexture() { return {}; },
+    bindTexture() {}, texParameteri() {}, enable() {}, blendFunc() {}, viewport() {},
+    uniform2f() {}, texImage2D() {}, clear() {}, uniform1f() {}, drawArrays() {},
+    deleteProgram() { del.program++; }, deleteShader() { del.shader++; },
+    deleteBuffer() { del.buffer++; }, deleteTexture() { del.texture++; },
+    getExtension(name) {
+      return name === 'WEBGL_lose_context' ? { loseContext() { del.lose++; } } : null;
+    },
+  };
+
+  const trackedWin = [], trackedDoc = [], trackedCanvas = [];
+  const track = (arr) => ({
+    addEventListener(type, fn, opts) { arr.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = arr.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+  });
+
+  const h1 = { offsetWidth: 500, offsetHeight: 180, classList: { add() {} } };
+  const canvas = {
+    offsetWidth: 500, offsetHeight: 180, style: {},
+    getContext(kind) { return kind === 'webgl' ? gl : null; },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 500, height: 180 }; },
+    ...track(trackedCanvas),
+  };
+
+  let ioDisconnected = false, cafCalls = 0;
+  global.window = track(trackedWin);
+  global.document = {
+    hidden: false,
+    fonts: { ready: Promise.resolve() },
+    ...track(trackedDoc),
+    createElement(tag) {
+      if (tag !== 'canvas') return {};
+      return {
+        width: 0, height: 0,
+        getContext() {
+          return {
+            scale() {}, clearRect() {}, fillText() {},
+            measureText() { return { width: 120 }; },
+            set fillStyle(_) {}, set textAlign(_) {}, set textBaseline(_) {}, set font(_) {},
+          };
+        },
+      };
+    },
+  };
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+    disconnect() { ioDisconnected = true; }
+  };
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => { cafCalls++; };
+  global.getComputedStyle = () => ({ fontSize: '96px', lineHeight: '100px' });
+  global.devicePixelRatio = 2;
+  global.performance = { now: () => 1000 };
+
+  try {
+    const shader = new HeroNameShader(h1, canvas);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const winTypes = trackedWin.map(e => e.type);
+    assert.ok(winTypes.includes('mousemove') && winTypes.includes('touchmove') && winTypes.includes('resize'),
+      'precondition: window listeners should be bound');
+    assert.ok(trackedDoc.some(e => e.type === 'visibilitychange'),
+      'precondition: document visibilitychange should be bound');
+    assert.ok(trackedCanvas.some(e => e.type === 'webglcontextlost') &&
+      trackedCanvas.some(e => e.type === 'webglcontextrestored'),
+      'precondition: canvas context listeners should be bound');
+
+    /* _bindEvents must be idempotent — a second call (e.g. context restore)
+       must not double-bind the window listeners. */
+    const winCountBefore = trackedWin.length;
+    shader._bindEvents();
+    assert.equal(trackedWin.length, winCountBefore,
+      '_bindEvents must not bind a second set of window listeners');
+
+    shader.destroy();
+
+    assert.ok(cafCalls >= 1, 'destroy() must cancelAnimationFrame');
+    assert.ok(ioDisconnected, 'destroy() must disconnect the IntersectionObserver');
+    const stillBound = [...trackedWin, ...trackedDoc, ...trackedCanvas].filter(e => !e.removed);
+    assert.equal(stillBound.length, 0,
+      `destroy() left listeners attached: ${stillBound.map(e => e.type).join(', ')}`);
+    assert.ok(del.program >= 1, 'destroy() must delete the GL program');
+    assert.ok(del.shader >= 2, 'destroy() must delete both shaders');
+    assert.ok(del.buffer >= 1, 'destroy() must delete the GL buffer');
+    assert.ok(del.texture >= 1, 'destroy() must delete the GL texture');
+    assert.ok(del.lose >= 1, 'destroy() must lose the WebGL context');
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCancel;
+    global.getComputedStyle = prevGetComputed;
+    global.devicePixelRatio = prevDpr;
+    global.performance = prevPerf;
   }
 });
 
@@ -1698,6 +1842,79 @@ test('NoiseGradient destroy cancels animation frame', () => {
     const ng = new NoiseGradient(canvas);
     ng.destroy();
     assert.equal(cancelledId, 42, 'Should cancel the animation frame');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCAF;
+    global.performance = prevPerf;
+  }
+});
+
+test('NoiseGradient destroy removes its resize listener and frees GL (no preserveDrawingBuffer)', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCAF = global.cancelAnimationFrame;
+  const prevPerf = global.performance;
+
+  const ctxArgs = [];
+  const del = { program: 0, shader: 0, buffer: 0, lose: 0 };
+  const gl = {
+    VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632,
+    ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, FLOAT: 5126, TRIANGLE_STRIP: 5,
+    COMPILE_STATUS: 35713, LINK_STATUS: 35714,
+    createShader() { return {}; }, shaderSource() {}, compileShader() {},
+    getShaderParameter() { return true; }, getShaderInfoLog() { return ''; },
+    createProgram() { return {}; }, attachShader() {}, linkProgram() {},
+    getProgramParameter() { return true; }, getProgramInfoLog() { return ''; },
+    useProgram() {}, createBuffer() { return {}; }, bindBuffer() {},
+    bufferData() {}, getAttribLocation() { return 0; },
+    enableVertexAttribArray() {}, vertexAttribPointer() {},
+    getUniformLocation() { return {}; }, uniform1f() {}, uniform2f() {},
+    viewport() {}, drawArrays() {},
+    deleteProgram() { del.program++; }, deleteShader() { del.shader++; },
+    deleteBuffer() { del.buffer++; },
+    getExtension(name) {
+      return name === 'WEBGL_lose_context' ? { loseContext() { del.lose++; } } : null;
+    },
+  };
+  const canvas = {
+    width: 0, height: 0, clientWidth: 800, clientHeight: 600,
+    style: {}, getContext(kind, opts) { ctxArgs.push(opts); return gl; },
+  };
+  const trackedWin = [];
+  global.document = { hidden: false };
+  global.window = {
+    devicePixelRatio: 1,
+    addEventListener(type, fn, opts) { trackedWin.push({ type, fn, opts, removed: false }); },
+    removeEventListener(type, fn) {
+      const e = trackedWin.find(x => x.type === type && x.fn === fn && !x.removed);
+      if (e) e.removed = true;
+    },
+  };
+  global.performance = { now: () => 1000 };
+  global.requestAnimationFrame = () => 7;
+  let cancelled = null;
+  global.cancelAnimationFrame = (id) => { cancelled = id; };
+
+  try {
+    const ng = new NoiseGradient(canvas);
+    assert.ok(ctxArgs.length > 0, 'getContext should be called');
+    assert.ok(!ctxArgs.some(o => o && o.preserveDrawingBuffer === true),
+      'NoiseGradient must not request preserveDrawingBuffer');
+    assert.equal(trackedWin.filter(e => e.type === 'resize' && !e.removed).length, 1,
+      'should register exactly one resize listener');
+
+    ng.destroy();
+
+    assert.equal(cancelled, 7, 'destroy must cancel the animation frame');
+    assert.equal(trackedWin.filter(e => e.type === 'resize' && !e.removed).length, 0,
+      'destroy must remove the resize listener');
+    assert.ok(del.program >= 1, 'destroy must delete the GL program');
+    assert.ok(del.shader >= 2, 'destroy must delete both shaders');
+    assert.ok(del.buffer >= 1, 'destroy must delete the GL buffer');
+    assert.ok(del.lose >= 1, 'destroy must lose the WebGL context');
   } finally {
     global.document = prevDoc;
     global.window = prevWin;
@@ -2958,6 +3175,52 @@ test('initCommandPalette: filtering reuses <li> nodes instead of recreating them
       'non-matching items should be hidden after filter');
     assert.ok(visibleAfter > 0,
       'matching items should remain visible');
+  } finally {
+    global.document = prevDoc;
+    global.requestAnimationFrame = prevRAF;
+  }
+});
+
+test('initCommandPalette: opening makes background siblings inert and closing restores them', () => {
+  const prevDoc = global.document;
+  const prevRAF = global.requestAnimationFrame;
+  global.requestAnimationFrame = (fn) => { if (fn) fn(); return 1; };
+
+  const { overlay, input, listEl, doc } = makeCmdPaletteDom();
+  const mkEl = (tag) => ({
+    tagName: tag, inert: false, attrs: {},
+    setAttribute(k, v) { this.attrs[k] = v; },
+    removeAttribute(k) { delete this.attrs[k]; },
+  });
+  const nav = mkEl('NAV'), main = mkEl('MAIN'), footer = mkEl('FOOTER'), script = mkEl('SCRIPT');
+
+  const docListeners = {};
+  doc.body = { style: {}, children: [nav, main, overlay, footer, script] };
+  doc.addEventListener = (type, fn) => { docListeners[type] = fn; };
+  global.document = doc;
+
+  try {
+    initCommandPalette();
+    assert.equal(typeof docListeners.keydown, 'function',
+      'precondition: a document keydown handler should be registered for the shortcut');
+
+    /* Open with Ctrl/⌘+K */
+    docListeners.keydown({ metaKey: true, ctrlKey: false, key: 'k', preventDefault() {} });
+    assert.equal(overlay.hidden, false, 'shortcut should open the palette');
+    assert.equal(nav.inert, true, 'nav should be inert while open');
+    assert.equal(main.inert, true, 'main should be inert while open');
+    assert.equal(footer.inert, true, 'footer should be inert while open');
+    assert.equal(nav.attrs['aria-hidden'], 'true', 'inert siblings should be aria-hidden');
+    assert.notStrictEqual(overlay.inert, true, 'the overlay itself must stay interactive');
+    assert.notStrictEqual(script.inert, true, 'script tags should be skipped');
+
+    /* Close with Escape */
+    input.listeners.keydown({ key: 'Escape', preventDefault() {} });
+    assert.equal(overlay.hidden, true, 'Escape should close the palette');
+    assert.equal(nav.inert, false, 'nav inert should be cleared on close');
+    assert.equal(main.inert, false, 'main inert should be cleared on close');
+    assert.equal(footer.inert, false, 'footer inert should be cleared on close');
+    assert.equal(nav.attrs['aria-hidden'], undefined, 'aria-hidden should be removed on close');
   } finally {
     global.document = prevDoc;
     global.requestAnimationFrame = prevRAF;

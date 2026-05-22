@@ -488,6 +488,34 @@ function initCommandPalette() {
     }
   });
 
+  /* Elements made inert while the palette is open, so they can be restored. */
+  let _inertedEls = [];
+
+  /* aria-modal alone is advisory; make it a real modal by marking every
+     sibling of the overlay inert (removes them from tab order + the AT tree)
+     while the palette is open, then restoring them on close. */
+  function setBackgroundInert(on) {
+    const body = document.body;
+    if (!body || !body.children) return;
+    if (on) {
+      _inertedEls = [];
+      for (const el of Array.from(body.children)) {
+        if (el === overlay) continue;
+        const tag = (el.tagName || '').toUpperCase();
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEMPLATE' || tag === 'LINK' || tag === 'META') continue;
+        el.inert = true;
+        if (typeof el.setAttribute === 'function') el.setAttribute('aria-hidden', 'true');
+        _inertedEls.push(el);
+      }
+    } else {
+      for (const el of _inertedEls) {
+        el.inert = false;
+        if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-hidden');
+      }
+      _inertedEls = [];
+    }
+  }
+
   /* ── Open / close ───────────────────────────────────────── */
   function open() {
     /* Remember the trigger element so we can restore focus on close. */
@@ -495,12 +523,14 @@ function initCommandPalette() {
     input.value = '';
     applyFilter('');
     overlay.hidden = false;
+    setBackgroundInert(true);
     requestAnimationFrame(() => input.focus());
     document.body.style.overflow = 'hidden';
   }
 
   function close() {
     overlay.hidden = true;
+    setBackgroundInert(false);
     document.body.style.overflow = '';
     /* Restore focus to whatever opened the palette so keyboard users
        don't lose their place in the page. */
@@ -1152,8 +1182,10 @@ function initAnimatedFavicon() {
 class NoiseGradient {
   constructor(canvas) {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: true })
-             || canvas.getContext('experimental-webgl', { alpha: false, depth: false, preserveDrawingBuffer: true });
+    /* No preserveDrawingBuffer — nothing reads pixels back, and keeping it on
+       forces the browser to retain a second copy of the framebuffer. */
+    const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
+             || canvas.getContext('experimental-webgl', { alpha: false, depth: false });
     if (!gl) { canvas.style.display = 'none'; return; }
     this.gl = gl;
     this._setup();
@@ -1169,14 +1201,15 @@ class NoiseGradient {
        window (changing canvas.width clears the WebGL buffer). The debounce
        avoids spawning a new burst on every pixel of a drag-resize. */
     let _rszTimer = null;
-    window.addEventListener('resize', () => {
+    this._onResizeHandler = () => {
       clearTimeout(_rszTimer);
       _rszTimer = setTimeout(() => {
         this._resize();
         this._framesLeft = Math.max(this._framesLeft, 2);
         if (!this._raf) this._raf = requestAnimationFrame(this._tick);
       }, 200);
-    }, { passive: true });
+    };
+    window.addEventListener('resize', this._onResizeHandler, { passive: true });
   }
 
   _compileShader(type, src) {
@@ -1244,6 +1277,8 @@ class NoiseGradient {
 
     if (!vert || !frag) { this.canvas.style.display = 'none'; return; }
 
+    this._vert = vert;
+    this._frag = frag;
     this.prog = gl.createProgram();
     gl.attachShader(this.prog, vert);
     gl.attachShader(this.prog, frag);
@@ -1257,6 +1292,7 @@ class NoiseGradient {
 
     /* Full-screen quad */
     const buf = gl.createBuffer();
+    this._buf = buf;
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(this.prog, 'a_pos');
@@ -1294,6 +1330,24 @@ class NoiseGradient {
 
   destroy() {
     if (this._raf) cancelAnimationFrame(this._raf);
+    this._raf = null;
+    if (this._onResizeHandler) {
+      try { window.removeEventListener('resize', this._onResizeHandler); } catch (_) { /* ignore */ }
+      this._onResizeHandler = null;
+    }
+    const gl = this.gl;
+    if (gl) {
+      try {
+        if (this.prog) gl.deleteProgram(this.prog);
+        if (this._vert) gl.deleteShader(this._vert);
+        if (this._frag) gl.deleteShader(this._frag);
+        if (this._buf) gl.deleteBuffer(this._buf);
+      } catch (_) { /* mock / partial context — ignore */ }
+      try {
+        if (typeof gl.getExtension === 'function') gl.getExtension('WEBGL_lose_context')?.loseContext();
+      } catch (_) { /* ignore */ }
+    }
+    this.gl = null;
   }
 }
 
