@@ -4,7 +4,7 @@
 
    Pure DOM / Canvas API — no Three.js dependency.
    ═══════════════════════════════════════════════════════════ */
-import { prefersReducedMotion } from './utils.js';
+import { prefersReducedMotion, rafThrottle } from './utils.js';
 
 /* ═══════════════════════════════════════════════════════════
    SCROLL-TRIGGERED REVEAL
@@ -198,17 +198,8 @@ export function initMagneticButtons() {
     }
   }
 
-  /* Coalesce mousemove bursts onto one rAF tick. */
-  let _lastEvent = null;
-  let _scheduled = false;
-  const _raf = typeof requestAnimationFrame === 'function'
-    ? requestAnimationFrame
-    : (cb) => { cb(); return 0; };
-
-  function process() {
-    _scheduled = false;
-    const e = _lastEvent;
-    if (!e) return;
+  /* Coalesce mousemove bursts onto one rAF tick (latest event wins). */
+  const onMouseMove = rafThrottle((e) => {
     if (!_rectsValid) refreshRects();
     const ex = e.clientX, ey = e.clientY;
     for (let i = 0; i < filteredMagnets.length; i++) {
@@ -228,14 +219,9 @@ export function initMagneticButtons() {
         if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
       }
     }
-  }
+  });
 
-  document.addEventListener('mousemove', (e) => {
-    _lastEvent = e;
-    if (_scheduled) return;
-    _scheduled = true;
-    _raf(process);
-  }, { passive: true });
+  document.addEventListener('mousemove', onMouseMove, { passive: true });
 }
 
 /* ═══════════════════════════════════════════════════════════

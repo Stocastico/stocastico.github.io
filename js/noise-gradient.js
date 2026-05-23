@@ -25,7 +25,6 @@ export class NoiseGradient {
     this._setup();
     this._resize();
     this._startTime = performance.now();
-    this._lastT     = 0;
     this._framesLeft = 3; /* render a few frames then stop */
     this._tick      = this._tick.bind(this);
     this._raf       = requestAnimationFrame(this._tick);
@@ -153,7 +152,6 @@ export class NoiseGradient {
     if (this._framesLeft <= 0) { this._raf = null; return; }
     this._raf = requestAnimationFrame(this._tick);
     if (document.hidden) return;
-    this._lastT = now;
     const t = (now - this._startTime) / 1000;
     const { gl } = this;
     gl.uniform1f(this._uTime, t);

@@ -9,7 +9,7 @@
    Content rendering (publications, projects, CV) and the
    DOMContentLoaded orchestration stay in js/main.js.
    ═══════════════════════════════════════════════════════════ */
-import { prefersReducedMotion, escapeHtml } from './utils.js';
+import { prefersReducedMotion, escapeHtml, rafThrottle } from './utils.js';
 
 /* ═══════════════════════════════════════════════════════════
    ANIMATED STAT COUNTERS
@@ -58,23 +58,6 @@ export function initTheme() {
   /* Theme switching intentionally disabled: dark mode is fixed. */
 }
 
-/* rAF-throttling helper. In Node tests there is no requestAnimationFrame,
-   so we fall back to a synchronous pass-through — keeps existing tests
-   that call the captured scroll handler synchronously working unchanged,
-   while in real browsers it coalesces bursts of scroll events into one
-   layout/paint per frame. */
-function _rafThrottle(fn) {
-  let scheduled = false;
-  const raf = typeof requestAnimationFrame === 'function'
-    ? requestAnimationFrame
-    : (cb) => { cb(); return 0; };
-  return (...args) => {
-    if (scheduled) return;
-    scheduled = true;
-    raf(() => { scheduled = false; fn(...args); });
-  };
-}
-
 /* ═══════════════════════════════════════════════════════════
    NAVBAR SCROLL BEHAVIOUR
    ═══════════════════════════════════════════════════════════ */
@@ -88,7 +71,7 @@ export function initNavbar() {
   const isProjectPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/projects/');
   if (isProjectPage) {
     const projectLink = document.querySelector('#nav-links a[href*="#projects"]');
-    if (projectLink) projectLink.setAttribute('aria-current', 'true');
+    if (projectLink) projectLink.setAttribute('aria-current', 'page');
   }
 
   const links = typeof document.querySelectorAll === 'function'
@@ -104,7 +87,7 @@ export function initNavbar() {
     links.forEach((link) => {
       const isActive = link.getAttribute('href') === `#${activeId}`;
       const cur = link.getAttribute('aria-current');
-      const next = isActive ? 'true' : 'false';
+      const next = isActive ? 'page' : 'false';
       if (cur !== next) link.setAttribute('aria-current', next);
     });
   };
@@ -121,7 +104,7 @@ export function initNavbar() {
     targets.forEach((t) => observer.observe(t));
   } else if (targets.length) {
     /* Fallback for browsers without IntersectionObserver */
-    window.addEventListener('scroll', _rafThrottle(() => {
+    window.addEventListener('scroll', rafThrottle(() => {
       const checkpoint = window.scrollY + (window.innerHeight * 0.35);
       targets.forEach((section) => {
         if (checkpoint >= section.offsetTop) activeId = section.id;
@@ -167,7 +150,7 @@ export function initNavbar() {
   };
 
   let _lastScrolled = false;
-  const onScroll = _rafThrottle(() => {
+  const onScroll = rafThrottle(() => {
     const y = window.scrollY;
     const scrolled = y > 20;
     if (scrolled !== _lastScrolled) {
@@ -191,7 +174,7 @@ export function initBackToTop() {
   if (!btn) return;
 
   let _lastVisible = false;
-  window.addEventListener('scroll', _rafThrottle(() => {
+  window.addEventListener('scroll', rafThrottle(() => {
     const visible = window.scrollY > window.innerHeight * 0.6;
     if (visible !== _lastVisible) {
       _lastVisible = visible;

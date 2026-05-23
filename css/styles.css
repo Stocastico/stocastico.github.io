@@ -89,6 +89,9 @@
   --r-lg: 24px;
   --r-xl: 36px;
 
+  /* Shadow colour — used as rgb(var(--shadow-rgb) / <alpha>) in box-shadows */
+  --shadow-rgb: 0 0 0;
+
   /* Opacity */
   --o-hover: 0.75;
   --o-overlay: 0.38;
@@ -1125,7 +1128,7 @@ h3 {
 .research-card:hover {
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
+  box-shadow: 0 20px 60px rgb(var(--shadow-rgb) / 0.4), 0 0 0 1px var(--accent-glow);
 }
 
 .research-card:hover::before {
@@ -1398,6 +1401,7 @@ h3 {
   transform: translateY(-5px);
   border-color: var(--accent);
   background: var(--bg-card-hov);
+  box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.35);
 }
 
 /* When a bg image is supplied, render it semi-transparent behind the content.
@@ -1682,6 +1686,7 @@ h3 {
 .skill-group:hover {
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
+  box-shadow: 0 8px 32px rgb(var(--shadow-rgb) / 0.3);
 }
 
 .skill-group-title {
@@ -1764,7 +1769,7 @@ h3 {
   transform: translateY(-5px);
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.35);
 }
 
 .contact-icon {
@@ -2013,7 +2018,7 @@ h3 {
 .tl-card-single:hover {
   border-color: var(--border-hov);
   background:   var(--bg-card-hov);
-  box-shadow:   0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow:   0 8px 32px rgb(var(--shadow-rgb) / 0.3);
 }
 
 /* Career cards: left side — accent bar on right edge (toward spine) */
@@ -2163,7 +2168,8 @@ h3 {
 
 .skill-panel:hover {
   border-color: var(--border-hov);
-  box-shadow:   0 4px 20px rgba(0, 0, 0, 0.25);
+  background:   var(--bg-card-hov);
+  box-shadow:   0 4px 20px rgb(var(--shadow-rgb) / 0.25);
 }
 
 .skill-panel-title {
@@ -2571,7 +2577,7 @@ h3 {
   overflow: hidden;
   background: radial-gradient(ellipse at 50% 65%, rgb(var(--bg-alt-rgb) / 0.95) 0%, var(--bg) 68%);
   border: 1px solid var(--border);
-  box-shadow: inset 0 0 80px rgb(var(--accent-rgb) / 0.04), 0 30px 80px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 80px rgb(var(--accent-rgb) / 0.04), 0 30px 80px rgb(var(--shadow-rgb) / 0.5);
   contain: layout paint;
   /* isolate reflow + paint within the globe */
 }
@@ -2611,7 +2617,7 @@ h3 {
   min-width: 165px;
   max-width: 230px;
   z-index: 10;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 30px rgb(var(--shadow-rgb) / 0.5);
 }
 
 .globe-tooltip.visible {
@@ -2937,7 +2943,7 @@ h3 {
   background: rgb(var(--bg-alt-rgb) / 0.97);
   border: 1px solid rgb(var(--accent-rgb) / 0.3);
   border-radius: var(--r-lg);
-  box-shadow: 0 32px 80px rgba(0 0 0 / 0.7), 0 0 0 1px rgb(var(--accent-rgb) / 0.15);
+  box-shadow: 0 32px 80px rgb(var(--shadow-rgb) / 0.7), 0 0 0 1px rgb(var(--accent-rgb) / 0.15);
   overflow: hidden;
   animation: cmd-slide-in 0.18s var(--ease);
 }
@@ -3212,10 +3218,6 @@ h3 {
     height: 48px;
   }
 }
-
-/* ─── Cursor Glow — removed for performance ──────────────── */
-/* The body::after radial gradient forced full-page repaints
-   on every mousemove, draining battery on older hardware.     */
 
 /* ─── Post Back Row (project pages) ────────────────────── */
 .post-back-row {

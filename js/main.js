@@ -732,16 +732,20 @@ if (typeof document !== 'undefined') {
   }
 
   /* Three.js neural network — falls back to Canvas2D when WebGL is missing.
-     Dynamically imported so Three.js stays out of the main chunk. */
+     Dynamically imported so Three.js stays out of the main chunk, and deferred
+     to idle time so its ~130 KB download stays off the critical path — the
+     hero already has the noise gradient + name shader while it loads. */
   const canvas = document.getElementById('neural-canvas');
   if (canvas) {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
     } else {
-      import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
-        _disposables.push(
-          hasWebGLSupport() ? new NeuralNetwork(canvas) : new NeuralNetwork2D(canvas),
-        );
+      whenIdle(() => {
+        import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
+          _disposables.push(
+            hasWebGLSupport() ? new NeuralNetwork(canvas) : new NeuralNetwork2D(canvas),
+          );
+        });
       });
     }
   }
