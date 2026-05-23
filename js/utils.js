@@ -53,3 +53,14 @@ export function hasWebGLSupport() {
   );
   return _webglSupportCache;
 }
+
+/* Escape a string for safe interpolation into innerHTML. Shared by the
+   command-palette UI (js/ui.js) and the content renderers (js/main.js). */
+export function escapeHtml(raw) {
+  return String(raw ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
