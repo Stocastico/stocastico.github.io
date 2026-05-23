@@ -12,17 +12,6 @@ need the audit context.
   - `js/noise-gradient.js` — pull `NoiseGradient` out of main.js
   - `js/ui.js` — navigation, command palette, scroll effects, etc.
 
-## Polish / nice-to-have
-
-- Add `color-scheme: dark` to `:root` so native form controls, scrollbars and
-  the text caret match the dark theme.
-- PWA manifest: add a stable `"id"` and a `maskable` icon variant so Android
-  adaptive icons aren't letterboxed.
-- Declare `og:image:width` / `og:image:height` (1200×630) on the social cards.
-- Generate `.webp` siblings for the project backgrounds still served as JPEG
-  (`clear-architecture`, `traction`, `avatech`) and point `data/projects.js` at
-  them, matching the rest of the cards.
-
 ## Decisions (reviewed, deliberately not changed)
 
 - `--text-faint` contrast (~3.4:1) sits below WCAG AA for small text — kept as

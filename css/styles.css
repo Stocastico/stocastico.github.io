@@ -71,6 +71,9 @@
   --pin-holiday: #d98e54;
   /* @theme-generated-end */
 
+  /* Match native UI (form controls, scrollbars, caret) to the dark theme */
+  color-scheme: dark;
+
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;

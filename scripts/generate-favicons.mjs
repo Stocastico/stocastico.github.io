@@ -3,10 +3,16 @@
  * Rasterise public/favicon.svg into the PNG + ICO sizes browsers expect.
  *
  * Outputs (all under public/, so Vite serves them at site root):
- *   favicon.ico            — multi-resolution 16/32/48
- *   apple-touch-icon.png   — 180 × 180 (iOS Add-to-Home-Screen)
- *   icon-192.png           — 192 × 192 (Android / PWA manifest)
- *   icon-512.png           — 512 × 512 (Android splash / PWA manifest)
+ *   favicon.ico             — multi-resolution 16/32/48
+ *   apple-touch-icon.png    — 180 × 180 (iOS Add-to-Home-Screen)
+ *   icon-192.png            — 192 × 192 (Android / PWA manifest)
+ *   icon-512.png            — 512 × 512 (Android splash / PWA manifest)
+ *   icon-maskable-192.png   — 192 × 192 maskable (Android adaptive icon)
+ *   icon-maskable-512.png   — 512 × 512 maskable (Android adaptive icon)
+ *
+ * Maskable variants are full-bleed (no rounded corners) with the glyph kept
+ * inside the central ~80% safe zone, so Android can crop them to any shape
+ * (circle / squircle) without clipping the "SM".
  *
  * The inline SVG in each HTML head stays as the primary `rel="icon"`;
  * these raster files are fallbacks for clients that don't render SVG
@@ -68,6 +74,22 @@ async function renderPng(svg, size) {
     .toBuffer();
 }
 
+/* Derive a maskable SVG from the themed favicon: drop the rounded corners
+   (the OS supplies the mask shape) and shrink the glyph so it sits inside the
+   maskable safe zone. Colours are read from favicon.svg, so this stays in
+   sync with `npm run generate-theme`. */
+function buildMaskableSvg(svgBuffer) {
+  const svgText = svgBuffer.toString('utf8');
+  const bg = (svgText.match(/<rect[^>]*fill="([^"]+)"/) || [])[1] || '#0a120e';
+  const fg = (svgText.match(/<text[^>]*fill="([^"]+)"/) || [])[1] || '#c8a44d';
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<rect width="64" height="64" fill="${bg}"/>` +
+    `<text x="50%" y="56%" text-anchor="middle" font-size="24" fill="${fg}" font-family="Georgia,serif">SM</text>` +
+    `</svg>`,
+  );
+}
+
 async function main() {
   const svg = await readFile(SVG_PATH);
   await mkdir(PUBLIC_DIR, { recursive: true });
@@ -82,6 +104,10 @@ async function main() {
   await writeFile(path.join(PUBLIC_DIR, 'icon-192.png'), pngs[192]);
   await writeFile(path.join(PUBLIC_DIR, 'icon-512.png'), pngs[512]);
 
+  const maskableSvg = buildMaskableSvg(svg);
+  await writeFile(path.join(PUBLIC_DIR, 'icon-maskable-192.png'), await renderPng(maskableSvg, 192));
+  await writeFile(path.join(PUBLIC_DIR, 'icon-maskable-512.png'), await renderPng(maskableSvg, 512));
+
   const ico = encodeIco([
     { size: 16, buffer: pngs[16] },
     { size: 32, buffer: pngs[32] },
@@ -89,7 +115,8 @@ async function main() {
   ]);
   await writeFile(path.join(PUBLIC_DIR, 'favicon.ico'), ico);
 
-  console.log('Wrote favicon.ico, apple-touch-icon.png, icon-192.png, icon-512.png');
+  console.log('Wrote favicon.ico, apple-touch-icon.png, icon-192.png, icon-512.png, ' +
+    'icon-maskable-192.png, icon-maskable-512.png');
 }
 
 main().catch(err => {
