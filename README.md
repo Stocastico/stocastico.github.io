@@ -71,7 +71,9 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── apple-touch-icon.png   iOS Add-to-Home-Screen icon (180×180)
 │   ├── icon-192.png           Android / PWA manifest (192×192)
 │   ├── icon-512.png           Android splash / PWA manifest (512×512)
-│   ├── manifest.webmanifest   PWA web app manifest (name, icons, theme colour)
+│   ├── icon-maskable-192.png  Android adaptive (maskable) icon (192×192)
+│   ├── icon-maskable-512.png  Android adaptive (maskable) icon (512×512)
+│   ├── manifest.webmanifest   PWA web app manifest (id, icons, theme colour)
 │   ├── sitemap.xml            Generated sitemap (copied verbatim into dist/)
 │   └── robots.txt             SEO robot rules
 ├── scripts/
@@ -270,7 +272,7 @@ node scripts/generate-csp-meta.mjs --dry-run
 
 ### `generate-favicons` — rasterise the favicon
 
-Uses [sharp](https://sharp.pixelplumbing.com/) to rasterise `public/favicon.svg` into the PNG + ICO sizes browsers expect (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`).
+Uses [sharp](https://sharp.pixelplumbing.com/) to rasterise `public/favicon.svg` into the PNG + ICO sizes browsers expect (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) plus full-bleed `maskable` variants (`icon-maskable-192.png`, `icon-maskable-512.png`) for Android adaptive icons.
 
 ```bash
 npm run generate-favicons

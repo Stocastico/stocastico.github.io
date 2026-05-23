@@ -3,8 +3,8 @@ id:          clear-architecture
 title:       "cleAR: Interoperable Architecture for Multi-User AR"
 year:        "2023"
 tags:        "AR, Education, Architecture"
-bg:       "img/projects/clear-architecture.jpg"
-bg:          "img/projects/clear-architecture.jpg"
+bg:       "img/projects/clear-architecture.webp"
+bg:          "img/projects/clear-architecture.webp"
 description: "cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research."
 link_paper:  "https://link.springer.com/article/10.1007/s10055-023-00764-5"
 ---
@@ -17,7 +17,7 @@ Despite the well-documented benefits of AR in learning — improved motivation, 
 
 The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
 
-![Design objectives diagram](img/projects/clear-design-objectives.jpg)
+![Design objectives diagram](img/projects/clear-design-objectives.webp)
 
 - **DO1 — Interoperability**: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
 - **DO2 — Multi-user interactions**: Real-time collaboration between students and teachers, both in-person and remotely.
@@ -30,7 +30,7 @@ The architecture was built around six design objectives (DOs) derived from a sys
 
 cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated stack.
 
-![Architecture overview](img/projects/clear-architecture.jpg)
+![Architecture overview](img/projects/clear-architecture.webp)
 
 **Real-time multi-user library.** A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and video streams.
 
@@ -46,7 +46,7 @@ Three proof-of-concept applications were developed to validate the architecture 
 
 **AR Cube** — a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
 
-![AR Cube proof-of-concept](img/projects/clear-ar-cube.jpg)
+![AR Cube proof-of-concept](img/projects/clear-ar-cube.webp)
 
 **xAPI Data Analysis** — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
 
