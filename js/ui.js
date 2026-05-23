@@ -490,6 +490,12 @@ export function initCommandPalette() {
   /* Close on overlay click */
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
+  /* Nav hint chip opens the palette through the same open() path as ⌘K, so it
+     gets the focus trap, background inert, and scroll-lock too (clicking the
+     chip used to bypass all three). */
+  const trigger = document.getElementById('cmd-trigger');
+  if (trigger) trigger.addEventListener('click', () => { if (overlay.hidden) open(); });
+
   /* Global keyboard shortcut — ⌘K or Ctrl+K */
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -705,18 +711,13 @@ export function initResearchCarousel() {
 export function initCmdTriggerHint() {
   const hint = document.getElementById('cmd-trigger');
   if (!hint) return;
+  /* Only the key label is set here; the click-to-open is wired in
+     initCommandPalette so the chip shares the palette's open() path
+     (focus trap + background inert + scroll-lock). */
   const keyEl = hint.querySelector('.cmd-trigger-key');
   if (keyEl) {
     const isMac = typeof navigator !== 'undefined'
       && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
     keyEl.textContent = isMac ? '⌘' : 'Ctrl+';
   }
-  hint.addEventListener('click', () => {
-    const overlay = document.getElementById('cmd-overlay');
-    if (overlay && overlay.hidden !== undefined) {
-      overlay.hidden = false;
-      const inp = document.getElementById('cmd-input');
-      if (inp) inp.focus();
-    }
-  });
 }

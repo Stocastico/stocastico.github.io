@@ -93,6 +93,9 @@
   <link rel="manifest" href="/manifest.webmanifest" />
 
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Scroll-reveal elements start at opacity:0 and are revealed by JS.
+       Without JS, show them so content is never invisible. -->
+  <noscript><style>[data-animate]{opacity:1 !important;transform:none !important;}</style></noscript>
 </head>
 
 <body>
@@ -124,9 +127,9 @@
         <li><a href="#projects">Projects</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
-      <kbd class="cmd-trigger-hint" id="cmd-trigger" aria-label="Open command palette">
+      <button type="button" class="cmd-trigger-hint" id="cmd-trigger" aria-label="Open command palette">
         <span class="cmd-trigger-key"></span>K
-      </kbd>
+      </button>
     </div>
   </nav>
 

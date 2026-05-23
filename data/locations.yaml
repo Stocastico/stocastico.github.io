@@ -96,7 +96,7 @@ pins:
     name: Munich, Germany
     info: amici
   - type: holiday
-    name: Niza, France
+    name: Nice, France
     info: amici
 
 # holidays
@@ -232,7 +232,7 @@ pins:
     info: Holiday
 # Benelux
   - type: holiday
-    name: Gant, Belgium
+    name: Ghent, Belgium
     info: Holiday
   - type: holiday
     name: Antwerp, Belgium

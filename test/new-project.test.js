@@ -14,6 +14,7 @@ const {
   slugify,
   parseTags,
   deriveOutputPath,
+  imageSize,
 } = require('../scripts/new-project.js');
 
 // ─── splitFrontmatter ─────────────────────────────────────────────────────────
@@ -187,6 +188,36 @@ test('project: buildProjectPage includes social-card meta (twitter:image, og:sit
   assert.match(html, /<meta property="og:image:alt"\s+content="Social"/);
   assert.match(html, /<meta name="twitter:image"\s+content="[^"]+img\/projects\/social\.webp"/);
   assert.match(html, /<meta name="twitter:image:alt"\s+content="Social"/);
+});
+
+test('project: buildProjectPage emits og:image:width/height when dimensions are provided', () => {
+  const fm = {
+    id: 'dims', title: 'Dims', year: '2024', tags: 'A',
+    bg: 'img/projects/dims.webp', description: 'D',
+  };
+  const html = buildProjectPage(fm, '<p>body</p>', { width: 1600, height: 840 });
+  assert.match(html, /<meta property="og:image:width"\s+content="1600"/);
+  assert.match(html, /<meta property="og:image:height"\s+content="840"/);
+  /* width/height must sit between og:image and og:image:alt */
+  assert.match(html, /og:image"[^]*og:image:width[^]*og:image:height[^]*og:image:alt/);
+});
+
+test('project: buildProjectPage omits og:image:width/height when dimensions are absent', () => {
+  const fm = {
+    id: 'nodims', title: 'NoDims', year: '2024', tags: 'A',
+    bg: 'img/projects/nodims.webp', description: 'D',
+  };
+  const html = buildProjectPage(fm, '<p>body</p>');
+  assert.doesNotMatch(html, /og:image:width/);
+  assert.doesNotMatch(html, /og:image:height/);
+});
+
+test('project: imageSize reads PNG and WebP dimensions, returns null when missing', () => {
+  /* Real repo assets with known dimensions cover the PNG + WebP code paths. */
+  assert.deepEqual(imageSize('img/projects/rag-document-qa-og.png'), { width: 1200, height: 630 });
+  assert.deepEqual(imageSize('img/projects/mlops-bg.webp'), { width: 1600, height: 840 });
+  assert.deepEqual(imageSize('img/projects/avatech-bg.webp'), { width: 270, height: 187 });
+  assert.equal(imageSize('img/projects/__does_not_exist__.webp'), null);
 });
 
 test('project: buildProjectPage uses correct asset paths for project subdir', () => {

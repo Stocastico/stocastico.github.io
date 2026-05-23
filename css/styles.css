@@ -3058,8 +3058,10 @@ h3 {
     display: inline-flex;
     align-items: center;
     gap: 0.2em;
+    font-family: inherit;
     font-size: 0.7rem;
     color: var(--text-faint);
+    background: transparent;
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0.1em 0.45em;
