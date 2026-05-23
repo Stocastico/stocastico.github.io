@@ -95,10 +95,6 @@
     "lat": 48.13711,
     "lon": 11.57538
   },
-  "Niza, France": {
-    "lat": 43.70094,
-    "lon": 7.26839
-  },
   "Amsterdam, Netherlands": {
     "lat": 52.37308,
     "lon": 4.89245
@@ -567,10 +563,6 @@
     "lat": 42.34392,
     "lon": -3.6969
   },
-  "Gant, Belgium": {
-    "lat": 51.05373,
-    "lon": 3.72098
-  },
   "Antwerp, Belgium": {
     "lat": 51.22047,
     "lon": 4.40246
@@ -762,5 +754,13 @@
   "Santa Cruz de Tenerife, Spain": {
     "lat": 28.467178,
     "lon": -16.2507843
+  },
+  "Nice, France": {
+    "lat": 43.70094,
+    "lon": 7.26839
+  },
+  "Ghent, Belgium": {
+    "lat": 51.05373,
+    "lon": 3.72098
   }
 }

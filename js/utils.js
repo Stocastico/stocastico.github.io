@@ -53,3 +53,32 @@ export function hasWebGLSupport() {
   );
   return _webglSupportCache;
 }
+
+/* Coalesce a burst of events (scroll, mousemove, resize) onto one rAF tick:
+   the wrapped fn runs once per frame with the most recent arguments. Falls
+   back to a synchronous pass-through in Node (no requestAnimationFrame) so
+   tests can invoke the captured handler directly. */
+export function rafThrottle(fn) {
+  let scheduled = false;
+  let lastArgs = null;
+  const raf = typeof requestAnimationFrame === 'function'
+    ? requestAnimationFrame
+    : (cb) => { cb(); return 0; };
+  return (...args) => {
+    lastArgs = args;
+    if (scheduled) return;
+    scheduled = true;
+    raf(() => { scheduled = false; fn(...lastArgs); });
+  };
+}
+
+/* Escape a string for safe interpolation into innerHTML. Shared by the
+   command-palette UI (js/ui.js) and the content renderers (js/main.js). */
+export function escapeHtml(raw) {
+  return String(raw ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}

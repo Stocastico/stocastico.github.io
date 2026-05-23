@@ -317,9 +317,58 @@ function deriveOutputPath(id, outDir = 'projects') {
   return path.join(outDir, `${id}.html`);
 }
 
+// ─── Image dimensions (for og:image:width / :height) ──────────────────────────
+// Reads PNG / JPEG / WebP headers synchronously so generated pages can declare
+// accurate social-card dimensions. Returns { width, height } or null when the
+// file is missing or its format isn't recognised (callers then omit the tags).
+function imageSize(filePath) {
+  let buf;
+  try { buf = fs.readFileSync(filePath); } catch { return null; }
+  if (buf.length < 24) return null;
+
+  // PNG: 8-byte signature, then IHDR with width/height as big-endian uint32.
+  if (buf.toString('latin1', 0, 8) === '\x89PNG\r\n\x1a\n') {
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  }
+
+  // JPEG: scan segments for a Start-Of-Frame marker (0xFFC0–0xFFCF, minus
+  // DHT/JPG/DAC) and read the frame dimensions.
+  if (buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < buf.length) {
+      if (buf[i] !== 0xff) { i++; continue; }
+      const marker = buf[i + 1];
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+        return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+      }
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+    return null;
+  }
+
+  // WebP: RIFF container with a VP8 / VP8L / VP8X chunk.
+  if (buf.toString('latin1', 0, 4) === 'RIFF' && buf.toString('latin1', 8, 12) === 'WEBP') {
+    const fourcc = buf.toString('latin1', 12, 16);
+    if (fourcc === 'VP8 ') {
+      return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+    }
+    if (fourcc === 'VP8L') {
+      const b = buf.readUInt32LE(21);
+      return { width: (b & 0x3fff) + 1, height: ((b >> 14) & 0x3fff) + 1 };
+    }
+    if (fourcc === 'VP8X') {
+      const w = (buf[24] | (buf[25] << 8) | (buf[26] << 16)) + 1;
+      const h = (buf[27] | (buf[28] << 8) | (buf[29] << 16)) + 1;
+      return { width: w, height: h };
+    }
+  }
+
+  return null;
+}
+
 // ─── Standalone project page builder ──────────────────────────────────────────
 
-function buildProjectPage(fm, bodyHtml) {
+function buildProjectPage(fm, bodyHtml, ogDims = null) {
   const tags = parseTags(fm.tags);
   const heroImg = fm.bg;
   const tagsHtml = tags
@@ -342,6 +391,10 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   const descEsc = escapeHtml(fm.description);
   const yearEsc = escapeHtml(fm.year);
   const heroImgEsc = escapeHtml(heroImg);
+  const ogDimsHtml = (ogDims && ogDims.width && ogDims.height)
+    ? `\n  <meta property="og:image:width"  content="${ogDims.width}" />` +
+      `\n  <meta property="og:image:height" content="${ogDims.height}" />`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -360,7 +413,7 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   <meta property="og:url"         content="${SITE_URL}/projects/${escapeHtml(fm.id)}.html" />
   <meta property="og:title"       content="${titleEsc} — Stefano Masneri" />
   <meta property="og:description" content="${descEsc}" />
-  <meta property="og:image"       content="${SITE_URL}/${heroImgEsc}" />
+  <meta property="og:image"       content="${SITE_URL}/${heroImgEsc}" />${ogDimsHtml}
   <meta property="og:image:alt"   content="${titleEsc}" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${titleEsc} — Stefano Masneri" />
@@ -506,7 +559,11 @@ function main() {
 
   const tags = parseTags(fm.tags);
   const bodyHtml = markdownToHtml(body);
-  const pageHtml = buildProjectPage(fm, bodyHtml);
+  /* Read the hero image's dimensions so the page can declare an accurate
+     og:image:width/height (better social-card rendering). Resolved relative
+     to the repo root; silently skipped if the file isn't found/readable. */
+  const ogDims = fm.bg ? imageSize(path.resolve(String(fm.bg))) : null;
+  const pageHtml = buildProjectPage(fm, bodyHtml, ogDims);
 
   const projectEntry = {
     id: String(fm.id),
@@ -563,4 +620,5 @@ module.exports = {
   parseTags,
   parseArgs,
   deriveOutputPath,
+  imageSize,
 };
