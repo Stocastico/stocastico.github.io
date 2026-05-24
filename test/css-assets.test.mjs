@@ -5,10 +5,10 @@
    - Project card/hero backgrounds are CSS background-image URLs, so the
      browser can't auto-negotiate format: guard that they use the existing
      .webp sibling and stay light (they render decoratively, often dimmed). */
-import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { PROJECTS } from '../data/projects.js';
 
@@ -65,4 +65,34 @@ test(`assets: each project bg image is <= ${MAX_BG_KB}KB`, () => {
   }
   assert.deepEqual(offenders, [],
     `Decorative project bg images should stay light:\n  ${offenders.join('\n  ')}`);
+});
+
+test('css: html and body use overflow-x: clip', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  assert(css.includes('overflow-x: clip;'), 'Expected html/body overflow-x to be clip');
+});
+
+test('css: named easing tokens are defined', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  for (const token of ['--ease-out', '--ease-in', '--ease-in-out']) {
+    assert(css.includes(`${token}:`), `Missing CSS custom property ${token}`);
+  }
+});
+
+test('css: button state helper selectors are present', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const selectors = [
+    '.btn:hover',
+    '.btn.is-hover',
+    '.btn:focus-visible',
+    '.btn.is-focus',
+    '.btn:active',
+    '.btn.is-active',
+    '.btn[disabled]',
+    '.btn.is-disabled',
+    '.btn[data-state="loading"]',
+    '.btn[data-state="error"]',
+  ];
+  const missing = selectors.filter(s => !css.includes(s));
+  assert.deepEqual(missing, [], `Missing button state helper selectors:\n  ${missing.join('\n  ')}`);
 });

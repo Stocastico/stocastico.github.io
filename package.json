@@ -26,6 +26,7 @@
     "generate-theme": "node scripts/generate-theme.js",
     "rotate-palette": "node scripts/rotate-palette.js",
     "generate-locations": "node scripts/generate-locations.js",
+    "test:playwright": "node test/playwright.ui.test.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-project-jsonld": "node scripts/generate-project-jsonld.mjs",
     "generate-csp-meta": "node scripts/generate-csp-meta.mjs",
