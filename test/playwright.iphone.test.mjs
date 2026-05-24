@@ -12,32 +12,34 @@
  *   • iPhone 13 / 14       — 390 × 844
  */
 
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
-import { extname, join, dirname } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+const require = createRequire(import.meta.url);
 
 const { chromium } = require('playwright');
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const SOURCE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const DIST_ROOT = join(SOURCE_ROOT, 'dist');
+const ROOT = existsSync(DIST_ROOT) ? DIST_ROOT : SOURCE_ROOT;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
-  '.css':  'text/css',
-  '.js':   'text/javascript',
-  '.svg':  'image/svg+xml',
-  '.png':  'image/png',
-  '.jpg':  'image/jpeg',
-  '.ico':  'image/x-icon',
+  '.css': 'text/css',
+  '.js': 'text/javascript',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.ico': 'image/x-icon',
   '.json': 'application/json',
-  '.woff2':'font/woff2',
+  '.woff2': 'font/woff2',
 };
 
 function serveFile(res, filePath) {
   if (!existsSync(filePath)) { res.writeHead(404); res.end('Not found'); return; }
-  const ext  = extname(filePath).toLowerCase();
+  const ext = extname(filePath).toLowerCase();
   const mime = MIME[ext] ?? 'application/octet-stream';
   res.writeHead(200, { 'Content-Type': mime });
   res.end(readFileSync(filePath));
@@ -75,11 +77,11 @@ function assert(cond, msg) {
 }
 
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) ' +
-                 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+  'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
 const server = await startServer();
-const port   = server.address().port;
-const BASE   = `http://127.0.0.1:${port}`;
+const port = server.address().port;
+const BASE = `http://127.0.0.1:${port}`;
 
 console.log(`\niPhone Safari UI tests — serving from ${BASE}\n`);
 
@@ -90,9 +92,9 @@ const browser = await chromium.launch({ headless: true });
 console.log('── iPhone SE (375×667, touch, Safari UA) ─────────────');
 {
   const ctx = await browser.newContext({
-    viewport:  { width: 375, height: 667 },
-    hasTouch:  true,
-    isMobile:  true,
+    viewport: { width: 375, height: 667 },
+    hasTouch: true,
+    isMobile: true,
     userAgent: IPHONE_UA,
   });
   const page = await ctx.newPage();
@@ -131,7 +133,7 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
     const overflow = await page.evaluate(() => ({
       bodyScroll: document.body.scrollWidth,
       htmlScroll: document.documentElement.scrollWidth,
-      viewport:   window.innerWidth,
+      viewport: window.innerWidth,
     }));
     assert(
       overflow.bodyScroll <= overflow.viewport + 1,
@@ -209,7 +211,7 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
         for (const rule of rules) {
           if (rule.selectorText === '#hero' && rule.style.height) {
             return /dvh\b/.test(rule.style.height) ||
-                   /dvh\b/.test(rule.cssText);
+              /dvh\b/.test(rule.cssText);
           }
         }
       }
@@ -237,9 +239,9 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
       const bad = [];
       for (const card of cards) {
         const cardRect = card.getBoundingClientRect();
-        const back     = card.querySelector('.card-back');
-        const body     = card.querySelector('.card-back-body');
-        const hint     = card.querySelector('.card-back-hint');
+        const back = card.querySelector('.card-back');
+        const body = card.querySelector('.card-back-body');
+        const hint = card.querySelector('.card-back-hint');
         if (!back) continue;
         const backRect = back.getBoundingClientRect();
         const bodyRect = body?.getBoundingClientRect();
@@ -321,9 +323,9 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
 console.log('\n── iPhone 13 (390×844, touch, Safari UA) ─────────────');
 {
   const ctx = await browser.newContext({
-    viewport:  { width: 390, height: 844 },
-    hasTouch:  true,
-    isMobile:  true,
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
     userAgent: IPHONE_UA,
   });
   const page = await ctx.newPage();
@@ -334,7 +336,7 @@ console.log('\n── iPhone 13 (390×844, touch, Safari UA) ──────�
   await test('no horizontal overflow at 390px', async () => {
     const m = await page.evaluate(() => ({
       bodyScroll: document.body.scrollWidth,
-      viewport:   window.innerWidth,
+      viewport: window.innerWidth,
     }));
     assert(m.bodyScroll <= m.viewport + 1, `body overflows: ${JSON.stringify(m)}`);
   });
