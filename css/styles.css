@@ -100,6 +100,9 @@
 
   /* Transitions */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 200ms;
   --t-med: 400ms;
   --t-slow: 700ms;
@@ -133,6 +136,7 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: var(--nav-h);
   -webkit-text-size-adjust: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -141,7 +145,7 @@ body {
   font-family: var(--font-sans);
   font-size: clamp(15px, 1.05vw, 17px);
   line-height: 1.7;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body.menu-open {
@@ -182,6 +186,15 @@ a {
 .inline-link:hover {
   opacity: var(--o-hover);
 }
+
+/* Hallmark: 8-state coverage helpers for interactive elements */
+.btn:hover, .btn.is-hover { opacity: var(--o-hover); transform: translateY(-1px); }
+.btn:focus-visible, .btn.is-focus { outline: 2px solid var(--accent2); outline-offset: 3px; }
+.btn:active, .btn.is-active { transform: translateY(1px); }
+.btn[disabled], .btn.is-disabled { opacity: 0.5; pointer-events: none; }
+.btn[data-state="loading"] { cursor: progress; }
+.btn[data-state="error"] { box-shadow: 0 0 0 4px rgba(200,80,50,0.08); }
+.btn[data-state="success"] { box-shadow: 0 0 0 4px rgba(80,200,120,0.06); }
 
 a:focus-visible,
 button:focus-visible {

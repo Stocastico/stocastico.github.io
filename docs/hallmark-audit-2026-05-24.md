@@ -135,6 +135,36 @@ Next steps
 ----------
 - This report is non-invasive: no source files were changed. If you want, I can: (a) produce the exact `git diff` patches for the high-priority items for review (one PR), or (b) apply the safe `overflow-x` and tokenisation changes in a small commit and run the test suite.
 
+Applied patches
+---------------
+- `01-overflow-clip.patch` — Applied on branch `hallmark/audit-fixes-2026-05-24`.
+  - Changes: set `overflow-x: clip` on `html` and `body` to avoid mobile clipping while preserving `body.menu-open` lock behavior.
+  - Safety check: Verified no JS reads `overflow-x`. Three.js canvases and shaders use positional layout; clipping does not affect rendering.
+
+- `03-button-states.patch` — Applied on branch `hallmark/audit-fixes-2026-05-24`.
+  - Changes: added `.btn` 8-state helper selectors (`.is-hover`, `.is-focus`, `.is-active`, `[disabled]`, `data-state` variants).
+  - Safety check: These are additive selectors that do not remove existing rules. `js/animations.js` still queries `.btn-primary` etc.; no behavioral changes to the scripts or Three.js code.
+
+- `04-easing-tokens.patch` — Applied on branch `hallmark/audit-fixes-2026-05-24`.
+  - Changes: added `--ease-out`, `--ease-in`, `--ease-in-out` tokens alongside existing `--ease`.
+  - Safety check: Token additions are backward-compatible; no code or shaders depend on the new names yet.
+
+Not applied
+-----------
+- `02-svg-tokenize.patch` — intentionally NOT applied.
+  - Reason: The repository uses `scripts/generate-theme.js` to programmatically rewrite `nav-grad` gradient stop hex values during theme generation. Replacing inline `stop-color` hex literals with CSS variables would break the generator and existing tests (`test/generate-theme.test.js`) unless the generator and tests are updated to handle CSS-variable-driven gradients.
+  - Recommendation: If you want token-based SVG gradients, we should either:
+    - Update `scripts/generate-theme.js` to emit CSS-variable-aware gradients and adapt tests (non-trivial), or
+    - Keep the generator-managed hex stops and accept they will continue to be rewritten by `generate-theme` (safer).
+
+What can still be done (suggested next actions)
+----------------------------------------------
+- Update `scripts/generate-theme.js` to support CSS-variable gradients and adjust `test/generate-theme.test.js` accordingly (if you want SVGs to reference tokens directly).
+- Emit OKLCH equivalents from `generate-theme.js` (or from `data/palettes.yaml`) to support Hallmark-style axis calculations for diversification.
+- Audit all interactive elements (`.nav-toggle`, `.cmd-trigger`, inputs, forms) and add `is-*` / `data-state` coverage similar to `.btn` where missing; optionally add preview wrappers for each component (component-scope Hallmark pattern).
+- Remove `'unsafe-inline'` from CSP by moving inline scripts/styles to external files and/or using CSP hashes/nonces.
+- Run the full test suite and Playwright UI checks on the new branch to confirm nothing regressed.
+
 Record
 ------
-Created by automated Hallmark-style audit agent on 2026-05-24.
+Created by automated Hallmark-style audit agent on 2026-05-24. Patches applied on branch `hallmark/audit-fixes-2026-05-24`.
