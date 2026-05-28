@@ -66,7 +66,7 @@ export const CV_CAREER = [
 export const CV_EDUCATION = [
   {
     year:            '2019 – 2024',
-    degree:          'PhD — Computer Science',
+    degree:          'PhD in Computer Science',
     institution:     'Euskal Herriko Unibertsitatea (UPV/EHU)',
     location:        'Bilbao, ES',
     description:     'Thesis: "A Novel Architecture for Collaborative Augmented Reality Experiences for Education." Graduated cum laude.',
@@ -74,13 +74,13 @@ export const CV_EDUCATION = [
   },
   {
     year:        '2005 – 2008',
-    degree:      'MSc — Telecommunications Engineering',
+    degree:      'MSc in Telecommunications Engineering',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
   },
   {
     year:        '2000 – 2005',
-    degree:      'BSc — Information Technology',
+    degree:      'BSc in Information Technology',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
   },
@@ -147,19 +147,19 @@ export const CV_SKILLS = {
     },
     {
       name:        'Spanish',
-      proficiency: 'C2 — Proficient',
+      proficiency: 'C2: Proficient',
     },
     {
       name:        'English',
-      proficiency: 'C2 — Proficient',
+      proficiency: 'C2: Proficient',
     },
     {
       name:        'German',
-      proficiency: 'B2 — Upper-Intermediate',
+      proficiency: 'B2: Upper-Intermediate',
     },
     {
       name:        'Basque',
-      proficiency: 'B1 — Intermediate',
+      proficiency: 'B1: Intermediate',
     },
   ],
 };
