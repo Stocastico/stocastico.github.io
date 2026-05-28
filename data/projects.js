@@ -42,7 +42,7 @@ export const PROJECTS = [
             year: "2020 – 2022",
             tags: ["Web Application","Co-creation","Social Inclusion"],
             bg: "img/projects/traction-bg.webp",
-            description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage — the real-time distributed performance tool — spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland.",
+            description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage, the real-time distributed performance tool, spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland.",
             url: "projects/traction.html",
         },
     {
@@ -96,7 +96,7 @@ export const PROJECTS = [
             year: "2009 – 2014",
             tags: ["Computer Vision","Audio Analysis","Digital Humanities"],
             bg: "img/projects/avatech-bg.webp",
-            description: "AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN — the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide — turning weeks of manual labelling into minutes of supervised review.",
+            description: "AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN, the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide, turning weeks of manual labelling into minutes of supervised review.",
             url: "projects/avatech.html",
         }];
 

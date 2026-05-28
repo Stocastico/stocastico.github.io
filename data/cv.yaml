@@ -102,7 +102,7 @@ career:
 # Optional:  location, description
 education:
   - year: "2019 – 2024"
-    degree: "PhD — Computer Science"
+    degree: "PhD in Computer Science"
     institution: "Euskal Herriko Unibertsitatea (UPV/EHU)"
     location: "Bilbao, ES"
     description: >
@@ -113,12 +113,12 @@ education:
       - Vicomtech
 
   - year: "2005 – 2008"
-    degree: "MSc — Telecommunications Engineering"
+    degree: "MSc in Telecommunications Engineering"
     institution: "Università degli Studi di Brescia"
     location: "Brescia, IT"
 
   - year: "2000 – 2005"
-    degree: "BSc — Information Technology"
+    degree: "BSc in Information Technology"
     institution: "Università degli Studi di Brescia"
     location: "Brescia, IT"
 
@@ -158,10 +158,10 @@ skills:
     - name: Italian
       proficiency: Native
     - name: Spanish
-      proficiency: "C2 — Proficient"
+      proficiency: "C2: Proficient"
     - name: English
-      proficiency: "C2 — Proficient"
+      proficiency: "C2: Proficient"
     - name: German
-      proficiency: "B2 — Upper-Intermediate"
+      proficiency: "B2: Upper-Intermediate"
     - name: Basque
-      proficiency: "B1 — Intermediate"
+      proficiency: "B1: Intermediate"

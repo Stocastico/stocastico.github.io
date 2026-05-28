@@ -9,21 +9,21 @@
   <meta name="description" content="End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow, noai, noimageai" />
-  <title>MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri</title>
+  <title>MLOps Platform on GCP for a Spanish Media Group | Stefano Masneri</title>
   <link rel="canonical" href="https://stefanomasneri.com/projects/mlops-vertex-media.html" />
 
   <meta property="og:type"        content="article" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:url"         content="https://stefanomasneri.com/projects/mlops-vertex-media.html" />
-  <meta property="og:title"       content="MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri" />
+  <meta property="og:title"       content="MLOps Platform on GCP for a Spanish Media Group | Stefano Masneri" />
   <meta property="og:description" content="End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle." />
   <meta property="og:image"       content="https://stefanomasneri.com/img/projects/mlops-bg.webp" />
   <meta property="og:image:width"  content="1600" />
   <meta property="og:image:height" content="840" />
   <meta property="og:image:alt"   content="MLOps Platform on GCP for a Spanish Media Group" />
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri" />
+  <meta name="twitter:title"       content="MLOps Platform on GCP for a Spanish Media Group | Stefano Masneri" />
   <meta name="twitter:description" content="End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle." />
   <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/mlops-bg.webp" />
   <meta name="twitter:image:alt"   content="MLOps Platform on GCP for a Spanish Media Group" />
@@ -172,10 +172,10 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
   <img src="../img/projects/mlops-architecture.webp" alt="MLOps architecture on GCP" width="1408" height="768" loading="lazy" />
 </figure>
 <p>
-<strong>Data layer.</strong> All training and serving data flows through <strong>BigQuery</strong>, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the <strong>Vertex AI Feature Store</strong> so the same definitions can serve both training and online inference — closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in <strong>GCS</strong> with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
+<strong>Data layer.</strong> All training and serving data flows through <strong>BigQuery</strong>, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the <strong>Vertex AI Feature Store</strong> so the same definitions can serve both training and online inference, closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in <strong>GCS</strong> with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
 </p>
 <p>
-<strong>Training and registry.</strong> Models are trained inside <strong>Vertex AI Pipelines</strong> using the Kubeflow Pipelines (KFP) SDK. Each pipeline is a DAG of containerised steps — ingest, validate, build features, train, evaluate, register — and steps are reusable across models so a new project starts from a working skeleton rather than a blank notebook. <strong>Vertex AI Experiments</strong> captures every run's parameters, metrics and lineage; the trained binaries land in the <strong>Vertex AI Model Registry</strong>, where they are versioned, tagged with their evaluation metrics, and promoted through staging aliases (<code>candidate</code> → <code>staging</code> → <code>production</code>) under explicit approval gates.
+<strong>Training and registry.</strong> Models are trained inside <strong>Vertex AI Pipelines</strong> using the Kubeflow Pipelines (KFP) SDK. Each pipeline is a DAG of containerised steps, ingest, validate, build features, train, evaluate, register, and steps are reusable across models so a new project starts from a working skeleton rather than a blank notebook. <strong>Vertex AI Experiments</strong> captures every run's parameters, metrics and lineage; the trained binaries land in the <strong>Vertex AI Model Registry</strong>, where they are versioned, tagged with their evaluation metrics, and promoted through staging aliases (<code>candidate</code> → <code>staging</code> → <code>production</code>) under explicit approval gates.
 </p>
 <p>
 <strong>Serving.</strong> The recommender and a handful of low-latency models are served as <strong>Vertex AI Endpoints</strong> with canary deployments and traffic splitting; the churn predictor and other batch-oriented models run as scheduled <strong>Vertex AI Batch Prediction</strong> jobs that write their outputs back to BigQuery for the downstream CRM and marketing systems.
@@ -184,11 +184,11 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
 <strong>Monitoring.</strong> Every production endpoint is wired into <strong>Vertex AI Model Monitoring</strong>, which compares the live feature distribution against the training baseline and raises alerts when feature drift, prediction drift or training/serving skew cross a threshold. Alerts flow into the same Cloud Logging / Cloud Monitoring stack the rest of the platform uses, so the on-call rotation sees model issues alongside infrastructure issues.
 </p>
 <p>
-<strong>Cross-cutting concerns.</strong> <strong>Cloud Build</strong> runs CI/CD on every commit — unit tests, integration tests, container builds, pipeline submissions in dev — and <strong>Terraform</strong> describes all the GCP resources so environments (dev, staging, prod) are not snowflakes. <strong>Cloud Scheduler</strong> triggers the periodic retraining and batch-scoring runs. <strong>IAM</strong> and <strong>KMS</strong> handle access control and secrets uniformly across the platform.
+<strong>Cross-cutting concerns.</strong> <strong>Cloud Build</strong> runs CI/CD on every commit, unit tests, integration tests, container builds, pipeline submissions in dev, and <strong>Terraform</strong> describes all the GCP resources so environments (dev, staging, prod) are not snowflakes. <strong>Cloud Scheduler</strong> triggers the periodic retraining and batch-scoring runs. <strong>IAM</strong> and <strong>KMS</strong> handle access control and secrets uniformly across the platform.
 </p>
 <h2>What a Pipeline Actually Does</h2>
 <p>
-Each model — churn, recommender, the rest — ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
+Each model, churn, recommender, the rest, ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
 </p>
 <figure>
   <img src="../img/projects/mlops-pipeline.webp" alt="Vertex AI pipeline run" width="1408" height="768" loading="lazy" />
@@ -197,13 +197,13 @@ Each model — churn, recommender, the rest — ended up as a Vertex AI Pipeline
 The pipeline runs on a schedule (typically weekly for churn, daily for the recommender) or whenever Model Monitoring raises a drift alert against the corresponding production endpoint. A typical run goes through:
 </p>
 <ol>
-  <li><strong>Ingest</strong> — a parameterised BigQuery query produces a dated training snapshot and writes it to GCS. The snapshot URI is recorded as a pipeline parameter so the run is fully reproducible.</li>
-  <li><strong>Validate</strong> — schema, types and basic statistics are checked against the previous snapshot. Anything that looks wrong (a feature distribution that has shifted suspiciously, a column that has gone missing) fails the pipeline early before any compute is wasted on training.</li>
-  <li><strong>Features</strong> — transformations and joins produce the model-ready feature set, which is materialised in the Feature Store so the same definitions are available at inference time.</li>
-  <li><strong>Train</strong> — the model is trained inside a custom container, optionally with hyperparameter tuning when the training budget allows it.</li>
-  <li><strong>Evaluate</strong> — offline metrics are computed and compared against the current production model. Both the new candidate's metrics and the comparison are logged to Experiments.</li>
-  <li><strong>Register</strong> — if the candidate is at least as good as production on the agreed metrics, it is registered in the Model Registry and tagged as a candidate. If not, the run halts and an alert is raised — no silent regressions.</li>
-  <li><strong>Deploy</strong> — a candidate that passes the offline gate is rolled out to a canary endpoint with a small slice of live traffic, monitored for a defined window, and either promoted to take 100% of traffic or rolled back automatically.</li>
+  <li><strong>Ingest</strong>: a parameterised BigQuery query produces a dated training snapshot and writes it to GCS. The snapshot URI is recorded as a pipeline parameter so the run is fully reproducible.</li>
+  <li><strong>Validate</strong>: schema, types and basic statistics are checked against the previous snapshot. Anything that looks wrong (a feature distribution that has shifted suspiciously, a column that has gone missing) fails the pipeline early before any compute is wasted on training.</li>
+  <li><strong>Features</strong>: transformations and joins produce the model-ready feature set, which is materialised in the Feature Store so the same definitions are available at inference time.</li>
+  <li><strong>Train</strong>: the model is trained inside a custom container, optionally with hyperparameter tuning when the training budget allows it.</li>
+  <li><strong>Evaluate</strong>: offline metrics are computed and compared against the current production model. Both the new candidate's metrics and the comparison are logged to Experiments.</li>
+  <li><strong>Register</strong>: if the candidate is at least as good as production on the agreed metrics, it is registered in the Model Registry and tagged as a candidate. If not, the run halts and an alert is raised; no silent regressions.</li>
+  <li><strong>Deploy</strong>: a candidate that passes the offline gate is rolled out to a canary endpoint with a small slice of live traffic, monitored for a defined window, and either promoted to take 100% of traffic or rolled back automatically.</li>
 </ol>
 <p>
 The full cycle runs without human intervention on the happy path; the human work is concentrated where it actually adds value: reviewing the model card before promotion, investigating drift alerts, deciding whether a borderline candidate is worth shipping.
@@ -229,7 +229,7 @@ By the end of the engagement, all the models in scope were running on Vertex AI 
 <ul>
   <li>Retraining went from a manual, days-long process per model to a scheduled pipeline run measured in hours.</li>
   <li>Promoting a new model version went from copying files to opening a pull request and approving the candidate in the Model Registry.</li>
-  <li>Drift detection that previously did not exist now caught two distinct feature-distribution shifts on the recommender during the first months of operation — one of them traced back to an upstream change in how article tags were generated, which would otherwise have quietly degraded recommendations.</li>
+  <li>Drift detection that previously did not exist now caught two distinct feature-distribution shifts on the recommender during the first months of operation; one of them traced back to an upstream change in how article tags were generated, which would otherwise have quietly degraded recommendations.</li>
   <li>Onboarding a new model became a question of cloning a pipeline template and filling in the model-specific bits, rather than designing the operational story from scratch.</li>
 </ul>
 <p>

@@ -9,21 +9,21 @@
   <meta name="description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow, noai, noimageai" />
-  <title>Audience Engagement Measurement System — Stefano Masneri</title>
+  <title>Audience Engagement Measurement System | Stefano Masneri</title>
   <link rel="canonical" href="https://stefanomasneri.com/projects/audience-engagement.html" />
 
   <meta property="og:type"        content="article" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:url"         content="https://stefanomasneri.com/projects/audience-engagement.html" />
-  <meta property="og:title"       content="Audience Engagement Measurement System — Stefano Masneri" />
+  <meta property="og:title"       content="Audience Engagement Measurement System | Stefano Masneri" />
   <meta property="og:description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
   <meta property="og:image"       content="https://stefanomasneri.com/img/projects/audience-engagement-bg.webp" />
   <meta property="og:image:width"  content="1852" />
   <meta property="og:image:height" content="542" />
   <meta property="og:image:alt"   content="Multi-modal Audience Engagement Measurement System" />
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Audience Engagement Measurement System — Stefano Masneri" />
+  <meta name="twitter:title"       content="Audience Engagement Measurement System | Stefano Masneri" />
   <meta name="twitter:description" content="A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software." />
   <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/audience-engagement-bg.webp" />
   <meta name="twitter:image:alt"   content="Multi-modal Audience Engagement Measurement System" />
@@ -143,18 +143,18 @@
 How do you know whether an audience is actually paying attention? For a conference organiser, a museum curator, or a retail-space operator, the question matters: did people show up and engage, or did they walk past? Existing answers relied on either expensive, intrusive sensors or proxy metrics (ticket sales, post-event surveys) that say nothing about what happened in the room.
 </p>
 <p>
-This project, carried out at <strong>Vicomtech</strong> in <strong>2020</strong> and published at <strong>ICAART 2020</strong> (Sanz-Narrillos, Masneri, Zorrilla — <em>&quot;A Multi-modal Audience Engagement Measurement System&quot;</em>), proposed a different answer: combine two cheap, complementary sensing modalities — <strong>computer vision</strong> and <strong>wireless signal strength</strong> — and use each to cover the weaknesses of the other. The complete system was released as open source and is available on <a href="https://github.com/tv-vicomtech/AudienceEngagement" target="_blank" rel="noopener">GitHub</a>.
+This project, carried out at <strong>Vicomtech</strong> in <strong>2020</strong> and published at <strong>ICAART 2020</strong> (Sanz-Narrillos, Masneri, Zorrilla: <em>&quot;A Multi-modal Audience Engagement Measurement System&quot;</em>), proposed a different answer: combine two cheap, complementary sensing modalities, <strong>computer vision</strong> and <strong>wireless signal strength</strong>, and use each to cover the weaknesses of the other. The complete system was released as open source and is available on <a href="https://github.com/tv-vicomtech/AudienceEngagement" target="_blank" rel="noopener">GitHub</a>.
 </p>
 <h2>The Two Modalities</h2>
 <p>
 <strong>Visual channel.</strong> Standard RGB cameras feed a pipeline built on <strong>TensorFlow</strong> and <strong>OpenCV</strong>. For each frame the system runs, in sequence:
 </p>
 <ol>
-  <li>Person detection — locating every individual in the frame.</li>
+  <li>Person detection: locating every individual in the frame.</li>
   <li>Face detection inside each person bounding box.</li>
-  <li>Body-joint estimation — eyes, ears, nose, shoulders, elbows, hands, hips, knees, feet.</li>
+  <li>Body-joint estimation: eyes, ears, nose, shoulders, elbows, hands, hips, knees, feet.</li>
   <li>Frame-to-frame tracking to maintain stable identities over time.</li>
-  <li>Attention-direction estimation based on the geometric configuration of the eyes and nose — classified as <em>front</em>, <em>left</em>, <em>right</em>, or <em>no detection</em>.</li>
+  <li>Attention-direction estimation based on the geometric configuration of the eyes and nose: classified as <em>front</em>, <em>left</em>, <em>right</em>, or <em>no detection</em>.</li>
 </ol>
 <p>
 The visual channel answers rich questions (how many people, where, are they looking at the stage?) but fails in poor lighting, behind obstacles, or when the camera simply does not cover a section of the venue.
@@ -163,17 +163,17 @@ The visual channel answers rich questions (how many people, where, are they look
 <strong>Wireless channel.</strong> A network of <strong>Raspberry Pi scanners</strong> passively listens for WiFi and Bluetooth probe requests from devices in the environment. The received signal strength indicator (RSSI) from each scanner, combined across multiple nodes, is used to estimate the approximate location of each device within a set of predefined zones. The processing is done on a central server using the open-source <strong>Find3</strong> framework; scanners and server communicate via <strong>MQTT (Mosquitto)</strong>.
 </p>
 <p>
-The wireless channel is robust to lighting and occlusions, covers the entire venue regardless of camera placement, and — crucially — provides a <strong>per-device identity</strong> that persists across the event without any cooperation from the attendee.
+The wireless channel is robust to lighting and occlusions, covers the entire venue regardless of camera placement, and, crucially, provides a <strong>per-device identity</strong> that persists across the event without any cooperation from the attendee.
 </p>
 <h2>Fusion</h2>
 <p>
 The two channels cover different things. The visual channel is <em>precise but narrow</em>: it tells you exactly who is looking at what, but only where a camera can see them. The wireless channel is <em>broad but coarse</em>: it knows someone is in the &quot;main hall&quot; zone, but nothing about their pose or attention. The system fuses both to compute, for each zone and each time window:
 </p>
 <ul>
-  <li><strong>Occupancy</strong> — how many distinct devices and people were present.</li>
-  <li><strong>Dwell time</strong> — how long, on average, individuals stayed in the zone.</li>
-  <li><strong>Attention share</strong> — the fraction of visible people whose gaze was directed towards the designated focal point (stage, screen, exhibit).</li>
-  <li><strong>Movement patterns</strong> — total and maximum distance travelled, extracted from the visual tracks.</li>
+  <li><strong>Occupancy</strong>: how many distinct devices and people were present.</li>
+  <li><strong>Dwell time</strong>: how long, on average, individuals stayed in the zone.</li>
+  <li><strong>Attention share</strong>: the fraction of visible people whose gaze was directed towards the designated focal point (stage, screen, exhibit).</li>
+  <li><strong>Movement patterns</strong>: total and maximum distance travelled, extracted from the visual tracks.</li>
 </ul>
 <p>
 An engagement score is computed by weighting these primitives. The weights are not fixed: they can be tuned per venue and per event type, which matters because &quot;engagement&quot; looks very different at a conference talk (low movement, high attention share) than at a museum exhibit (moderate movement, high dwell time) or a product launch (high movement, variable attention).
@@ -183,11 +183,11 @@ An engagement score is computed by weighting these primitives. The weights are n
 The software stack was designed to be deployable on commodity hardware:
 </p>
 <ul>
-  <li><strong>Scanner nodes</strong> — Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in <strong>Go</strong> for efficiency on constrained hardware.</li>
-  <li><strong>Server</strong> — Go-based aggregation and inference service, also handling MQTT brokerage.</li>
-  <li><strong>Vision processing</strong> — Python 3 with TensorFlow and OpenCV; runs on a small GPU-equipped edge machine connected to the venue cameras.</li>
-  <li><strong>Messaging</strong> — MQTT over Mosquitto for all inter-component communication.</li>
-  <li><strong>Deployment</strong> — Docker images for each component to simplify installation at the venue.</li>
+  <li><strong>Scanner nodes</strong>: Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in <strong>Go</strong> for efficiency on constrained hardware.</li>
+  <li><strong>Server</strong>: Go-based aggregation and inference service, also handling MQTT brokerage.</li>
+  <li><strong>Vision processing</strong>: Python 3 with TensorFlow and OpenCV; runs on a small GPU-equipped edge machine connected to the venue cameras.</li>
+  <li><strong>Messaging</strong>: MQTT over Mosquitto for all inter-component communication.</li>
+  <li><strong>Deployment</strong>: Docker images for each component to simplify installation at the venue.</li>
 </ul>
 <p>
 The deliberate choice of <strong>Go for the wireless side</strong> and <strong>Python for the vision side</strong> reflected practical trade-offs: Go gave us the single-binary deployability and tight memory footprint we needed on the Pi scanners; Python gave us the machine-learning ecosystem for everything visual.
@@ -202,7 +202,7 @@ Three things made this project interesting beyond the engagement-metric angle:
 </p>
 <ol>
   <li><strong>Multi-modal sensor fusion done pragmatically.</strong> Academic papers on multi-modal systems often fuse modalities that share a common machine-learning formulation. Here the channels had completely different statistical properties, completely different hardware requirements, and different failure modes. The fusion had to respect that asymmetry.</li>
-  <li><strong>Open-source release.</strong> The entire stack — scanner firmware, server, vision pipeline, MQTT plumbing, Docker files — is on GitHub and was designed for reproducibility. At the time, very little open tooling existed in the audience-analytics space outside of proprietary, closed commercial offerings.</li>
+  <li><strong>Open-source release.</strong> The entire stack, scanner firmware, server, vision pipeline, MQTT plumbing, Docker files, is on GitHub and was designed for reproducibility. At the time, very little open tooling existed in the audience-analytics space outside of proprietary, closed commercial offerings.</li>
   <li><strong>Privacy-aware by design.</strong> The wireless channel uses <strong>MAC addresses as transient identifiers only</strong>, and all personal identifiers are dropped before aggregation. The visual channel produces only zone-level statistics, not per-person records. This was a deliberate response to the GDPR landscape that was crystallising in Europe in 2019–2020.</li>
 </ol>
 <p>

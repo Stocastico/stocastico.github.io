@@ -11,14 +11,14 @@
     content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow, noai, noimageai" />
-  <title>cleAR: Architecture for Multi-User AR — Stefano Masneri</title>
+  <title>cleAR: Architecture for Multi-User AR | Stefano Masneri</title>
   <link rel="canonical" href="https://stefanomasneri.com/projects/clear-architecture.html" />
 
   <meta property="og:type" content="article" />
   <meta property="og:site_name"   content="Stefano Masneri" />
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:url" content="https://stefanomasneri.com/projects/clear-architecture.html" />
-  <meta property="og:title" content="cleAR: Architecture for Multi-User AR — Stefano Masneri" />
+  <meta property="og:title" content="cleAR: Architecture for Multi-User AR | Stefano Masneri" />
   <meta property="og:description"
     content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
   <meta property="og:image" content="https://stefanomasneri.com/img/projects/clear-architecture.webp" />
@@ -26,7 +26,7 @@
   <meta property="og:image:height" content="405" />
   <meta property="og:image:alt"   content="cleAR: Interoperable Architecture for Multi-User AR" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="cleAR: Architecture for Multi-User AR — Stefano Masneri" />
+  <meta name="twitter:title" content="cleAR: Architecture for Multi-User AR | Stefano Masneri" />
   <meta name="twitter:description"
     content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
   <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/clear-architecture.webp" />
@@ -155,8 +155,8 @@
       published in the <em>Virtual Reality</em> journal (Springer, 2023).
     </p>
     <p>
-      Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier
-      knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty
+      Despite the well-documented benefits of AR in learning, improved motivation, better concept assimilation, easier
+      knowledge transfer, its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty
       of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school
       infrastructure and curricula. cleAR was designed to address both.
     </p>
@@ -169,18 +169,18 @@
       <img src="../img/projects/clear-design-objectives.webp" alt="Design objectives diagram" width="751" height="469" loading="lazy" />
     </figure>
     <ul>
-      <li><strong>DO1 — Interoperability</strong>: Cross-platform support for head-mounted displays, tablets,
+      <li><strong>DO1: Interoperability</strong>: Cross-platform support for head-mounted displays, tablets,
         smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
       </li>
-      <li><strong>DO2 — Multi-user interactions</strong>: Real-time collaboration between students and teachers, both
+      <li><strong>DO2: Multi-user interactions</strong>: Real-time collaboration between students and teachers, both
         in-person and remotely.</li>
-      <li><strong>DO3 — Long-term storage</strong>: Persistent capture of student progress, task completion, and
+      <li><strong>DO3: Long-term storage</strong>: Persistent capture of student progress, task completion, and
         interaction data for longitudinal analysis.</li>
-      <li><strong>DO4 — Data visualisation</strong>: Automatic generation of reports and interactive dashboards
+      <li><strong>DO4: Data visualisation</strong>: Automatic generation of reports and interactive dashboards
         accessible to teachers without programming skills.</li>
-      <li><strong>DO5 — AI integration</strong>: Support for machine learning pipelines that can surface usage patterns,
+      <li><strong>DO5: AI integration</strong>: Support for machine learning pipelines that can surface usage patterns,
         estimate task difficulty, and flag students at risk of falling behind.</li>
-      <li><strong>DO6 — Ease of development</strong>: A clean, well-documented API surface so developers can build new
+      <li><strong>DO6: Ease of development</strong>: A clean, well-documented API surface so developers can build new
         AR experiences without reimplementing common infrastructure.</li>
     </ul>
     <h2>Architecture</h2>
@@ -219,7 +219,7 @@
       Three proof-of-concept applications were developed to validate the architecture against the design objectives.
     </p>
     <p>
-      <strong>AR Cube</strong> — a minimal multi-user app in which up to four users share a virtual cube and can
+      <strong>AR Cube</strong>: a minimal multi-user app in which up to four users share a virtual cube and can
       manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative
       logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both
       Wi-Fi and 4G.
@@ -228,13 +228,13 @@
       <img src="../img/projects/clear-ar-cube.webp" alt="AR Cube proof-of-concept" width="551" height="310" loading="lazy" />
     </figure>
     <p>
-      <strong>xAPI Data Analysis</strong> — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent
+      <strong>xAPI Data Analysis</strong>: a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent
       clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A
       classification model trained on the collected data successfully predicted the originating client from the xAPI
       triplet, validating DO3–DO5.
     </p>
     <p>
-      <strong>AR Geography Quiz</strong> — the most complete proof-of-concept, placing a teacher and multiple students
+      <strong>AR Geography Quiz</strong>: the most complete proof-of-concept, placing a teacher and multiple students
       around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective
       mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and
       mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
