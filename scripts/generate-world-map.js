@@ -65,36 +65,94 @@ function ringCoords(arcIdxList, decodeArc) {
   return ring;
 }
 
+/* Make a ring's longitudes continuous: when consecutive points jump by more
+   than 180° they're really crossing the antimeridian, so unwrap by ±360°.
+   Without this, an equirectangular projection stretches the segment clear
+   across the map (Russia/Chukotka, Fiji). Mirrors the fix in js/globe.js. */
+function unwrapRing(coords) {
+  if (!coords.length) return coords;
+  const out = [[coords[0][0], coords[0][1]]];
+  for (let i = 1; i < coords.length; i += 1) {
+    let lon = coords[i][0];
+    const prevLon = out[i - 1][0];
+    while (lon - prevLon > 180) lon -= 360;
+    while (lon - prevLon < -180) lon += 360;
+    out.push([lon, coords[i][1]]);
+  }
+  return out;
+}
+
+/* Build the SVG subpath(s) for one ring. Equirectangular projection
+   (x = lon, y = -lat), rounded to 1 decimal. The ring is unwrapped first;
+   when the unwrapped ring spills past ±180° we also emit a copy shifted by
+   ∓360° so the wrapped-around piece still appears — the fixed viewBox clips
+   whatever falls outside [-180, 180]. Updates `latBounds` (latitudes are
+   never wrapped, so they're safe to use for the vertical extent). */
+function ringSubpaths(coords, round, latBounds) {
+  if (coords.length < 2) return [];
+  const unwrapped = unwrapRing(coords);
+  let minLon = Infinity;
+  let maxLon = -Infinity;
+  for (const [lon] of unwrapped) {
+    if (lon < minLon) minLon = lon;
+    if (lon > maxLon) maxLon = lon;
+  }
+
+  const subpathAt = (shift) => {
+    let d = '';
+    let prevX = null;
+    let prevY = null;
+    let emitted = 0;
+    for (const [lon, lat] of unwrapped) {
+      const x = round(lon + shift);
+      const y = round(-lat);
+      // Skip points that collapse onto the previous one after rounding.
+      if (x === prevX && y === prevY) continue;
+      prevX = x;
+      prevY = y;
+      if (lat < latBounds.min) latBounds.min = lat;
+      if (lat > latBounds.max) latBounds.max = lat;
+      // Compact path data: a leading minus is self-delimiting, so only emit a
+      // space separator before a non-negative y.
+      const sep = y < 0 ? '' : ' ';
+      d += `${emitted === 0 ? 'M' : 'L'}${x}${sep}${y}`;
+      emitted += 1;
+    }
+    return emitted >= 2 ? `${d}Z` : '';
+  };
+
+  const subs = [];
+  const base = subpathAt(0);
+  if (base) subs.push(base);
+  if (maxLon > 180) {
+    const wrapped = subpathAt(-360);
+    if (wrapped) subs.push(wrapped);
+  }
+  if (minLon < -180) {
+    const wrapped = subpathAt(360);
+    if (wrapped) subs.push(wrapped);
+  }
+  return subs;
+}
+
 /* Build an SVG path `d` (one country, all polygons + holes). Returns null when
-   the geometry has no rings. Mutates `bounds` with the projected extent. */
-function geometryToPath(geom, decodeArc, project, bounds) {
+   the geometry has no drawable rings. Mutates `latBounds`. With
+   `skipAntarctica`, rings lying entirely south of 55°S are dropped — Antarctica
+   is irrelevant to a "places visited" map and its polar ring would otherwise
+   need pole-bridging to fill correctly. */
+function geometryToPath(geom, decodeArc, round, latBounds, opts = {}) {
   const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
   const segments = [];
   for (const poly of polys || []) {
     for (const ringArcs of poly) {
       const coords = ringCoords(ringArcs, decodeArc);
       if (coords.length < 2) continue;
-      let d = '';
-      let prevX = null;
-      let prevY = null;
-      let emitted = 0;
-      for (let i = 0; i < coords.length; i += 1) {
-        const [x, y] = project(coords[i][0], coords[i][1]);
-        // Skip points that collapse onto the previous one after rounding.
-        if (x === prevX && y === prevY) continue;
-        prevX = x;
-        prevY = y;
-        if (x < bounds.minX) bounds.minX = x;
-        if (x > bounds.maxX) bounds.maxX = x;
-        if (y < bounds.minY) bounds.minY = y;
-        if (y > bounds.maxY) bounds.maxY = y;
-        // Compact path data: a leading minus is self-delimiting, so only emit
-        // a space separator before a non-negative y.
-        const sep = y < 0 ? '' : ' ';
-        d += `${emitted === 0 ? 'M' : 'L'}${x}${sep}${y}`;
-        emitted += 1;
+      if (opts.skipAntarctica) {
+        let maxLat = -Infinity;
+        for (const p of coords) if (p[1] > maxLat) maxLat = p[1];
+        if (maxLat < -55) continue;
       }
-      if (emitted >= 2) segments.push(`${d}Z`);
+      segments.push(...ringSubpaths(coords, round, latBounds));
     }
   }
   return segments.length ? segments.join('') : null;
@@ -111,16 +169,15 @@ function buildWorldMapSvg(topo, countries) {
   const visited = new Set((countries && countries.visited) || []);
   const decodeArc = makeArcDecoder(topo);
 
-  // Equirectangular; round to 1 decimal place.
+  // Equirectangular; round to 1 decimal place. Only latitudes feed the
+  // viewBox — longitude is fixed to the full [-180, 180] world so wrapped
+  // (antimeridian) overflow is clipped cleanly at the date line.
   const round = (n) => Math.round(n * 10) / 10;
-  const project = (lon, lat) => [round(lon), round(-lat)];
+  const latBounds = { min: Infinity, max: -Infinity };
 
-  const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-
-  // Base silhouette — the merged land object covers the full extent, so the
-  // viewBox is fitted from it.
+  // Base silhouette — the merged land object covers the full extent.
   const land = topo.objects.land.geometries[0];
-  const landPath = geometryToPath(land, decodeArc, project, bounds);
+  const landPath = geometryToPath(land, decodeArc, round, latBounds, { skipAntarctica: true });
 
   // Highlighted countries painted over the silhouette.
   const highlights = [];
@@ -129,17 +186,17 @@ function buildWorldMapSvg(topo, countries) {
     const isLived = lived.has(name);
     const isVisited = visited.has(name);
     if (!isLived && !isVisited) continue;
-    const d = geometryToPath(geom, decodeArc, project, bounds);
+    const d = geometryToPath(geom, decodeArc, round, latBounds, { skipAntarctica: true });
     if (!d) continue;
     const cls = `wm-country ${isLived ? 'wm-lived' : 'wm-visited'}`;
     highlights.push(`<path class="${cls}" data-name="${escapeAttr(name)}" d="${d}"/>`);
   }
 
-  const pad = 2;
-  const minX = round(bounds.minX - pad);
-  const minY = round(bounds.minY - pad);
-  const w = round(bounds.maxX - bounds.minX + pad * 2);
-  const h = round(bounds.maxY - bounds.minY + pad * 2);
+  const padY = 2;
+  const minX = -180;
+  const w = 360;
+  const minY = round(-latBounds.max - padY);
+  const h = round(latBounds.max - latBounds.min + padY * 2);
 
   return (
     `<svg class="world-map" viewBox="${minX} ${minY} ${w} ${h}" ` +
