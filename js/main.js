@@ -52,6 +52,7 @@ import '../data/locations.js';
 import { PUBLICATIONS as DEFAULT_PUBLICATIONS } from '../data/publications.js';
 import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
 import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
+import { UNESCO as DEFAULT_UNESCO } from '../data/unesco.js';
 import './europe-map.js';
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
@@ -595,6 +596,51 @@ export function renderGlobeA11yList(container, locations) {
   container.innerHTML = sections.join('');
 }
 
+/* Renders the UNESCO World Heritage accordion on the travel page: a two-level
+   native-disclosure tree (continent → country) whose leaves are links to each
+   site's official whc.unesco.org page. Built from <details>/<summary> so it is
+   keyboard-operable and degrades gracefully with no extra JS. Site URLs are
+   already restricted to https:// by the generator (scripts/generate-unesco.js),
+   and every field is HTML-escaped here as defence in depth. */
+export function renderUnescoAccordion(container, data) {
+  if (!container) return;
+  const continents = (data && Array.isArray(data.continents)) ? data.continents : [];
+
+  if (!continents.length) {
+    container.innerHTML =
+      '<p class="unesco-empty">The list of visited sites is on its way &mdash; check back soon.</p>';
+    return;
+  }
+
+  const countSites = (countries) =>
+    countries.reduce((n, k) => n + (k.sites ? k.sites.length : 0), 0);
+
+  const html = continents.map((cont) => {
+    const countries = (cont.countries || []).map((country) => {
+      const sites = (country.sites || []).map((site) => {
+        const year = site.year
+          ? ` <span class="unesco-year">(${escapeHtml(String(site.year))})</span>`
+          : '';
+        return `<li><a class="unesco-site" href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(site.name)}</a>${year}</li>`;
+      }).join('');
+      return (
+        `<details class="unesco-country"><summary>` +
+        `<span class="unesco-name">${escapeHtml(country.name)}</span>` +
+        `<span class="unesco-count">${(country.sites || []).length}</span></summary>` +
+        `<ul class="unesco-sites">${sites}</ul></details>`
+      );
+    }).join('');
+    return (
+      `<details class="unesco-continent"><summary>` +
+      `<span class="unesco-name">${escapeHtml(cont.name)}</span>` +
+      `<span class="unesco-count">${countSites(cont.countries || [])}</span></summary>` +
+      `<div class="unesco-countries">${countries}</div></details>`
+    );
+  }).join('');
+
+  container.innerHTML = html;
+}
+
 /* Run destroy() on every disposable when the page is being torn down.
    Wired to `pagehide` because it is the most reliable signal for both
    classic unloads and bfcache evictions. visibilitychange would be too
@@ -797,6 +843,10 @@ if (typeof document !== 'undefined') {
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
     _lazyOnViewport(europeCanvas, () => _disposables.push(new EuropeMap2D(europeCanvas)));
   }
+
+  /* UNESCO World Heritage accordion (travel page only) */
+  const unescoAccordion = document.getElementById('unesco-accordion');
+  if (unescoAccordion) renderUnescoAccordion(unescoAccordion, DEFAULT_UNESCO);
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');

@@ -2986,6 +2986,56 @@ test('renderGlobeA11yList: escapes HTML in location names', async () => {
     'expected escaped &lt;script in output');
 });
 
+/* ─── UNESCO accordion (travel page) ────────────────────────
+   renderUnescoAccordion() must build a continent → country → site
+   disclosure tree with safe external links, and degrade gracefully. */
+
+test('renderUnescoAccordion: builds nested continent/country disclosure with site links', async () => {
+  const { renderUnescoAccordion } = await import('../js/main.js');
+  assert.equal(typeof renderUnescoAccordion, 'function',
+    'main.js must export renderUnescoAccordion');
+  const container = { innerHTML: '' };
+  renderUnescoAccordion(container, {
+    continents: [
+      {
+        name: 'Europe',
+        countries: [
+          { name: 'Italy', sites: [{ name: 'Rome', url: 'https://whc.unesco.org/en/list/91', year: 2018 }] },
+        ],
+      },
+    ],
+  });
+  const html = container.innerHTML;
+  assert.match(html, /unesco-continent/);
+  assert.match(html, /unesco-country/);
+  assert.match(html, /Europe/);
+  assert.match(html, /Italy/);
+  assert.match(html, /href="https:\/\/whc\.unesco\.org\/en\/list\/91"/);
+  assert.match(html, /rel="noopener noreferrer"/);
+  assert.match(html, /\(2018\)/);
+});
+
+test('renderUnescoAccordion: shows a placeholder when there are no continents', async () => {
+  const { renderUnescoAccordion } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderUnescoAccordion(container, { continents: [] });
+  assert.match(container.innerHTML, /unesco-empty/);
+});
+
+test('renderUnescoAccordion: escapes HTML in site and country names', async () => {
+  const { renderUnescoAccordion } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderUnescoAccordion(container, {
+    continents: [
+      { name: 'Europe', countries: [
+        { name: '<b>X</b>', sites: [{ name: '<script>alert(1)</script>', url: 'https://x.example' }] },
+      ] },
+    ],
+  });
+  assert.ok(!container.innerHTML.includes('<script>'), 'must escape site names');
+  assert.match(container.innerHTML, /&lt;script/);
+});
+
 /* ─── Page lifecycle cleanup ────────────────────────────────
    initLifecycleCleanup() must register a pagehide listener that
    fans out destroy() across the supplied disposables, idempotently. */

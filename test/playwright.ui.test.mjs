@@ -149,35 +149,29 @@ console.log('── Desktop (1280×800) — index.html ────────�
     assert(groups.length >= 1, `Skill groups: ${groups.length}`);
   });
 
-  await test('2D Europe canvas is present and sized', async () => {
-    await page.evaluate(() => document.getElementById('about')?.scrollIntoView());
+  await test('Homepage Places teaser renders the static world map', async () => {
+    await page.evaluate(() => document.getElementById('places')?.scrollIntoView());
     await page.waitForTimeout(300);
-    const metrics = await page.evaluate(() => {
-      const canvas = document.getElementById('europe-canvas');
-      if (!canvas) return null;
-      return { width: canvas.width, height: canvas.height };
+    const info = await page.evaluate(() => {
+      const svg = document.querySelector('.world-map');
+      if (!svg) return null;
+      return {
+        lived: document.querySelectorAll('.world-map .wm-lived').length,
+        visited: document.querySelectorAll('.world-map .wm-visited').length,
+        hasLand: !!document.querySelector('.world-map .wm-land'),
+        hasTravelLink: !!document.querySelector('.places-more a[href*="travel"]'),
+      };
     });
-    assert(metrics !== null, '#europe-canvas not found');
-    assert(metrics.width > 0 && metrics.height > 0, `Invalid Europe canvas size: ${JSON.stringify(metrics)}`);
+    assert(info !== null, '.world-map SVG not found on homepage');
+    assert(info.hasLand, 'world map silhouette (.wm-land) missing');
+    assert(info.lived >= 1 && info.visited >= 1, `expected highlighted countries, got ${JSON.stringify(info)}`);
+    assert(info.hasTravelLink, 'link to travel page missing from Places teaser');
   });
 
-  await test('2D Europe map initializes with tooltip DOM', async () => {
-    await page.evaluate(() => document.getElementById('europe-canvas')?.scrollIntoView());
-    await page.waitForTimeout(300);
-
-    await page.waitForFunction(() => {
-      const canvas = document.getElementById('europe-canvas');
-      const tooltip = document.getElementById('europe-tooltip');
-      return !!(canvas && canvas._europe && canvas._europe.filteredPins?.length > 0 && tooltip);
-    }, { timeout: 5000 });
-
-    const ready = await page.evaluate(() => {
-      const canvas = document.getElementById('europe-canvas');
-      const tooltip = document.getElementById('europe-tooltip');
-      return !!(canvas && canvas._europe && canvas._europe.filteredPins?.length > 0 && tooltip);
-    });
-
-    assert(ready, 'Europe map did not initialize with pins and tooltip DOM');
+  await test('Homepage no longer mounts the heavy globe/Europe canvases', async () => {
+    const absent = await page.evaluate(() =>
+      !document.getElementById('globe-canvas') && !document.getElementById('europe-canvas'));
+    assert(absent, 'globe/Europe canvases should now live on travel.html, not the homepage');
   });
 
   await test('Location filter controls are hidden', async () => {
@@ -248,6 +242,86 @@ console.log('── Desktop (1280×800) — index.html ────────�
   await test('No JS errors at page load', async () => {
     const relevant = consoleErrors.filter(e =>
       !e.includes('Failed to load resource')    /* CDN may not resolve in test env */
+      && !e.includes('net::ERR')
+      && !e.includes('favicon')
+      && !e.includes('frame-ancestors')
+    );
+    assert(relevant.length === 0, `JS errors:\n  ${relevant.join('\n  ')}`);
+  });
+
+  await ctx.close();
+}
+
+// ─── Desktop tests (travel.html) ─────────────────────────────────────────────
+
+console.log('\n── Desktop (1280×800) — travel.html ────────────────────');
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+
+  const consoleErrors = [];
+  page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+  page.on('pageerror', err => consoleErrors.push(err.message));
+
+  await page.goto(`${BASE}/travel.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+
+  await test('Travel page title contains "Travel"', async () => {
+    const title = await page.title();
+    assert(title.includes('Travel'), `Got title: "${title}"`);
+  });
+
+  await test('2D Europe canvas is present and sized on travel page', async () => {
+    await page.evaluate(() => document.getElementById('europe-canvas')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    const metrics = await page.evaluate(() => {
+      const canvas = document.getElementById('europe-canvas');
+      if (!canvas) return null;
+      return { width: canvas.width, height: canvas.height };
+    });
+    assert(metrics !== null, '#europe-canvas not found');
+    assert(metrics.width > 0 && metrics.height > 0, `Invalid Europe canvas size: ${JSON.stringify(metrics)}`);
+  });
+
+  await test('2D Europe map initializes with tooltip DOM on travel page', async () => {
+    await page.evaluate(() => document.getElementById('europe-canvas')?.scrollIntoView());
+    await page.waitForTimeout(300);
+
+    await page.waitForFunction(() => {
+      const canvas = document.getElementById('europe-canvas');
+      const tooltip = document.getElementById('europe-tooltip');
+      return !!(canvas && canvas._europe && canvas._europe.filteredPins?.length > 0 && tooltip);
+    }, { timeout: 5000 });
+
+    const ready = await page.evaluate(() => {
+      const canvas = document.getElementById('europe-canvas');
+      const tooltip = document.getElementById('europe-tooltip');
+      return !!(canvas && canvas._europe && canvas._europe.filteredPins?.length > 0 && tooltip);
+    });
+
+    assert(ready, 'Europe map did not initialize with pins and tooltip DOM');
+  });
+
+  await test('UNESCO accordion renders continents with site links', async () => {
+    await page.evaluate(() => document.getElementById('unesco-accordion')?.scrollIntoView());
+    await page.waitForTimeout(300);
+    const info = await page.evaluate(() => {
+      const acc = document.getElementById('unesco-accordion');
+      if (!acc) return null;
+      return {
+        continents: acc.querySelectorAll('.unesco-continent').length,
+        countries: acc.querySelectorAll('.unesco-country').length,
+        siteLinks: acc.querySelectorAll('.unesco-site[href^="https://"]').length,
+      };
+    });
+    assert(info !== null, '#unesco-accordion not found');
+    assert(info.continents >= 1, `expected continents, got ${JSON.stringify(info)}`);
+    assert(info.countries >= 1 && info.siteLinks >= 1, `expected countries + site links, got ${JSON.stringify(info)}`);
+  });
+
+  await test('No JS errors on travel page', async () => {
+    const relevant = consoleErrors.filter(e =>
+      !e.includes('Failed to load resource')
       && !e.includes('net::ERR')
       && !e.includes('favicon')
       && !e.includes('frame-ancestors')

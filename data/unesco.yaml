@@ -1,0 +1,37 @@
+# UNESCO World Heritage sites Stefano has visited.
+# Source of truth for the travel page accordion → run `npm run generate-unesco`
+# after editing to rebuild data/unesco.js.
+#
+# Structure: continent → country → sites. Each site needs a name and an
+# https:// link to its official UNESCO page (find it at
+# https://whc.unesco.org/en/list/). `year` (when you visited) is optional.
+#
+# NOTE: the entries below are PLACEHOLDERS to wire up the page — replace them
+# with the real list. Continents render in the order listed here; countries
+# and sites likewise.
+
+continents:
+  - name: Europe
+    countries:
+      - name: Italy
+        sites:
+          - name: Historic Centre of Rome
+            url: https://whc.unesco.org/en/list/91
+            year: 2018
+          - name: Venice and its Lagoon
+            url: https://whc.unesco.org/en/list/394
+      - name: Spain
+        sites:
+          - name: Works of Antoni Gaudí
+            url: https://whc.unesco.org/en/list/320
+      - name: Croatia
+        sites:
+          - name: Plitvice Lakes National Park
+            url: https://whc.unesco.org/en/list/98
+
+  - name: Asia
+    countries:
+      - name: Japan
+        sites:
+          - name: Historic Monuments of Ancient Kyoto
+            url: https://whc.unesco.org/en/list/688

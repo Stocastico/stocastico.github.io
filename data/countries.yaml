@@ -1,0 +1,74 @@
+# Countries where Stefano has lived or travelled.
+# Derived from data/locations.yaml by scripts/generate-countries.js — but EDITABLE:
+# tweak the list or fix a status, then run `npm run generate-countries` to
+# rebuild data/countries.js (your edits here are preserved across runs).
+#
+#   status: lived | visited
+#   name:   must match data/countries-110m.json for the homepage map to
+#           highlight it (micro-states absent from that file stay listed
+#           here but simply will not render at world scale).
+countries:
+  - name: Germany
+    status: lived
+  - name: Italy
+    status: lived
+  - name: Spain
+    status: lived
+  - name: Albania
+    status: visited
+  - name: Austria
+    status: visited
+  - name: Belgium
+    status: visited
+  - name: Croatia
+    status: visited
+  - name: Cuba
+    status: visited
+  - name: Czechia
+    status: visited
+  - name: Egypt
+    status: visited
+  - name: France
+    status: visited
+  - name: Greece
+    status: visited
+  - name: Hungary
+    status: visited
+  - name: Iceland
+    status: visited
+  - name: Ireland
+    status: visited
+  - name: Israel
+    status: visited
+  - name: Japan
+    status: visited
+  - name: Malaysia
+    status: visited
+  - name: Malta
+    status: visited
+  - name: Morocco
+    status: visited
+  - name: Netherlands
+    status: visited
+  - name: North Macedonia
+    status: visited
+  - name: Norway
+    status: visited
+  - name: Poland
+    status: visited
+  - name: Portugal
+    status: visited
+  - name: San Marino
+    status: visited
+  - name: Slovenia
+    status: visited
+  - name: Switzerland
+    status: visited
+  - name: Thailand
+    status: visited
+  - name: Turkey
+    status: visited
+  - name: United Kingdom
+    status: visited
+  - name: United States of America
+    status: visited
