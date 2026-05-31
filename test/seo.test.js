@@ -34,6 +34,7 @@ const pages = [
   { rel: 'cv.html',       label: 'cv' },
   { rel: 'projects.html', label: 'projects' },
   { rel: 'travel.html',   label: 'travel' },
+  { rel: 'links.html',    label: 'links' },
 ];
 
 for (const { rel, label } of pages) {
@@ -58,6 +59,7 @@ const canonicalExpected = [
   { rel: 'cv.html',       label: 'cv',       href: 'https://stefanomasneri.com/cv.html' },
   { rel: 'projects.html', label: 'projects', href: 'https://stefanomasneri.com/projects.html' },
   { rel: 'travel.html',   label: 'travel',   href: 'https://stefanomasneri.com/travel.html' },
+  { rel: 'links.html',    label: 'links',    href: 'https://stefanomasneri.com/links.html' },
 ];
 
 for (const { rel, label, href } of canonicalExpected) {

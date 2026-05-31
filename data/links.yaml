@@ -1,0 +1,74 @@
+# Links — a small, curated blogroll.
+#
+# Source of truth for the links page → run `npm run generate-links` after
+# editing to rebuild data/links.js.
+#
+# Structure: category → links. Each link needs a name and an https:// url; a
+# one-line `description` is optional. An optional category `blurb` shows under
+# the category heading. Categories and links render in the order listed here.
+#
+# This is an EDITORIAL page: keep it short and curated. A blogroll only has
+# value if it stays current — prune anything you stop reading. The entries
+# below are a starter set of sites Stefano enjoys; replace them freely.
+
+categories:
+  - name: AI / ML
+    blurb: Where I go to keep up with the field and dig into the fundamentals.
+    links:
+      - name: Lil'Log
+        url: https://lilianweng.github.io
+        description: Lilian Weng's patient, rigorous deep dives into modern ML.
+      - name: Ahead of AI
+        url: https://magazine.sebastianraschka.com
+        description: Sebastian Raschka on LLMs, training and research that matters.
+      - name: Andrej Karpathy
+        url: https://karpathy.github.io
+        description: From-scratch explanations that make hard ideas click.
+      - name: Chip Huyen
+        url: https://huyenchip.com
+        description: Pragmatic writing on ML systems and the realities of shipping.
+      - name: Distill
+        url: https://distill.pub
+        description: Archived, but still the gold standard for visual ML explainers.
+
+  - name: Engineering
+    blurb: Generalists who make me a better engineer.
+    links:
+      - name: Julia Evans
+        url: https://jvns.ca
+        description: Wizard zines and the friendliest debugging notes on the web.
+      - name: Dan Luu
+        url: https://danluu.com
+        description: Data-driven essays on performance, reliability and industry myths.
+      - name: Martin Kleppmann
+        url: https://martin.kleppmann.com
+        description: Distributed systems and data, explained with unusual clarity.
+      - name: Brendan Gregg
+        url: https://www.brendangregg.com
+        description: The reference for systems performance and observability.
+
+  - name: Web & Design
+    blurb: Craft, front-end and the visual side of the web.
+    links:
+      - name: Josh W. Comeau
+        url: https://www.joshwcomeau.com
+        description: Delightful, interactive tutorials on CSS and React.
+      - name: Lea Verou
+        url: https://lea.verou.me
+        description: CSS at the standards level, from someone who helps write it.
+      - name: Smashing Magazine
+        url: https://www.smashingmagazine.com
+        description: Long-running, dependable front-end and UX writing.
+
+  - name: Worth your time
+    blurb: Slower, broader reading that has nothing and everything to do with work.
+    links:
+      - name: Gwern
+        url: https://gwern.net
+        description: Exhaustive long-form essays and the canonical personal site.
+      - name: Maggie Appleton
+        url: https://maggieappleton.com
+        description: Digital gardens, tools for thought and lovely illustrations.
+      - name: Paul Graham
+        url: https://paulgraham.com
+        description: Essays on startups, work and thinking clearly.

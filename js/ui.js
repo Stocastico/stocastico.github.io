@@ -222,6 +222,7 @@ export function initCommandPalette() {
     { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
     { id: 'projects',     label: 'Projects',      hint: 'Things I’ve built', href: 'projects.html' },
     { id: 'places',       label: 'Places',        hint: 'Where I’ve been' },
+    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: 'links.html' },
     { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
   ];
 

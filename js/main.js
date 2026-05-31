@@ -53,6 +53,7 @@ import { PUBLICATIONS as DEFAULT_PUBLICATIONS } from '../data/publications.js';
 import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
 import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
 import { UNESCO as DEFAULT_UNESCO } from '../data/unesco.js';
+import { LINKS as DEFAULT_LINKS } from '../data/links.js';
 import './europe-map.js';
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
@@ -641,6 +642,50 @@ export function renderUnescoAccordion(container, data) {
   container.innerHTML = html;
 }
 
+/* Renders the curated blogroll on the links page: a grid of category sections,
+   each listing external links (name + optional one-line description) to sites
+   Stefano follows. Link URLs are already restricted to https:// by the
+   generator (scripts/generate-links.js); every field is HTML-escaped here as
+   defence in depth. Gated on #links-grid (links page only). */
+export function renderLinks(container, data) {
+  if (!container) return;
+  const categories = (data && Array.isArray(data.categories)) ? data.categories : [];
+
+  if (!categories.length) {
+    container.innerHTML =
+      '<p class="links-empty">The reading list is on its way &mdash; check back soon.</p>';
+    return;
+  }
+
+  const html = categories.map((cat) => {
+    const links = (cat.links || []).map((link) => {
+      const desc = link.description
+        ? `<p class="link-card-desc">${escapeHtml(link.description)}</p>`
+        : '';
+      let host = '';
+      try { host = new URL(link.url).hostname.replace(/^www\./, ''); } catch (_) { host = ''; }
+      const hostLabel = host ? `<span class="link-card-host">${escapeHtml(host)}</span>` : '';
+      return (
+        `<li><a class="link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">` +
+        `<span class="link-card-head"><span class="link-card-name">${escapeHtml(link.name)}</span>` +
+        `<svg class="link-card-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">` +
+        `<path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` +
+        `</span>${desc}${hostLabel}</a></li>`
+      );
+    }).join('');
+    const blurb = cat.blurb
+      ? `<p class="links-category-blurb">${escapeHtml(cat.blurb)}</p>`
+      : '';
+    return (
+      `<section class="links-category">` +
+      `<h2 class="links-category-title">${escapeHtml(cat.name)}</h2>${blurb}` +
+      `<ul class="links-list">${links}</ul></section>`
+    );
+  }).join('');
+
+  container.innerHTML = html;
+}
+
 /* Run destroy() on every disposable when the page is being torn down.
    Wired to `pagehide` because it is the most reliable signal for both
    classic unloads and bfcache evictions. visibilitychange would be too
@@ -847,6 +892,10 @@ if (typeof document !== 'undefined') {
   /* UNESCO World Heritage accordion (travel page only) */
   const unescoAccordion = document.getElementById('unesco-accordion');
   if (unescoAccordion) renderUnescoAccordion(unescoAccordion, DEFAULT_UNESCO);
+
+  /* Curated blogroll (links page only) */
+  const linksGrid = document.getElementById('links-grid');
+  if (linksGrid) renderLinks(linksGrid, DEFAULT_LINKS);
 
   /* Hero name — iridescent WebGL shader (progressive enhancement) */
   const nameH1 = document.getElementById('hero-name');

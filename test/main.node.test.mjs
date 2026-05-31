@@ -3036,6 +3036,57 @@ test('renderUnescoAccordion: escapes HTML in site and country names', async () =
   assert.match(container.innerHTML, /&lt;script/);
 });
 
+/* ─── Links blogroll (links page) ───────────────────────────
+   renderLinks() must build a category → link grid with safe
+   external links, optional descriptions, and degrade gracefully. */
+
+test('renderLinks: builds category sections with external link cards', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  assert.equal(typeof renderLinks, 'function', 'main.js must export renderLinks');
+  const container = { innerHTML: '' };
+  renderLinks(container, {
+    categories: [
+      {
+        name: 'AI / ML',
+        blurb: 'Sites I follow.',
+        links: [
+          { name: 'Lil-Log', url: 'https://lilianweng.github.io', description: 'Deep dives.' },
+          { name: 'Distill', url: 'https://distill.pub' },
+        ],
+      },
+    ],
+  });
+  const html = container.innerHTML;
+  assert.match(html, /links-category/);
+  assert.match(html, /AI \/ ML/);
+  assert.match(html, /Sites I follow\./);
+  assert.match(html, /href="https:\/\/lilianweng\.github\.io"/);
+  assert.match(html, /rel="noopener noreferrer"/);
+  assert.match(html, /target="_blank"/);
+  assert.match(html, /Deep dives\./);
+});
+
+test('renderLinks: shows a placeholder when there are no categories', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderLinks(container, { categories: [] });
+  assert.match(container.innerHTML, /links-empty/);
+});
+
+test('renderLinks: escapes HTML in names, descriptions and urls', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderLinks(container, {
+    categories: [
+      { name: '<b>Cat</b>', links: [
+        { name: '<script>alert(1)</script>', url: 'https://x.example', description: '<img src=x>' },
+      ] },
+    ],
+  });
+  assert.ok(!container.innerHTML.includes('<script>'), 'must escape link names');
+  assert.match(container.innerHTML, /&lt;script/);
+});
+
 /* ─── Page lifecycle cleanup ────────────────────────────────
    initLifecycleCleanup() must register a pagehide listener that
    fans out destroy() across the supplied disposables, idempotently. */
