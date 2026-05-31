@@ -20,11 +20,12 @@ async function loadProjects() {
   return mod.PROJECTS;
 }
 
-test('sitemap: includes the three top-level pages', () => {
+test('sitemap: includes the top-level pages', () => {
   const xml = readSitemap();
   for (const loc of [
     `${SITE}/`,
     `${SITE}/projects.html`,
+    `${SITE}/travel.html`,
     `${SITE}/cv.html`,
   ]) {
     assert.ok(xml.includes(`<loc>${loc}</loc>`), `missing <loc>${loc}</loc>`);

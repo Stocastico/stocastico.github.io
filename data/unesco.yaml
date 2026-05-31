@@ -1,0 +1,308 @@
+# UNESCO World Heritage sites Stefano has visited.
+# Source of truth for the travel page accordion → run `npm run generate-unesco`
+# after editing to rebuild data/unesco.js.
+#
+# Structure: continent → country → sites. Each site needs a name and an
+# https:// link to its official UNESCO page (find it at
+# https://whc.unesco.org/en/list/). `year` (when you visited) is optional.
+#
+# NOTE: the entries below are PLACEHOLDERS to wire up the page — replace them
+# with the real list. Continents render in the order listed here; countries
+# and sites likewise.
+
+# UNESCO World Heritage sites Stefano has visited.
+# Source of truth for the travel page accordion → run `npm run generate-unesco`
+# after editing to rebuild data/unesco.js.
+#
+# Structure: continent → country → sites. Each site needs a name and an
+# https:// link to its official UNESCO page.
+
+continents:
+  - name: Europe
+    countries:
+      - name: Albania
+        sites:
+          - name: Historic Centres of Berat and Gjirokastra
+            url: https://whc.unesco.org/en/list/569
+          - name: Natural and Cultural Heritage of the Ohrid region
+            url: https://whc.unesco.org/en/list/99
+      - name: Austria
+        sites:
+          - name: Historic Centre of the City of Salzburg
+            url: https://whc.unesco.org/en/list/784
+          - name: Historic Centre of Vienna
+            url: https://whc.unesco.org/en/list/1033
+          - name: The Great Spa Towns of Europe
+            url: https://whc.unesco.org/en/list/1613
+      - name: Belgium
+        sites:
+          - name: Flemish Béguinages
+            url: https://whc.unesco.org/en/list/855
+          - name: La Grand-Place, Brussels
+            url: https://whc.unesco.org/en/list/857
+          - name: Historic Centre of Brugge
+            url: https://whc.unesco.org/en/list/996
+          - name: Major Town Houses of the Architect Victor Horta (Brussels)
+            url: https://whc.unesco.org/en/list/1005
+      - name: Croatia
+        sites:
+          - name: Historical Complex of Split with the Palace of Diocletian
+            url: https://whc.unesco.org/en/list/97
+          - name: Plitvice Lakes National Park
+            url: https://whc.unesco.org/en/list/98
+          - name: Episcopal Complex of the Euphrasian Basilica in the Historic Centre of Poreč
+            url: https://whc.unesco.org/en/list/809
+          - name: Historic City of Trogir
+            url: https://whc.unesco.org/en/list/810
+      - name: Cyprus
+        sites:
+          - name: Paphos
+            url: https://whc.unesco.org/en/list/79
+          - name: Choirokoitia
+            url: https://whc.unesco.org/en/list/848
+      - name: Czechia
+        sites:
+          - name: Historic Centre of Prague
+            url: https://whc.unesco.org/en/list/616
+      - name: France
+        sites:
+          - name: Arles, Roman and Romanesque Monuments
+            url: https://whc.unesco.org/en/list/164
+          - name: Strasbourg, Grande-Île and Neustadt
+            url: https://whc.unesco.org/en/list/495
+          - name: Paris, Banks of the Seine
+            url: https://whc.unesco.org/en/list/600
+          - name: Cathedral of Notre-Dame, Former Abbey of Saint-Rémi and Palace of Tau, Reims
+            url: https://whc.unesco.org/en/list/601
+          - name: Canal du Midi
+            url: https://whc.unesco.org/en/list/770
+          - name: Jurisdiction of Saint-Emilion
+            url: https://whc.unesco.org/en/list/933
+          - name: Bordeaux, Port of the Moon
+            url: https://whc.unesco.org/en/list/1256
+          - name: Nice, Winter Resort Town of the Riviera
+            url: https://whc.unesco.org/en/list/1635
+      - name: Germany
+        sites:
+          - name: Cologne Cathedral
+            url: https://whc.unesco.org/en/list/292
+          - name: Palaces and Parks of Potsdam and Berlin
+            url: https://whc.unesco.org/en/list/532
+          - name: Town of Bamberg
+            url: https://whc.unesco.org/en/list/624
+          - name: Museumsinsel (Museum Island), Berlin
+            url: https://whc.unesco.org/en/list/896
+          - name: Upper Middle Rhine Valley
+            url: https://whc.unesco.org/en/list/1066
+          - name: Berlin Modernism Housing Estates
+            url: https://whc.unesco.org/en/list/1239
+          - name: Mathildenhöhe Darmstadt
+            url: https://whc.unesco.org/en/list/1614
+          - name: ShUM Sites of Speyer, Worms and Mainz
+            url: https://whc.unesco.org/en/list/1636
+      - name: Greece
+        sites:
+          - name: Acropolis, Athens
+            url: https://whc.unesco.org/en/list/404
+          - name: Old Town of Corfu
+            url: https://whc.unesco.org/en/list/1060
+      - name: Holy See
+        sites:
+          - name: Vatican City
+            url: https://whc.unesco.org/en/list/286
+      - name: Hungary
+        sites:
+          - name: Budapest, including the Banks of the Danube, the Buda Castle Quarter and Andrássy Avenue
+            url: https://whc.unesco.org/en/list/400
+      - name: Iceland
+        sites:
+          - name: Þingvellir National Park
+            url: https://whc.unesco.org/en/list/1152
+          - name: Vatnajökull National Park - Dynamic Nature of Fire and Ice
+            url: https://whc.unesco.org/en/list/1604
+      - name: Italy
+        sites:
+          - name: Rock Drawings in Valcamonica
+            url: https://whc.unesco.org/en/list/94
+          - name: Historic Centre of Florence
+            url: https://whc.unesco.org/en/list/174
+          - name: Medici Villas and Gardens in Tuscany
+            url: https://whc.unesco.org/en/list/175bis
+          - name: Venice and its Lagoon
+            url: https://whc.unesco.org/en/list/394
+          - name: Piazza del Duomo, Pisa
+            url: https://whc.unesco.org/en/list/395
+          - name: Historic Centre of San Gimignano
+            url: https://whc.unesco.org/en/list/555
+          - name: The Sassi and the Park of the Rupestrian Churches of Matera
+            url: https://whc.unesco.org/en/list/670
+          - name: Historic Centre of Siena
+            url: https://whc.unesco.org/en/list/717
+          - name: Historic Centre of Naples
+            url: https://whc.unesco.org/en/list/726
+          - name: Ferrara, City of the Renaissance, and its Po Delta
+            url: https://whc.unesco.org/en/list/733
+          - name: Early Christian Monuments of Ravenna
+            url: https://whc.unesco.org/en/list/788
+          - name: City of Verona
+            url: https://whc.unesco.org/en/list/797
+          - name: Botanical Garden (Orto Botanico), Padua
+            url: https://whc.unesco.org/en/list/824
+          - name: Portovenere, Cinque Terre, and the Islands (Palmaria, Tino and Tinetto)
+            url: https://whc.unesco.org/en/list/826
+          - name: Archaeological Areas of Pompei, Herculaneum and Torre Annunziata
+            url: https://whc.unesco.org/en/list/829
+          - name: Archaeological Area of Agrigento
+            url: https://whc.unesco.org/en/list/831
+          - name: Cilento and Vallo di Diano National Park with the Archeological Sites of Paestum and Velia, and the Certosa di Padula
+            url: https://whc.unesco.org/en/list/842
+          - name: Late Baroque Towns of the Val di Noto (South-Eastern Sicily)
+            url: https://whc.unesco.org/en/list/1024
+          - name: Syracuse and the Rocky Necropolis of Pantalica
+            url: https://whc.unesco.org/en/list/1200
+          - name: "Genoa: Le Strade Nuove and the system of the Palazzi dei Rolli"
+            url: https://whc.unesco.org/en/list/1211
+          - name: The Dolomites
+            url: https://whc.unesco.org/en/list/1237
+          - name: Mantua and Sabbioneta
+            url: https://whc.unesco.org/en/list/1287
+          - name: Longobards in Italy. Places of the Power (568-774 A.D.)
+            url: https://whc.unesco.org/en/list/1318
+          - name: Arab-Norman Palermo and the Cathedral Churches of Cefalú and Monreale
+            url: https://whc.unesco.org/en/list/1487
+          - name: "Padua's fourteenth-century fresco cycles"
+            url: https://whc.unesco.org/en/list/1623
+          - name: The Porticoes of Bologna
+            url: https://whc.unesco.org/en/list/1650
+          - name: Historic Centre of Rome, the Properties of the Holy See in that City Enjoying Extraterritorial Rights and San Paolo Fuori le Mura
+            url: https://whc.unesco.org/en/list/91
+      - name: Malta
+        sites:
+          - name: City of Valletta
+            url: https://whc.unesco.org/en/list/131
+          - name: Megalithic Temples of Malta
+            url: https://whc.unesco.org/en/list/132
+      - name: Netherlands
+        sites:
+          - name: Seventeenth-Century Canal Ring Area of Amsterdam inside the Singelgracht
+            url: https://whc.unesco.org/en/list/1349
+      - name: Poland
+        sites:
+          - name: Centennial Hall in Wrocław
+            url: https://whc.unesco.org/en/list/1165
+      - name: Portugal
+        sites:
+          - name: Monastery of the Hieronymites and Tower of Belém in Lisbon
+            url: https://whc.unesco.org/en/list/263
+          - name: Cultural Landscape of Sintra
+            url: https://whc.unesco.org/en/list/723
+          - name: Historic Centre of Oporto, Luiz I Bridge and Monastery of Serra do Pilar
+            url: https://whc.unesco.org/en/list/755
+      - name: San Marino
+        sites:
+          - name: San Marino Historic Centre and Mount Titano
+            url: https://whc.unesco.org/en/list/1245
+      - name: Slovenia
+        sites:
+          - name: The works of Jože Plečnik in Ljubljana – Human Centred Urban Design
+            url: https://whc.unesco.org/en/list/1628
+      - name: Spain
+        sites:
+          - name: Old Town of Segovia and its Aqueduct
+            url: https://whc.unesco.org/en/list/311
+          - name: Burgos Cathedral
+            url: https://whc.unesco.org/en/list/316
+          - name: Works of Antoni Gaudí
+            url: https://whc.unesco.org/en/list/320
+          - name: Santiago de Compostela (Old Town)
+            url: https://whc.unesco.org/en/list/347
+          - name: Cathedral, Alcázar and Archivo de Indias in Seville
+            url: https://whc.unesco.org/en/list/383
+          - name: Ibiza, Biodiversity and Culture
+            url: https://whc.unesco.org/en/list/417
+          - name: Renaissance Monumental Ensembles of Úbeda and Baeza
+            url: https://whc.unesco.org/en/list/522
+          - name: "Routes of Santiago de Compostela: Camino Francés and Routes of Northern Spain"
+            url: https://whc.unesco.org/en/list/669bis
+          - name: La Lonja de la Seda de Valencia
+            url: https://whc.unesco.org/en/list/939
+          - name: Palau de la Música Catalana and Hospital de Sant Pau, Barcelona
+            url: https://whc.unesco.org/en/list/804
+          - name: San Cristóbal de La Laguna
+            url: https://whc.unesco.org/en/list/929
+          - name: Vizcaya Bridge
+            url: https://whc.unesco.org/en/list/1217
+          - name: Teide National Park
+            url: https://whc.unesco.org/en/list/1258
+          - name: Tower of Hercules
+            url: https://whc.unesco.org/en/list/1312
+          - name: Talayotic Menorca
+            url: https://whc.unesco.org/en/list/1528
+          - name: Risco Caido and the Sacred Mountains of Gran Canaria Cultural Landscape
+            url: https://whc.unesco.org/en/list/1577
+          - name: Paseo del Prado and Buen Retiro, a landscape of Arts and Sciences
+            url: https://whc.unesco.org/en/list/1618
+      - name: Switzerland
+        sites:
+          - name: Swiss Alps Jungfrau-Aletsch
+            url: https://whc.unesco.org/en/list/1037
+      - name: Turkey
+        sites:
+          - name: Hierapolis-Pamukkale
+            url: https://whc.unesco.org/en/list/485
+      - name: United Kingdom
+        sites:
+          - name: "Palace of Westminster and Westminster Abbey including Saint Margaret's Church"
+            url: https://whc.unesco.org/en/list/426
+          - name: Tower of London
+            url: https://whc.unesco.org/en/list/488
+          - name: "Canterbury Cathedral, St Augustine's Abbey, and St Martin's Church"
+            url: https://whc.unesco.org/en/list/496
+          - name: Old and New Towns of Edinburgh
+            url: https://whc.unesco.org/en/list/728
+      - name: United States
+        sites:
+          - name: Independence Hall
+            url: https://whc.unesco.org/en/list/78
+          - name: Statue of Liberty
+            url: https://whc.unesco.org/en/list/307
+  - name: Africa
+    countries:
+      - name: Morocco
+        sites:
+          - name: Medina of Marrakesh
+            url: https://whc.unesco.org/en/list/331
+          - name: Medina of Essaouira (formerly Mogador)
+            url: https://whc.unesco.org/en/list/753
+  - name: Americas
+    countries:
+      - name: Cuba
+        sites:
+          - name: Old Havana and its Fortification System
+            url: https://whc.unesco.org/en/list/204
+          - name: Trinidad and the Valley de los Ingenios
+            url: https://whc.unesco.org/en/list/460
+          - name: Viñales Valley
+            url: https://whc.unesco.org/en/list/840
+          - name: Urban Historic Centre of Cienfuegos
+            url: https://whc.unesco.org/en/list/1202
+          - name: Historic Centre of Camagüey
+            url: https://whc.unesco.org/en/list/1276
+  - name: Asia
+    countries:
+      - name: Israel
+        sites:
+          - name: White City of Tel-Aviv – the Modern Movement
+            url: https://whc.unesco.org/en/list/1096
+      - name: Japan
+        sites:
+          - name: Himeji-jo
+            url: https://whc.unesco.org/en/list/661
+          - name: Historic Monuments of Ancient Kyoto (Kyoto, Uji and Otsu Cities)
+            url: https://whc.unesco.org/en/list/688
+          - name: Historic Monuments of Ancient Nara
+            url: https://whc.unesco.org/en/list/870
+      - name: Thailand
+        sites:
+          - name: Historic Town of Sukhothai and Associated Historic Towns
+            url: https://whc.unesco.org/en/list/574

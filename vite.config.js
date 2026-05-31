@@ -96,6 +96,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         projects: resolve(__dirname, 'projects.html'),
+        travel: resolve(__dirname, 'travel.html'),
         cv: resolve(__dirname, 'cv.html'),
         '404': resolve(__dirname, '404.html'),
         ...projectPages,
