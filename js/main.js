@@ -688,7 +688,7 @@ function wireLinksFilter(container) {
   toolbar.addEventListener('click', (e) => {
     const chip = e.target.closest && e.target.closest('.link-chip');
     if (!chip || !toolbar.contains(chip)) return;
-    apply(chip.getAttribute('data-filter'), chip.textContent.trim());
+    apply(chip.getAttribute('data-filter'), chip.getAttribute('data-label') || chip.textContent.trim());
   });
 }
 
@@ -718,10 +718,10 @@ export function renderLinks(container, data) {
   }
 
   const chips = [
-    `<button class="link-chip is-active" type="button" data-filter="all" aria-pressed="true">` +
+    `<button class="link-chip is-active" type="button" data-filter="all" data-label="All" aria-pressed="true">` +
     `All <span class="link-chip-count">${links.length}</span></button>`,
   ].concat(categories.map((cat) => (
-    `<button class="link-chip" type="button" data-filter="${escapeHtml(cat.slug)}" aria-pressed="false">` +
+    `<button class="link-chip" type="button" data-filter="${escapeHtml(cat.slug)}" data-label="${escapeHtml(cat.label)}" aria-pressed="false">` +
     `${escapeHtml(cat.label)} <span class="link-chip-count">${countOf.get(cat.slug) || 0}</span></button>`
   ))).join('');
 
