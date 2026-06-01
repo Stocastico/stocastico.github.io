@@ -642,48 +642,117 @@ export function renderUnescoAccordion(container, data) {
   container.innerHTML = html;
 }
 
-/* Renders the curated blogroll on the links page: a grid of category sections,
-   each listing external links (name + optional one-line description) to sites
-   Stefano follows. Link URLs are already restricted to https:// by the
-   generator (scripts/generate-links.js); every field is HTML-escaped here as
-   defence in depth. Gated on #links-grid (links page only). */
+/* True when a link (its list of category slugs) should be shown under the
+   active filter. 'all' matches everything. Pure + exported so the show/hide
+   rule can be unit-tested without a DOM. */
+export function linkMatchesFilter(categories, filter) {
+  if (filter === 'all' || !filter) return true;
+  return Array.isArray(categories) && categories.indexOf(filter) !== -1;
+}
+
+/* Human-readable "Showing …" summary for the live count region. */
+function linksCountLabel(shown, total, filterLabel) {
+  const noun = total === 1 ? 'site' : 'sites';
+  if (!filterLabel) return `Showing all ${total} ${noun}`;
+  return `Showing ${shown} ${shown === 1 ? 'site' : 'sites'} in ${filterLabel}`;
+}
+
+/* Wire up the category filter chips: clicking a chip shows only the cards in
+   that category (or all). Single-select, accessible (aria-pressed + a polite
+   live count). No-op when handed a non-DOM container (unit tests). */
+function wireLinksFilter(container) {
+  if (!container || typeof container.querySelector !== 'function') return;
+  const toolbar = container.querySelector('.links-toolbar');
+  const countEl = container.querySelector('.links-count');
+  if (!toolbar) return;
+  const chips = Array.from(toolbar.querySelectorAll('.link-chip'));
+  const items = Array.from(container.querySelectorAll('.link-card-item'));
+  const total = items.length;
+
+  const apply = (filter, label) => {
+    let shown = 0;
+    for (const item of items) {
+      const cats = (item.getAttribute('data-categories') || '').split(' ').filter(Boolean);
+      const match = linkMatchesFilter(cats, filter);
+      item.hidden = !match;
+      if (match) shown += 1;
+    }
+    for (const chip of chips) {
+      const active = chip.getAttribute('data-filter') === filter;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (countEl) countEl.textContent = linksCountLabel(shown, total, filter === 'all' ? '' : label);
+  };
+
+  toolbar.addEventListener('click', (e) => {
+    const chip = e.target.closest && e.target.closest('.link-chip');
+    if (!chip || !toolbar.contains(chip)) return;
+    apply(chip.getAttribute('data-filter'), chip.textContent.trim());
+  });
+}
+
+/* Renders the curated blogroll on the links page: a category filter bar plus a
+   single, de-duplicated grid of external link cards. Each site appears once and
+   is tagged with every category it belongs to, so filtering by category never
+   duplicates an entry. The generator (scripts/generate-links.js) already
+   restricts URLs to https:// and de-duplicates by URL; every field is
+   HTML-escaped here as defence in depth. Gated on #links-grid (links page). */
 export function renderLinks(container, data) {
   if (!container) return;
   const categories = (data && Array.isArray(data.categories)) ? data.categories : [];
+  const links = (data && Array.isArray(data.links)) ? data.links : [];
 
-  if (!categories.length) {
+  if (!links.length) {
     container.innerHTML =
       '<p class="links-empty">The reading list is on its way &mdash; check back soon.</p>';
     return;
   }
 
-  const html = categories.map((cat) => {
-    const links = (cat.links || []).map((link) => {
-      const desc = link.description
-        ? `<p class="link-card-desc">${escapeHtml(link.description)}</p>`
-        : '';
-      let host = '';
-      try { host = new URL(link.url).hostname.replace(/^www\./, ''); } catch (_) { host = ''; }
-      const hostLabel = host ? `<span class="link-card-host">${escapeHtml(host)}</span>` : '';
-      return (
-        `<li><a class="link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">` +
-        `<span class="link-card-head"><span class="link-card-name">${escapeHtml(link.name)}</span>` +
-        `<svg class="link-card-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">` +
-        `<path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` +
-        `</span>${desc}${hostLabel}</a></li>`
-      );
-    }).join('');
-    const blurb = cat.blurb
-      ? `<p class="links-category-blurb">${escapeHtml(cat.blurb)}</p>`
+  const labelOf = new Map(categories.map((c) => [c.slug, c.label]));
+  const countOf = new Map(categories.map((c) => [c.slug, 0]));
+  for (const link of links) {
+    for (const slug of (link.categories || [])) {
+      if (countOf.has(slug)) countOf.set(slug, countOf.get(slug) + 1);
+    }
+  }
+
+  const chips = [
+    `<button class="link-chip is-active" type="button" data-filter="all" aria-pressed="true">` +
+    `All <span class="link-chip-count">${links.length}</span></button>`,
+  ].concat(categories.map((cat) => (
+    `<button class="link-chip" type="button" data-filter="${escapeHtml(cat.slug)}" aria-pressed="false">` +
+    `${escapeHtml(cat.label)} <span class="link-chip-count">${countOf.get(cat.slug) || 0}</span></button>`
+  ))).join('');
+
+  const cards = links.map((link) => {
+    const cats = Array.isArray(link.categories) ? link.categories : [];
+    const desc = link.description
+      ? `<p class="link-card-desc">${escapeHtml(link.description)}</p>`
       : '';
+    let host = '';
+    try { host = new URL(link.url).hostname.replace(/^www\./, ''); } catch (_) { host = ''; }
+    const hostLabel = host ? `<span class="link-card-host">${escapeHtml(host)}</span>` : '';
+    const badges = cats.map((slug) => (
+      `<span class="link-card-cat">${escapeHtml(labelOf.get(slug) || slug)}</span>`
+    )).join('');
+    const badgeRow = badges ? `<span class="link-card-cats">${badges}</span>` : '';
     return (
-      `<section class="links-category">` +
-      `<h2 class="links-category-title">${escapeHtml(cat.name)}</h2>${blurb}` +
-      `<ul class="links-list">${links}</ul></section>`
+      `<li class="link-card-item" data-categories="${escapeHtml(cats.join(' '))}">` +
+      `<a class="link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">` +
+      `<span class="link-card-head"><span class="link-card-name">${escapeHtml(link.name)}</span>` +
+      `<svg class="link-card-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">` +
+      `<path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` +
+      `</span>${desc}<span class="link-card-foot">${badgeRow}${hostLabel}</span></a></li>`
     );
   }).join('');
 
-  container.innerHTML = html;
+  container.innerHTML =
+    `<div class="links-toolbar" role="group" aria-label="Filter links by category">${chips}</div>` +
+    `<p class="links-count" role="status" aria-live="polite">${linksCountLabel(links.length, links.length, '')}</p>` +
+    `<ul class="links-list">${cards}</ul>`;
+
+  wireLinksFilter(container);
 }
 
 /* Run destroy() on every disposable when the page is being torn down.

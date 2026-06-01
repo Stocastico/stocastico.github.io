@@ -46,7 +46,7 @@ index.html          Single-page site (hero, about, research, skills, publication
 cv.html             Dedicated CV page (two-column layout)
 projects.html       Projects listing page
 travel.html         Travel page (3D globe + 2D Europe map + UNESCO World Heritage accordion)
-links.html          Links page (curated blogroll, grouped by category)
+links.html          Links page (curated blogroll, filterable by category)
 404.html            Custom 404 page
 projects/*.html     Per-project detail pages
 vite.config.js      Multi-page Vite config (index, cv, projects, travel, links, 404, project pages)
@@ -71,7 +71,7 @@ data/countries-110m.json  world-atlas TopoJSON (country borders + names) for the
 data/unesco.yaml    Source of truth for the travel-page UNESCO accordion → run generate-unesco after editing
 data/unesco.js      Generated ESM module — UNESCO { continents } (do not edit manually)
 data/links.yaml     Source of truth for the links-page blogroll → run generate-links after editing
-data/links.js       Generated ESM module — LINKS { categories } (do not edit manually)
+data/links.js       Generated ESM module — LINKS { categories, links } (do not edit manually)
 data/projects.js    Project entries — ESM (edit directly or via `npm run new-project`)
 data/publications.js Publication entries — ESM (edit directly)
 js/theme.js         Generated ESM module — active palette in hex/int/glvec forms (do not edit manually)
@@ -111,7 +111,7 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - **Project pipeline**: Write Markdown with YAML frontmatter → `node scripts/new-project.js file.md` → generates HTML + updates `data/projects.js`
 - **Homepage world map**: `data/countries.yaml` (lived/visited, derived from `locations.yaml` but hand-editable) → `generate-countries` → `data/countries.js`; then `generate-world-map` projects `data/countries-110m.json` to a static inline SVG (silhouette + highlighted-country paths) and rewrites the `<!-- world-map:start … -->` block in `index.html`. Fills use CSS `var(--pin-lived)` / `var(--pin-holiday)` classes, so a palette switch needs no regen. Micro-states absent from the 110m TopoJSON (e.g. Malta, San Marino, North Macedonia) stay in the data but don't render at world scale.
 - **UNESCO accordion**: `data/unesco.yaml` (continent → country → site, https-only links) → `generate-unesco` → `data/unesco.js`; `renderUnescoAccordion()` in `js/main.js` builds a `<details>` disclosure tree, gated on `#unesco-accordion` (travel page only). The globe + Europe map init the same way — keyed off `#globe-canvas` / `#europe-canvas`, which now live only on `travel.html`.
-- **Links blogroll**: `data/links.yaml` (category → link, https-only urls, optional per-link `description` + per-category `blurb`) → `generate-links` → `data/links.js`; `renderLinks()` in `js/main.js` builds a grid of category sections of `.link-card`s, gated on `#links-grid` (links page only). Same shape as the UNESCO pipeline — https-only validation in the generator, HTML-escaped again at render. Keep the list short and curated.
+- **Links blogroll**: `data/links.yaml` (a flat list; each entry has a name, an https-only url, optional `description`, one or more `categories`, and optional `tags` — categories/tags written as inline YAML flow arrays, e.g. `[ai, visual-explanation]`) → `generate-links` → `data/links.js`. The generator de-duplicates by URL (merging the categories/tags of duplicates) and emits `LINKS { categories: [{slug,label}], links: [...] }` with the used categories in canonical order. `renderLinks()` in `js/main.js` builds a category filter bar plus a single de-duplicated grid of `.link-card`s, gated on `#links-grid` (links page only); `linkMatchesFilter()` drives the client-side show/hide. https-only validation in the generator, HTML-escaped again at render. Category labels live in `CATEGORY_LABELS` in `scripts/generate-links.js`; unknown slugs are tolerated (humanised). Keep the list short and curated.
 - **THREE module bindings**: `js/neural-net.js` and `js/globe.js` use named-import destructuring (`let { Scene, WebGLRenderer, ... } = _THREE`) re-bound by `onChange` so test mocks still take effect
 - **Theme pipeline**: `data/palettes.yaml` (one `active` key + named palettes) → `npm run generate-theme` → rewrites the `@theme-generated` `:root` block in `css/styles.css`, regenerates `js/theme.js`, and updates `<meta theme-color>` / inline favicon / nav-logo gradient across every `*.html` + `public/favicon.svg`. CSS reads `var(--*)`; the WebGL/Canvas2D modules and GLSL shaders import `THEME` + the `int()` / `rgba()` / `glvec()` helpers from `js/theme.js` (the shader source is a JS template literal, so colours are interpolated at module load — no recompile, no uniforms). Switching the whole site's palette = edit one YAML key + run one command.
 - **Performance**: NoiseGradient renders 3 frames then stops; HeroNameShader capped at 30fps; favicon is static
