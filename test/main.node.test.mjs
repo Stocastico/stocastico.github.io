@@ -3036,6 +3036,89 @@ test('renderUnescoAccordion: escapes HTML in site and country names', async () =
   assert.match(container.innerHTML, /&lt;script/);
 });
 
+/* ─── Links blogroll (links page) ───────────────────────────
+   renderLinks() must build a category filter bar plus a single,
+   de-duplicated grid of safe external link cards, and degrade
+   gracefully. linkMatchesFilter() drives the show/hide rule. */
+
+const LINKS_FIXTURE = {
+  categories: [
+    { slug: 'ai', label: 'AI' },
+    { slug: 'visual-explanation', label: 'Visual Explanations' },
+  ],
+  links: [
+    {
+      name: 'Lil-Log',
+      url: 'https://lilianweng.github.io',
+      description: 'Deep dives.',
+      categories: ['ai'],
+      tags: ['research'],
+    },
+    {
+      name: 'Chris Olah',
+      url: 'https://colah.github.io',
+      categories: ['ai', 'visual-explanation'],
+    },
+  ],
+};
+
+test('renderLinks: builds a filter toolbar and a de-duplicated card grid', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  assert.equal(typeof renderLinks, 'function', 'main.js must export renderLinks');
+  const container = { innerHTML: '' };
+  renderLinks(container, LINKS_FIXTURE);
+  const html = container.innerHTML;
+  /* Filter chips: an "All" chip plus one per category, with counts. */
+  assert.match(html, /links-toolbar/);
+  assert.match(html, /data-filter="all"/);
+  assert.match(html, /data-filter="ai"/);
+  assert.match(html, /data-filter="visual-explanation"/);
+  assert.match(html, /Visual Explanations/);
+  /* Cards carry their categories for client-side filtering. */
+  assert.match(html, /data-categories="ai visual-explanation"/);
+  /* External-link hardening + content. */
+  assert.match(html, /href="https:\/\/lilianweng\.github\.io"/);
+  assert.match(html, /rel="noopener noreferrer"/);
+  assert.match(html, /target="_blank"/);
+  assert.match(html, /Deep dives\./);
+});
+
+test('renderLinks: renders each site exactly once even across categories', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderLinks(container, LINKS_FIXTURE);
+  const cards = container.innerHTML.match(/class="link-card-item"/g) || [];
+  assert.equal(cards.length, 2, 'a multi-category site is not duplicated');
+});
+
+test('renderLinks: shows a placeholder when there are no links', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderLinks(container, { categories: [], links: [] });
+  assert.match(container.innerHTML, /links-empty/);
+});
+
+test('renderLinks: escapes HTML in names, descriptions and urls', async () => {
+  const { renderLinks } = await import('../js/main.js');
+  const container = { innerHTML: '' };
+  renderLinks(container, {
+    categories: [{ slug: 'ai', label: '<b>AI</b>' }],
+    links: [
+      { name: '<script>alert(1)</script>', url: 'https://x.example', description: '<img src=x>', categories: ['ai'] },
+    ],
+  });
+  assert.ok(!container.innerHTML.includes('<script>'), 'must escape link names');
+  assert.match(container.innerHTML, /&lt;script/);
+});
+
+test('linkMatchesFilter: "all" matches everything; a slug matches only its members', async () => {
+  const { linkMatchesFilter } = await import('../js/main.js');
+  assert.equal(linkMatchesFilter(['ai'], 'all'), true);
+  assert.equal(linkMatchesFilter([], 'all'), true);
+  assert.equal(linkMatchesFilter(['ai', 'visual-explanation'], 'visual-explanation'), true);
+  assert.equal(linkMatchesFilter(['ai'], 'visual-explanation'), false);
+});
+
 /* ─── Page lifecycle cleanup ────────────────────────────────
    initLifecycleCleanup() must register a pagehide listener that
    fans out destroy() across the supplied disposables, idempotently. */

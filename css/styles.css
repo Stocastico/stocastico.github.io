@@ -1099,6 +1099,204 @@ h3 {
   }
 }
 
+/* ─── Links page (curated blogroll) ─────────────────────────────────────── */
+.links-page .section-header {
+  text-align: center;
+}
+
+.links-intro {
+  max-width: 60ch;
+  margin: 1rem auto 0;
+  color: var(--text-muted);
+}
+
+.links-grid {
+  margin-top: 2.5rem;
+}
+
+.links-empty {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Category filter chips */
+.links-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease);
+}
+
+.link-chip:hover {
+  border-color: var(--border-hov);
+  background: var(--bg-card-hov);
+  color: var(--text);
+}
+
+.link-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.link-chip.is-active {
+  color: var(--bg);
+  background: linear-gradient(to right, var(--accent), var(--accent2));
+  border-color: transparent;
+}
+
+.link-chip-count {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.link-chip.is-active .link-chip-count {
+  opacity: 0.85;
+}
+
+.links-count {
+  text-align: center;
+  margin: 1rem 0 0;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
+.links-list {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* Card footer: category badges above the hostname. */
+.link-card-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.35rem;
+}
+
+.link-card-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.link-card-cat {
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  height: 100%;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+
+.link-card:hover,
+.link-card:focus-visible {
+  border-color: var(--border-hov);
+  background: var(--bg-card-hov);
+  transform: translateY(-3px);
+}
+
+.link-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.link-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.link-card-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.link-card-arrow {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+  transform: translate(-2px, 2px);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease);
+}
+
+.link-card:hover .link-card-arrow,
+.link-card:focus-visible .link-card-arrow {
+  opacity: 1;
+  transform: translate(0, 0);
+  color: var(--accent);
+}
+
+.link-card-desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.link-card-host {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-card,
+  .link-card-arrow,
+  .link-chip {
+    transition: none;
+  }
+  .link-card:hover,
+  .link-card:focus-visible {
+    transform: none;
+  }
+}
+
 .photo-card {
   border-radius: var(--r-lg);
   overflow: hidden;

@@ -26,6 +26,7 @@ test('sitemap: includes the top-level pages', () => {
     `${SITE}/`,
     `${SITE}/projects.html`,
     `${SITE}/travel.html`,
+    `${SITE}/links.html`,
     `${SITE}/cv.html`,
   ]) {
     assert.ok(xml.includes(`<loc>${loc}</loc>`), `missing <loc>${loc}</loc>`);

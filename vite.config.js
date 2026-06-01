@@ -97,6 +97,7 @@ export default defineConfig({
         index: resolve(__dirname, 'index.html'),
         projects: resolve(__dirname, 'projects.html'),
         travel: resolve(__dirname, 'travel.html'),
+        links: resolve(__dirname, 'links.html'),
         cv: resolve(__dirname, 'cv.html'),
         '404': resolve(__dirname, '404.html'),
         ...projectPages,

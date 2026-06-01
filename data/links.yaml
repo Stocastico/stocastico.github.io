@@ -1,0 +1,259 @@
+# Curated links for personal site — source of truth for the links page.
+# Run `npm run generate-links` after editing to rebuild data/links.js.
+#
+# Flat list so each entry lives in MULTIPLE categories without being repeated:
+# generate-links de-duplicates by URL (merging categories/tags) and the page
+# renders one card per site, filterable by category.
+#   name        -> display name (required)
+#   url         -> https:// only (required)
+#   description -> one-line summary (optional)
+#   categories  -> one or more; power the on-page category filter chips
+#   tags        -> finer-grained labels (kept in the data for search/future use)
+# Valid categories: ai | engineering-math-physics | visual-explanation | beautiful-websites | misc
+
+links:
+  - name: "Andrej Karpathy"
+    url: "https://karpathy.ai"
+    description: "Deep learning researcher; blog plus the 'Zero to Hero' neural nets course, built from scratch."
+    categories: [ai]
+    tags: [deep-learning, education]
+  - name: "Chris Olah"
+    url: "https://colah.github.io"
+    description: "Visual, intuition-first essays on neural nets; founder of Distill and Anthropic interpretability."
+    categories: [ai, visual-explanation]
+    tags: [interpretability, neural-nets]
+  - name: "Michael Nielsen"
+    url: "https://michaelnielsen.org"
+    description: "Neural networks book, quantum computing, and essays on memory and explanation."
+    categories: [ai, visual-explanation, engineering-math-physics]
+    tags: [neural-nets, quantum, essays]
+  - name: "Distill"
+    url: "https://distill.pub"
+    description: "Interactive ML research journal; on hiatus since 2021, but a worthwhile archive."
+    categories: [ai, visual-explanation]
+    tags: [research, archive]
+  - name: "Sebastian Raschka"
+    url: "https://sebastianraschka.com"
+    description: "Clear, practical writing on LLMs and ML; 'Ahead of AI' and build-from-scratch books."
+    categories: [ai]
+    tags: [llm, education]
+  - name: "Simon Willison"
+    url: "https://simonwillison.net"
+    description: "Prolific notes on LLM tooling and prompt engineering; creator of Datasette and llm."
+    categories: [ai, engineering-math-physics]
+    tags: [tooling, llm]
+  - name: "Jay Alammar"
+    url: "https://jalammar.github.io"
+    description: "The Illustrated Transformer and friends; gold standard for visual NLP/LLM explainers."
+    categories: [ai, visual-explanation]
+    tags: [llm, nlp]
+  - name: "Lilian Weng"
+    url: "https://lilianweng.github.io"
+    description: "Rigorous long-form technical surveys (RL, diffusion, agents, hallucination)."
+    categories: [ai]
+    tags: [research, deep-learning]
+  - name: "Julian Schrittwieser"
+    url: "https://julian.ac"
+    description: "AlphaGo/MuZero co-author, now at Anthropic; sharp posts on RL and AI progress."
+    categories: [ai]
+    tags: [reinforcement-learning]
+  - name: "Vicki Boykis"
+    url: "https://vickiboykis.com"
+    description: "ML engineering from the trenches; 'What are embeddings' and candid notes on the field."
+    categories: [ai]
+    tags: [ml-engineering, essays]
+  - name: "Eugene Yan"
+    url: "https://eugeneyan.com"
+    description: "Applied ML and recsys patterns, MLOps, and how to operate as a practitioner in industry."
+    categories: [ai]
+    tags: [ml-engineering, mlops]
+  - name: "Chip Huyen"
+    url: "https://huyenchip.com"
+    description: "ML systems design and production; author of 'Designing ML Systems' and 'AI Engineering'."
+    categories: [ai]
+    tags: [ml-engineering, systems]
+  - name: "John Baez"
+    url: "https://math.ucr.edu/home/baez/"
+    description: "Mathematical physics, category theory, and the long-running Azimuth notes."
+    categories: [engineering-math-physics]
+    tags: [math, physics, essays]
+  - name: "3Blue1Brown"
+    url: "https://www.3blue1brown.com"
+    description: "Grant Sanderson's animated math (linear algebra, calculus, neural nets); peak visual intuition."
+    categories: [engineering-math-physics, visual-explanation]
+    tags: [math, education]
+  - name: "Red Blob Games"
+    url: "https://www.redblobgames.com"
+    description: "Amit Patel's interactive explanations of game-dev algorithms (A*, hex grids, noise)."
+    categories: [engineering-math-physics, visual-explanation]
+    tags: [algorithms, game-dev, interactive]
+  - name: "Julia Evans"
+    url: "https://jvns.ca"
+    description: "Approachable, often hand-drawn explanations of systems, networking, and debugging."
+    categories: [engineering-math-physics, visual-explanation]
+    tags: [systems, debugging]
+  - name: "Fabien Sanglard"
+    url: "https://fabiensanglard.net"
+    description: "Beautifully written reverse-engineering deep dives into classic game engines."
+    categories: [engineering-math-physics]
+    tags: [graphics, essays]
+  - name: "SICP (Sarabander HTML edition)"
+    url: "https://sarabander.github.io/sicp/"
+    description: "The classic CS text in a beautifully typeset, readable HTML edition."
+    categories: [engineering-math-physics, beautiful-websites]
+    tags: [computer-science, programming, book, typesetting]
+  - name: "Nicky Case"
+    url: "https://ncase.me"
+    description: "Playful explorable games-as-essays on social systems, trust, and mental health."
+    categories: [visual-explanation]
+    tags: [interactive, essays, playful]
+  - name: "Our World in Data"
+    url: "https://ourworldindata.org"
+    description: "Research and interactive charts on global development, health, and the environment."
+    categories: [visual-explanation]
+    tags: [data-viz, research]
+  - name: "Setosa"
+    url: "https://setosa.io"
+    description: "Explained Visually; short interactive explainers (PCA, Markov chains, probability)."
+    categories: [visual-explanation, engineering-math-physics]
+    tags: [math, interactive, statistics]
+  - name: "Bartosz Ciechanowski"
+    url: "https://ciechanow.ski"
+    description: "Interactive masterclasses on how things work (gears, GPS, the eye, light)."
+    categories: [visual-explanation, engineering-math-physics]
+    tags: [interactive, physics]
+  - name: "Bret Victor"
+    url: "https://worrydream.com"
+    description: "The essays that defined explorable explanations and dynamic media."
+    categories: [visual-explanation]
+    tags: [interaction-design, essays]
+  - name: "The Pudding"
+    url: "https://pudding.cool"
+    description: "Visual essays that argue ideas through data journalism and rich interaction."
+    categories: [visual-explanation]
+    tags: [data-viz, journalism, interactive]
+  - name: "Vi Hart"
+    url: "https://vihart.com"
+    description: "Mathematical doodling and playful video-essays on geometry and music."
+    categories: [visual-explanation, engineering-math-physics]
+    tags: [math, playful]
+  - name: "PerThirtySix"
+    url: "https://perthirtysix.com"
+    description: "Interactive, design-led data explorations across sports, economics, and society."
+    categories: [visual-explanation]
+    tags: [data-viz, interactive, sports]
+  - name: "Mike Bostock"
+    url: "https://bost.ocks.org/mike"
+    description: "D3's creator; 'Visualizing Algorithms' and canonical interactive viz essays."
+    categories: [visual-explanation, engineering-math-physics]
+    tags: [data-viz, algorithms]
+  - name: "Amelia Wattenberger"
+    url: "https://wattenberger.com"
+    description: "Interactive essays on data, design, and tools for thought."
+    categories: [visual-explanation, beautiful-websites]
+    tags: [data-viz, interactive, design]
+  - name: "Nadieh Bremer (Visual Cinnamon)"
+    url: "https://www.visualcinnamon.com"
+    description: "Gorgeous, hand-crafted data art and D3 work."
+    categories: [visual-explanation, beautiful-websites]
+    tags: [data-viz, data-art, design]
+  - name: "VisuAlgo"
+    url: "https://visualgo.net"
+    description: "Steven Halim's animated walkthroughs of data structures and algorithms; still maintained."
+    categories: [visual-explanation, engineering-math-physics]
+    tags: [algorithms, interactive]
+  - name: "The Nature of Code"
+    url: "https://natureofcode.com"
+    description: "Daniel Shiffman's interactive book on simulating natural systems in code."
+    categories: [visual-explanation, beautiful-websites]
+    tags: [creative-coding, education]
+  - name: "Bruno Simon"
+    url: "https://bruno-simon.com"
+    description: "WebGL portfolio you drive around in a toy car; creator of Three.js Journey."
+    categories: [beautiful-websites]
+    tags: [creative-coding, webgl, portfolio]
+  - name: "Maxime Heckel"
+    url: "https://blog.maximeheckel.com"
+    description: "Deep, beautiful frontend articles on shaders, React Three Fiber, and WebGL."
+    categories: [beautiful-websites]
+    tags: [frontend, webgl, shaders]
+  - name: "Mr.doob"
+    url: "https://mrdoob.com"
+    description: "Ricardo Cabello, creator of Three.js; creative-coding experiments."
+    categories: [beautiful-websites]
+    tags: [creative-coding, webgl]
+  - name: "Inigo Quilez"
+    url: "https://iquilezles.org"
+    description: "Raymarching, SDFs, and the math behind Shadertoy, explained generously."
+    categories: [beautiful-websites, engineering-math-physics, visual-explanation]
+    tags: [graphics, math, shaders]
+  - name: "Lynn Fisher"
+    url: "https://lynnandtonic.com"
+    description: "A personal site redesigned yearly as ambitious pure-CSS art."
+    categories: [beautiful-websites]
+    tags: [css, design]
+  - name: "Josh Comeau"
+    url: "https://www.joshwcomeau.com"
+    description: "Delightful, interactive frontend tutorials on a beautifully built site."
+    categories: [beautiful-websites, visual-explanation]
+    tags: [frontend, css, interactive]
+  - name: "Codrops"
+    url: "https://tympanus.net/codrops"
+    description: "Cutting-edge web animation and UI technique tutorials with live demos."
+    categories: [beautiful-websites]
+    tags: [frontend, animation, tutorials]
+  - name: "The Book of Shaders"
+    url: "https://thebookofshaders.com"
+    description: "Patricio Gonzalez Vivo and Jen Lowe's interactive, gentle guide to fragment shaders."
+    categories: [beautiful-websites, visual-explanation]
+    tags: [creative-coding, shaders]
+  - name: "Wait But Why"
+    url: "https://waitbutwhy.com"
+    description: "Tim Urban's long, stick-figure-illustrated deep dives on big questions."
+    categories: [misc]
+    tags: [essays, explainer]
+  - name: "Scaruffi"
+    url: "https://scaruffi.com"
+    description: "Piero Scaruffi's vast, opinionated archive on music, film, science, and history."
+    categories: [misc]
+    tags: [music, film, archive, essays]
+  - name: "xkcd"
+    url: "https://xkcd.com"
+    description: "Randall Munroe's webcomic of romance, sarcasm, math, and language."
+    categories: [misc]
+    tags: [comic, humor, science]
+  - name: "Maggie Appleton"
+    url: "https://maggieappleton.com"
+    description: "Illustrated essays on digital gardens, tools for thought, and anthropology."
+    categories: [misc, visual-explanation]
+    tags: [design, essays, tools-for-thought]
+  - name: "Gwern"
+    url: "https://gwern.net"
+    description: "Sprawling, rigorous long-form research with a famously distinctive site design."
+    categories: [misc, beautiful-websites]
+    tags: [research, essays]
+  - name: "Andy Matuschak"
+    url: "https://andymatuschak.org"
+    description: "Public working notes on memory, spaced repetition, and effective learning."
+    categories: [misc]
+    tags: [learning, tools-for-thought, essays]
+  - name: "Gerard 't Hooft - How to Become a GOOD Theoretical Physicist"
+    url: "https://webspace.science.uu.nl/~hooft101/theorist.html"
+    description: "A Nobel laureate's eccentric, self-hosted physics curriculum, with opinions to match."
+    categories: [misc, engineering-math-physics]
+    tags: [physics, personal, education, weird]
+  - name: "Become a Programmer, Motherfucker"
+    url: "https://programming-motherfucker.com"
+    description: "A blunt manifesto and a serious, no-nonsense reading list for learning to code."
+    categories: [misc, engineering-math-physics]
+    tags: [programming, manifesto, weird]
+  - name: "Marginalia Search"
+    url: "https://marginalia-search.com"
+    description: "An indie search engine built to surface the small, non-commercial, text-heavy web."
+    categories: [misc]
+    tags: [search, indie-web, discovery]
+  - name: "href.cool"
+    url: "https://href.cool"
+    description: "Kicks Condor's hand-curated directory of wonderful, weird corners of the web."
+    categories: [misc]
+    tags: [directory, indie-web, discovery]

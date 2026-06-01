@@ -8,10 +8,11 @@
      • Sequence of mappings (inline first key + indented continuation keys)
      • Folded (>) and literal (|) block scalars
      • Quoted scalars (single / double)
+     • Inline flow sequences ([a, b, c]) — comma-separated, quote-aware
      • Inline comments stripped via stripYamlComments
      • Scalar type coercion: null, bool, int, float, string
 
-   Does NOT support: anchors, aliases, flow style {}, [], multi-doc, tags.
+   Does NOT support: anchors, aliases, flow mappings {}, multi-doc, tags.
 ──────────────────────────────────────────────────────────────────────────────*/
 
 /**
@@ -33,6 +34,41 @@ function stripYamlComments(line) {
 }
 
 /**
+ * Split the body of a flow sequence on top-level commas, honouring quotes
+ * and nested [] / {} so "a, [b, c], 'd, e'" yields three items.
+ */
+function splitFlowItems(inner) {
+  const items = [];
+  let buf = '';
+  let inSingle = false;
+  let inDouble = false;
+  let depth = 0;
+  for (let i = 0; i < inner.length; i++) {
+    const c = inner[i];
+    if (c === "'" && !inDouble) { inSingle = !inSingle; buf += c; continue; }
+    if (c === '"' && !inSingle) { inDouble = !inDouble; buf += c; continue; }
+    if (!inSingle && !inDouble) {
+      if (c === '[' || c === '{') { depth++; buf += c; continue; }
+      if (c === ']' || c === '}') { depth--; buf += c; continue; }
+      if (c === ',' && depth === 0) { items.push(buf); buf = ''; continue; }
+    }
+    buf += c;
+  }
+  items.push(buf);
+  return items;
+}
+
+/**
+ * Parse an inline flow sequence ("[a, b, c]") into an array. Empty "[]" → [].
+ * Each item is run through parseScalar, so types/quoting are handled per item.
+ */
+function parseFlowSequence(str) {
+  const inner = str.slice(1, -1).trim();
+  if (inner === '') return [];
+  return splitFlowItems(inner).map((s) => parseScalar(s.trim()));
+}
+
+/**
  * Parse a YAML scalar token to the appropriate JS type.
  */
 function parseScalar(str) {
@@ -42,6 +78,7 @@ function parseScalar(str) {
   if (str === 'false') return false;
   if (str.startsWith("'") && str.endsWith("'") && str.length >= 2) return str.slice(1, -1);
   if (str.startsWith('"') && str.endsWith('"') && str.length >= 2) return str.slice(1, -1);
+  if (str.startsWith('[') && str.endsWith(']')) return parseFlowSequence(str);
   const n = Number(str);
   if (!isNaN(n)) return n;
   return str;
@@ -291,4 +328,4 @@ function parseYaml(text) {
   return parseMapping(0);
 }
 
-module.exports = { stripYamlComments, parseScalar, parseYaml };
+module.exports = { stripYamlComments, parseScalar, parseFlowSequence, parseYaml };
