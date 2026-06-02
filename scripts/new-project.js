@@ -433,6 +433,8 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
 
   <meta name="theme-color" content="#120a0a" />
 
+  <link rel="preload" href="../fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="../fonts/outfit-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="../css/fonts.css" />
   <link rel="icon"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23120a0a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23d64550' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
