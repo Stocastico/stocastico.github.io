@@ -136,14 +136,35 @@ function ringSubpaths(coords, round, latBounds) {
 }
 
 /* Build an SVG path `d` (one country, all polygons + holes). Returns null when
-   the geometry has no drawable rings. Mutates `latBounds`. With
-   `skipAntarctica`, rings lying entirely south of 55°S are dropped — Antarctica
-   is irrelevant to a "places visited" map and its polar ring would otherwise
-   need pole-bridging to fill correctly. */
+   the geometry has no drawable rings. Mutates `latBounds`. Options:
+   - `skipAntarctica`: drop rings lying entirely south of 55°S.
+   - `skipOverseas`: for MultiPolygon countries, drop polygon components whose
+     centroid is more than `skipOverseasDeg` (default 35°) away from the largest
+     component's centroid. Filters French Guiana from France, etc. */
 function geometryToPath(geom, decodeArc, round, latBounds, opts = {}) {
   const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
+
+  let filteredPolys = polys;
+  if (opts.skipOverseas && polys && polys.length > 1) {
+    const threshold = opts.skipOverseasDeg ?? 35;
+    const withMeta = polys.map(poly => {
+      const outerCoords = ringCoords(poly[0], decodeArc);
+      const lon = outerCoords.reduce((s, [x]) => s + x, 0) / outerCoords.length;
+      const lat = outerCoords.reduce((s, [, y]) => s + y, 0) / outerCoords.length;
+      return { poly, size: outerCoords.length, centroid: [lon, lat] };
+    });
+    const largest = withMeta.reduce((a, b) => (b.size > a.size ? b : a));
+    filteredPolys = withMeta
+      .filter(({ centroid }) => {
+        const dx = centroid[0] - largest.centroid[0];
+        const dy = centroid[1] - largest.centroid[1];
+        return Math.sqrt(dx * dx + dy * dy) <= threshold;
+      })
+      .map(({ poly }) => poly);
+  }
+
   const segments = [];
-  for (const poly of polys || []) {
+  for (const poly of filteredPolys || []) {
     for (const ringArcs of poly) {
       const coords = ringCoords(ringArcs, decodeArc);
       if (coords.length < 2) continue;
@@ -186,7 +207,7 @@ function buildWorldMapSvg(topo, countries) {
     const isLived = lived.has(name);
     const isVisited = visited.has(name);
     if (!isLived && !isVisited) continue;
-    const d = geometryToPath(geom, decodeArc, round, latBounds, { skipAntarctica: true });
+    const d = geometryToPath(geom, decodeArc, round, latBounds, { skipAntarctica: true, skipOverseas: true });
     if (!d) continue;
     const cls = `wm-country ${isLived ? 'wm-lived' : 'wm-visited'}`;
     highlights.push(`<path class="${cls}" data-name="${escapeAttr(name)}" d="${d}"/>`);
