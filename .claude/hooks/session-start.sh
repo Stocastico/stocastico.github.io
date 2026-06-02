@@ -13,4 +13,19 @@ if ! command -v node &>/dev/null; then
 fi
 
 echo "Node.js $(node --version) available"
+
+# Install dependencies so the test suite can run. The Three.js-dependent
+# tests import the `three` package via js/three-context.js; without an
+# install they silently fail to load. Fresh web containers start with no
+# node_modules, so install on first session start.
+if [ ! -d node_modules ]; then
+  echo "Installing dependencies (npm ci)..."
+  if [ -f package-lock.json ]; then
+    npm ci
+  else
+    npm install
+  fi
+  echo "Dependencies installed."
+fi
+
 echo "Session start hook complete."
