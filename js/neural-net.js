@@ -317,6 +317,43 @@ export class NeuralNetwork {
       try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
     }
     this._listeners = [];
+
+    /* Walk the scene tree and free GPU resources (geometries, materials and
+       their textures — e.g. the additive glow map on the points material).
+       Mirrors Globe3D.destroy(); guarded so test mocks without dispose() are
+       safe. Without this the renderer, geometries and glow texture leak on
+       every pagehide / bfcache eviction. */
+    if (this.scene && Array.isArray(this.scene.children)) {
+      const visit = (obj) => {
+        if (!obj) return;
+        if (obj.geometry && typeof obj.geometry.dispose === 'function') obj.geometry.dispose();
+        const mat = obj.material;
+        if (mat) {
+          const mats = Array.isArray(mat) ? mat : [mat];
+          for (const m of mats) {
+            if (m && typeof m.dispose === 'function') m.dispose();
+            for (const key of ['map', 'alphaMap']) {
+              if (m && m[key] && typeof m[key].dispose === 'function') m[key].dispose();
+            }
+          }
+        }
+        if (Array.isArray(obj.children)) obj.children.forEach(visit);
+      };
+      this.scene.children.forEach(visit);
+    }
+
+    if (this.renderer) {
+      try {
+        if (typeof this.renderer.dispose === 'function') this.renderer.dispose();
+        if (typeof this.renderer.forceContextLoss === 'function') this.renderer.forceContextLoss();
+      } catch (_) { /* ignore */ }
+    }
+
+    this.scene = null;
+    this.renderer = null;
+    this.points = null;
+    this.lines = null;
+    this.lineGeo = null;
   }
 }
 

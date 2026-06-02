@@ -600,6 +600,7 @@ test('NeuralNetwork constructs and updates with mocked THREE', () => {
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
     observe() {}
+    disconnect() {}
   };
   global.requestAnimationFrame = () => 1;
   global.cancelAnimationFrame = () => {};
@@ -609,6 +610,29 @@ test('NeuralNetwork constructs and updates with mocked THREE', () => {
     assert.ok(nn.points);
     assert.ok(nn.lines);
     assert.ok(nn.lineGeo);
+
+    /* destroy() must free GPU resources (geometries, materials and the glow
+       texture) and drop the renderer/scene refs — otherwise they leak on every
+       pagehide / bfcache eviction. The mock objects have no dispose() of their
+       own, so we attach spies and assert destroy() walks the scene. */
+    const disposed = [];
+    const spy = (obj, tag) => { if (obj) obj.dispose = () => disposed.push(tag); };
+    spy(nn.points.geometry, 'points.geo');
+    spy(nn.points.material, 'points.mat');
+    spy(nn.points.material && nn.points.material.map, 'points.map');
+    spy(nn.lines.geometry, 'lines.geo');
+    spy(nn.lines.material, 'lines.mat');
+    nn.renderer.dispose = () => disposed.push('renderer');
+
+    nn.destroy();
+
+    assert.ok(disposed.includes('points.geo'), 'destroy must dispose the points geometry');
+    assert.ok(disposed.includes('points.mat'), 'destroy must dispose the points material');
+    assert.ok(disposed.includes('points.map'), 'destroy must dispose the glow texture');
+    assert.ok(disposed.includes('lines.geo'), 'destroy must dispose the lines geometry');
+    assert.ok(disposed.includes('renderer'), 'destroy must dispose the renderer');
+    assert.equal(nn.scene, null, 'destroy must drop the scene ref');
+    assert.equal(nn.renderer, null, 'destroy must drop the renderer ref');
   } finally {
     global.window = prevWindow;
     global.document = prevDocument;

@@ -127,6 +127,13 @@ test('project: markdownToHtml converts bold text', () => {
 test('project: markdownToHtml converts links', () => {
   const html = markdownToHtml('[click](https://example.com)');
   assert.match(html, /href="https:\/\/example\.com"/);
+  assert.match(html, /rel="noopener noreferrer"/);
+});
+
+test('project: markdownToHtml refuses javascript: links', () => {
+  const html = markdownToHtml('[click](javascript:alert(1))');
+  assert.doesNotMatch(html, /href="javascript:/i);
+  assert.doesNotMatch(html, /<a /);
 });
 
 test('project: markdownToHtml converts unordered lists', () => {
