@@ -305,17 +305,31 @@ h3 {
   align-items: center;
   padding-inline: clamp(1.25rem, 5vw, 3rem);
 
-  /* Starts transparent, gains blur on scroll via JS */
+  /* Transparent bar; the blurred background fades in on scroll via the
+     ::before pseudo-element (see #navbar.scrolled::before below). */
   background: transparent;
-  transition: background var(--t-med) var(--ease),
-    backdrop-filter var(--t-med) var(--ease),
-    box-shadow var(--t-med) var(--ease);
 }
 
-#navbar.scrolled {
+/* Render the scrolled bar's background + blur on a pseudo-element instead of
+   #navbar itself. A non-none backdrop-filter on #navbar would make it the
+   containing block for its fixed-position descendants, which would break the
+   mobile menu overlay (.nav-links) — it'd be sized against the 68px navbar
+   instead of the viewport. Keeping the filter on ::before avoids that trap.
+   It's always present (opacity 0) so the scroll-in still fades smoothly. */
+#navbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background: rgb(var(--bg-rgb) / 0.85);
   backdrop-filter: blur(18px) saturate(1.4);
   box-shadow: 0 1px 0 var(--border);
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease);
+}
+
+#navbar.scrolled::before {
+  opacity: 1;
 }
 
 .nav-inner {
