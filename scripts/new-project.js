@@ -147,7 +147,17 @@ function applyInline(text) {
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
   text = text.replace(/(?<!\w)_(.+?)_(?!\w)/g, '<em>$1</em>');
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
+    /* The text is already HTML-escaped, so quotes can't break out of the
+       attribute — but the protocol still has to be vetted to keep
+       javascript:/data: links out of the generated href. Allow http(s),
+       mailto, fragments and site-relative paths; anything else is left as
+       inert text. */
+    const raw = url.trim();
+    if (!/^(https?:\/\/|mailto:|[/#])/i.test(raw)) return `[${label}](${url})`;
+    const rel = /^https?:\/\//i.test(raw) ? ' target="_blank" rel="noopener noreferrer"' : '';
+    return `<a href="${raw}"${rel}>${label}</a>`;
+  });
   return text;
 }
 
