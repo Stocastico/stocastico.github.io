@@ -74,7 +74,7 @@ import { NoiseGradient } from './noise-gradient.js';
    GlobeFallback2D/geocodeLocations) are dynamically imported at their init
    sites below — see the Three.js loading-strategy note at the top. */
 
-/* DOM animations: scroll-driven, card tilt, magnetic buttons, parallax (extracted) */
+/* DOM animations: scroll reveal, card tilt, card flip, parallax, skill bars (extracted) */
 import {
   initScrollReveal,
   initCardTilt,
@@ -848,12 +848,21 @@ if (typeof document !== 'undefined') {
   initCursorGlow();
   initTaglineReveal();
 
+  /* Each disposable below is recorded so a single pagehide handler at the end
+     of init can release every WebGL context, RAF loop, observer, and event
+     listener in one go (avoids leaks when bfcache evicts the page or the user
+     reloads). The pointer/parallax enhancers return a teardown fn, the
+     WebGL/Canvas instances expose destroy() — initLifecycleCleanup() handles
+     both shapes. */
+  const _disposables = [];
+  const _pushTeardown = (fn) => { if (typeof fn === 'function') _disposables.push({ destroy: fn }); };
+
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
   initCounters();
 
   /* Scroll-driven effects: start immediately (lightweight, needed at any scroll pos) */
-  initScroll3D();
+  _pushTeardown(initScroll3D());
 
   /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
      not compete with content rendering on the main thread. requestIdleCallback
@@ -864,7 +873,7 @@ if (typeof document !== 'undefined') {
     : (fn) => setTimeout(fn, 0);
   initCardFlip();
   whenIdle(() => {
-    initCardTilt();
+    _pushTeardown(initCardTilt());
   });
 
   /* CV timeline and skill bars */
@@ -873,12 +882,6 @@ if (typeof document !== 'undefined') {
 
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
-
-  /* Each WebGL/Canvas instance below is recorded so a single pagehide
-     handler at the end of init can release every WebGL context, RAF
-     loop, observer, and event listener in one go (avoids leaks when
-     bfcache evicts the page or the user reloads). */
-  const _disposables = [];
 
   /* Noise gradient — raw WebGL, runs on devices that support it */
   const noiseCanvas = document.getElementById('noise-canvas');
