@@ -33,6 +33,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
 - Self-hosted fonts: Inter (body) and Outfit (headings + the hero name shader)
+- Privacy-first: no third-party scripts, no cookies. The only external request is a cookieless [GoatCounter](https://www.goatcounter.com/) no-JS analytics pixel (aggregate counts, no personal data)
 
 ## Project structure
 
@@ -99,6 +100,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── generate-sitemap.mjs         Rebuild public/sitemap.xml from projects.js + git mtimes
 │   ├── generate-project-jsonld.mjs  Inject/refresh BreadcrumbList + Article JSON-LD on every projects/*.html
 │   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
+│   ├── generate-analytics.mjs       Inject/refresh the cookieless GoatCounter no-JS pixel on every HTML page
 │   ├── generate-favicons.mjs        Rasterise public/favicon.svg → ico + apple-touch + 192/512 PNGs (uses sharp)
 │   ├── rotate-palette.js            Advance data/palettes.yaml `active` to the next palette (used by CI)
 │   ├── set-domain.mjs               Migrate the site to a custom domain (rewrites URLs + writes public/CNAME)
@@ -127,6 +129,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── css-assets.test.mjs         Regression checks on CSS structure + referenced assets
 │   ├── theme-sync.test.js          Guards every HTML page against palette drift (theme-color / favicon / nav-grad)
 │   ├── cname.test.js               Guards public/CNAME ↔ site origin consistency
+│   ├── analytics.test.mjs          Guards the GoatCounter pixel + its CSP origin on every page
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 │   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
@@ -159,6 +162,7 @@ npm run test:html-quality       # html-validate / a11y checks only
 npm run test:css-assets         # CSS structure / asset regression checks only
 npm run test:theme-sync         # palette-drift guard across every HTML page
 npm run test:cname              # CNAME ↔ site-origin consistency
+npm run test:analytics          # GoatCounter pixel + CSP-origin guard
 # europe-map.test.mjs is included in `npm test` but has no dedicated shorthand
 ```
 
@@ -314,6 +318,18 @@ npm run generate-csp-meta
 node scripts/generate-csp-meta.mjs --dry-run
 ```
 
+### `generate-analytics` — refresh the cookieless analytics pixel
+
+Injects (or replaces) a **GoatCounter no-JS tracking pixel** on every indexable HTML page, wrapped in `<!-- generated:analytics -->` markers. It is a plain `<img>` to `https://stocastico.goatcounter.com/count` — **no external `<script>`, no cookies, no personal data** — so it only needs `img-src` loosened in the CSP (handled by `generate-csp-meta`). The recorded path (`p`) mirrors each page's canonical URL and the title (`t`) is taken from its `<title>`.
+
+```bash
+npm run generate-analytics
+# or:
+node scripts/generate-analytics.mjs --dry-run
+```
+
+View aggregate stats (pageviews, top pages, referrers, countries, browsers) at **https://stocastico.goatcounter.com**. `test/analytics.test.mjs` guards the pixel + its CSP origin on every page and fails on drift.
+
 ### `generate-favicons` — rasterise the favicon
 
 Uses [sharp](https://sharp.pixelplumbing.com/) to rasterise `public/favicon.svg` into the PNG + ICO sizes browsers expect (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) plus full-bleed `maskable` variants (`icon-maskable-192.png`, `icon-maskable-512.png`) for Android adaptive icons.
@@ -404,7 +420,14 @@ Quick summary:
    - Create `projects/<id>.html` from the template (with OG/Twitter tags, canonical, theme-color and the PWA manifest link already included)
    - Register the entry in `data/projects.js` so the card appears on the homepage (up to 4) and on `projects.html`
 
-3. Preview locally by opening `index.html` in a browser, then commit both generated files.
+3. Refresh the per-page generators so the new page carries a CSP meta tag and the analytics pixel (the `seo` / `html-quality` / `analytics` tests gate this in CI):
+
+   ```bash
+   npm run generate-csp-meta
+   npm run generate-analytics
+   ```
+
+4. Preview locally by opening `index.html` in a browser, then commit the generated files.
 
 ### Dry-run mode
 

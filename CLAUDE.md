@@ -36,6 +36,8 @@ npm run generate-countries  # data/locations.yaml → data/countries.yaml (edita
 npm run generate-world-map  # data/countries-110m.json + data/countries.js → inline SVG in index.html
 npm run generate-unesco     # data/unesco.yaml → data/unesco.js
 npm run generate-links      # data/links.yaml → data/links.js
+npm run generate-csp-meta   # refresh the CSP <meta> across every HTML page
+npm run generate-analytics  # refresh the cookieless GoatCounter no-JS pixel across every HTML page
 npm run new-project -- file.md  # Markdown → projects/<slug>.html + updates data/projects.js
 ```
 
@@ -104,7 +106,8 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 5. **After editing `data/countries.yaml`**, run `npm run generate-countries` then `npm run generate-world-map` (rewrites the inline SVG block in `index.html`).
 6. **After editing `data/unesco.yaml`**, run `npm run generate-unesco`.
 7. **After editing `data/links.yaml`**, run `npm run generate-links`.
-8. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.
+8. **After adding/removing a project page** (or any HTML page), run `npm run generate-csp-meta` and `npm run generate-analytics` so the new page carries the CSP `<meta>` and the GoatCounter pixel. The `seo`/`html-quality`/`analytics` tests gate this in CI.
+9. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.
 
 ## Important Patterns
 
@@ -116,6 +119,7 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - **Links blogroll**: `data/links.yaml` (a flat list; each entry has a name, an https-only url, optional `description`, one or more `categories`, and optional `tags` — categories/tags written as inline YAML flow arrays, e.g. `[ai, visual-explanation]`) → `generate-links` → `data/links.js`. The generator de-duplicates by URL (merging the categories/tags of duplicates) and emits `LINKS { categories: [{slug,label}], links: [...] }` with the used categories in canonical order. `renderLinks()` in `js/main.js` builds a category filter bar plus a single de-duplicated grid of `.link-card`s, gated on `#links-grid` (links page only); `linkMatchesFilter()` drives the client-side show/hide. https-only validation in the generator, HTML-escaped again at render. Category labels live in `CATEGORY_LABELS` in `scripts/generate-links.js`; unknown slugs are tolerated (humanised). Keep the list short and curated.
 - **THREE module bindings**: `js/neural-net.js` and `js/globe.js` use named-import destructuring (`let { Scene, WebGLRenderer, ... } = _THREE`) re-bound by `onChange` so test mocks still take effect
 - **Theme pipeline**: `data/palettes.yaml` (one `active` key + named palettes) → `npm run generate-theme` → rewrites the `@theme-generated` `:root` block in `css/styles.css`, regenerates `js/theme.js`, and updates `<meta theme-color>` / inline favicon / nav-logo gradient across every `*.html` + `public/favicon.svg`. CSS reads `var(--*)`; the WebGL/Canvas2D modules and GLSL shaders import `THEME` + the `int()` / `rgba()` / `glvec()` helpers from `js/theme.js` (the shader source is a JS template literal, so colours are interpolated at module load — no recompile, no uniforms). Switching the whole site's palette = edit one YAML key + run one command.
+- **Analytics**: cookieless GoatCounter via a **no-JS `<img>` pixel** (no external `<script>`, no cookies, no personal data). `scripts/generate-analytics.mjs` injects a marker-wrapped `<img src="https://stocastico.goatcounter.com/count?p=…&t=…">` into every HTML page (`p` = canonical path, `t` = page `<title>`), wrapped in `<!-- generated:analytics -->` markers like the CSP/JSON-LD generators. The pixel's origin is allowlisted in the CSP `img-src` (`generate-csp-meta.mjs`). `test/analytics.test.mjs` guards the pixel + CSP origin on every page and fails on drift. View stats at `https://stocastico.goatcounter.com`.
 - **Performance**: NoiseGradient renders 3 frames then stops; HeroNameShader capped at 30fps; favicon is static
 
 ## Things to Avoid
@@ -124,7 +128,7 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - Don't edit generated files (`data/cv.js`, `data/locations.js`, `js/theme.js`, `data/countries.js`, `data/unesco.js`, `data/links.js`) or the `<!-- world-map:start … -->` SVG block in `index.html` — regenerate via the relevant script
 - Don't hardcode colours — add them to `data/palettes.yaml` and consume via `var(--*)` (CSS) or `THEME` from `js/theme.js` (JS/shaders), so palette switching stays consistent
 - Don't edit the `@theme-generated` block inside `css/styles.css` by hand — it's overwritten by `generate-theme`
-- Don't load external fonts or analytics — privacy-first, no tracking
+- Don't load external fonts, third-party scripts, or any cookie-setting / cross-site tracker — privacy-first. The one permitted external request is the **GoatCounter no-JS analytics pixel** (cookieless, no personal data, image-only — `img-src https://stocastico.goatcounter.com`); keep analytics to that pixel.
 - Don't remove `prefers-reduced-motion` checks or accessibility attributes
 - Don't commit `.cache/` changes without verifying geocoding results
 - Don't add `module.exports` / CJS to anything under `js/` or `data/` — they're ESM
