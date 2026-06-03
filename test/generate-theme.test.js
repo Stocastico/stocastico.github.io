@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 
 const {
   parseArgs, validate,
-  hexToChannelList, faviconDataUri,
+  hexToChannelList, hexToOklch, faviconDataUri,
   generateCssBlock, generateThemeJs,
   rewriteHtml, rewriteFaviconSvg, spliceCssBlock,
 } = require('../scripts/generate-theme');
@@ -97,19 +97,30 @@ test('validate: the --palette override is honoured', () => {
 
 // ─── generateCssBlock ────────────────────────────────────────────────────────
 
-test('generateCssBlock: emits markers, hex vars, channel lists and pin vars', () => {
+test('generateCssBlock: emits markers, oklch vars, channel lists and pin vars', () => {
   const css = generateCssBlock(samplePalette(), 'test');
   assert.match(css, /@theme-generated-start/);
   assert.match(css, /@theme-generated-end/);
-  assert.match(css, /--bg: #0a120e;/);
+  /* Solid colours ship as oklch(), computed from the palette hex. */
+  assert.ok(css.includes(`--bg: ${hexToOklch('#0a120e')};`), 'bg should be oklch');
+  assert.ok(css.includes(`--accent: ${hexToOklch('#c8a44d')};`), 'accent should be oklch');
+  assert.ok(css.includes(`--pin-holiday: ${hexToOklch('#d98e54')};`), 'pin-holiday should be oklch');
+  assert.match(css, /--accent: oklch\(/);
+  /* sRGB channel lists stay sRGB for the rgb(var(--x-rgb) / a) alpha pattern. */
   assert.match(css, /--bg-rgb: 10 18 14;/);
-  assert.match(css, /--accent: #c8a44d;/);
   assert.match(css, /--accent-rgb: 200 164 77;/);
+  /* Glow tokens stay hex8 (used directly in box-shadows). */
   assert.match(css, /--accent-glow: #c8a44d55;/);
-  assert.match(css, /--pin-holiday: #d98e54;/);
   /* card / border surfaces are derived from the text channels */
   assert.match(css, /--bg-card: rgb\(232 238 229 \/ 0\.04\);/);
   assert.match(css, /--border-hov: rgb\(200 164 77 \/ 0\.45\);/);
+});
+
+test('hexToOklch: round-trips to oklch() and is deterministic', () => {
+  assert.match(hexToOklch('#000000'), /^oklch\(0% 0 0\)$/);
+  assert.match(hexToOklch('#ffffff'), /^oklch\(100% 0 0\)$/);
+  assert.match(hexToOklch('#c8a44d'), /^oklch\([\d.]+% [\d.]+ [\d.]+\)$/);
+  assert.equal(hexToOklch('#d64550'), hexToOklch('#d64550'));
 });
 
 // ─── generateThemeJs ─────────────────────────────────────────────────────────
