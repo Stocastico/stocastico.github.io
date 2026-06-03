@@ -230,3 +230,8 @@ shots-after/
 shots-diff/
 scripts/_shot.mjs
 scripts/_diff.mjs
+scripts/_shotdemo.mjs
+scripts/_compose.mjs
+demo-before/
+demo-after/
+demo-compare/
