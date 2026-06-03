@@ -78,10 +78,29 @@
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
 
-  /* Spacing */
+  /* Spacing — modular scale (rem). Prefer these tokens over ad-hoc rem values
+     so vertical rhythm and gaps stay consistent across components. */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3rem;
+  --space-4xl: 4rem;
+
   --section-py: clamp(6rem, 11vw, 10rem);
   --container: 1180px;
-  --gap: 1.5rem;
+  --gap: var(--space-lg);
+
+  /* Letter-spacing (tracking) scale — replaces a dozen ad-hoc em values.
+     Uppercase labels/eyebrows use the wider end. */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0.02em;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
+  --tracking-widest: 0.12em;
 
   /* Radius */
   --r-sm: 8px;
@@ -365,7 +384,7 @@ h3 {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-muted);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   transition: color var(--t-fast);
   position: relative;
@@ -564,7 +583,7 @@ h3 {
   font-size: clamp(3.5rem, 9vw, 8.5rem);
   font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
   margin-bottom: 0;
   /* spacing now on .hero-name-wrap */
   background: linear-gradient(135deg, var(--hero-grad-from) 30%, var(--hero-grad-to) 100%);
@@ -662,7 +681,7 @@ h3 {
   gap: 0.5rem;
   color: var(--text-faint);
   font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   animation: scrollHintFade 3s ease-in-out infinite;
 }
@@ -1218,7 +1237,7 @@ h3 {
 
 .link-card-cat {
   font-size: 0.7rem;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-normal);
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   color: var(--text-muted);
@@ -1296,7 +1315,7 @@ h3 {
 .link-card-host {
   color: var(--text-faint);
   font-size: 0.78rem;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-normal);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1755,7 +1774,7 @@ h3 {
   margin-top: auto;
   padding-top: 1rem;
   font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--accent2);
   opacity: 0.5;
@@ -1770,7 +1789,7 @@ h3 {
   display: block;
   margin-top: 1rem;
   font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--accent2);
   opacity: 0.6;
@@ -1869,7 +1888,7 @@ h3 {
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--accent);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   padding-top: 0;
 }
@@ -1986,7 +2005,7 @@ h3 {
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
 }
 
@@ -2093,7 +2112,7 @@ h3 {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--accent);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   margin: 0;
 }
@@ -2331,7 +2350,7 @@ h3 {
   display: block;
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   color: var(--text-faint);
   font-weight: 600;
 }
@@ -2591,7 +2610,7 @@ h3 {
   display: block;
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   margin-bottom: 0.4rem;
 }
@@ -2670,7 +2689,7 @@ h3 {
   background: rgb(var(--accent-rgb) / 0.11);
   color: var(--accent);
   border: 1px solid rgb(var(--accent-rgb) / 0.22);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-normal);
 }
 
 /* ── CV skills section ─────────────────────────────────── */
@@ -2691,7 +2710,7 @@ h3 {
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   font-size: 0.75rem;
 }
 
@@ -3219,7 +3238,7 @@ h3 {
 .gt-type {
   font-size: 0.63rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
 }
 
@@ -3375,7 +3394,7 @@ h3 {
 .post-meta {
   font-size: 0.82rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   color: var(--accent2);
   margin-bottom: 0.9rem;
 }

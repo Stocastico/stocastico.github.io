@@ -223,3 +223,10 @@ output/playwright/
 
 # Local-only screenshot scratch dir (e.g. PR review captures)
 screenshots/
+
+# transient visual-regression artifacts (CSS modernization branch)
+shots-before/
+shots-after/
+shots-diff/
+scripts/_shot.mjs
+scripts/_diff.mjs
