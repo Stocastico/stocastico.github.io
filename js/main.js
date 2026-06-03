@@ -889,21 +889,30 @@ if (typeof document !== 'undefined') {
   }
 
   /* Three.js neural network — falls back to Canvas2D when WebGL is missing.
-     Dynamically imported so Three.js stays out of the main chunk, and deferred
-     to idle time so its ~130 KB download stays off the critical path — the
-     hero already has the noise gradient + name shader while it loads. */
+     Dynamically imported so Three.js stays out of the main chunk. Deferred
+     until the first user interaction (mousemove / scroll / touchstart) so the
+     ~130 KB chunk is off the critical path on page load; the noise gradient +
+     name shader fill the hero while it loads. On reduced-motion the canvas is
+     hidden entirely. */
   const canvas = document.getElementById('neural-canvas');
   if (canvas) {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
     } else {
-      whenIdle(() => {
+      let started = false;
+      const startNeural = () => {
+        if (started) return;
+        started = true;
+        ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
+          window.removeEventListener(evt, startNeural));
         import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
           _disposables.push(
             hasWebGLSupport() ? new NeuralNetwork(canvas) : new NeuralNetwork2D(canvas),
           );
         });
-      });
+      };
+      ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
+        window.addEventListener(evt, startNeural, { passive: true, once: true }));
     }
   }
 
