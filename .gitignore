@@ -240,3 +240,10 @@ scripts/_compose2.mjs
 d2-before/
 d2-after/
 d2-compare/
+scripts/_shot3.mjs
+scripts/_compose3.mjs
+d3-before/
+d3-after/
+d3-compare/
+scripts/_check46.mjs
+scripts/_compose3.mjs

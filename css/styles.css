@@ -1998,11 +1998,11 @@ h3 {
 
 .project-card--has-bg.bg-loaded::before {
   background-image: var(--card-bg);
-  opacity: 0.35;
+  opacity: 0.16;
 }
 
 .project-card--has-bg.bg-loaded:hover::before {
-  opacity: 0.5;
+  opacity: 0.26;
   transform: scale(1.04);
 }
 
@@ -2011,9 +2011,9 @@ h3 {
   position: absolute;
   inset: 0;
   background: linear-gradient(to top,
-      rgb(var(--bg-rgb) / 0.92) 0%,
-      rgb(var(--bg-rgb) / 0.7) 45%,
-      rgb(var(--bg-rgb) / 0.25) 100%);
+      rgb(var(--bg-rgb) / 0.95) 0%,
+      rgb(var(--bg-rgb) / 0.85) 45%,
+      rgb(var(--bg-rgb) / 0.55) 100%);
   z-index: -1;
   pointer-events: none;
 }
