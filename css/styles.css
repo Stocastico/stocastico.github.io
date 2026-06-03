@@ -2327,13 +2327,13 @@ h3 {
     border-color var(--t-med),
     background var(--t-med),
     box-shadow var(--t-med);
-}
 
-.contact-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--border-hov);
-  background: var(--bg-card-hov);
-  box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.35);
+  &:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-hov);
+    background: var(--bg-card-hov);
+    box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.35);
+  }
 }
 
 .contact-icon {
@@ -3656,16 +3656,16 @@ h3 {
   transition: background var(--t-fast);
   font-size: 0.9rem;
   color: var(--text);
-}
 
-.cmd-item:hover,
-.cmd-item[aria-selected="true"] {
-  background: rgb(var(--accent-rgb) / 0.12);
-  color: var(--text);
-}
+  &:hover,
+  &[aria-selected="true"] {
+    background: rgb(var(--accent-rgb) / 0.12);
+    color: var(--text);
+  }
 
-.cmd-item[aria-selected="true"] {
-  background: rgb(var(--accent-rgb) / 0.18);
+  &[aria-selected="true"] {
+    background: rgb(var(--accent-rgb) / 0.18);
+  }
 }
 
 .cmd-item-icon {
@@ -3678,11 +3678,11 @@ h3 {
   justify-content: center;
   flex-shrink: 0;
   color: var(--accent2);
-}
 
-.cmd-item-icon svg {
-  width: 14px;
-  height: 14px;
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .cmd-item-label {
@@ -3754,42 +3754,42 @@ h3 {
   padding: 0;
   cursor: pointer;
   transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
-}
 
-.side-dot:hover {
-  background: var(--text-muted);
-  transform: scale(1.4);
-}
+  &:hover {
+    background: var(--text-muted);
+    transform: scale(1.4);
+  }
 
-.side-dot[aria-current="true"] {
-  background: var(--accent2);
-  transform: scale(1.35);
-  box-shadow: 0 0 8px var(--accent2-glow);
-}
+  &[aria-current="true"] {
+    background: var(--accent2);
+    transform: scale(1.35);
+    box-shadow: 0 0 8px var(--accent2-glow);
+  }
 
-/* Tooltip label on hover */
-.side-dot::before {
-  content: attr(data-label);
-  position: absolute;
-  right: calc(100% + 0.75rem);
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  background: rgb(var(--bg-rgb) / 0.85);
-  border: 1px solid var(--border);
-  padding: 0.2em 0.55em;
-  border-radius: var(--r-sm);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--t-fast);
-  backdrop-filter: blur(8px);
-}
+  /* Tooltip label on hover */
+  &::before {
+    content: attr(data-label);
+    position: absolute;
+    right: calc(100% + 0.75rem);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: rgb(var(--bg-rgb) / 0.85);
+    border: 1px solid var(--border);
+    padding: 0.2em 0.55em;
+    border-radius: var(--r-sm);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--t-fast);
+    backdrop-filter: blur(8px);
+  }
 
-.side-dot:hover::before {
-  opacity: 1;
+  &:hover::before {
+    opacity: 1;
+  }
 }
 
 /* Only show on wide enough screens with a mouse */
