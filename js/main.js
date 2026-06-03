@@ -79,7 +79,6 @@ import {
   initScrollReveal,
   initCardTilt,
   initCardFlip,
-  initMagneticButtons,
   initScroll3D,
   initSkillBars,
   initTimelineScroll3D,
@@ -798,7 +797,6 @@ export {
   initSkillBars,
   initTimelineScroll3D,
   initAnimatedFavicon,
-  initMagneticButtons,
   initScroll3D,
   initNavbar,
   initMobileMenu,
@@ -857,17 +855,16 @@ if (typeof document !== 'undefined') {
   /* Scroll-driven effects: start immediately (lightweight, needed at any scroll pos) */
   initScroll3D();
 
-  /* Pointer-only enhancements (card tilt, magnetic buttons) — deferred to idle time
-     so they do not compete with content rendering on the main thread.
-     requestIdleCallback fires within milliseconds on a quiet page; the 2 s timeout
-     guarantees they still initialise on heavily loaded devices.                     */
+  /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
+     not compete with content rendering on the main thread. requestIdleCallback
+     fires within milliseconds on a quiet page; the 2 s timeout guarantees it
+     still initialises on heavily loaded devices.                              */
   const whenIdle = typeof requestIdleCallback !== 'undefined'
     ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
     : (fn) => setTimeout(fn, 0);
   initCardFlip();
   whenIdle(() => {
     initCardTilt();
-    initMagneticButtons();
   });
 
   /* CV timeline and skill bars */

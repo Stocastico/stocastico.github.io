@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
-   ANIMATIONS — scroll-driven effects, card tilt, magnetic
-   buttons, parallax, skill bars, timeline entrance.
+   ANIMATIONS — scroll-driven effects, card tilt, parallax,
+   skill bars, timeline entrance.
 
    Pure DOM / Canvas API — no Three.js dependency.
    ═══════════════════════════════════════════════════════════ */
@@ -136,92 +136,6 @@ export function initCardFlip() {
       }
     });
   });
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MAGNETIC BUTTONS
-   ═══════════════════════════════════════════════════════════ */
-export function initMagneticButtons() {
-  if (prefersReducedMotion()) return;
-  if (typeof window === 'undefined') return;
-  if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) return;
-
-  const RADIUS   = 80;   /* px — proximity trigger distance */
-  const RADIUS_2 = RADIUS * RADIUS;  /* compare squared — avoids sqrt */
-  const STRENGTH = 0.35; /* fraction of offset to apply     */
-  const SPRING   = 0.14; /* lerp factor per frame           */
-
-  const magnets = Array.from(
-    document.querySelectorAll('.btn-primary, .btn-ghost, .social-btn')
-  ).map(el => ({ el, tx: 0, ty: 0, cx: 0, cy: 0, active: false, raf: null, cxRect: 0, cyRect: 0 }));
-
-  const heroActions = document.querySelector('.hero-actions');
-  const filteredMagnets = magnets.filter((m) => !heroActions?.contains(m.el));
-
-  if (!filteredMagnets.length) return;
-
-  /* Cache the centre of each magnet — getBoundingClientRect() is one of the
-     most layout-thrashing DOM reads, and the previous implementation called
-     it once per magnet on every mousemove (~360 layouts/sec for 6 magnets at
-     60Hz). We refresh on resize, scroll, and after the spring resets the
-     transform — that covers every case where the centre actually moves. */
-  let _rectsValid = false;
-  function refreshRects() {
-    for (const m of filteredMagnets) {
-      /* Skip while the spring transform is non-zero — it would offset the rect
-         and we'd capture a moving centre. */
-      if (m.cx !== 0 || m.cy !== 0 || m.active) continue;
-      const r = m.el.getBoundingClientRect();
-      m.cxRect = r.left + r.width  / 2;
-      m.cyRect = r.top  + r.height / 2;
-    }
-    _rectsValid = true;
-  }
-  const _invalidate = () => { _rectsValid = false; };
-
-  if (typeof window.addEventListener === 'function') {
-    window.addEventListener('resize', _invalidate, { passive: true });
-    window.addEventListener('scroll', _invalidate, { passive: true });
-  }
-
-  function tick(m) {
-    m.cx += (m.tx - m.cx) * SPRING;
-    m.cy += (m.ty - m.cy) * SPRING;
-    const done = !m.active && Math.abs(m.tx - m.cx) < 0.05 && Math.abs(m.ty - m.cy) < 0.05;
-    if (done) {
-      m.cx = 0; m.cy = 0;
-      m.el.style.transform = '';
-      m.raf = null;
-    } else {
-      m.el.style.transform = `translate(${m.cx.toFixed(2)}px,${m.cy.toFixed(2)}px)`;
-      m.raf = requestAnimationFrame(() => tick(m));
-    }
-  }
-
-  /* Coalesce mousemove bursts onto one rAF tick (latest event wins). */
-  const onMouseMove = rafThrottle((e) => {
-    if (!_rectsValid) refreshRects();
-    const ex = e.clientX, ey = e.clientY;
-    for (let i = 0; i < filteredMagnets.length; i++) {
-      const m = filteredMagnets[i];
-      const dx = ex - m.cxRect;
-      const dy = ey - m.cyRect;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < RADIUS_2) {
-        m.active = true;
-        m.tx = dx * STRENGTH;
-        m.ty = dy * STRENGTH;
-        if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
-      } else if (m.active) {
-        m.active = false;
-        m.tx = 0;
-        m.ty = 0;
-        if (!m.raf) m.raf = requestAnimationFrame(() => tick(m));
-      }
-    }
-  });
-
-  document.addEventListener('mousemove', onMouseMove, { passive: true });
 }
 
 /* ═══════════════════════════════════════════════════════════
