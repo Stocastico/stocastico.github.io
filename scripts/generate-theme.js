@@ -113,12 +113,9 @@ function hexToChannelList(hex) {
   return `${r} ${g} ${b}`;
 }
 
-/* '#rrggbb' → 'oklch(L% C H)'.
-   sRGB → linear → OKLab → OKLCH (Björn Ottosson's matrices). Output carries
-   enough precision to round-trip back to the same sRGB byte values, so
-   switching the emitted tokens from hex to oklch is a no-op on screen while
-   giving the shipped CSS a perceptual, wide-gamut-ready colour space. */
-function hexToOklch(hex) {
+/* '#rrggbb' → { L, C, H } in OKLCH (L 0..1, H degrees).
+   sRGB → linear → OKLab → OKLCH (Björn Ottosson's matrices). */
+function hexToLch(hex) {
   const { r, g, b } = hexChannels(hex);
   const lin = (c) => {
     c /= 255;
@@ -135,14 +132,60 @@ function hexToOklch(hex) {
   const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
   const bb = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
 
-  const C = Math.sqrt(a * a + bb * bb);
   let H = Math.atan2(bb, a) * 180 / Math.PI;
   if (H < 0) H += 360;
+  return { L, C: Math.sqrt(a * a + bb * bb), H };
+}
 
-  const Lp = +(L * 100).toFixed(3);
+/* { L, C, H } in OKLCH → '#rrggbb' (OKLab → linear sRGB → sRGB, clamped). */
+function lchToHex({ L, C, H }) {
+  const hr = H * Math.PI / 180;
+  const a = C * Math.cos(hr), b = C * Math.sin(hr);
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+  const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
+  const R = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  const G = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  const B = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+  const enc = (c) => {
+    c = c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
+    return Math.max(0, Math.min(255, Math.round(c * 255)));
+  };
+  return '#' + [enc(R), enc(G), enc(B)].map(n => n.toString(16).padStart(2, '0')).join('');
+}
+
+/* '#rrggbb' → 'oklch(L% C H)'. Output carries enough precision to round-trip
+   back to the same sRGB byte values, so switching the emitted tokens from hex
+   to oklch is a no-op on screen while giving the shipped CSS a perceptual,
+   wide-gamut-ready colour space. */
+function hexToOklch(hex) {
+  const { L, C, H } = hexToLch(hex);
   const Cp = +C.toFixed(4);
-  const Hp = Cp === 0 ? 0 : +H.toFixed(3);
-  return `oklch(${Lp}% ${Cp} ${Hp})`;
+  return `oklch(${+(L * 100).toFixed(3)}% ${Cp} ${Cp === 0 ? 0 : +H.toFixed(3)})`;
+}
+
+/* Slightly tame the accent chroma (OKLCH) for a more sophisticated, less
+   "alert" accent — applied uniformly to every palette so a rotation never
+   reintroduces a hot accent. Lightness + hue are preserved; only chroma is
+   scaled. data/palettes.yaml stays the authored source (full chroma); this is
+   the single knob that softens it site-wide (CSS, JS canvas, HTML, favicons). */
+const ACCENT_CHROMA = 0.86;
+
+function desaturate(hex, scale = ACCENT_CHROMA) {
+  const lch = hexToLch(hex);
+  return lchToHex({ ...lch, C: lch.C * scale });
+}
+
+/* Return a palette clone with the accent family chroma tamed. */
+function tameAccent(p) {
+  return {
+    ...p,
+    accent: desaturate(p.accent),
+    accentHi: desaturate(p.accentHi),
+    accent2: desaturate(p.accent2),
+    accent2Hi: desaturate(p.accent2Hi),
+  };
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -414,7 +457,7 @@ function main(argv) {
   }
 
   const id = opts.palette || data.active;
-  const p  = data.palettes[id];
+  const p  = tameAccent(data.palettes[id]);
 
   const themeJs  = generateThemeJs(p, id);
   const cssBlock = generateCssBlock(p, id);
@@ -478,7 +521,7 @@ if (require.main === module) {
 
 module.exports = {
   parseArgs, validate,
-  hexToChannelList, hexToOklch, faviconDataUri,
+  hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
   generateCssBlock, generateThemeJs,
   rewriteHtml, rewriteFaviconSvg,
   spliceCssBlock,

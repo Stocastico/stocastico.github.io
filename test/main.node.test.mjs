@@ -25,7 +25,6 @@ import {
   initSkillBars,
   initTimelineScroll3D,
   initAnimatedFavicon,
-  initMagneticButtons,
   initScroll3D,
   initBackToTop,
   NoiseGradient,
@@ -1557,60 +1556,6 @@ test('initCardTilt skips when prefers-reduced-motion is set', () => {
   try {
     initCardTilt();
     assert.ok(!queryCalled, 'Should skip card setup when reduced motion is preferred');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-  }
-});
-
-/* ─── initMagneticButtons tests ───────────────────────────── */
-
-test('initMagneticButtons registers mousemove listener for magnetic effect', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const btn = {
-    style: { transform: '' },
-    getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 40 }; },
-  };
-  const docListeners = {};
-  global.document = {
-    querySelectorAll() { return [btn]; },
-    querySelector() { return null; },  /* no .hero-actions */
-    addEventListener(type, fn) { docListeners[type] = fn; },
-  };
-  global.window = {
-    matchMedia() { return { matches: false }; },
-  };
-  global.requestAnimationFrame = (fn) => { fn(); return 1; };
-  try {
-    initMagneticButtons();
-    assert.ok(docListeners.mousemove, 'Should register mousemove listener');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-  }
-});
-
-test('initMagneticButtons skips on coarse pointer devices', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  let queryCalled = false;
-  global.document = {
-    querySelectorAll() { queryCalled = true; return []; },
-    querySelector() { return null; },
-    addEventListener() {},
-  };
-  global.window = {
-    matchMedia(q) {
-      if (q === '(pointer: coarse)') return { matches: true };
-      return { matches: false };
-    },
-  };
-  try {
-    initMagneticButtons();
-    assert.ok(!queryCalled, 'Should skip on touch devices');
   } finally {
     global.document = prevDoc;
     global.window = prevWin;

@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 
 const {
   parseArgs, validate,
-  hexToChannelList, hexToOklch, faviconDataUri,
+  hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
   generateCssBlock, generateThemeJs,
   rewriteHtml, rewriteFaviconSvg, spliceCssBlock,
 } = require('../scripts/generate-theme');
@@ -121,6 +121,31 @@ test('hexToOklch: round-trips to oklch() and is deterministic', () => {
   assert.match(hexToOklch('#ffffff'), /^oklch\(100% 0 0\)$/);
   assert.match(hexToOklch('#c8a44d'), /^oklch\([\d.]+% [\d.]+ [\d.]+\)$/);
   assert.equal(hexToOklch('#d64550'), hexToOklch('#d64550'));
+});
+
+test('lchToHex: inverts hexToLch within rounding for in-gamut colours', () => {
+  for (const hex of ['#d64550', '#c2632e', '#120a0a', '#f0e6e3', '#6db088']) {
+    assert.equal(lchToHex(hexToLch(hex)), hex, `${hex} should round-trip`);
+  }
+});
+
+test('desaturate: lowers OKLCH chroma but preserves lightness and hue', () => {
+  const before = hexToLch('#d64550');
+  const after = hexToLch(desaturate('#d64550'));
+  assert.ok(after.C < before.C, 'chroma should drop');
+  assert.ok(Math.abs(after.L - before.L) < 0.01, 'lightness preserved');
+  assert.ok(Math.abs(after.H - before.H) < 1.0, 'hue preserved');
+});
+
+test('tameAccent: tames only the accent family, leaving bg/text/pins intact', () => {
+  const p = samplePalette();
+  const t = tameAccent(p);
+  for (const k of ['accent', 'accentHi', 'accent2', 'accent2Hi']) {
+    assert.ok(hexToLch(t[k]).C < hexToLch(p[k]).C, `${k} chroma should drop`);
+  }
+  assert.equal(t.bg, p.bg);
+  assert.equal(t.text, p.text);
+  assert.deepEqual(t.pins, p.pins);
 });
 
 // ─── generateThemeJs ─────────────────────────────────────────────────────────

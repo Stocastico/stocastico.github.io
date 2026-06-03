@@ -22,7 +22,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { parseYaml } = require('../scripts/lib/yaml');
-const { rewriteHtml, rewriteFaviconSvg } = require('../scripts/generate-theme.js');
+const { rewriteHtml, rewriteFaviconSvg, tameAccent } = require('../scripts/generate-theme.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -31,7 +31,9 @@ function activePalette() {
   const id = data.active;
   const p = data.palettes[id];
   assert.ok(p, `active palette "${id}" is not defined in data/palettes.yaml`);
-  return p;
+  /* generate-theme tames the accent chroma before writing the HTML, so the
+     guard must compare against the same tamed palette. */
+  return tameAccent(p);
 }
 
 /** Every *.html in the repo root + projects/ (the set generate-theme rewrites). */
