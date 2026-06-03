@@ -30,6 +30,14 @@
    22. Side Progress Dots
    ============================================================ */
 
+/* ─── 0. Cascade layers ───────────────────────────────────
+   Explicit layer order: component rules sit in a later layer than the
+   reset/base layer, so they win without needing higher specificity or
+   !important. :root tokens stay unlayered — custom-property *values* are
+   layer-agnostic, and keeping them out of a layer also leaves the
+   generate-theme splice untouched. */
+@layer base, components;
+
 /* ─── 1. Custom Properties ─────────────────────────────── */
 :root {
   /* Colours — generated. Edit data/palettes.yaml then run
@@ -129,6 +137,8 @@
   /* Navbar height (used for scroll offset) */
   --nav-h: 68px;
 }
+
+@layer base {
 
 /* ─── 1b. Entrance for research cards ───────────────────── */
 /* Cards slide in from the right when they enter the viewport. */
@@ -753,6 +763,10 @@ h3 {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+} /* end @layer base */
+
+@layer components {
 
 /* ─── 8. Section Shared ─────────────────────────────────── */
 .section {
@@ -3922,3 +3936,5 @@ h3 {
     color: #333;
   }
 }
+
+} /* end @layer components */
