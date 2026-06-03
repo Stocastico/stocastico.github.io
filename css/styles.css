@@ -374,10 +374,10 @@ h3 {
   display: flex;
   align-items: center;
   transition: opacity var(--t-fast);
-}
 
-.nav-logo:hover {
-  opacity: var(--o-hover);
+  &:hover {
+    opacity: var(--o-hover);
+  }
 }
 
 .nav-home-icon {
@@ -388,59 +388,59 @@ h3 {
 .nav-links {
   display: flex;
   gap: 2.5rem;
-}
 
-.nav-links a {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  transition: color var(--t-fast);
-  position: relative;
-}
+  a {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    transition: color var(--t-fast);
+    position: relative;
 
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 0;
-  height: 1px;
-  background: var(--accent);
-  transition: width var(--t-med) var(--ease);
-}
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 0;
+      height: 1px;
+      background: var(--accent);
+      transition: width var(--t-med) var(--ease);
+    }
 
-.nav-links a:hover {
-  color: var(--text);
-}
+    &:hover {
+      color: var(--text);
 
-.nav-links a:hover::after {
-  width: 100%;
-}
+      &::after {
+        width: 100%;
+      }
+    }
 
-.nav-links a[aria-current='true'] {
-  color: var(--text);
-}
+    &[aria-current='true'] {
+      color: var(--text);
 
-.nav-links a[aria-current='true']::after {
-  width: 100%;
-  background: var(--accent2);
-}
+      &::after {
+        width: 100%;
+        background: var(--accent2);
+      }
 
-/* Active section dot above the link */
-.nav-links a[aria-current='true']::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--accent2);
-  box-shadow: 0 0 6px var(--accent2-glow);
-  transition: opacity var(--t-med);
+      /* Active section dot above the link */
+      &::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent2);
+        box-shadow: 0 0 6px var(--accent2-glow);
+        transition: opacity var(--t-med);
+      }
+    }
+  }
 }
 
 /* ─── Reading Progress Bar ───────────────────────────── */
@@ -469,27 +469,27 @@ h3 {
   border: none;
   cursor: pointer;
   padding: 4px;
-}
 
-.nav-toggle span {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: var(--text);
-  border-radius: 2px;
-  transition: transform var(--t-med) var(--ease), opacity var(--t-fast);
-}
+  span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform var(--t-med) var(--ease), opacity var(--t-fast);
+  }
 
-.nav-toggle.open span:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
-}
+  &.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
 
-.nav-toggle.open span:nth-child(2) {
-  opacity: 0;
-}
+  &.open span:nth-child(2) {
+    opacity: 0;
+  }
 
-.nav-toggle.open span:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  &.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
 }
 
 /* ─── 6. Hero Section ───────────────────────────────────── */
@@ -2497,20 +2497,20 @@ h3 {
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 0;
-}
 
-/* Central vertical spine */
-.cv-timeline::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-50%);
-  background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
-  box-shadow: 0 0 10px var(--accent-glow);
-  border-radius: 2px;
+  /* Central vertical spine */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
+    box-shadow: 0 0 10px var(--accent-glow);
+    border-radius: 2px;
+  }
 }
 
 /* ── Timeline row — one per entry ─────────────────────── */
@@ -2531,22 +2531,22 @@ h3 {
   align-items: start;
   margin-bottom: 1.5rem;
   position: relative;
-}
 
-/* Dots inside concurrent block use career colour */
-.tl-concurrent-block .tl-spine .tl-dot {
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow);
-}
+  /* Dots inside concurrent block use career colour */
+  .tl-spine .tl-dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
 
-/* Education card stretches to fill its full row span */
-.tl-concurrent-block .tl-right {
-  align-self: stretch;
-}
+  /* Education card stretches to fill its full row span */
+  .tl-right {
+    align-self: stretch;
 
-.tl-concurrent-block .tl-right .tl-card-single {
-  height: 100%;
-  box-sizing: border-box;
+    .tl-card-single {
+      height: 100%;
+      box-sizing: border-box;
+    }
+  }
 }
 
 /* ── Year marker on the spine ─────────────────────────── */
@@ -2584,12 +2584,12 @@ h3 {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   transition: border-color var(--t-med), background var(--t-med), box-shadow var(--t-med);
-}
 
-.tl-card-single:hover {
-  border-color: var(--border-hov);
-  background: var(--bg-card-hov);
-  box-shadow: 0 8px 32px rgb(var(--shadow-rgb) / 0.3);
+  &:hover {
+    border-color: var(--border-hov);
+    background: var(--bg-card-hov);
+    box-shadow: 0 8px 32px rgb(var(--shadow-rgb) / 0.3);
+  }
 }
 
 /* Career cards: left side — accent bar on right edge (toward spine) */
