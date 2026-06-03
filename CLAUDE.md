@@ -52,13 +52,15 @@ projects/*.html     Per-project detail pages
 vite.config.js      Multi-page Vite config (index, cv, projects, travel, links, 404, project pages)
 css/styles.css      All styles including print styles
 css/fonts.css       Self-hosted fonts
-js/main.js          ESM entry — orchestrates DOMContentLoaded init
+js/main.js          ESM entry — orchestrates DOMContentLoaded init + page-teardown (pagehide) cleanup
+js/ui.js            Chrome/UI behaviours — navbar, mobile menu, command palette, side-dots, counters, toast, back-to-top, cursor glow, carousel
 js/three-context.js Shared THREE binding + test mocking hook
 js/utils.js         isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
 js/neural-net.js    NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
 js/hero-shader.js   HeroNameShader (raw WebGL iridescent text)
+js/noise-gradient.js NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 js/globe.js         Globe3D + GlobeFallback2D + geocodeLocations
-js/animations.js    Scroll-driven effects, card tilt, magnetic buttons, parallax
+js/animations.js    Scroll-driven effects, card tilt (rect cached per hover), card flip, parallax, skill bars, timeline entrance
 js/europe-map.js    Interactive 2D Canvas map of Europe
 data/cv.yaml        Source of truth for CV → run generate-cv after editing
 data/cv.js          Generated ESM module (do not edit manually)
