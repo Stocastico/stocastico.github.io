@@ -98,7 +98,7 @@
   --space-3xl: 3rem;
   --space-4xl: 4rem;
 
-  --section-py: clamp(6rem, 11vw, 10rem);
+  --section-py: clamp(7rem, 12vw, 11rem);
   --container: 1180px;
   --gap: var(--space-lg);
 
@@ -118,6 +118,14 @@
 
   /* Shadow colour — used as rgb(var(--shadow-rgb) / <alpha>) in box-shadows */
   --shadow-rgb: 0 0 0;
+
+  /* Elevation — layered (tight contact + soft ambient) shadows. Two modest
+     layers read more refined than one big blur, and stay consistent across
+     cards, panels and modals. */
+  --elev-1: 0 1px 2px rgb(var(--shadow-rgb) / 0.24), 0 2px 6px rgb(var(--shadow-rgb) / 0.2);
+  --elev-2: 0 2px 6px rgb(var(--shadow-rgb) / 0.26), 0 8px 20px rgb(var(--shadow-rgb) / 0.3);
+  --elev-3: 0 4px 12px rgb(var(--shadow-rgb) / 0.3), 0 16px 36px rgb(var(--shadow-rgb) / 0.38);
+  --elev-4: 0 8px 22px rgb(var(--shadow-rgb) / 0.34), 0 28px 56px rgb(var(--shadow-rgb) / 0.44);
 
   /* Opacity */
   --o-hover: 0.75;
@@ -797,7 +805,7 @@ h3 {
 
 .section-header {
   text-align: center;
-  margin-bottom: clamp(3rem, 6vw, 5rem);
+  margin-bottom: clamp(3.5rem, 7vw, 6rem);
 }
 
 .section-tag {
@@ -816,7 +824,9 @@ h3 {
 
 .section-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-size: clamp(2.25rem, 4.5vw, 3.75rem);
+  line-height: 1.08;
+  letter-spacing: var(--tracking-tight);
   background: linear-gradient(135deg, var(--text) 50%, var(--text-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -825,8 +835,10 @@ h3 {
 
 .section-subtitle {
   color: var(--text-muted);
-  font-size: 1rem;
-  margin-top: 0.75rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  max-width: 60ch;
+  margin: 1rem auto 0;
 }
 
 
@@ -1694,7 +1706,7 @@ h3 {
 .research-card:hover {
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
-  box-shadow: 0 16px 40px rgb(var(--shadow-rgb) / 0.45);
+  box-shadow: var(--elev-3);
 }
 
 .research-card:hover::before {
@@ -1711,51 +1723,50 @@ h3 {
   grid-template-areas: 'face';
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: inherit;
 }
 
-.research-card.is-flipped .card-inner {
-  transform: rotateY(180deg);
-}
-
+/* Reveal, not flip: front and back share one grid cell and cross-fade with a
+   subtle vertical glide (no 3-D rotation). The shown side flips visibility
+   immediately so it fades in; the hidden side flips visibility only after the
+   fade, so its text leaves the tab order once it's gone. */
 .card-front,
 .card-back {
   grid-area: face;
   padding: 2rem;
   border-radius: inherit;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
 .card-front {
-  /* Firefox ignores backface-visibility in some configurations; toggling
-     visibility at the flip midpoint is the reliable cross-browser fix. */
   visibility: visible;
-  transition: visibility 0s linear 0.325s;
+  transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease);
 }
 
 .card-back {
-  transform: rotateY(180deg);
   background: var(--bg-card-hov);
   border: 1px solid var(--border-hov);
   justify-content: space-between;
+  opacity: 0;
+  transform: translateY(12px);
   visibility: hidden;
-  transition: visibility 0s linear 0.325s;
+  transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease), visibility 0s linear var(--t-med);
 }
 
 .research-card.is-flipped .card-front {
+  opacity: 0;
+  transform: translateY(-12px);
   visibility: hidden;
-  transition: visibility 0s linear 0.325s;
+  transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease), visibility 0s linear var(--t-med);
 }
 
 .research-card.is-flipped .card-back {
+  opacity: 1;
+  transform: translateY(0);
   visibility: visible;
-  transition-delay: 0s;
+  transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease);
 }
 
 .card-back-title {
@@ -1966,7 +1977,7 @@ h3 {
   transform: translateY(-5px);
   border-color: var(--accent);
   background: var(--bg-card-hov);
-  box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.35);
+  box-shadow: var(--elev-3);
 }
 
 /* When a bg image is supplied, render it semi-transparent behind the content.
@@ -2250,7 +2261,7 @@ h3 {
 .skill-group:hover {
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
-  box-shadow: 0 8px 32px rgb(var(--shadow-rgb) / 0.3);
+  box-shadow: var(--elev-2);
 }
 
 .skill-group-title {
@@ -2332,7 +2343,7 @@ h3 {
     transform: translateY(-5px);
     border-color: var(--border-hov);
     background: var(--bg-card-hov);
-    box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.35);
+    box-shadow: var(--elev-3);
   }
 }
 
@@ -2588,7 +2599,7 @@ h3 {
   &:hover {
     border-color: var(--border-hov);
     background: var(--bg-card-hov);
-    box-shadow: 0 8px 32px rgb(var(--shadow-rgb) / 0.3);
+    box-shadow: var(--elev-2);
   }
 }
 
@@ -2745,7 +2756,7 @@ h3 {
 .skill-panel:hover {
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
-  box-shadow: 0 4px 20px rgb(var(--shadow-rgb) / 0.25);
+  box-shadow: var(--elev-2);
 }
 
 .skill-panel-title {
@@ -3201,7 +3212,7 @@ h3 {
   overflow: hidden;
   background: radial-gradient(ellipse at 50% 65%, rgb(var(--bg-alt-rgb) / 0.95) 0%, var(--bg) 68%);
   border: 1px solid var(--border);
-  box-shadow: inset 0 0 80px rgb(var(--accent-rgb) / 0.04), 0 30px 80px rgb(var(--shadow-rgb) / 0.5);
+  box-shadow: inset 0 0 60px rgb(var(--accent-rgb) / 0.035), var(--elev-4);
   contain: layout paint;
   /* isolate reflow + paint within the globe */
 }
@@ -3241,7 +3252,7 @@ h3 {
   min-width: 165px;
   max-width: 230px;
   z-index: 10;
-  box-shadow: 0 8px 30px rgb(var(--shadow-rgb) / 0.5);
+  box-shadow: var(--elev-2);
 }
 
 .globe-tooltip.visible {
@@ -3574,7 +3585,7 @@ h3 {
   background: rgb(var(--bg-alt-rgb) / 0.97);
   border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: var(--r-lg);
-  box-shadow: 0 24px 60px rgb(var(--shadow-rgb) / 0.6);
+  box-shadow: var(--elev-4);
   overflow: hidden;
   animation: cmd-slide-in 0.18s var(--ease);
 }

@@ -235,3 +235,8 @@ scripts/_compose.mjs
 demo-before/
 demo-after/
 demo-compare/
+scripts/_shot2.mjs
+scripts/_compose2.mjs
+d2-before/
+d2-after/
+d2-compare/
