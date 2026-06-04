@@ -909,8 +909,15 @@ if (typeof document !== 'undefined') {
         ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
           window.removeEventListener(evt, startNeural));
         import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
+          /* Fade the canvas in once the first frame has painted (see the
+             #neural-canvas opacity transition in css/styles.css), so the
+             network materialises gently instead of popping in fully-formed
+             the instant the Three.js chunk lands. */
+          const reveal = () => canvas.classList.add('is-visible');
           _disposables.push(
-            hasWebGLSupport() ? new NeuralNetwork(canvas) : new NeuralNetwork2D(canvas),
+            hasWebGLSupport()
+              ? new NeuralNetwork(canvas, reveal)
+              : new NeuralNetwork2D(canvas, reveal),
           );
         });
       };

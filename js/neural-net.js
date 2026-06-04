@@ -42,10 +42,13 @@ export class NeuralNetwork {
   static ACCENT  = glvec(THEME.accent);
   static ACCENT2 = glvec(THEME.accent2);
 
-  constructor(canvas) {
+  constructor(canvas, onReady) {
     this.canvas = canvas;
     this.mouse = { x: 0, y: 0 };
     this.frameId = null;
+    /* Fired once, right after the first frame paints, so the hero can fade the
+       canvas in instead of letting the network pop in fully-formed. */
+    this._onReady = typeof onReady === 'function' ? onReady : null;
     this._isLowPower = isLowPowerDevice();
     this.particleCount = this._isLowPower ? 64 : NeuralNetwork.PARTICLE_COUNT;
     this.connectionDist = this._isLowPower ? 130 : NeuralNetwork.CONNECTION_DIST;
@@ -296,6 +299,15 @@ export class NeuralNetwork {
     this._lastDrawTime = now;
     this._update();
     this.renderer.render(this.scene, this.camera);
+    this._signalReady();
+  }
+
+  /* Invoke the onReady callback exactly once, after the first painted frame. */
+  _signalReady() {
+    if (!this._onReady) return;
+    const cb = this._onReady;
+    this._onReady = null;
+    cb();
   }
 
   _onResize() {
@@ -359,10 +371,12 @@ export class NeuralNetwork {
 
 /* CPU fallback for the hero background when WebGL is unavailable */
 export class NeuralNetwork2D {
-  constructor(canvas) {
+  constructor(canvas, onReady) {
     this.canvas = canvas;
     this._listeners = [];
     this._io = null;
+    /* Fired once, right after the first frame paints — see NeuralNetwork. */
+    this._onReady = typeof onReady === 'function' ? onReady : null;
     this.ctx = canvas.getContext('2d', { alpha: true });
     if (!this.ctx) return;
     this.mouse = { x: 0, y: 0 };
@@ -493,6 +507,15 @@ export class NeuralNetwork2D {
     if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
     this._lastDrawTime = now;
     this._draw();
+    this._signalReady();
+  }
+
+  /* Invoke the onReady callback exactly once, after the first painted frame. */
+  _signalReady() {
+    if (!this._onReady) return;
+    const cb = this._onReady;
+    this._onReady = null;
+    cb();
   }
 
   destroy() {

@@ -642,6 +642,64 @@ test('NeuralNetwork constructs and updates with mocked THREE', () => {
   }
 });
 
+test('NeuralNetwork fires onReady once after the first painted frame', () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCancel = global.cancelAnimationFrame;
+
+  __setThreeForTests(createMinimalThree());
+  global.window = {
+    innerWidth: 1200,
+    innerHeight: 800,
+    devicePixelRatio: 2,
+    addEventListener() {},
+  };
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+    createElement(tag) {
+      if (tag !== 'canvas') return {};
+      return {
+        width: 0,
+        height: 0,
+        getContext() {
+          return {
+            createRadialGradient() { return { addColorStop() {} }; },
+            fillRect() {},
+            fillStyle: '',
+          };
+        },
+      };
+    },
+  };
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+    disconnect() {}
+  };
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => {};
+
+  try {
+    let readyCalls = 0;
+    const nn = new NeuralNetwork({}, () => { readyCalls += 1; });
+    assert.equal(readyCalls, 1, 'onReady must fire after the first frame paints');
+
+    /* Subsequent frames must not re-fire onReady (the hero only fades in once). */
+    nn._animate();
+    assert.equal(readyCalls, 1, 'onReady must fire exactly once');
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCancel;
+    __resetThreeForTests();
+  }
+});
+
 test('Globe3D constructs with mocked THREE and location data', () => {
   const prevWindow = global.window;
   const prevDocument = global.document;
