@@ -16,6 +16,7 @@ const PAGES = [
   'index.html',
   'cv.html',
   'projects.html',
+  'publications.html',
   '404.html',
   ...fs.readdirSync(path.join(ROOT, 'projects'))
        .filter(f => f.endsWith('.html'))

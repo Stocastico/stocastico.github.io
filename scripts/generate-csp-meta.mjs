@@ -49,6 +49,7 @@ const TARGETS = [
   'index.html',
   'cv.html',
   'projects.html',
+  'publications.html',
   'travel.html',
   'links.html',
   '404.html',

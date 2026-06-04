@@ -525,13 +525,21 @@
         <span class="section-tag">Publications</span>
         <h2 class="section-title">Selected Work</h2>
       </header>
-      <p class="publications-intro" data-animate>During my years as a researcher, I published more than 30 articles, the majority of them open access. The papers below represent the core of my PhD work. Use the button below to browse the full list.</p>
-      <!-- Items injected by JS — data source: PUBLICATIONS in data/publications.js -->
-      <div class="publications-list" id="publications-list" role="list"></div>
+      <p class="publications-intro" data-animate>During my years as a researcher, I published more than 30 articles, the majority of them open access. The papers below highlight the core of my PhD work; the full list lives on the <a href="publications.html" class="inline-link">publications page</a>.</p>
+      <!-- Server-rendered by `npm run generate-cards` (data: data/publications.js),
+           then re-hydrated by renderPublications() in main.js. -->
+      <div class="publications-list" id="publications-list" role="list">
+        <!-- generated:publication-items -->
+        <a href="https://link.springer.com/article/10.1007/s10055-024-00952-x" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="0" aria-label="Open paper: A collaborative AR application for education: from architecture design to user evaluation"><div class="pub-year">2024</div><div class="pub-title">A collaborative AR application for education: from architecture design to user evaluation</div><div class="pub-meta">S. Masneri, A. Domínguez, G. Pacho, M. Zorrilla, M. Larrañaga, A. Arruarte &nbsp;·&nbsp; <span class="pub-venue">Virtual Reality (Springer), Vol. 28</span></div></a>
+        <a href="https://link.springer.com/article/10.1007/s10055-023-00764-5" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="70" aria-label="Open paper: cleAR: an interoperable architecture for multi-user AR-based school curricula"><div class="pub-year">2023</div><div class="pub-title">cleAR: an interoperable architecture for multi-user AR-based school curricula</div><div class="pub-meta">S. Masneri, A. Domínguez, M. Sanz, M. Zorrilla, M. Larrañaga, A. Arruarte &nbsp;·&nbsp; <span class="pub-venue">Virtual Reality (Springer), Vol. 27(3)</span></div></a>
+        <a href="https://lib.jucs.org/article/76535/" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="140" aria-label="Open paper: Interactive, Collaborative and Multi-user Augmented Reality Applications in Primary and Secondary Education. A Systematic Review"><div class="pub-year">2022</div><div class="pub-title">Interactive, Collaborative and Multi-user Augmented Reality Applications in Primary and Secondary Education. A Systematic Review</div><div class="pub-meta">S. Masneri, A. Domínguez, M. Zorrilla, M. Larrañaga, A. Arruarte &nbsp;·&nbsp; <span class="pub-venue">Journal of Universal Computer Science, Vol. 28(6)</span></div></a>
+        <!-- /generated:publication-items -->
+      </div>
       <div class="publications-cta" data-animate>
+        <a href="publications.html" class="btn btn-primary">View all publications →</a>
         <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener"
           class="btn btn-ghost">
-          View all on Google Scholar →
+          Google Scholar →
         </a>
       </div>
     </div>
@@ -545,8 +553,15 @@
         <h2 class="section-title">Things I&rsquo;ve Built</h2>
         <p class="section-subtitle">A random selection of my work, from brand analytics and Gaussian-splat 3D reconstruction in live sport to collaborative AR research. Refresh the page to shuffle the set.</p>
       </header>
-      <!-- Items injected by JS — data source: PROJECTS in data/projects.js -->
-      <div class="projects-grid" id="projects-grid"></div>
+      <!-- Server-rendered by `npm run generate-cards` (newest 3 from
+           data/projects.js), then re-shuffled by renderProjects() in main.js. -->
+      <div class="projects-grid" id="projects-grid">
+        <!-- generated:project-cards -->
+        <a href="projects/brand-stadium.html" class="project-card project-card--has-bg" data-animate data-delay="0" style="--card-bg: url('/img/projects/annotated-stadium.webp')"><div class="project-card__overlay" aria-hidden="true"></div><div class="project-card__body"><span class="project-card__year">2025</span><span class="project-card__title">Brand recognition in football matches</span><div class="project-card__tags"><span class="project-tag">AI</span><span class="project-tag">Computer Vision</span></div><p class="project-card__desc">A computer-vision system that measures how much screen time each brand gets in football broadcasts. A YOLO detector finds the perimeter boards and LED signage; a DenseNet201 classifier sorts each into one of 52 brands — coping with small, motion-blurred crops, a 40× class imbalance, and LED ads that rotate weekly. Runs in production on Azure, validated against human annotators.</p></div></a>
+        <a href="projects/aroundtheworld.html" class="project-card project-card--has-bg" data-animate data-delay="80" style="--card-bg: url('/img/projects/ARound_the_world_2.webp')"><div class="project-card__overlay" aria-hidden="true"></div><div class="project-card__body"><span class="project-card__year">2024</span><span class="project-card__title">ARoundTheWorld: Collaborative AR for Education</span><div class="project-card__tags"><span class="project-tag">AR</span><span class="project-tag">Education</span><span class="project-tag">User Study</span></div><p class="project-card__desc">ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula.</p></div></a>
+        <a href="projects/clear-architecture.html" class="project-card project-card--has-bg" data-animate data-delay="160" style="--card-bg: url('/img/projects/clear-architecture.webp')"><div class="project-card__overlay" aria-hidden="true"></div><div class="project-card__body"><span class="project-card__year">2023</span><span class="project-card__title">cleAR: Interoperable Architecture for Multi-User AR</span><div class="project-card__tags"><span class="project-tag">AR</span><span class="project-tag">Education</span><span class="project-tag">Architecture</span></div><p class="project-card__desc">cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR&#39;s potential and its limited classroom adoption, it was the core contribution of my PhD research.</p></div></a>
+        <!-- /generated:project-cards -->
+      </div>
     </div>
   </section>
 

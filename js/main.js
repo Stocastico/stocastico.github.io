@@ -58,6 +58,10 @@ import './europe-map.js';
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
 import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml } from './utils.js';
 
+/* Card / list-item markup — shared with the static generator
+   (scripts/generate-cards.mjs) so SSR and client markup never drift. */
+import { projectCardHtml, publicationItemHtml } from './render-cards.js';
+
 /* Theme colours — single source of truth (data/palettes.yaml → js/theme.js).
    Only the favicon renderer below reads THEME/rgba now; the noise shader
    imports its own colours inside js/noise-gradient.js. */
@@ -179,46 +183,25 @@ function renderPublications(publications = DEFAULT_PUBLICATIONS) {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
-  list.innerHTML = publications.slice(0, 3).map((pub, i) => `
-    <a href="${escapeHtml(pub.url || '#')}" target="_blank" rel="noopener" class="pub-item research-card" role="listitem" data-animate data-delay="${i * 70}" aria-label="Open paper: ${escapeHtml(pub.title)}">
-      <div class="pub-year">${escapeHtml(pub.year)}</div>
-      <div class="pub-title">${escapeHtml(pub.title)}</div>
-      <div class="pub-meta">
-        ${escapeHtml(pub.authors)} &nbsp;·&nbsp;
-        <span class="pub-venue">${escapeHtml(pub.venue)}</span>
-      </div>
-    </a>
-  `).join('');
+  /* publications.html opts in via data-render="all" and lists every paper;
+     the homepage shows the featured subset (falling back to the newest 3). */
+  const showAll = list.getAttribute && list.getAttribute('data-render') === 'all';
+  let shown;
+  if (showAll) {
+    shown = publications;
+  } else {
+    const featured = publications.filter((p) => p && p.featured);
+    shown = featured.length ? featured : publications.slice(0, 3);
+  }
+  list.innerHTML = shown.map((pub, i) => publicationItemHtml(pub, i)).join('');
 }
 
 /* Project cards — data source: PROJECTS (data/projects.js) */
 var PROJECTS_MAX_HOMEPAGE = 3;
 
+/* Thin wrapper around the shared builder (kept for the public test surface). */
 function renderProjectCard(project, i) {
-  const tagsHtml = (project.tags || [])
-    .map(function(t) { return '<span class="project-tag">' + escapeHtml(t) + '</span>'; })
-    .join('');
-  const bgSrc = project.bg || '';
-  const hasBg = Boolean(bgSrc);
-  /* Make the url() root-absolute. Chromium resolves a relative url() inside a
-     CSS custom property against the stylesheet that *uses* var(--card-bg)
-     (the bundled /assets/styles.css), not the document — so a bare
-     "img/projects/…" path would 404 at /assets/img/projects/…. Leading "/"
-     pins it to the site root. */
-  const bgUrl = /^(https?:|data:|\/)/.test(bgSrc) ? bgSrc : '/' + bgSrc;
-  const style = hasBg
-    ? ' style="--card-bg: url(\'' + escapeHtml(bgUrl) + '\')"'
-    : '';
-  const cls = 'project-card' + (hasBg ? ' project-card--has-bg' : '');
-  return '<a href="' + escapeHtml(project.url || '#') + '" class="' + cls + '" data-animate data-delay="' + (i * 80) + '"' + style + '>' +
-    '<div class="project-card__overlay" aria-hidden="true"></div>' +
-    '<div class="project-card__body">' +
-      '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
-      '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +
-      '<div class="project-card__tags">' + tagsHtml + '</div>' +
-      '<p class="project-card__desc">' + escapeHtml(project.description || '') + '</p>' +
-    '</div>' +
-  '</a>';
+  return projectCardHtml(project, i);
 }
 
 function renderProjects(projects = DEFAULT_PROJECTS) {

@@ -25,6 +25,7 @@ test('sitemap: includes the top-level pages', () => {
   for (const loc of [
     `${SITE}/`,
     `${SITE}/projects.html`,
+    `${SITE}/publications.html`,
     `${SITE}/travel.html`,
     `${SITE}/links.html`,
     `${SITE}/cv.html`,

@@ -218,6 +218,7 @@ export function initCommandPalette() {
     { id: 'about',        label: 'About',        hint: 'Who I am' },
     { id: 'research',     label: 'Research',      hint: 'What I work on' },
     { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
+    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: 'publications.html' },
     { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
     { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
     { id: 'projects',     label: 'Projects',      hint: 'Things I’ve built', href: 'projects.html' },

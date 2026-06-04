@@ -4,7 +4,7 @@ Personal website of **Stefano Masneri** — Senior AI Engineer based in San Seba
 
 ## About this site
 
-A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across six pages:
+A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across seven pages:
 
 - **`index.html`** — the main page, with the following sections:
   - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Three.js neural-network particle field.
@@ -16,6 +16,7 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
   - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
 - **`projects.html`** — full project listing, with one detail page per project under `projects/`.
+- **`publications.html`** — the full (30+) publication list, rendered from `data/publications.js`.
 - **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
 - **`travel.html`** — interactive 3-D globe (Three.js) + 2-D Canvas map of Europe + a UNESCO World Heritage accordion. The globe and map visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
 - **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
@@ -41,6 +42,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 .
 ├── index.html                 Main single-page site
 ├── projects.html              Dedicated projects listing page
+├── publications.html          Full publication list (all papers)
 ├── cv.html                    Dedicated CV page (two-column: work | education)
 ├── travel.html                Travel page — 3D globe + 2D Europe map + UNESCO accordion
 ├── links.html                 Curated, category-filterable blogroll
@@ -51,6 +53,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 ├── vite.config.js             Multi-page Vite config (index, projects, cv, travel, links, 404, project pages)
 ├── js/
 │   ├── main.js                ESM entry — orchestrates DOMContentLoaded init + pagehide teardown
+│   ├── render-cards.js        Pure HTML builders for project cards + publication items (shared with generate-cards)
 │   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 │   ├── three-context.js       Shared THREE binding + test mocking hook
 │   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
@@ -89,6 +92,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   └── robots.txt             SEO robot rules
 ├── scripts/
 │   ├── new-project.js               Convert a Markdown draft → project HTML + update projects.js
+│   ├── generate-cards.mjs           Server-render project cards + publication items into static HTML (index/projects/publications)
 │   ├── generate-cv.js               Build data/cv.js from data/cv.yaml
 │   ├── generate-locations.js        Generate data/locations.js from data/locations.yaml
 │   ├── generate-countries.js        Generate data/countries.js from data/countries.yaml (lived/visited)
@@ -513,13 +517,19 @@ Edit `data/publications.js` directly. Each entry:
 
 ```js
 {
-  year:    "2025",
-  title:   "Paper title",
-  authors: "A. Author et al.",
-  venue:   "Conference / Journal",
-  url:     "https://doi.org/..."   // omit to suppress link
+  year:     "2025",
+  title:    "Paper title",
+  authors:  "A. Author et al.",
+  venue:    "Conference / Journal",
+  url:      "https://doi.org/...",  // optional; omit to render a non-link entry
+  featured: true                    // optional; surfaces it in the homepage section
 }
 ```
+
+Then run `npm run generate-cards` to refresh the static publication items baked
+into `index.html` (featured subset) and `publications.html` (all). The
+`generate-cards` test fails on drift, so committing without regenerating is
+caught in CI.
 
 ---
 
@@ -535,6 +545,7 @@ The navbar contains: **About**, **Work** (the Research section), **Projects**, *
 | ------ | ------------- |
 | `index.html` | Single-page application — Hero, About, Research, Skills, Publications, Projects, Places, Contact sections |
 | `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
+| `publications.html` | Full publication list — all papers from `data/publications.js` |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
 | `travel.html` | 3-D globe + 2-D Europe map + UNESCO World Heritage accordion |
 | `links.html` | Curated, category-filterable blogroll from `data/links.yaml` |

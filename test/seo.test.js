@@ -33,6 +33,7 @@ const pages = [
   { rel: 'index.html',    label: 'home' },
   { rel: 'cv.html',       label: 'cv' },
   { rel: 'projects.html', label: 'projects' },
+  { rel: 'publications.html', label: 'publications' },
   { rel: 'travel.html',   label: 'travel' },
   { rel: 'links.html',    label: 'links' },
 ];
@@ -58,6 +59,7 @@ const canonicalExpected = [
   { rel: 'index.html',    label: 'home',     href: 'https://stefanomasneri.com/' },
   { rel: 'cv.html',       label: 'cv',       href: 'https://stefanomasneri.com/cv.html' },
   { rel: 'projects.html', label: 'projects', href: 'https://stefanomasneri.com/projects.html' },
+  { rel: 'publications.html', label: 'publications', href: 'https://stefanomasneri.com/publications.html' },
   { rel: 'travel.html',   label: 'travel',   href: 'https://stefanomasneri.com/travel.html' },
   { rel: 'links.html',    label: 'links',    href: 'https://stefanomasneri.com/links.html' },
 ];
@@ -148,6 +150,7 @@ const indexableTopLevel = [
   { rel: 'index.html',    label: 'home' },
   { rel: 'cv.html',       label: 'cv' },
   { rel: 'projects.html', label: 'projects' },
+  { rel: 'publications.html', label: 'publications' },
 ];
 
 test('SEO: manifest.webmanifest is valid JSON with name and icons', () => {
@@ -184,7 +187,7 @@ function nameTag(html, name) {
    dist/img/ via the copy-og-images plugin) or the social card 404s — and an
    SVG is not a valid social-card image. */
 const imageBearingPages = [
-  'index.html', 'cv.html', 'projects.html', '404.html',
+  'index.html', 'cv.html', 'projects.html', 'publications.html', '404.html',
   ...fs.readdirSync(path.join(ROOT, 'projects'))
     .filter((f) => f.endsWith('.html'))
     .map((f) => `projects/${f}`),
