@@ -26,7 +26,7 @@ bg:          "img/projects/annotated-stadium.webp"
 description: "A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV."
 ---
 
-# Measuring Brand Exposure in Football Footage with Computer Vision
+## Measuring Brand Exposure in Football Footage with Computer Vision
 
 We've been building a computer vision system that detects and classifies advertising holders in football footage — the perimeter boards, banners, and signage you see around a pitch — so we can measure how much exposure each brand actually gets during a match. It's a deceptively hard problem, and we wanted to share where it's landed.
 
