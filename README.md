@@ -134,6 +134,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   ├── theme-sync.test.js          Guards every HTML page against palette drift (theme-color / favicon / nav-grad)
 │   ├── cname.test.js               Guards public/CNAME ↔ site origin consistency
 │   ├── analytics.test.mjs          Guards the GoatCounter pixel + its CSP origin on every page
+│   ├── csp.test.mjs                Guards the per-page CSP script-src hashes (no 'unsafe-inline'; no drift)
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 │   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
@@ -167,6 +168,7 @@ npm run test:css-assets         # CSS structure / asset regression checks only
 npm run test:theme-sync         # palette-drift guard across every HTML page
 npm run test:cname              # CNAME ↔ site-origin consistency
 npm run test:analytics          # GoatCounter pixel + CSP-origin guard
+npm run test:csp                # per-page CSP script-src hash guard
 # europe-map.test.mjs is included in `npm test` but has no dedicated shorthand
 ```
 
@@ -314,7 +316,7 @@ The block is wrapped in `<!-- generated:project-jsonld -->` markers so re-runs r
 
 ### `generate-csp-meta` — refresh Content-Security-Policy meta tags
 
-Injects (or replaces) the CSP `<meta http-equiv="Content-Security-Policy">` tag on every indexable HTML page. Edit the policy constant at the top of the script and re-run.
+Injects (or replaces) the CSP `<meta http-equiv="Content-Security-Policy">` tag on every indexable HTML page. `script-src` lists a per-page `'sha256-…'` hash for each inline `<script>` (JSON-LD + speculationrules) rather than `'unsafe-inline'`, so re-run this **after** any generator that touches inline scripts (`generate-project-jsonld`, `generate-cards`). Edit the policy in `cspFor()` and re-run; `test/csp.test.mjs` fails on drift.
 
 ```bash
 npm run generate-csp-meta
