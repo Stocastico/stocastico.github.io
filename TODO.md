@@ -5,11 +5,14 @@ need the audit context.
 
 ## Future ideas
 
-- **Dedicated "Publications" page.** The homepage shows only the top 3 papers
-  with a "View all on Google Scholar" link. A standalone page (like
-  `projects.html`) could list the full set of papers, each with a link to its
-  Google Scholar entry and a direct PDF download link. (Owner: Stefano — to
-  tackle later.)
+- **"Now" page.** A `/now` page (now-now-now.com style) for current focus —
+  what I'm working on, reading, and thinking about — kept deliberately short
+  and updated occasionally. (Owner: Stefano — planned.)
+
+- **Per-paper PDF/DOI links on the publications page.** `publications.html` now
+  lists every paper, but only a few carry a `url`. Backfill DOIs / open-access
+  PDFs in `data/publications.js` (then `npm run generate-cards`) so more entries
+  link out. (Owner: Stefano — to tackle later.)
 
 - **UNESCO World Heritage sites map.** A page that lists the UNESCO World
   Heritage sites and lets me mark the ones I've visited — a natural extension
