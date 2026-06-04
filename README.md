@@ -7,7 +7,7 @@ Personal website of **Stefano Masneri** — Senior AI Engineer based in San Seba
 A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across six pages:
 
 - **`index.html`** — the main page, with the following sections:
-  - **Hero** — animated name rendered through a custom GLSL iridescence shader, layered over a domain-warped noise gradient and a Three.js neural-network particle field.
+  - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Three.js neural-network particle field.
   - **About** — short bio and key stats.
   - **Research** — horizontal-scroll carousel of research topics (computer vision, AR, video understanding, generative AI, etc.).
   - **Skills** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
@@ -21,18 +21,18 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
 - **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
 - **`404.html`** — custom not-found page with the standard navbar.
 
-Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section navigation, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, and full `prefers-reduced-motion` support throughout.
+Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, cross-document View Transitions, and full `prefers-reduced-motion` support throughout.
 
 ## Tech stack
 
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
 - Modern CSS — `@layer` cascade, native nesting, `oklch()` colours, and a design-token scale (spacing / tracking / elevation / easing)
 - [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the neural-network hero background and the interactive globe — lazily code-split so it stays off the initial critical path
-- Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
+- Raw WebGL (GLSL) for the noise-gradient hero background
 - Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`); a weekly GitHub Actions job rotates the active palette
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
-- Self-hosted fonts: Inter (body) and Outfit (headings + the hero name shader)
+- Self-hosted fonts: Inter (body) and Outfit (headings + the hero name)
 - Privacy-first: no third-party scripts, no cookies. The only external request is a cookieless [GoatCounter](https://www.goatcounter.com/) no-JS analytics pixel (aggregate counts, no personal data)
 
 ## Project structure
@@ -51,11 +51,10 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ├── vite.config.js             Multi-page Vite config (index, projects, cv, travel, links, 404, project pages)
 ├── js/
 │   ├── main.js                ESM entry — orchestrates DOMContentLoaded init + pagehide teardown
-│   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, side-dots, counters, toast, back-to-top, carousel
+│   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 │   ├── three-context.js       Shared THREE binding + test mocking hook
 │   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
 │   ├── neural-net.js          NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
-│   ├── hero-shader.js         HeroNameShader (raw WebGL iridescent text)
 │   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
 │   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars, timeline entrance
@@ -110,7 +109,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │       ├── yaml.js                  Minimal YAML parser (no external dependencies)
 │       └── site.json                Single source of truth for the site origin (used by the URL generators)
 ├── test/
-│   ├── main.node.test.mjs          Tests for js/main.js + js/animations.js + js/hero-shader.js
+│   ├── main.node.test.mjs          Tests for js/main.js + js/animations.js
 │   ├── cv.test.mjs                 Tests for CV rendering
 │   ├── europe-map.test.mjs         Tests for js/europe-map.js
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
@@ -144,7 +143,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 
 ```bash
 npm test                        # run all tests
-npm run test:main               # js/main.js + animations + hero-shader tests only
+npm run test:main               # js/main.js + animations tests only
 npm run test:cv                 # CV rendering tests only
 npm run test:generate-cv        # generate-cv.js tests only
 npm run test:generate-theme     # generate-theme.js tests only
@@ -545,7 +544,7 @@ The navbar contains: **About**, **Work** (the Research section), **Projects**, *
 
 | Section | Description |
 | --------- | ------------- |
-| Hero | Left-aligned layout with iridescent name shader, animated tagline, hero CTAs |
+| Hero | Left-aligned layout with a palette-gradient name, animated tagline, hero CTAs |
 | About | Photo + stats and bio text in a split layout |
 | Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows; cards flip to a back face on click |
 | Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
@@ -564,7 +563,7 @@ The site uses several layers of real-time rendering, all progressive-enhancement
 
 A Three.js particle system of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor. Lines are drawn between nearby pairs using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the node count drops and line updates are frame-skipped. A Canvas2D fallback (`NeuralNetwork2D`) renders the same network without WebGL.
 
-The module (and, through it, Three.js — ~130 KB gzipped) is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient + name shader fill the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
+The module (and, through it, Three.js — ~130 KB gzipped) is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient fills the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
 
 ### Interactive 3-D globe (travel page)
 
@@ -577,18 +576,6 @@ A Three.js `Phong`-shaded sphere textured with satellite imagery, lit by a warm 
 - **Grid lines**: latitude / longitude lines with the equator and tropics brightened.
 
 Mouse dragging rotates the globe with inertia; auto-spin resumes when idle. Raycasting handles pin hover tooltips. A Canvas2D flat-map fallback is used when `prefers-reduced-motion` is set.
-
-### Hero name iridescence shader
-
-The "Stefano / Masneri" heading is rendered by a raw GLSL fragment shader layered over the accessible `<h1>`. The shader:
-
-1. Rasterises the text into an alpha-only WebGL texture each frame using `Canvas2D`.
-2. Applies **fractional Brownian motion** (three octaves of value noise drifting at different speeds) to compute a per-pixel UV displacement.
-3. Samples the red, green, and blue channels at slightly different offsets to produce **chromatic aberration** (colour fringing).
-4. Applies **mouse-repulsion warping**: the distortion field bends away from the cursor using inverse-square falloff, so moving the mouse visibly deforms the text.
-5. Computes an **iridescent colour sweep** — a cosine-based RGB palette with phase offsets, blended with a bright blue-white bias to give a glass / crystal appearance.
-
-FPS is capped at 30 fps (20 fps on low-power devices) to conserve battery. The iridescent colour sweep is driven by the active palette's accent colours (imported from `js/theme.js`), so it re-tints automatically on a palette switch.
 
 ### Animated GLSL noise gradient (hero background)
 
@@ -649,10 +636,6 @@ Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page
 
 Type to filter commands. Press **Enter** to run the selected command, **Escape** to close.
 
-### Side-dot navigation
-
-A vertical row of small dots on the right edge of the viewport indicates the current section and lets the user jump directly to any section by clicking. Each dot is labelled with the section name via a tooltip that appears on hover.
-
 ### Back-to-top button
 
 A floating button appears in the bottom-right corner once the user has scrolled past one viewport height. Clicking it smooth-scrolls back to the top.
@@ -670,7 +653,6 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 | Homepage world map is a static inline SVG | No runtime projection or TopoJSON fetch on the home page |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
 | Cursor glow removed; hero orbs removed | Removes per-frame radial-gradient draws and large blurred animated elements |
-| HeroNameShader FPS capped at 30/20 | Halves GPU work on mid/low-power devices |
 | Card-tilt rect cached per hover | Removes a layout read on every `mousemove` |
 | Animated favicon replaced with static render | Removes per-frame Canvas2D draw in the background tab |
 | All WebGL/Canvas instances + pointer listeners torn down on `pagehide` | Releases GL contexts and avoids leaks on bfcache eviction |

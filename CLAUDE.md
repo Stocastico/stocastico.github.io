@@ -9,7 +9,7 @@ Personal website of **Stefano Masneri** (Senior AI Engineer), hosted on GitHub P
 - **HTML/CSS/JS** — vanilla, no framework
 - **Vite** — dev server + production bundler (multi-page input)
 - **Three.js** (npm, bundled by Vite) — 3D globe, neural-network hero
-- **Raw WebGL/GLSL** — iridescent hero name shader, noise-gradient background
+- **Raw WebGL/GLSL** — noise-gradient hero background
 - **Node.js >= 18** — scripts and tests (built-in test runner, zero test dependencies)
 - **Playwright** — E2E UI tests (dev dependency)
 
@@ -55,11 +55,10 @@ vite.config.js      Multi-page Vite config (index, cv, projects, travel, links, 
 css/styles.css      All styles including print styles
 css/fonts.css       Self-hosted fonts
 js/main.js          ESM entry — orchestrates DOMContentLoaded init + page-teardown (pagehide) cleanup
-js/ui.js            Chrome/UI behaviours — navbar, mobile menu, command palette, side-dots, counters, toast, back-to-top, cursor glow, carousel
+js/ui.js            Chrome/UI behaviours — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 js/three-context.js Shared THREE binding + test mocking hook
 js/utils.js         isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
 js/neural-net.js    NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
-js/hero-shader.js   HeroNameShader (raw WebGL iridescent text)
 js/noise-gradient.js NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 js/globe.js         Globe3D + GlobeFallback2D + geocodeLocations
 js/animations.js    Scroll-driven effects, card tilt (rect cached per hover), card flip, parallax, skill bars, timeline entrance
@@ -120,7 +119,7 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - **THREE module bindings**: `js/neural-net.js` and `js/globe.js` use named-import destructuring (`let { Scene, WebGLRenderer, ... } = _THREE`) re-bound by `onChange` so test mocks still take effect
 - **Theme pipeline**: `data/palettes.yaml` (one `active` key + named palettes) → `npm run generate-theme` → rewrites the `@theme-generated` `:root` block in `css/styles.css`, regenerates `js/theme.js`, and updates `<meta theme-color>` / inline favicon / nav-logo gradient across every `*.html` + `public/favicon.svg`. CSS reads `var(--*)`; the WebGL/Canvas2D modules and GLSL shaders import `THEME` + the `int()` / `rgba()` / `glvec()` helpers from `js/theme.js` (the shader source is a JS template literal, so colours are interpolated at module load — no recompile, no uniforms). Switching the whole site's palette = edit one YAML key + run one command.
 - **Analytics**: cookieless GoatCounter via a **no-JS `<img>` pixel** (no external `<script>`, no cookies, no personal data). `scripts/generate-analytics.mjs` injects a marker-wrapped `<img src="https://stocastico.goatcounter.com/count?p=…&t=…">` into every HTML page (`p` = canonical path, `t` = page `<title>`), wrapped in `<!-- generated:analytics -->` markers like the CSP/JSON-LD generators. The pixel's origin is allowlisted in the CSP `img-src` (`generate-csp-meta.mjs`). `test/analytics.test.mjs` guards the pixel + CSP origin on every page and fails on drift. View stats at `https://stocastico.goatcounter.com`.
-- **Performance**: NoiseGradient renders 3 frames then stops; HeroNameShader capped at 30fps; favicon is static
+- **Performance**: NoiseGradient renders 3 frames then stops; favicon is static
 
 ## Things to Avoid
 

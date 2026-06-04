@@ -12,7 +12,6 @@
                             mobile menu, counters, carousel, etc.
      js/animations.js     — scroll reveals, card tilt, parallax
      js/noise-gradient.js — hero background WebGL shader
-     js/hero-shader.js    — iridescent hero name shader
      js/globe.js          — 3D globe (Three.js)
      js/neural-net.js     — neural-network hero (Three.js)
      js/europe-map.js     — 2D Canvas Europe map
@@ -65,7 +64,6 @@ import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml } f
 import { THEME, rgba } from './theme.js';
 
 /* Hero name iridescent WebGL shader (raw WebGL, no Three.js) */
-import { HeroNameShader } from './hero-shader.js';
 
 /* Hero background noise gradient (raw WebGL, no Three.js) */
 import { NoiseGradient } from './noise-gradient.js';
@@ -93,7 +91,6 @@ import {
   initNavbar,
   initBackToTop,
   initCommandPalette,
-  initSideDots,
   initTaglineReveal,
   initCursorGlow,
   initMobileMenu,
@@ -805,7 +802,6 @@ export {
   initScrollReveal,
   initCounters,
   animateCounter,
-  HeroNameShader,
   NoiseGradient,
   decodeBase64,
   getObfuscatedContactEmail,
@@ -841,7 +837,6 @@ if (typeof document !== 'undefined') {
   initMobileMenu();
   initEmailObfuscation();
   initBackToTop();
-  initSideDots();
   initCommandPalette();
   initCmdTriggerHint();
   initResearchCarousel();
@@ -981,15 +976,6 @@ if (typeof document !== 'undefined') {
   /* Curated blogroll (links page only) */
   const linksGrid = document.getElementById('links-grid');
   if (linksGrid) renderLinks(linksGrid, DEFAULT_LINKS);
-
-  /* Hero name — iridescent WebGL shader (progressive enhancement) */
-  const nameH1 = document.getElementById('hero-name');
-  const nameCanvas = document.getElementById('name-canvas');
-  if (nameH1 && nameCanvas) {
-    if (!prefersReducedMotion() && hasWebGLSupport()) {
-      _disposables.push(new HeroNameShader(nameH1, nameCanvas));
-    }
-  }
 
   initLifecycleCleanup(_disposables);
 

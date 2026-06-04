@@ -27,7 +27,6 @@
    19. Enhanced Project Cards
    20. Project Detail Page
    21. Command Palette
-   22. Side Progress Dots
    ============================================================ */
 
 /* ─── 0. Cascade layers ───────────────────────────────────
@@ -612,25 +611,7 @@ h3 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-align: left;
-  /* ensure text is still selectable / readable before shader loads */
   user-select: text;
-}
-
-/* JS adds this class once the WebGL canvas is live */
-.hero-name--gpu {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* The canvas sits on top of the (now invisible) h1 */
-.hero-name-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  display: block;
-  will-change: transform;
-  /* WebGL canvas — own compositor layer */
 }
 
 .hero-tagline {
@@ -3092,11 +3073,6 @@ h3 {
     text-align: center;
   }
 
-  .hero-name-canvas {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
   .hero-actions {
     justify-content: center;
   }
@@ -3736,84 +3712,6 @@ h3 {
   }
 }
 
-/* ─── Side Progress Dots ─────────────────────────────────── */
-.side-dots {
-  position: fixed;
-  right: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 900;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: center;
-  /* Hidden on small screens / touch devices */
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--t-med);
-}
-
-.side-dots.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.side-dot {
-  display: block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text-faint);
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
-
-  &:hover {
-    background: var(--text-muted);
-    transform: scale(1.4);
-  }
-
-  &[aria-current="true"] {
-    background: var(--accent2);
-    transform: scale(1.35);
-    box-shadow: 0 0 8px var(--accent2-glow);
-  }
-
-  /* Tooltip label on hover */
-  &::before {
-    content: attr(data-label);
-    position: absolute;
-    right: calc(100% + 0.75rem);
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    background: rgb(var(--bg-rgb) / 0.85);
-    border: 1px solid var(--border);
-    padding: 0.2em 0.55em;
-    border-radius: var(--r-sm);
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--t-fast);
-    backdrop-filter: blur(8px);
-  }
-
-  &:hover::before {
-    opacity: 1;
-  }
-}
-
-/* Only show on wide enough screens with a mouse */
-@media (max-width: 900px),
-(pointer: coarse) {
-  .side-dots {
-    display: none;
-  }
-}
-
 /* ─── Back to Top Button ─────────────────────────────────── */
 .back-to-top {
   position: fixed;
@@ -3918,12 +3816,10 @@ h3 {
   #navbar,
   .reading-progress,
   .scroll-hint,
-  .side-dots,
   .back-to-top,
   .cmd-overlay,
   #noise-canvas,
   #neural-canvas,
-  #name-canvas,
   #globe-canvas,
   #europe-canvas,
   .globe-legend,

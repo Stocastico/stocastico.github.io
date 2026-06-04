@@ -1,5 +1,5 @@
 /* ─── Shared environment helpers ──────────────────────────────
-   Used by neural-net, globe, animations, hero-shader, etc.
+   Used by neural-net, globe, animations, etc.
    Each function is safe to call in Node (returns sensible
    defaults when DOM/browser globals are absent). */
 

@@ -142,14 +142,11 @@
     <canvas id="neural-canvas" aria-hidden="true"></canvas>
 
     <div class="hero-content">
-      <!-- hero-name-wrap lets the WebGL canvas overlay the h1 exactly -->
       <div class="hero-name-wrap">
         <h1 class="hero-name" id="hero-name" aria-label="Stefano Masneri">
           Stefano<br />
           Masneri
         </h1>
-        <!-- Canvas filled by HeroNameShader; h1 stays for accessibility -->
-        <canvas id="name-canvas" class="hero-name-canvas" aria-hidden="true"></canvas>
       </div>
       <p class="hero-tagline">
         AI &nbsp;·&nbsp; Machine Learning &nbsp;·&nbsp; Computer Vision &nbsp;·&nbsp; Augmented Reality
@@ -709,11 +706,6 @@
       <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="Commands"></ul>
     </div>
   </div>
-
-  <!-- Side progress dots — one per section, active = current viewport -->
-  <nav class="side-dots" id="side-dots" aria-label="Section progress">
-    <!-- Dots injected by JS -->
-  </nav>
 
   <!-- Back to top button — shown after scrolling past the hero -->
   <button class="back-to-top" id="back-to-top" aria-label="Back to top">
