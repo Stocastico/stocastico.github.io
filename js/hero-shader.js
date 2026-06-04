@@ -53,7 +53,10 @@ export class HeroNameShader {
     }
 
     /* Wait for web-fonts before measuring / drawing text */
+    let booted = false;
     const boot = () => {
+      if (booted) return;          /* a rejected fonts.ready must not double-boot */
+      booted = true;
       if (this._setupGL()) {
         this._resize();
         this._bindEvents();
@@ -66,7 +69,9 @@ export class HeroNameShader {
         this._io.observe(this.canvas);
       }
     };
-    if (document.fonts?.ready) document.fonts.ready.then(boot);
+    /* Boot once fonts are ready, but never leave the promise unhandled — if
+       fonts.ready rejects, boot anyway with whatever fonts are available. */
+    if (document.fonts?.ready) document.fonts.ready.then(boot, boot);
     else setTimeout(boot, 400);   /* Safari guard */
   }
 

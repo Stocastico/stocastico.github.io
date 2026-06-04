@@ -4,31 +4,36 @@ Personal website of **Stefano Masneri** — Senior AI Engineer based in San Seba
 
 ## About this site
 
-A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across four pages:
+A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across six pages:
 
 - **`index.html`** — the main page, with the following sections:
   - **Hero** — animated name rendered through a custom GLSL iridescence shader, layered over a domain-warped noise gradient and a Three.js neural-network particle field.
-  - **About** — short bio, key stats, and a split layout featuring an interactive 3-D globe (Three.js) and an interactive 2-D Canvas map of Europe. Both visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
+  - **About** — short bio and key stats.
   - **Research** — horizontal-scroll carousel of research topics (computer vision, AR, video understanding, generative AI, etc.).
-  - **Publications** — filterable list of selected papers, generated from `data/publications.js`.
   - **Skills** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
+  - **Publications** — filterable list of selected papers, generated from `data/publications.js`.
   - **Projects** — up to three project cards from `data/projects.js`, with a link to the full listing.
+  - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
 - **`projects.html`** — full project listing, with one detail page per project under `projects/`.
 - **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
+- **`travel.html`** — interactive 3-D globe (Three.js) + 2-D Canvas map of Europe + a UNESCO World Heritage accordion. The globe and map visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
+- **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
 - **`404.html`** — custom not-found page with the standard navbar.
 
-Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section navigation, a reading-progress bar, magnetic buttons, 3-D tilt-and-gloss cards, a back-to-top button, and full `prefers-reduced-motion` support throughout.
+Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section navigation, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, and full `prefers-reduced-motion` support throughout.
 
 ## Tech stack
 
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
-- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the 3-D neural-network background and interactive globe
+- Modern CSS — `@layer` cascade, native nesting, `oklch()` colours, and a design-token scale (spacing / tracking / elevation / easing)
+- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the neural-network hero background and the interactive globe — lazily code-split so it stays off the initial critical path
 - Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
-- Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`)
-- Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies)
+- Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`); a weekly GitHub Actions job rotates the active palette
+- Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
 - Self-hosted fonts: Inter (body) and Outfit (headings + the hero name shader)
+- Privacy-first: no third-party scripts, no cookies. The only external request is a cookieless [GoatCounter](https://www.goatcounter.com/) no-JS analytics pixel (aggregate counts, no personal data)
 
 ## Project structure
 
@@ -37,29 +42,36 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ├── index.html                 Main single-page site
 ├── projects.html              Dedicated projects listing page
 ├── cv.html                    Dedicated CV page (two-column: work | education)
+├── travel.html                Travel page — 3D globe + 2D Europe map + UNESCO accordion
+├── links.html                 Curated, category-filterable blogroll
 ├── 404.html                   Custom 404 page
 ├── css/
-│   └── styles.css             All styles, including shared project-page rules
-├── vite.config.js             Multi-page Vite config (index, projects, cv, 404, project pages)
+│   ├── styles.css             All styles (@layer + nesting + oklch), including shared project-page + print rules
+│   └── fonts.css              Self-hosted @font-face declarations
+├── vite.config.js             Multi-page Vite config (index, projects, cv, travel, links, 404, project pages)
 ├── js/
-│   ├── main.js                ESM entry — orchestrates DOMContentLoaded init
+│   ├── main.js                ESM entry — orchestrates DOMContentLoaded init + pagehide teardown
+│   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, side-dots, counters, toast, back-to-top, carousel
 │   ├── three-context.js       Shared THREE binding + test mocking hook
-│   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport
-│   ├── neural-net.js          NeuralNetwork (Three.js) + Canvas2D fallback
+│   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
+│   ├── neural-net.js          NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
 │   ├── hero-shader.js         HeroNameShader (raw WebGL iridescent text)
+│   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
-│   ├── animations.js          Scroll reveal, card tilt, magnetic buttons, parallax
+│   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars, timeline entrance
 │   ├── europe-map.js          Interactive 2D Canvas map of Europe
 │   └── theme.js               Generated — active palette (hex/int/glvec) + helpers (do not edit manually)
 ├── data/
-│   ├── cv.yaml                Source of truth for CV — edit this, then run generate-cv
-│   ├── cv.js                  Generated CV data (do not edit manually)
-│   ├── projects.js            PROJECTS array — edit to add/update project cards
+│   ├── cv.yaml / cv.js        CV source (YAML) → generated ESM (run generate-cv)
+│   ├── projects.js            PROJECTS array — edit directly or via new-project
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
-│   ├── locations.yaml         Source of truth for globe pins/trips/regions
-│   ├── locations.js           Generated file (do not edit manually)
-│   ├── palettes.yaml          Source of truth for the colour palette — edit then run generate-theme
+│   ├── locations.yaml / .js   Globe pins/trips/regions source → generated ESM (run generate-locations)
+│   ├── countries.yaml / .js   Homepage-map lived/visited highlights → generated ESM (run generate-countries)
+│   ├── unesco.yaml / .js      Travel-page UNESCO accordion source → generated ESM (run generate-unesco)
+│   ├── links.yaml / .js       Blogroll source → generated ESM (run generate-links)
+│   ├── palettes.yaml          Source of truth for the colour palettes — edit then run generate-theme
 │   ├── world-110m.json        TopoJSON world map data (110m resolution)
+│   ├── countries-110m.json    world-atlas TopoJSON (borders + names) for the homepage world map
 │   └── land-50m.json          TopoJSON land data for Europe 2D map (50m, finer coastlines)
 ├── projects/
 │   └── *.html                 Individual project detail pages
@@ -80,10 +92,15 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── new-project.js               Convert a Markdown draft → project HTML + update projects.js
 │   ├── generate-cv.js               Build data/cv.js from data/cv.yaml
 │   ├── generate-locations.js        Generate data/locations.js from data/locations.yaml
-│   ├── generate-theme.js            Propagate data/palettes.yaml across CSS, js/theme.js, HTML + favicon
+│   ├── generate-countries.js        Generate data/countries.js from data/countries.yaml (lived/visited)
+│   ├── generate-world-map.js        Project countries-110m.json → inline SVG block in index.html
+│   ├── generate-unesco.js           Generate data/unesco.js from data/unesco.yaml
+│   ├── generate-links.js            Generate data/links.js from data/links.yaml (de-dupes by URL)
+│   ├── generate-theme.js            Propagate data/palettes.yaml across CSS, js/theme.js, HTML + favicon (oklch + accent taming)
 │   ├── generate-sitemap.mjs         Rebuild public/sitemap.xml from projects.js + git mtimes
 │   ├── generate-project-jsonld.mjs  Inject/refresh BreadcrumbList + Article JSON-LD on every projects/*.html
 │   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
+│   ├── generate-analytics.mjs       Inject/refresh the cookieless GoatCounter no-JS pixel on every HTML page
 │   ├── generate-favicons.mjs        Rasterise public/favicon.svg → ico + apple-touch + 192/512 PNGs (uses sharp)
 │   ├── rotate-palette.js            Advance data/palettes.yaml `active` to the next palette (used by CI)
 │   ├── set-domain.mjs               Migrate the site to a custom domain (rewrites URLs + writes public/CNAME)
@@ -93,18 +110,26 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │       ├── yaml.js                  Minimal YAML parser (no external dependencies)
 │       └── site.json                Single source of truth for the site origin (used by the URL generators)
 ├── test/
-│   ├── main.node.test.mjs          Tests for js/main.js
+│   ├── main.node.test.mjs          Tests for js/main.js + js/animations.js + js/hero-shader.js
 │   ├── cv.test.mjs                 Tests for CV rendering
 │   ├── europe-map.test.mjs         Tests for js/europe-map.js
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
-│   ├── generate-theme.test.js      Tests for scripts/generate-theme.js
+│   ├── generate-theme.test.js      Tests for scripts/generate-theme.js (oklch math + accent taming)
 │   ├── rotate-palette.test.js      Tests for scripts/rotate-palette.js
+│   ├── generate-countries.test.js  Tests for scripts/generate-countries.js
+│   ├── generate-world-map.test.js  Tests for scripts/generate-world-map.js
+│   ├── generate-unesco.test.js     Tests for scripts/generate-unesco.js
+│   ├── generate-links.test.js      Tests for scripts/generate-links.js
 │   ├── locations-generator.test.js Tests for scripts/generate-locations.js
 │   ├── new-project.test.js         Tests for scripts/new-project.js
 │   ├── seo.test.js                 SEO regression tests (meta description, JSON-LD, stat counters)
 │   ├── sitemap.test.mjs            Regression tests for the generated sitemap.xml
 │   ├── project-jsonld.test.mjs     Regression tests for BreadcrumbList + Article JSON-LD on project pages
 │   ├── html-quality.test.mjs       html-validate / a11y regression checks on every HTML page
+│   ├── css-assets.test.mjs         Regression checks on CSS structure + referenced assets
+│   ├── theme-sync.test.js          Guards every HTML page against palette drift (theme-color / favicon / nav-grad)
+│   ├── cname.test.js               Guards public/CNAME ↔ site origin consistency
+│   ├── analytics.test.mjs          Guards the GoatCounter pixel + its CSP origin on every page
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 │   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
@@ -118,22 +143,30 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ## Running tests
 
 ```bash
-npm test                       # run all tests
-npm run test:main              # js/main.js tests only
-npm run test:cv                # CV rendering tests only
-npm run test:generate-cv       # generate-cv.js tests only
-npm run test:generate-theme    # generate-theme.js tests only
-npm run test:rotate-palette    # rotate-palette.js tests only
-npm run test:locations         # locations generator tests only
-npm run test:project           # new-project.js tests only
-npm run test:seo               # SEO regression tests only
-npm run test:sitemap           # sitemap.xml regression tests only
-npm run test:project-jsonld    # project-page JSON-LD regression tests only
-npm run test:html-quality      # html-validate / a11y checks only
+npm test                        # run all tests
+npm run test:main               # js/main.js + animations + hero-shader tests only
+npm run test:cv                 # CV rendering tests only
+npm run test:generate-cv        # generate-cv.js tests only
+npm run test:generate-theme     # generate-theme.js tests only
+npm run test:rotate-palette     # rotate-palette.js tests only
+npm run test:generate-countries # generate-countries.js tests only
+npm run test:generate-world-map # generate-world-map.js tests only
+npm run test:generate-unesco    # generate-unesco.js tests only
+npm run test:generate-links     # generate-links.js tests only
+npm run test:locations          # locations generator tests only
+npm run test:project            # new-project.js tests only
+npm run test:seo                # SEO regression tests only
+npm run test:sitemap            # sitemap.xml regression tests only
+npm run test:project-jsonld     # project-page JSON-LD regression tests only
+npm run test:html-quality       # html-validate / a11y checks only
+npm run test:css-assets         # CSS structure / asset regression checks only
+npm run test:theme-sync         # palette-drift guard across every HTML page
+npm run test:cname              # CNAME ↔ site-origin consistency
+npm run test:analytics          # GoatCounter pixel + CSP-origin guard
 # europe-map.test.mjs is included in `npm test` but has no dedicated shorthand
 ```
 
-The Playwright suites (`playwright.ui.test.mjs`, `playwright.iphone.test.mjs`) are not wired into `npm test` — run them manually with `npx playwright test test/playwright.ui.test.mjs` once the dev server is up.
+The Playwright suite is not wired into `npm test` — run it manually with `npm run test:playwright` once the dev server is up.
 
 No external test dependencies are required — the Node.js built-in test runner (Node ≥ 18) handles everything.
 
@@ -185,14 +218,29 @@ node scripts/generate-locations.js --help
 
 Geocoding results are cached in `.cache/locations-geocode-cache.json` so subsequent runs do not re-query the API. The Nominatim API has a 1-request-per-second rate limit; the script respects this automatically.
 
+### Content generators — countries, world map, UNESCO, links
+
+Each reads a YAML source of truth and emits a generated ESM module (or, for the world map, rewrites an inline SVG block). All support `--dry-run` / `--help`.
+
+```bash
+npm run generate-countries     # data/countries.yaml → data/countries.js (lived/visited)
+npm run generate-world-map     # data/countries-110m.json + countries.js → inline SVG in index.html
+npm run generate-unesco        # data/unesco.yaml → data/unesco.js  (travel-page accordion)
+npm run generate-links         # data/links.yaml  → data/links.js   (de-duped by URL)
+```
+
+`countries.yaml` is derived from `locations.yaml` on first run (`generate-countries --refresh`) and is hand-editable thereafter. After editing it, run `generate-countries` then `generate-world-map` to rewrite the `<!-- world-map:start … -->` block in `index.html`. The map's fills use CSS `var(--pin-*)` classes, so a palette switch needs **no** world-map regeneration.
+
 ### `generate-theme` — apply a colour palette site-wide
 
 Reads `data/palettes.yaml`, takes the `active` palette, and regenerates every place a colour is baked in — in one pass:
 
-- the `:root` colour block in `css/styles.css` (between the `@theme-generated` markers)
+- the `:root` colour block in `css/styles.css` (between the `@theme-generated` markers) — solid colours ship as `oklch()`, with sRGB channel lists kept for the `rgb(var(--x-rgb) / a)` alpha pattern
 - `js/theme.js` — the ESM module the WebGL / Canvas2D modules and GLSL shaders import
 - `<meta theme-color>`, the inline data-URI favicon, and the nav-logo gradient in every `*.html` page + the `scripts/new-project.js` template
 - `public/favicon.svg`
+
+The accent family is **chroma-tamed** in OKLCH before it is written out (lightness and hue preserved), so accents read as refined rather than neon. The `theme-sync` test guards every HTML page against palette drift.
 
 ```bash
 npm run generate-theme
@@ -270,6 +318,18 @@ npm run generate-csp-meta
 node scripts/generate-csp-meta.mjs --dry-run
 ```
 
+### `generate-analytics` — refresh the cookieless analytics pixel
+
+Injects (or replaces) a **GoatCounter no-JS tracking pixel** on every indexable HTML page, wrapped in `<!-- generated:analytics -->` markers. It is a plain `<img>` to `https://stocastico.goatcounter.com/count` — **no external `<script>`, no cookies, no personal data** — so it only needs `img-src` loosened in the CSP (handled by `generate-csp-meta`). The recorded path (`p`) mirrors each page's canonical URL and the title (`t`) is taken from its `<title>`.
+
+```bash
+npm run generate-analytics
+# or:
+node scripts/generate-analytics.mjs --dry-run
+```
+
+View aggregate stats (pageviews, top pages, referrers, countries, browsers) at **https://stocastico.goatcounter.com**. `test/analytics.test.mjs` guards the pixel + its CSP origin on every page and fails on drift.
+
 ### `generate-favicons` — rasterise the favicon
 
 Uses [sharp](https://sharp.pixelplumbing.com/) to rasterise `public/favicon.svg` into the PNG + ICO sizes browsers expect (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) plus full-bleed `maskable` variants (`icon-maskable-192.png`, `icon-maskable-512.png`) for Android adaptive icons.
@@ -318,9 +378,12 @@ Full YAML format reference is in **[docs/DATA-FORMATS.md](docs/DATA-FORMATS.md)*
 
 Quick summary:
 
-- **`data/cv.yaml`** — career, education, and skills. Edit then run `npm run generate-cv`.
+- **`data/cv.yaml`** — career, education, and skills (each skill has a `level` 0–100 driving its CV bar). Edit then run `npm run generate-cv`.
 - **`data/locations.yaml`** — globe pins (`lived` / `work` / `travel`), animated trip routes, and highlighted regions. Edit then run `npm run generate-locations`.
-- **`data/palettes.yaml`** — named colour palettes plus an `active` key. Edit then run `npm run generate-theme`.
+- **`data/countries.yaml`** — homepage world-map highlights (`lived` / `visited`); derived from `locations.yaml` on first run, then hand-editable. Edit then run `npm run generate-countries` and `npm run generate-world-map`.
+- **`data/unesco.yaml`** — travel-page UNESCO accordion (continent → country → site, https-only links). Edit then run `npm run generate-unesco`.
+- **`data/links.yaml`** — blogroll entries (name, https-only url, optional description, categories, tags). Edit then run `npm run generate-links`.
+- **`data/palettes.yaml`** — named colour palettes (Forest & Brass, Mocha & Apricot, Crimson & Rust) plus an `active` key. Edit then run `npm run generate-theme`.
 - **`data/projects.js`** — project card entries. Edit directly, or use `npm run new-project` to generate from Markdown.
 
 ---
@@ -357,7 +420,14 @@ Quick summary:
    - Create `projects/<id>.html` from the template (with OG/Twitter tags, canonical, theme-color and the PWA manifest link already included)
    - Register the entry in `data/projects.js` so the card appears on the homepage (up to 4) and on `projects.html`
 
-3. Preview locally by opening `index.html` in a browser, then commit both generated files.
+3. Refresh the per-page generators so the new page carries a CSP meta tag and the analytics pixel (the `seo` / `html-quality` / `analytics` tests gate this in CI):
+
+   ```bash
+   npm run generate-csp-meta
+   npm run generate-analytics
+   ```
+
+4. Preview locally by opening `index.html` in a browser, then commit the generated files.
 
 ### Dry-run mode
 
@@ -458,15 +528,17 @@ Edit `data/publications.js` directly. Each entry:
 
 ### Navigation
 
-The navbar contains four items: **About**, **Work** (the Research section), **Projects**, and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically.
+The navbar contains: **About**, **Work** (the Research section), **Projects**, **Travel**, **Links**, and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
 
 ### Pages
 
 | Page | Description |
 | ------ | ------------- |
-| `index.html` | Single-page application — Hero, About, Research, Skills, Publications, Projects, Contact sections |
+| `index.html` | Single-page application — Hero, About, Research, Skills, Publications, Projects, Places, Contact sections |
 | `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
+| `travel.html` | 3-D globe + 2-D Europe map + UNESCO World Heritage accordion |
+| `links.html` | Curated, category-filterable blogroll from `data/links.yaml` |
 | `404.html` | Custom 404 error page. |
 
 ### Sections (index.html)
@@ -474,11 +546,12 @@ The navbar contains four items: **About**, **Work** (the Research section), **Pr
 | Section | Description |
 | --------- | ------------- |
 | Hero | Left-aligned layout with iridescent name shader, animated tagline, hero CTAs |
-| About | Photo + stats and bio text in a split layout; the interactive Europe 2D map spans full-width below; the 3-D globe fills the right half of the split |
-| Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows |
-| Publications | Filterable list of papers, rendered from `data/publications.js` |
+| About | Photo + stats and bio text in a split layout |
+| Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows; cards flip to a back face on click |
 | Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
+| Publications | Filterable list of papers, rendered from `data/publications.js` |
 | Projects | Up to 3 project cards rendered from `data/projects.js`, with a "View all projects" link to `projects.html` |
+| Places | Static inline-SVG world map of lived / visited countries; links to the travel page |
 | Contact | 2×2 grid of contact cards; email address is obfuscated and revealed on click |
 
 ---
@@ -489,9 +562,11 @@ The site uses several layers of real-time rendering, all progressive-enhancement
 
 ### Neural network (hero background)
 
-A Three.js particle system of ~120 glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor within a 220 px radius. Lines are drawn between every pair within 170 px using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the count drops to 84 nodes and line updates are frame-skipped. A Canvas2D fallback renders the same network without WebGL.
+A Three.js particle system of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor. Lines are drawn between nearby pairs using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the node count drops and line updates are frame-skipped. A Canvas2D fallback (`NeuralNetwork2D`) renders the same network without WebGL.
 
-### Interactive 3-D globe (About section)
+The module (and, through it, Three.js — ~130 KB gzipped) is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient + name shader fill the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
+
+### Interactive 3-D globe (travel page)
 
 A Three.js `Phong`-shaded sphere textured with satellite imagery, lit by a warm directional sun and a cyan rim light for branding consistency. On top of the base sphere:
 
@@ -513,19 +588,19 @@ The "Stefano / Masneri" heading is rendered by a raw GLSL fragment shader layere
 4. Applies **mouse-repulsion warping**: the distortion field bends away from the cursor using inverse-square falloff, so moving the mouse visibly deforms the text.
 5. Computes an **iridescent colour sweep** — a cosine-based RGB palette with phase offsets, blended with a bright blue-white bias to give a glass / crystal appearance.
 
-FPS is capped at 30 fps (20 fps on low-power devices) to conserve battery.
+FPS is capped at 30 fps (20 fps on low-power devices) to conserve battery. The iridescent colour sweep is driven by the active palette's accent colours (imported from `js/theme.js`), so it re-tints automatically on a palette switch.
 
 ### Animated GLSL noise gradient (hero background)
 
-A full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette that cycles between the site's accent colours (indigo-violet `#6c63ff`, cyan `#00d4ff`) and deep black. To save battery, the gradient renders only 3 frames at startup and then stops — the last rendered frame persists as a static background.
+A full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette built from the active palette's `noise` stops (dark / mid / bright). To save battery, the gradient renders only 3 frames at startup and then stops — the last rendered frame persists as a static background.
 
 ### 3-D card tilt with specular gloss
 
-Cards (research, blog, contact, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices.
+Cards (research, project, contact, skill-group, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. The card's bounding rect is cached once per hover (read on `mouseenter`, not on every `mousemove`) to avoid layout thrashing. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices, and torn down on `pagehide` (bfcache-friendly).
 
-### Magnetic button pull
+### Click-to-flip research cards
 
-Interactive buttons (hero CTAs, social links, contact cards) exert a magnetic attraction on the cursor when it enters a configurable proximity radius (~80 px). The button translates toward the cursor by a fraction of the cursor-to-centre offset, producing the feeling that the button is trying to "catch" the pointer. The translation is spring-lerped so motion is smooth and natural. On leave, the button spring-snaps back to its resting position.
+Each research card is a keyboard-operable button (`role="button"`, `tabindex`, `aria-expanded`) that flips on click / Enter / Space to reveal a back face with extra links. The back face's links stay out of the tab order until the card is expanded.
 
 ### Scroll-driven effects
 
@@ -538,9 +613,17 @@ As the user scrolls, elements respond with transforms calculated from their posi
 
 All transforms are throttled to `requestAnimationFrame` and are disabled for `prefers-reduced-motion`.
 
-### Interactive 2D Europe map (About section)
+### Homepage world map (Places teaser)
 
-A Canvas2D flat map of Europe rendered from `data/land-50m.json` (TopoJSON, 50m resolution for fine coastline detail). Country outlines are drawn with a neon cyan stroke on a dark background, matching the globe's visual style. Location pins from `data/locations.js` are plotted as pulsing rings or spikes using the same pin types as the 3D globe (`lived` / `work` / `travel`). Hovering a pin shows a tooltip with the location name and trip name (for trip waypoints). The map is loaded from `js/europe-map.js` and displayed full-width below the split layout in the About section.
+The home page's **Places** section shows a static inline-SVG world map: a silhouette of every country plus highlighted lived / visited countries. It is generated offline — `data/countries.yaml` → `generate-countries` → `data/countries.js`, then `generate-world-map` projects `data/countries-110m.json` into the `<!-- world-map:start … -->` SVG block in `index.html`. Fills use CSS `var(--pin-*)` classes, so a palette switch needs no regeneration. It links through to the full travel page.
+
+### Interactive 2D Europe map (travel page)
+
+A Canvas2D flat map of Europe rendered from `data/land-50m.json` (TopoJSON, 50m resolution for fine coastline detail). Country outlines are drawn with the palette's coast colour on a dark background, matching the globe's visual style. Location pins from `data/locations.js` are plotted as pulsing rings or spikes using the same pin types as the 3D globe (`lived` / `work` / `travel`). Hovering a pin shows a tooltip with the location name and trip name (for trip waypoints). The map is loaded from `js/europe-map.js` on the travel page.
+
+### UNESCO World Heritage accordion (travel page)
+
+A nested `<details>` disclosure tree (continent → country → site) built by `renderUnescoAccordion()` from `data/unesco.js`, gated on the travel page only. Source data lives in `data/unesco.yaml` (https-only links) → `generate-unesco`.
 
 ### Reading progress bar
 
@@ -556,15 +639,13 @@ Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page
 
 | Command | Action |
 | --------- | -------- |
-| About | Scroll to About section |
-| Research | Scroll to Research section |
-| Skills | Scroll to Skills section |
-| Projects | Scroll to Projects section |
-| Contact | Scroll to Contact section |
+| About / Research / Skills / Publications / Projects / Places / Contact | Scroll to that section |
 | CV | Navigate to `cv.html` |
-| Copy email | Copy email address to clipboard |
-| GitHub | Open GitHub profile |
-| LinkedIn | Open LinkedIn profile |
+| Links | Navigate to `links.html` |
+| Open CV PDF | Open the CV PDF |
+| Copy email address | Copy email address to clipboard |
+| LinkedIn profile | Open LinkedIn profile |
+| Google Scholar | Open Google Scholar profile |
 
 Type to filter commands. Press **Enter** to run the selected command, **Escape** to close.
 
@@ -584,12 +665,15 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 
 | Change | Impact |
 | -------- | -------- |
+| Three.js neural-net lazily imported on first interaction | Keeps the ~130 KB Three.js chunk off the initial critical path |
+| Globe / Europe map built only when their canvas nears the viewport | Defers Three.js + the 545 KB TopoJSON fetch until the user scrolls there |
+| Homepage world map is a static inline SVG | No runtime projection or TopoJSON fetch on the home page |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
-| Cursor glow removed | Removes the per-frame radial gradient draw on the overlay canvas |
-| Hero orbs are static (no animation) | Eliminates CSS animation on large blurred elements |
+| Cursor glow removed; hero orbs removed | Removes per-frame radial-gradient draws and large blurred animated elements |
 | HeroNameShader FPS capped at 30/20 | Halves GPU work on mid/low-power devices |
+| Card-tilt rect cached per hover | Removes a layout read on every `mousemove` |
 | Animated favicon replaced with static render | Removes per-frame Canvas2D draw in the background tab |
-| Orb blur reduced from 100 px to 40 px | Reduces GPU rasterisation cost |
+| All WebGL/Canvas instances + pointer listeners torn down on `pagehide` | Releases GL contexts and avoids leaks on bfcache eviction |
 
 ---
 

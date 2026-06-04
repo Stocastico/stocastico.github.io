@@ -28,7 +28,8 @@ const CSP = [
   "script-src 'self' 'unsafe-inline'",
   /* 404.html keeps an inline <style>; many pages use style="" attributes. */
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  /* GoatCounter no-JS analytics pixel (cookieless) loads from this origin. */
+  "img-src 'self' data: blob: https://stocastico.goatcounter.com",
   "font-src 'self'",
   /* Geocoder calls nominatim.openstreetmap.org over fetch(). */
   "connect-src 'self' https://nominatim.openstreetmap.org",
@@ -48,6 +49,8 @@ const TARGETS = [
   'index.html',
   'cv.html',
   'projects.html',
+  'travel.html',
+  'links.html',
   '404.html',
   ...fs.readdirSync(path.join(ROOT, 'projects'))
        .filter(f => f.endsWith('.html'))

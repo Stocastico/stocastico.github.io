@@ -642,6 +642,64 @@ test('NeuralNetwork constructs and updates with mocked THREE', () => {
   }
 });
 
+test('NeuralNetwork fires onReady once after the first painted frame', () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCancel = global.cancelAnimationFrame;
+
+  __setThreeForTests(createMinimalThree());
+  global.window = {
+    innerWidth: 1200,
+    innerHeight: 800,
+    devicePixelRatio: 2,
+    addEventListener() {},
+  };
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+    createElement(tag) {
+      if (tag !== 'canvas') return {};
+      return {
+        width: 0,
+        height: 0,
+        getContext() {
+          return {
+            createRadialGradient() { return { addColorStop() {} }; },
+            fillRect() {},
+            fillStyle: '',
+          };
+        },
+      };
+    },
+  };
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+    observe() {}
+    disconnect() {}
+  };
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => {};
+
+  try {
+    let readyCalls = 0;
+    const nn = new NeuralNetwork({}, () => { readyCalls += 1; });
+    assert.equal(readyCalls, 1, 'onReady must fire after the first frame paints');
+
+    /* Subsequent frames must not re-fire onReady (the hero only fades in once). */
+    nn._animate();
+    assert.equal(readyCalls, 1, 'onReady must fire exactly once');
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCancel;
+    __resetThreeForTests();
+  }
+});
+
 test('Globe3D constructs with mocked THREE and location data', () => {
   const prevWindow = global.window;
   const prevDocument = global.document;
@@ -901,6 +959,84 @@ test('HeroNameShader boots with mocked WebGL context', async () => {
     await Promise.resolve();
     assert.ok(shader.gl);
     assert.ok(shader.prog);
+  } finally {
+    global.window = prevWindow;
+    global.document = prevDocument;
+    global.IntersectionObserver = prevObserver;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCancel;
+    global.getComputedStyle = prevGetComputed;
+    global.setTimeout = prevSetTimeout;
+    global.devicePixelRatio = prevDpr;
+  }
+});
+
+test('HeroNameShader still boots when document.fonts.ready rejects', async () => {
+  const prevWindow = global.window;
+  const prevDocument = global.document;
+  const prevObserver = global.IntersectionObserver;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCancel = global.cancelAnimationFrame;
+  const prevGetComputed = global.getComputedStyle;
+  const prevSetTimeout = global.setTimeout;
+  const prevDpr = global.devicePixelRatio;
+
+  /* A no-op WebGL stub — every method the shader calls returns a truthy value. */
+  const gl = new Proxy({}, {
+    get(_t, prop) {
+      /* numeric GL enums the code reads as constants */
+      if (typeof prop === 'string' && /^[A-Z_]+$/.test(prop)) return 1;
+      if (prop === 'getShaderParameter' || prop === 'getProgramParameter') return () => true;
+      if (prop === 'getShaderInfoLog' || prop === 'getProgramInfoLog') return () => '';
+      if (prop === 'getAttribLocation') return () => 0;
+      if (prop === 'createShader' || prop === 'createProgram' || prop === 'createBuffer'
+        || prop === 'createTexture' || prop === 'getUniformLocation') return () => ({});
+      return () => {};
+    },
+  });
+
+  const h1 = { offsetWidth: 500, offsetHeight: 180, classList: { add() {} } };
+  const canvas = {
+    offsetWidth: 500, offsetHeight: 180, style: {},
+    getContext(kind) { return kind === 'webgl' ? gl : null; },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 500, height: 180 }; },
+  };
+
+  /* A rejected fonts.ready that is pre-caught here only to keep the test runner
+     quiet; the shader must attach its own handler so the real app never leaks
+     an unhandled rejection. */
+  const rejected = Promise.reject(new Error('fonts failed'));
+  rejected.catch(() => {});
+
+  global.window = { addEventListener() {} };
+  global.document = {
+    hidden: false,
+    addEventListener() {},
+    fonts: { ready: rejected },
+    createElement(tag) {
+      if (tag !== 'canvas') return {};
+      return {
+        width: 0, height: 0,
+        getContext() {
+          return { scale() {}, clearRect() {}, fillText() {},
+            set fillStyle(_) {}, set textAlign(_) {}, set textBaseline(_) {}, set font(_) {} };
+        },
+      };
+    },
+  };
+  global.IntersectionObserver = class { observe() {} disconnect() {} };
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => {};
+  global.getComputedStyle = () => ({ fontSize: '96px' });
+  global.setTimeout = (fn) => { fn(); return 1; };
+  global.devicePixelRatio = 2;
+
+  try {
+    const shader = new HeroNameShader(h1, canvas);
+    /* flush the rejection microtask so the shader's onRejected boot runs */
+    await rejected.catch(() => {});
+    await Promise.resolve();
+    assert.ok(shader.prog, 'shader should boot from the fonts.ready rejection handler');
   } finally {
     global.window = prevWindow;
     global.document = prevDocument;
@@ -1592,6 +1728,78 @@ test('initScroll3D registers scroll listener for hero parallax', () => {
     global.document = prevDoc;
     global.window = prevWin;
     global.requestAnimationFrame = prevRAF;
+  }
+});
+
+test('initScroll3D returns a teardown that removes the scroll listener', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCAF = global.cancelAnimationFrame;
+  const heroContent = {
+    style: { transform: '' },
+    addEventListener(type, fn) { if (type === 'animationend') fn(); },
+  };
+  let added = null, removed = null;
+  global.document = {
+    querySelector(sel) { return sel === '.hero-content' ? heroContent : null; },
+    getElementById(id) { return id === 'hero' ? { offsetHeight: 800 } : null; },
+  };
+  global.window = {
+    scrollY: 0,
+    matchMedia() { return { matches: false }; },
+    addEventListener(type, fn) { if (type === 'scroll') added = fn; },
+    removeEventListener(type, fn) { if (type === 'scroll') removed = fn; },
+  };
+  global.requestAnimationFrame = (fn) => { fn(); return 1; };
+  global.cancelAnimationFrame = () => {};
+  try {
+    const teardown = initScroll3D();
+    assert.equal(typeof teardown, 'function', 'initScroll3D should return a teardown fn');
+    teardown();
+    assert.ok(removed && removed === added, 'teardown should remove the same scroll listener it added');
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCAF;
+  }
+});
+
+test('initCardTilt returns a teardown that removes every card pointer listener', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevRAF = global.requestAnimationFrame;
+  const prevCAF = global.cancelAnimationFrame;
+  const added = [];
+  const removed = [];
+  const card = {
+    classList: makeClassList(),
+    style: { setProperty() {}, transform: '', transition: '' },
+    addEventListener(type, fn) { added.push([type, fn]); },
+    removeEventListener(type, fn) { removed.push([type, fn]); },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 200, height: 100 }; },
+  };
+  global.document = { querySelectorAll() { return [card]; } };
+  global.window = { matchMedia() { return { matches: false }; } };
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => {};
+  try {
+    const teardown = initCardTilt();
+    assert.equal(typeof teardown, 'function', 'initCardTilt should return a teardown fn');
+    assert.equal(added.length, 3, 'should bind mouseenter/mousemove/mouseleave');
+    teardown();
+    /* every added [type, fn] pair must be removed with the identical handler */
+    assert.equal(removed.length, 3);
+    for (const [type, fn] of added) {
+      assert.ok(removed.some(([t, f]) => t === type && f === fn),
+        `teardown should remove the ${type} listener with the same handler`);
+    }
+  } finally {
+    global.document = prevDoc;
+    global.window = prevWin;
+    global.requestAnimationFrame = prevRAF;
+    global.cancelAnimationFrame = prevCAF;
   }
 });
 

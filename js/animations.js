@@ -38,12 +38,15 @@ export function initCardTilt() {
   const MAX_RY = 12;   /* max degrees rotateY */
   const SPRING  = 0.10; /* lerp factor per frame */
 
+  const teardowns = [];
+
   Array.from(document.querySelectorAll('.research-card, .project-card, .contact-card, .skill-group, .pub-item'))
     .forEach((card) => {
       let targetRX = 0, targetRY = 0, targetZ = 0;
       let currentRX = 0, currentRY = 0, currentZ = 0;
       let raf = null;
       let isHovered = false;
+      let rect = null;   /* cached on mouseenter — avoids a layout read per mousemove */
 
       card.style.setProperty('--gloss-x', '50%');
       card.style.setProperty('--gloss-y', '50%');
@@ -70,36 +73,56 @@ export function initCardTilt() {
         raf = requestAnimationFrame(loop);
       }
 
-      card.addEventListener('mouseenter', () => {
+      const onEnter = () => {
         if (card.classList.contains('is-flipped')) return;
         isHovered = true;
         targetZ   = 8;
+        /* Cache the (pre-transform) rect once per hover — the card box doesn't
+           move while hovered, so re-reading it on every mousemove would only
+           thrash layout. */
+        rect = card.getBoundingClientRect();
         /* Suppress the CSS transform-transition while the spring runs */
         card.style.transition = `border-color var(--t-med), background var(--t-med), box-shadow var(--t-med)`;
         if (!raf) raf = requestAnimationFrame(loop);
-      });
+      };
 
-      card.addEventListener('mousemove', (e) => {
+      const onMove = (e) => {
         if (card.classList.contains('is-flipped')) return;
-        const r  = card.getBoundingClientRect();
+        const r  = rect || (rect = card.getBoundingClientRect());
         const cx = (e.clientX - r.left) / r.width;
         const cy = (e.clientY - r.top) / r.height;
         targetRY =  (cx - 0.5) * MAX_RY * 2;
         targetRX = -(cy - 0.5) * MAX_RX * 2;
         card.style.setProperty('--gloss-x', `${(cx * 100).toFixed(1)}%`);
         card.style.setProperty('--gloss-y', `${(cy * 100).toFixed(1)}%`);
-      });
+      };
 
-      card.addEventListener('mouseleave', () => {
+      const onLeave = () => {
         isHovered = false;
+        rect = null;
         targetRX = 0;
         targetRY = 0;
         targetZ  = 0;
         card.style.setProperty('--gloss-x', '50%');
         card.style.setProperty('--gloss-y', '50%');
         if (!raf) raf = requestAnimationFrame(loop);
+      };
+
+      card.addEventListener('mouseenter', onEnter);
+      card.addEventListener('mousemove', onMove);
+      card.addEventListener('mouseleave', onLeave);
+
+      teardowns.push(() => {
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        card.removeEventListener('mouseenter', onEnter);
+        card.removeEventListener('mousemove', onMove);
+        card.removeEventListener('mouseleave', onLeave);
       });
     });
+
+  /* Returned so page teardown (pagehide / bfcache) can drop every pointer
+     listener and cancel any in-flight spring loop in one call. */
+  return () => teardowns.forEach(fn => fn());
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -179,11 +202,19 @@ export function initScroll3D() {
     }
   }
 
-  window.addEventListener('scroll', () => {
+  const onScroll = () => {
     if (!rafId) rafId = requestAnimationFrame(update);
-  }, { passive: true });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   update(); /* initial — scrollY is 0 so transforms are no-ops */
+
+  /* Returned so page teardown (pagehide / bfcache) can drop the scroll
+     listener and cancel any pending parallax frame. */
+  return () => {
+    window.removeEventListener('scroll', onScroll);
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════

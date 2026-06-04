@@ -74,7 +74,7 @@ import { NoiseGradient } from './noise-gradient.js';
    GlobeFallback2D/geocodeLocations) are dynamically imported at their init
    sites below — see the Three.js loading-strategy note at the top. */
 
-/* DOM animations: scroll-driven, card tilt, magnetic buttons, parallax (extracted) */
+/* DOM animations: scroll reveal, card tilt, card flip, parallax, skill bars (extracted) */
 import {
   initScrollReveal,
   initCardTilt,
@@ -848,12 +848,21 @@ if (typeof document !== 'undefined') {
   initCursorGlow();
   initTaglineReveal();
 
+  /* Each disposable below is recorded so a single pagehide handler at the end
+     of init can release every WebGL context, RAF loop, observer, and event
+     listener in one go (avoids leaks when bfcache evicts the page or the user
+     reloads). The pointer/parallax enhancers return a teardown fn, the
+     WebGL/Canvas instances expose destroy() — initLifecycleCleanup() handles
+     both shapes. */
+  const _disposables = [];
+  const _pushTeardown = (fn) => { if (typeof fn === 'function') _disposables.push({ destroy: fn }); };
+
   /* Scroll reveals (must come after content injection) */
   initScrollReveal();
   initCounters();
 
   /* Scroll-driven effects: start immediately (lightweight, needed at any scroll pos) */
-  initScroll3D();
+  _pushTeardown(initScroll3D());
 
   /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
      not compete with content rendering on the main thread. requestIdleCallback
@@ -864,7 +873,7 @@ if (typeof document !== 'undefined') {
     : (fn) => setTimeout(fn, 0);
   initCardFlip();
   whenIdle(() => {
-    initCardTilt();
+    _pushTeardown(initCardTilt());
   });
 
   /* CV timeline and skill bars */
@@ -873,12 +882,6 @@ if (typeof document !== 'undefined') {
 
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
-
-  /* Each WebGL/Canvas instance below is recorded so a single pagehide
-     handler at the end of init can release every WebGL context, RAF
-     loop, observer, and event listener in one go (avoids leaks when
-     bfcache evicts the page or the user reloads). */
-  const _disposables = [];
 
   /* Noise gradient — raw WebGL, runs on devices that support it */
   const noiseCanvas = document.getElementById('noise-canvas');
@@ -889,21 +892,37 @@ if (typeof document !== 'undefined') {
   }
 
   /* Three.js neural network — falls back to Canvas2D when WebGL is missing.
-     Dynamically imported so Three.js stays out of the main chunk, and deferred
-     to idle time so its ~130 KB download stays off the critical path — the
-     hero already has the noise gradient + name shader while it loads. */
+     Dynamically imported so Three.js stays out of the main chunk. Deferred
+     until the first user interaction (mousemove / scroll / touchstart) so the
+     ~130 KB chunk is off the critical path on page load; the noise gradient +
+     name shader fill the hero while it loads. On reduced-motion the canvas is
+     hidden entirely. */
   const canvas = document.getElementById('neural-canvas');
   if (canvas) {
     if (prefersReducedMotion()) {
       canvas.style.display = 'none';
     } else {
-      whenIdle(() => {
+      let started = false;
+      const startNeural = () => {
+        if (started) return;
+        started = true;
+        ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
+          window.removeEventListener(evt, startNeural));
         import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
+          /* Fade the canvas in once the first frame has painted (see the
+             #neural-canvas opacity transition in css/styles.css), so the
+             network materialises gently instead of popping in fully-formed
+             the instant the Three.js chunk lands. */
+          const reveal = () => canvas.classList.add('is-visible');
           _disposables.push(
-            hasWebGLSupport() ? new NeuralNetwork(canvas) : new NeuralNetwork2D(canvas),
+            hasWebGLSupport()
+              ? new NeuralNetwork(canvas, reveal)
+              : new NeuralNetwork2D(canvas, reveal),
           );
         });
-      });
+      };
+      ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
+        window.addEventListener(evt, startNeural, { passive: true, once: true }));
     }
   }
 
