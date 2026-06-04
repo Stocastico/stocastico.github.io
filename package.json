@@ -44,6 +44,7 @@
     "generate-csp-meta": "node scripts/generate-csp-meta.mjs",
     "generate-analytics": "node scripts/generate-analytics.mjs",
     "generate-favicons": "node scripts/generate-favicons.mjs",
+    "generate-og": "node scripts/generate-og.mjs",
     "set-domain": "node scripts/set-domain.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
   },

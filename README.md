@@ -105,6 +105,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
 │   ├── generate-analytics.mjs       Inject/refresh the cookieless GoatCounter no-JS pixel on every HTML page
 │   ├── generate-favicons.mjs        Rasterise public/favicon.svg → ico + apple-touch + 192/512 PNGs (uses sharp)
+│   ├── generate-og.mjs              Render one social-card PNG per palette → img/og/og-<key>.png (uses sharp)
 │   ├── rotate-palette.js            Advance data/palettes.yaml `active` to the next palette (used by CI)
 │   ├── set-domain.mjs               Migrate the site to a custom domain (rewrites URLs + writes public/CNAME)
 │   ├── update-locations.sh          Convenience wrapper for generate-locations.js

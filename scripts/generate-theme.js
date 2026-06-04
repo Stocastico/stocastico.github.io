@@ -368,9 +368,10 @@ function faviconDataUri(bgHex, fgHex) {
          `font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E`;
 }
 
-/** Apply the theme-colour / favicon / nav-gradient rewrites to an HTML-ish
- *  document string. Returns the new string (unchanged if nothing matched). */
-function rewriteHtml(text, p) {
+/** Apply the theme-colour / favicon / nav-gradient / OG-image rewrites to an
+ *  HTML-ish document string. Returns the new string (unchanged if nothing
+ *  matched). `id` is the active palette key (used for the OG card filename). */
+function rewriteHtml(text, p, id) {
   let out = text;
 
   /* 1. <meta name="theme-color" content="#rrggbb"> */
@@ -397,6 +398,16 @@ function rewriteHtml(text, p) {
       });
     },
   );
+
+  /* 4. Social-card image (og:image / twitter:image) — brand pages point at the
+        active palette's OG card. Matches the legacy screenshot-hero.png and any
+        prior og-*.png; project pages use bespoke .webp images, left untouched. */
+  if (id) {
+    out = out.replace(
+      /(content=")(https:\/\/[^"]+?)\/img\/(?:screenshot-hero\.png|og\/og-[a-z0-9-]+\.png)(")/g,
+      `$1$2/img/og/og-${id}.png$3`,
+    );
+  }
 
   return out;
 }
@@ -492,7 +503,7 @@ function main(argv) {
   for (const file of [...htmlFiles, NEW_PROJECT]) {
     if (!fs.existsSync(file)) continue;
     const src = fs.readFileSync(file, 'utf8');
-    const next = rewriteHtml(src, p);
+    const next = rewriteHtml(src, p, id);
     if (next !== src) {
       fs.writeFileSync(file, next, 'utf8');
       written.push(path.relative(ROOT, file));
