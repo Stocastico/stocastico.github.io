@@ -24,7 +24,7 @@ export const PROJECTS = [
             year: "2025",
             tags: ["AI","Computer Vision"],
             bg: "img/projects/annotated-stadium.webp",
-            description: "ABC.",
+            description: "A computer-vision system that measures how much screen time each brand gets in football broadcasts. A YOLO detector finds the perimeter boards and LED signage; a DenseNet201 classifier sorts each into one of 52 brands — coping with small, motion-blurred crops, a 40× class imbalance, and LED ads that rotate weekly. Runs in production on Azure, validated against human annotators.",
             url: "projects/brand-stadium.html",
         },
     {
