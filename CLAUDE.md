@@ -9,7 +9,7 @@ Personal website of **Stefano Masneri** (Senior AI Engineer), hosted on GitHub P
 - **HTML/CSS/JS** — vanilla, no framework
 - **Vite** — dev server + production bundler (multi-page input)
 - **Three.js** (npm, bundled by Vite) — 3D globe, neural-network hero
-- **Raw WebGL/GLSL** — iridescent hero name shader, noise-gradient background
+- **Raw WebGL/GLSL** — noise-gradient hero background
 - **Node.js >= 18** — scripts and tests (built-in test runner, zero test dependencies)
 - **Playwright** — E2E UI tests (dev dependency)
 
@@ -36,6 +36,7 @@ npm run generate-countries  # data/locations.yaml → data/countries.yaml (edita
 npm run generate-world-map  # data/countries-110m.json + data/countries.js → inline SVG in index.html
 npm run generate-unesco     # data/unesco.yaml → data/unesco.js
 npm run generate-links      # data/links.yaml → data/links.js
+npm run generate-cards      # data/projects.js + data/publications.js → static cards in index/projects/publications.html
 npm run generate-csp-meta   # refresh the CSP <meta> across every HTML page
 npm run generate-analytics  # refresh the cookieless GoatCounter no-JS pixel across every HTML page
 npm run new-project -- file.md  # Markdown → projects/<slug>.html + updates data/projects.js
@@ -47,19 +48,20 @@ npm run new-project -- file.md  # Markdown → projects/<slug>.html + updates da
 index.html          Single-page site (hero, about, research, skills, publications, projects, places-teaser, contact)
 cv.html             Dedicated CV page (two-column layout)
 projects.html       Projects listing page
+publications.html   Full publication list (all papers from data/publications.js)
 travel.html         Travel page (3D globe + 2D Europe map + UNESCO World Heritage accordion)
 links.html          Links page (curated blogroll, filterable by category)
 404.html            Custom 404 page
 projects/*.html     Per-project detail pages
-vite.config.js      Multi-page Vite config (index, cv, projects, travel, links, 404, project pages)
+vite.config.js      Multi-page Vite config (index, cv, projects, publications, travel, links, 404, project pages)
 css/styles.css      All styles including print styles
 css/fonts.css       Self-hosted fonts
 js/main.js          ESM entry — orchestrates DOMContentLoaded init + page-teardown (pagehide) cleanup
-js/ui.js            Chrome/UI behaviours — navbar, mobile menu, command palette, side-dots, counters, toast, back-to-top, cursor glow, carousel
+js/render-cards.js  Pure HTML builders for project cards + publication items (shared by main.js and generate-cards)
+js/ui.js            Chrome/UI behaviours — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 js/three-context.js Shared THREE binding + test mocking hook
 js/utils.js         isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
 js/neural-net.js    NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
-js/hero-shader.js   HeroNameShader (raw WebGL iridescent text)
 js/noise-gradient.js NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 js/globe.js         Globe3D + GlobeFallback2D + geocodeLocations
 js/animations.js    Scroll-driven effects, card tilt (rect cached per hover), card flip, parallax, skill bars, timeline entrance
@@ -77,9 +79,9 @@ data/unesco.js      Generated ESM module — UNESCO { continents } (do not edit 
 data/links.yaml     Source of truth for the links-page blogroll → run generate-links after editing
 data/links.js       Generated ESM module — LINKS { categories, links } (do not edit manually)
 data/projects.js    Project entries — ESM (edit directly or via `npm run new-project`)
-data/publications.js Publication entries — ESM (edit directly)
+data/publications.js Publication entries — ESM (edit directly; `featured: true` surfaces a paper on the homepage). Run generate-cards after editing.
 js/theme.js         Generated ESM module — active palette in hex/int/glvec forms (do not edit manually)
-scripts/            Generator scripts (new-project, generate-cv, generate-locations, generate-theme, generate-countries, generate-world-map, generate-unesco, generate-links)
+scripts/            Generator scripts (new-project, generate-cv, generate-locations, generate-theme, generate-countries, generate-world-map, generate-unesco, generate-links, generate-cards, generate-og)
 test/               Tests for each script + main.js + europe-map.js + SEO + Playwright E2E
 docs/               DATA-FORMATS.md, DEPLOYMENT.md, project-template.md, cv.pdf, defense.pdf
 drafts/             Markdown source for projects/*.html — feed into `npm run new-project`. Not deployed.
@@ -102,25 +104,28 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 1. **Always run `npm test` after changes** to verify nothing breaks
 2. **After editing `data/cv.yaml`**, run `npm run generate-cv`
 3. **After editing `data/locations.yaml`**, run `npm run generate-locations`. If countries changed, also `npm run generate-countries --refresh` then `npm run generate-world-map` (and review `data/countries.yaml`).
-4. **After editing `data/palettes.yaml`** (or switching the `active` palette), run `npm run generate-theme`, then `npm run generate-favicons` to rebuild the raster icons. The homepage world map needs no regeneration — it uses CSS `var(--*)` classes.
+4. **After editing `data/palettes.yaml`** (or switching the `active` palette), run `npm run generate-theme`, then `npm run generate-favicons` to rebuild the raster icons. If you **added or recoloured a palette**, also run `npm run generate-og` to (re)render its social card. The homepage world map needs no regeneration — it uses CSS `var(--*)` classes; per-palette OG cards are committed static files and `generate-theme` just repoints `og:image` at the active one.
 5. **After editing `data/countries.yaml`**, run `npm run generate-countries` then `npm run generate-world-map` (rewrites the inline SVG block in `index.html`).
 6. **After editing `data/unesco.yaml`**, run `npm run generate-unesco`.
 7. **After editing `data/links.yaml`**, run `npm run generate-links`.
-8. **After adding/removing a project page** (or any HTML page), run `npm run generate-csp-meta` and `npm run generate-analytics` so the new page carries the CSP `<meta>` and the GoatCounter pixel. The `seo`/`html-quality`/`analytics` tests gate this in CI.
-9. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.
+8. **After editing `data/projects.js` or `data/publications.js`**, run `npm run generate-cards` to refresh the static cards/items baked into `index.html`, `projects.html` and `publications.html`. The `generate-cards` test fails on drift in CI.
+9. **After adding/removing a project page** (or any HTML page), run `npm run generate-analytics` and then `npm run generate-csp-meta` so the new page carries the GoatCounter pixel and CSP `<meta>`. Run **generate-csp-meta last**, after anything that changes inline `<script>` content (`generate-project-jsonld`, `generate-cards`) — the CSP hashes each inline script (`script-src` uses per-page `'sha256-…'` instead of `'unsafe-inline'`), so a changed JSON-LD invalidates the hash. The `seo`/`html-quality`/`analytics`/`csp` tests gate this in CI.
+10. Production builds are produced by GitHub Actions (`.github/workflows/deploy.yml`) on push to `main` — Vite builds `dist/` and the official Pages action publishes it.
 
 ## Important Patterns
 
 - **Email obfuscation**: Contact email is base64-encoded in HTML `data-*` attributes, revealed by JS on click
 - **Globe data pipeline**: `locations.yaml` → geocode via Nominatim API (cached in `.cache/`) → `locations.js` (ESM module that also assigns `globalThis.LOCATIONS` so legacy bare-global reads keep working)
 - **Project pipeline**: Write Markdown with YAML frontmatter → `node scripts/new-project.js file.md` → generates HTML + updates `data/projects.js`
+- **Static card rendering**: Project cards and publication items are **server-rendered into static HTML** (not just JS-injected) so crawlers and no-JS visitors see real content. `generate-cards` (`scripts/generate-cards.mjs`) bakes them between `<!-- generated:project-cards -->` / `<!-- generated:publication-items -->` markers — newest 3 / featured on `index.html`, all on `projects.html` / `publications.html` — plus a `CollectionPage` JSON-LD on `publications.html`. Markup comes from the shared pure builders in `js/render-cards.js`, which `js/main.js` also uses, so SSR and client markup can't drift (`generate-cards` test guards it). On load, `renderProjects()` re-shuffles the homepage set; `renderPublications()` honours `data-render="all"` on `publications.html`.
 - **Homepage world map**: `data/countries.yaml` (lived/visited, derived from `locations.yaml` but hand-editable) → `generate-countries` → `data/countries.js`; then `generate-world-map` projects `data/countries-110m.json` to a static inline SVG (silhouette + highlighted-country paths) and rewrites the `<!-- world-map:start … -->` block in `index.html`. Fills use CSS `var(--pin-lived)` / `var(--pin-holiday)` classes, so a palette switch needs no regen. Micro-states absent from the 110m TopoJSON (e.g. Malta, San Marino, North Macedonia) stay in the data but don't render at world scale.
 - **UNESCO accordion**: `data/unesco.yaml` (continent → country → site, https-only links) → `generate-unesco` → `data/unesco.js`; `renderUnescoAccordion()` in `js/main.js` builds a `<details>` disclosure tree, gated on `#unesco-accordion` (travel page only). The globe + Europe map init the same way — keyed off `#globe-canvas` / `#europe-canvas`, which now live only on `travel.html`.
 - **Links blogroll**: `data/links.yaml` (a flat list; each entry has a name, an https-only url, optional `description`, one or more `categories`, and optional `tags` — categories/tags written as inline YAML flow arrays, e.g. `[ai, visual-explanation]`) → `generate-links` → `data/links.js`. The generator de-duplicates by URL (merging the categories/tags of duplicates) and emits `LINKS { categories: [{slug,label}], links: [...] }` with the used categories in canonical order. `renderLinks()` in `js/main.js` builds a category filter bar plus a single de-duplicated grid of `.link-card`s, gated on `#links-grid` (links page only); `linkMatchesFilter()` drives the client-side show/hide. https-only validation in the generator, HTML-escaped again at render. Category labels live in `CATEGORY_LABELS` in `scripts/generate-links.js`; unknown slugs are tolerated (humanised). Keep the list short and curated.
 - **THREE module bindings**: `js/neural-net.js` and `js/globe.js` use named-import destructuring (`let { Scene, WebGLRenderer, ... } = _THREE`) re-bound by `onChange` so test mocks still take effect
-- **Theme pipeline**: `data/palettes.yaml` (one `active` key + named palettes) → `npm run generate-theme` → rewrites the `@theme-generated` `:root` block in `css/styles.css`, regenerates `js/theme.js`, and updates `<meta theme-color>` / inline favicon / nav-logo gradient across every `*.html` + `public/favicon.svg`. CSS reads `var(--*)`; the WebGL/Canvas2D modules and GLSL shaders import `THEME` + the `int()` / `rgba()` / `glvec()` helpers from `js/theme.js` (the shader source is a JS template literal, so colours are interpolated at module load — no recompile, no uniforms). Switching the whole site's palette = edit one YAML key + run one command.
+- **Theme pipeline**: `data/palettes.yaml` (one `active` key + named palettes) → `npm run generate-theme` → rewrites the `@theme-generated` `:root` block in `css/styles.css`, regenerates `js/theme.js`, and updates `<meta theme-color>` / inline favicon / nav-logo gradient across every `*.html` + `public/favicon.svg`. CSS reads `var(--*)`; the WebGL/Canvas2D modules and GLSL shaders import `THEME` + the `int()` / `rgba()` / `glvec()` helpers from `js/theme.js` (the shader source is a JS template literal, so colours are interpolated at module load — no recompile, no uniforms). Switching the whole site's palette = edit one YAML key + run one command. `generate-theme` also repoints every brand page's `og:image`/`twitter:image` at the active palette's social card (`img/og/og-<key>.png`, built by `scripts/generate-og.mjs` from the same palette colours via an SVG→PNG render with embedded fonts).
+- **CSP**: every page ships a `Content-Security-Policy` `<meta>` (generated by `scripts/generate-csp-meta.mjs`, marker-wrapped). `script-src` carries **per-page `'sha256-…'` hashes** of each inline `<script>` (JSON-LD + speculationrules) instead of `'unsafe-inline'`; `style-src` keeps `'unsafe-inline'` (inline `style=""` attributes can't be hashed). `test/csp.test.mjs` recomputes the hashes and fails on drift, so re-run `generate-csp-meta` after any change to inline scripts.
 - **Analytics**: cookieless GoatCounter via a **no-JS `<img>` pixel** (no external `<script>`, no cookies, no personal data). `scripts/generate-analytics.mjs` injects a marker-wrapped `<img src="https://stocastico.goatcounter.com/count?p=…&t=…">` into every HTML page (`p` = canonical path, `t` = page `<title>`), wrapped in `<!-- generated:analytics -->` markers like the CSP/JSON-LD generators. The pixel's origin is allowlisted in the CSP `img-src` (`generate-csp-meta.mjs`). `test/analytics.test.mjs` guards the pixel + CSP origin on every page and fails on drift. View stats at `https://stocastico.goatcounter.com`.
-- **Performance**: NoiseGradient renders 3 frames then stops; HeroNameShader capped at 30fps; favicon is static
+- **Performance**: NoiseGradient renders 3 frames then stops; favicon is static
 
 ## Things to Avoid
 

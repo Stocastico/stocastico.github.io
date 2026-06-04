@@ -15,7 +15,7 @@
    10. Research Section
    11. Publications Section
    12. Skills Section
-   13. Blog Section
+   13. Projects Section
    14. Contact Section
    15. Footer
    16. Scroll Reveal Animations
@@ -24,10 +24,9 @@
    17. Performance (content-visibility)
    18. Responsive
    18b. Europe 2D Map
-   19. Enhanced Blog Cards
-   20. Blog Post Page
+   19. Enhanced Project Cards
+   20. Project Detail Page
    21. Command Palette
-   22. Side Progress Dots
    ============================================================ */
 
 /* ─── 0. Cascade layers ───────────────────────────────────
@@ -146,6 +145,26 @@
 
   /* Navbar height (used for scroll offset) */
   --nav-h: 68px;
+}
+
+/* ─── Cross-document view transitions ─────────────────────────
+   Opt the whole multi-page site into the View Transitions API so same-origin
+   navigations (home ↔ projects ↔ project detail ↔ cv ↔ travel ↔ links) animate
+   as a smooth cross-fade in supporting browsers. Pages already prerender on
+   hover via the Speculation Rules API, so the transition lands instantly.
+   Unsupported browsers ignore this rule entirely — navigation just cuts. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Respect reduced-motion: keep the navigation working but drop the animation
+   so it's an instant cut rather than a fade. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 @layer base {
@@ -592,25 +611,7 @@ h3 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-align: left;
-  /* ensure text is still selectable / readable before shader loads */
   user-select: text;
-}
-
-/* JS adds this class once the WebGL canvas is live */
-.hero-name--gpu {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* The canvas sits on top of the (now invisible) h1 */
-.hero-name-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  display: block;
-  will-change: transform;
-  /* WebGL canvas — own compositor layer */
 }
 
 .hero-tagline {
@@ -1891,6 +1892,11 @@ h3 {
   cursor: pointer;
 }
 
+/* Papers without a canonical link render as a non-interactive card. */
+.pub-item--nolink {
+  cursor: default;
+}
+
 .pub-year {
   font-family: var(--font-display);
   font-size: 0.82rem;
@@ -1925,8 +1931,40 @@ h3 {
   text-align: center;
 }
 
+/* Full publications.html list — papers grouped under per-year headings.
+   The container stacks (heading, grid, heading, grid…); each year's papers
+   keep the same multi-column grid as the homepage set. */
+.publications-grouped {
+  display: block;
+}
+
+.pub-year-heading {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: var(--tracking-wide);
+  margin: 2.75rem 0 1.25rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pub-year-heading:first-child {
+  margin-top: 0;
+}
+
+.pub-year-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
 @media (max-width: 1080px) {
   .publications-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-year-group {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -3072,11 +3110,6 @@ h3 {
     text-align: center;
   }
 
-  .hero-name-canvas {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
   .hero-actions {
     justify-content: center;
   }
@@ -3096,7 +3129,8 @@ h3 {
 }
 
 @media (max-width: 480px) {
-  .publications-list {
+  .publications-list,
+  .pub-year-group {
     grid-template-columns: 1fr;
   }
 
@@ -3716,84 +3750,6 @@ h3 {
   }
 }
 
-/* ─── Side Progress Dots ─────────────────────────────────── */
-.side-dots {
-  position: fixed;
-  right: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 900;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: center;
-  /* Hidden on small screens / touch devices */
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--t-med);
-}
-
-.side-dots.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.side-dot {
-  display: block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text-faint);
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
-
-  &:hover {
-    background: var(--text-muted);
-    transform: scale(1.4);
-  }
-
-  &[aria-current="true"] {
-    background: var(--accent2);
-    transform: scale(1.35);
-    box-shadow: 0 0 8px var(--accent2-glow);
-  }
-
-  /* Tooltip label on hover */
-  &::before {
-    content: attr(data-label);
-    position: absolute;
-    right: calc(100% + 0.75rem);
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    background: rgb(var(--bg-rgb) / 0.85);
-    border: 1px solid var(--border);
-    padding: 0.2em 0.55em;
-    border-radius: var(--r-sm);
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--t-fast);
-    backdrop-filter: blur(8px);
-  }
-
-  &:hover::before {
-    opacity: 1;
-  }
-}
-
-/* Only show on wide enough screens with a mouse */
-@media (max-width: 900px),
-(pointer: coarse) {
-  .side-dots {
-    display: none;
-  }
-}
-
 /* ─── Back to Top Button ─────────────────────────────────── */
 .back-to-top {
   position: fixed;
@@ -3898,12 +3854,10 @@ h3 {
   #navbar,
   .reading-progress,
   .scroll-hint,
-  .side-dots,
   .back-to-top,
   .cmd-overlay,
   #noise-canvas,
   #neural-canvas,
-  #name-canvas,
   #globe-canvas,
   #europe-canvas,
   .globe-legend,

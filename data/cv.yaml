@@ -130,9 +130,9 @@ skills:
     - name: "GenAI & LLMs (Fine-tuning · RAG · LangChain · Vector DBs)"
       level: 95
     - name: "Python · PyTorch · TensorFlow · Hugging Face"
-      level: 100
+      level: 98
     - name: "Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)"
-      level: 100
+      level: 97
     - name: "MLOps · Docker · Kubernetes · CI/CD · GCP · Azure"
       level: 85
     - name: "Augmented Reality (ARCore · ARKit · WebXR)"
@@ -146,9 +146,9 @@ skills:
     - name: "Delivery Track Record (10+ AI/ML projects, Agile/Scrum)"
       level: 90
     - name: "Technical Mentoring & Training (20+ sessions)"
-      level: 100
+      level: 96
     - name: Stakeholder & Partner Coordination
-      level: 100
+      level: 97
     - name: "Strategic AI Roadmap & Vision (OKRs · Research → Production)"
       level: 85
     - name: "Cross-functional Collaboration (Engineering · Research · Product)"

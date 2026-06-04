@@ -413,7 +413,7 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="${descEsc}" />
   <meta name="author" content="Stefano Masneri" />
-  <meta name="robots" content="index, follow, noai, noimageai" />
+  <meta name="robots" content="index, follow" />
   <title>${titleEsc} — Stefano Masneri</title>
   <link rel="canonical" href="${SITE_URL}/projects/${escapeHtml(fm.id)}.html" />
 
@@ -468,6 +468,8 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
         <li><a href="../index.html#about">About</a></li>
         <li><a href="../index.html#research">Work</a></li>
         <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../travel.html">Travel</a></li>
+        <li><a href="../links.html">Links</a></li>
         <li><a href="../index.html#contact">Contact</a></li>
       </ul>
     </div>

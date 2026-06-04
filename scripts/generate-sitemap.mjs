@@ -59,6 +59,7 @@ async function main() {
   const entries = [
     { rel: 'index.html',    loc: `${SITE}/`,             changefreq: 'weekly',  priority: '1.0' },
     { rel: 'projects.html', loc: `${SITE}/projects.html`, changefreq: 'weekly',  priority: '0.8' },
+    { rel: 'publications.html', loc: `${SITE}/publications.html`, changefreq: 'monthly', priority: '0.6' },
     { rel: 'travel.html',   loc: `${SITE}/travel.html`,   changefreq: 'monthly', priority: '0.6' },
     { rel: 'links.html',    loc: `${SITE}/links.html`,    changefreq: 'monthly', priority: '0.5' },
     { rel: 'cv.html',       loc: `${SITE}/cv.html`,       changefreq: 'monthly', priority: '0.7' },

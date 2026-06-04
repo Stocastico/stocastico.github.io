@@ -1,13 +1,13 @@
 # stocastico.github.io
 
-Personal website of **Stefano Masneri** — Senior AI Engineer based in San Sebastián, Spain — hosted at [stocastico.github.io](https://stocastico.github.io/).
+Personal website of **Stefano Masneri** — Senior AI Engineer based in San Sebastián, Spain — live at [stefanomasneri.com](https://stefanomasneri.com/) (hosted on GitHub Pages from this repository).
 
 ## About this site
 
-A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across six pages:
+A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across seven pages:
 
 - **`index.html`** — the main page, with the following sections:
-  - **Hero** — animated name rendered through a custom GLSL iridescence shader, layered over a domain-warped noise gradient and a Three.js neural-network particle field.
+  - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Three.js neural-network particle field.
   - **About** — short bio and key stats.
   - **Research** — horizontal-scroll carousel of research topics (computer vision, AR, video understanding, generative AI, etc.).
   - **Skills** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
@@ -16,23 +16,24 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
   - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
 - **`projects.html`** — full project listing, with one detail page per project under `projects/`.
+- **`publications.html`** — the full (30+) publication list, rendered from `data/publications.js`.
 - **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
 - **`travel.html`** — interactive 3-D globe (Three.js) + 2-D Canvas map of Europe + a UNESCO World Heritage accordion. The globe and map visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
 - **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
 - **`404.html`** — custom not-found page with the standard navbar.
 
-Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section navigation, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, and full `prefers-reduced-motion` support throughout.
+Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, cross-document View Transitions, and full `prefers-reduced-motion` support throughout.
 
 ## Tech stack
 
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
 - Modern CSS — `@layer` cascade, native nesting, `oklch()` colours, and a design-token scale (spacing / tracking / elevation / easing)
 - [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the neural-network hero background and the interactive globe — lazily code-split so it stays off the initial critical path
-- Raw WebGL (GLSL) for the hero name iridescence shader and noise-gradient hero background
+- Raw WebGL (GLSL) for the noise-gradient hero background
 - Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`); a weekly GitHub Actions job rotates the active palette
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
-- Self-hosted fonts: Inter (body) and Outfit (headings + the hero name shader)
+- Self-hosted fonts: Inter (body) and Outfit (headings + the hero name)
 - Privacy-first: no third-party scripts, no cookies. The only external request is a cookieless [GoatCounter](https://www.goatcounter.com/) no-JS analytics pixel (aggregate counts, no personal data)
 
 ## Project structure
@@ -41,6 +42,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 .
 ├── index.html                 Main single-page site
 ├── projects.html              Dedicated projects listing page
+├── publications.html          Full publication list (all papers)
 ├── cv.html                    Dedicated CV page (two-column: work | education)
 ├── travel.html                Travel page — 3D globe + 2D Europe map + UNESCO accordion
 ├── links.html                 Curated, category-filterable blogroll
@@ -51,11 +53,11 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 ├── vite.config.js             Multi-page Vite config (index, projects, cv, travel, links, 404, project pages)
 ├── js/
 │   ├── main.js                ESM entry — orchestrates DOMContentLoaded init + pagehide teardown
-│   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, side-dots, counters, toast, back-to-top, carousel
+│   ├── render-cards.js        Pure HTML builders for project cards + publication items (shared with generate-cards)
+│   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 │   ├── three-context.js       Shared THREE binding + test mocking hook
 │   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
 │   ├── neural-net.js          NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
-│   ├── hero-shader.js         HeroNameShader (raw WebGL iridescent text)
 │   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
 │   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars, timeline entrance
@@ -90,6 +92,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   └── robots.txt             SEO robot rules
 ├── scripts/
 │   ├── new-project.js               Convert a Markdown draft → project HTML + update projects.js
+│   ├── generate-cards.mjs           Server-render project cards + publication items into static HTML (index/projects/publications)
 │   ├── generate-cv.js               Build data/cv.js from data/cv.yaml
 │   ├── generate-locations.js        Generate data/locations.js from data/locations.yaml
 │   ├── generate-countries.js        Generate data/countries.js from data/countries.yaml (lived/visited)
@@ -102,6 +105,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── generate-csp-meta.mjs        Inject/refresh the CSP meta tag on every HTML page
 │   ├── generate-analytics.mjs       Inject/refresh the cookieless GoatCounter no-JS pixel on every HTML page
 │   ├── generate-favicons.mjs        Rasterise public/favicon.svg → ico + apple-touch + 192/512 PNGs (uses sharp)
+│   ├── generate-og.mjs              Render one social-card PNG per palette → img/og/og-<key>.png (uses sharp)
 │   ├── rotate-palette.js            Advance data/palettes.yaml `active` to the next palette (used by CI)
 │   ├── set-domain.mjs               Migrate the site to a custom domain (rewrites URLs + writes public/CNAME)
 │   ├── update-locations.sh          Convenience wrapper for generate-locations.js
@@ -110,7 +114,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │       ├── yaml.js                  Minimal YAML parser (no external dependencies)
 │       └── site.json                Single source of truth for the site origin (used by the URL generators)
 ├── test/
-│   ├── main.node.test.mjs          Tests for js/main.js + js/animations.js + js/hero-shader.js
+│   ├── main.node.test.mjs          Tests for js/main.js + js/animations.js
 │   ├── cv.test.mjs                 Tests for CV rendering
 │   ├── europe-map.test.mjs         Tests for js/europe-map.js
 │   ├── generate-cv.test.js         Tests for scripts/generate-cv.js
@@ -130,6 +134,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 │   ├── theme-sync.test.js          Guards every HTML page against palette drift (theme-color / favicon / nav-grad)
 │   ├── cname.test.js               Guards public/CNAME ↔ site origin consistency
 │   ├── analytics.test.mjs          Guards the GoatCounter pixel + its CSP origin on every page
+│   ├── csp.test.mjs                Guards the per-page CSP script-src hashes (no 'unsafe-inline'; no drift)
 │   ├── globe.test.html             Interactive globe visualisation tests
 │   ├── playwright.ui.test.mjs      End-to-end UI tests (Playwright)
 │   └── playwright.iphone.test.mjs  iPhone Safari regression tests (Playwright)
@@ -144,7 +149,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, side-dot section n
 
 ```bash
 npm test                        # run all tests
-npm run test:main               # js/main.js + animations + hero-shader tests only
+npm run test:main               # js/main.js + animations tests only
 npm run test:cv                 # CV rendering tests only
 npm run test:generate-cv        # generate-cv.js tests only
 npm run test:generate-theme     # generate-theme.js tests only
@@ -163,6 +168,7 @@ npm run test:css-assets         # CSS structure / asset regression checks only
 npm run test:theme-sync         # palette-drift guard across every HTML page
 npm run test:cname              # CNAME ↔ site-origin consistency
 npm run test:analytics          # GoatCounter pixel + CSP-origin guard
+npm run test:csp                # per-page CSP script-src hash guard
 # europe-map.test.mjs is included in `npm test` but has no dedicated shorthand
 ```
 
@@ -310,7 +316,7 @@ The block is wrapped in `<!-- generated:project-jsonld -->` markers so re-runs r
 
 ### `generate-csp-meta` — refresh Content-Security-Policy meta tags
 
-Injects (or replaces) the CSP `<meta http-equiv="Content-Security-Policy">` tag on every indexable HTML page. Edit the policy constant at the top of the script and re-run.
+Injects (or replaces) the CSP `<meta http-equiv="Content-Security-Policy">` tag on every indexable HTML page. `script-src` lists a per-page `'sha256-…'` hash for each inline `<script>` (JSON-LD + speculationrules) rather than `'unsafe-inline'`, so re-run this **after** any generator that touches inline scripts (`generate-project-jsonld`, `generate-cards`). Edit the policy in `cspFor()` and re-run; `test/csp.test.mjs` fails on drift.
 
 ```bash
 npm run generate-csp-meta
@@ -514,13 +520,19 @@ Edit `data/publications.js` directly. Each entry:
 
 ```js
 {
-  year:    "2025",
-  title:   "Paper title",
-  authors: "A. Author et al.",
-  venue:   "Conference / Journal",
-  url:     "https://doi.org/..."   // omit to suppress link
+  year:     "2025",
+  title:    "Paper title",
+  authors:  "A. Author et al.",
+  venue:    "Conference / Journal",
+  url:      "https://doi.org/...",  // optional; omit to render a non-link entry
+  featured: true                    // optional; surfaces it in the homepage section
 }
 ```
+
+Then run `npm run generate-cards` to refresh the static publication items baked
+into `index.html` (featured subset) and `publications.html` (all). The
+`generate-cards` test fails on drift, so committing without regenerating is
+caught in CI.
 
 ---
 
@@ -536,6 +548,7 @@ The navbar contains: **About**, **Work** (the Research section), **Projects**, *
 | ------ | ------------- |
 | `index.html` | Single-page application — Hero, About, Research, Skills, Publications, Projects, Places, Contact sections |
 | `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
+| `publications.html` | Full publication list — all papers from `data/publications.js` |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
 | `travel.html` | 3-D globe + 2-D Europe map + UNESCO World Heritage accordion |
 | `links.html` | Curated, category-filterable blogroll from `data/links.yaml` |
@@ -545,7 +558,7 @@ The navbar contains: **About**, **Work** (the Research section), **Projects**, *
 
 | Section | Description |
 | --------- | ------------- |
-| Hero | Left-aligned layout with iridescent name shader, animated tagline, hero CTAs |
+| Hero | Left-aligned layout with a palette-gradient name, animated tagline, hero CTAs |
 | About | Photo + stats and bio text in a split layout |
 | Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows; cards flip to a back face on click |
 | Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
@@ -564,7 +577,7 @@ The site uses several layers of real-time rendering, all progressive-enhancement
 
 A Three.js particle system of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor. Lines are drawn between nearby pairs using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the node count drops and line updates are frame-skipped. A Canvas2D fallback (`NeuralNetwork2D`) renders the same network without WebGL.
 
-The module (and, through it, Three.js — ~130 KB gzipped) is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient + name shader fill the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
+The module (and, through it, Three.js — ~130 KB gzipped) is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient fills the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
 
 ### Interactive 3-D globe (travel page)
 
@@ -577,18 +590,6 @@ A Three.js `Phong`-shaded sphere textured with satellite imagery, lit by a warm 
 - **Grid lines**: latitude / longitude lines with the equator and tropics brightened.
 
 Mouse dragging rotates the globe with inertia; auto-spin resumes when idle. Raycasting handles pin hover tooltips. A Canvas2D flat-map fallback is used when `prefers-reduced-motion` is set.
-
-### Hero name iridescence shader
-
-The "Stefano / Masneri" heading is rendered by a raw GLSL fragment shader layered over the accessible `<h1>`. The shader:
-
-1. Rasterises the text into an alpha-only WebGL texture each frame using `Canvas2D`.
-2. Applies **fractional Brownian motion** (three octaves of value noise drifting at different speeds) to compute a per-pixel UV displacement.
-3. Samples the red, green, and blue channels at slightly different offsets to produce **chromatic aberration** (colour fringing).
-4. Applies **mouse-repulsion warping**: the distortion field bends away from the cursor using inverse-square falloff, so moving the mouse visibly deforms the text.
-5. Computes an **iridescent colour sweep** — a cosine-based RGB palette with phase offsets, blended with a bright blue-white bias to give a glass / crystal appearance.
-
-FPS is capped at 30 fps (20 fps on low-power devices) to conserve battery. The iridescent colour sweep is driven by the active palette's accent colours (imported from `js/theme.js`), so it re-tints automatically on a palette switch.
 
 ### Animated GLSL noise gradient (hero background)
 
@@ -649,10 +650,6 @@ Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page
 
 Type to filter commands. Press **Enter** to run the selected command, **Escape** to close.
 
-### Side-dot navigation
-
-A vertical row of small dots on the right edge of the viewport indicates the current section and lets the user jump directly to any section by clicking. Each dot is labelled with the section name via a tooltip that appears on hover.
-
 ### Back-to-top button
 
 A floating button appears in the bottom-right corner once the user has scrolled past one viewport height. Clicking it smooth-scrolls back to the top.
@@ -670,7 +667,6 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 | Homepage world map is a static inline SVG | No runtime projection or TopoJSON fetch on the home page |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
 | Cursor glow removed; hero orbs removed | Removes per-frame radial-gradient draws and large blurred animated elements |
-| HeroNameShader FPS capped at 30/20 | Halves GPU work on mid/low-power devices |
 | Card-tilt rect cached per hover | Removes a layout read on every `mousemove` |
 | Animated favicon replaced with static render | Removes per-frame Canvas2D draw in the background tab |
 | All WebGL/Canvas instances + pointer listeners torn down on `pagehide` | Releases GL contexts and avoids leaks on bfcache eviction |
