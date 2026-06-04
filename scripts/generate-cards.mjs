@@ -21,7 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { projectCardHtml, publicationItemHtml } from '../js/render-cards.js';
+import { projectCardHtml, publicationsListLines } from '../js/render-cards.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
 
@@ -86,14 +86,14 @@ const TARGETS = {
     'generated:project-cards': () =>
       PROJECTS.slice(0, HOMEPAGE_PROJECTS).map((p, i) => projectCardHtml(p, i)),
     'generated:publication-items': () =>
-      PUBLICATIONS.filter((p) => p.featured).map((p, i) => publicationItemHtml(p, i)),
+      publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
   },
   'projects.html': {
     'generated:project-cards': () => PROJECTS.map((p, i) => projectCardHtml(p, i)),
   },
   'publications.html': {
     'generated:publication-items': () =>
-      PUBLICATIONS.map((p, i) => publicationItemHtml(p, i)),
+      publicationsListLines(PUBLICATIONS, { grouped: true }),
     'generated:publications-jsonld': () => publicationsJsonLd(),
   },
 };

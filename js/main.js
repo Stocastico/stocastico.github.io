@@ -60,7 +60,7 @@ import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml } f
 
 /* Card / list-item markup — shared with the static generator
    (scripts/generate-cards.mjs) so SSR and client markup never drift. */
-import { projectCardHtml, publicationItemHtml } from './render-cards.js';
+import { projectCardHtml, publicationsListLines } from './render-cards.js';
 
 /* Theme colours — single source of truth (data/palettes.yaml → js/theme.js).
    Only the favicon renderer below reads THEME/rgba now; the noise shader
@@ -193,7 +193,7 @@ function renderPublications(publications = DEFAULT_PUBLICATIONS) {
     const featured = publications.filter((p) => p && p.featured);
     shown = featured.length ? featured : publications.slice(0, 3);
   }
-  list.innerHTML = shown.map((pub, i) => publicationItemHtml(pub, i)).join('');
+  list.innerHTML = publicationsListLines(shown, { grouped: showAll }).join('');
 }
 
 /* Project cards — data source: PROJECTS (data/projects.js) */

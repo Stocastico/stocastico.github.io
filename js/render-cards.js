@@ -37,9 +37,9 @@ export function projectCardHtml(project, i = 0) {
 
 /* One publication item. Renders an <a> when a url is present, otherwise a
    non-interactive <div> (many older papers have no canonical link). */
-export function publicationItemHtml(pub, i = 0) {
+export function publicationItemHtml(pub, i = 0, { hideYear = false } = {}) {
   const inner =
-    '<div class="pub-year">' + escapeHtml(pub.year) + '</div>' +
+    (hideYear ? '' : '<div class="pub-year">' + escapeHtml(pub.year) + '</div>') +
     '<div class="pub-title">' + escapeHtml(pub.title) + '</div>' +
     '<div class="pub-meta">' +
       escapeHtml(pub.authors) + ' &nbsp;·&nbsp; ' +
@@ -53,4 +53,30 @@ export function publicationItemHtml(pub, i = 0) {
   return '<div class="pub-item pub-item--nolink research-card" role="listitem" data-animate data-delay="' + (i * 70) + '">' +
     inner +
   '</div>';
+}
+
+/* Build the publication list as an array of HTML lines (one element per line,
+   so the static generator can indent them). When `grouped` is true (the full
+   publications.html list) papers are split into year sections with an <h2>
+   heading; otherwise it's a flat list (the homepage featured set). Shared by
+   js/main.js and scripts/generate-cards.mjs so SSR and client output match. */
+export function publicationsListLines(publications, { grouped = false } = {}) {
+  if (!grouped) {
+    return publications.map((pub, i) => publicationItemHtml(pub, i));
+  }
+  const lines = [];
+  let year = null;
+  let i = 0;
+  for (const pub of publications) {
+    if (pub.year !== year) {
+      if (year !== null) lines.push('</div>');
+      year = pub.year;
+      lines.push('<h2 class="pub-year-heading">' + escapeHtml(year) + '</h2>');
+      lines.push('<div class="pub-year-group" role="list" aria-label="Publications from ' + escapeHtml(year) + '">');
+    }
+    lines.push(publicationItemHtml(pub, i, { hideYear: true }));
+    i += 1;
+  }
+  if (year !== null) lines.push('</div>');
+  return lines;
 }

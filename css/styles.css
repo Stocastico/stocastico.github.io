@@ -1931,8 +1931,40 @@ h3 {
   text-align: center;
 }
 
+/* Full publications.html list — papers grouped under per-year headings.
+   The container stacks (heading, grid, heading, grid…); each year's papers
+   keep the same multi-column grid as the homepage set. */
+.publications-grouped {
+  display: block;
+}
+
+.pub-year-heading {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: var(--tracking-wide);
+  margin: 2.75rem 0 1.25rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pub-year-heading:first-child {
+  margin-top: 0;
+}
+
+.pub-year-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
 @media (max-width: 1080px) {
   .publications-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-year-group {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -3097,7 +3129,8 @@ h3 {
 }
 
 @media (max-width: 480px) {
-  .publications-list {
+  .publications-list,
+  .pub-year-group {
     grid-template-columns: 1fr;
   }
 
