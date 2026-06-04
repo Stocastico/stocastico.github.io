@@ -468,6 +468,8 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
         <li><a href="../index.html#about">About</a></li>
         <li><a href="../index.html#research">Work</a></li>
         <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../travel.html">Travel</a></li>
+        <li><a href="../links.html">Links</a></li>
         <li><a href="../index.html#contact">Contact</a></li>
       </ul>
     </div>
