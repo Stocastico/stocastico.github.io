@@ -64,8 +64,8 @@ for (const file of projectFiles) {
     assert.ok(article.author && article.author.name,
       `${file} Article.author missing`);
     assert.ok(typeof article.datePublished === 'string'
-      && /^\d{4}/.test(article.datePublished),
-      `${file} Article.datePublished must start with a 4-digit year`);
+      && /^\d{4}-\d{2}-\d{2}$/.test(article.datePublished),
+      `${file} Article.datePublished must be a full ISO-8601 date (YYYY-MM-DD)`);
     assert.ok(typeof article.url === 'string' && article.url.startsWith(`${SITE}/projects/`),
       `${file} Article.url missing or off-site`);
   });

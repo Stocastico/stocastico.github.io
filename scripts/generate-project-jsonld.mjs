@@ -67,11 +67,13 @@ function parsePage(html) {
     /<p\s+class=["']project-detail__year["']>\s*([^<]+?)\s*<\/p>/i);
 
   /* Year may be "2020", "2024", or a range like "2015 – 2017" / "2009 – 2014".
-     For Article.datePublished use the first 4-digit segment. */
+     For Article.datePublished use the first 4-digit segment, normalised to a
+     full ISO-8601 date (YYYY-01-01) — Google's Article guidelines prefer a
+     complete date over a bare year, and we only know the year. */
   let year = null;
   if (yearText) {
     const m = yearText.match(/(\d{4})/);
-    if (m) year = m[1];
+    if (m) year = `${m[1]}-01-01`;
   }
 
   /* Strip the " — Stefano Masneri" suffix from the headline. */
