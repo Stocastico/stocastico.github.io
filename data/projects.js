@@ -19,6 +19,15 @@
 
 export const PROJECTS = [
     {
+            id: "brand-stadium",
+            title: "Brand recognition in football matches",
+            year: "2025",
+            tags: ["AI","Computer Vision"],
+            bg: "img/projects/annotated-stadium.webp",
+            description: "ABC.",
+            url: "projects/brand-stadium.html",
+        },
+    {
             id: "aroundtheworld",
             title: "ARoundTheWorld: Collaborative AR for Education",
             year: "2024",

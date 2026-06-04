@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- generated:csp-meta -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <!-- /generated:csp-meta -->
+  <meta name="description" content="A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV." />
+  <meta name="author" content="Stefano Masneri" />
+  <meta name="robots" content="index, follow, noai, noimageai" />
+  <title>Brand recognition in football matches — Stefano Masneri</title>
+  <link rel="canonical" href="https://stefanomasneri.com/projects/brand-stadium.html" />
+
+  <meta property="og:type"        content="article" />
+  <meta property="og:site_name"   content="Stefano Masneri" />
+  <meta property="og:locale"      content="en_GB" />
+  <meta property="og:url"         content="https://stefanomasneri.com/projects/brand-stadium.html" />
+  <meta property="og:title"       content="Brand recognition in football matches — Stefano Masneri" />
+  <meta property="og:description" content="A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV." />
+  <meta property="og:image"       content="https://stefanomasneri.com/img/projects/annotated-stadium.webp" />
+  <meta property="og:image:width"  content="673" />
+  <meta property="og:image:height" content="298" />
+  <meta property="og:image:alt"   content="Brand recognition in football matches" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Brand recognition in football matches — Stefano Masneri" />
+  <meta name="twitter:description" content="A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV." />
+  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/annotated-stadium.webp" />
+  <meta name="twitter:image:alt"   content="Brand recognition in football matches" />
+
+  <meta name="theme-color" content="#120a0a" />
+
+  <link rel="preload" href="../fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="../fonts/outfit-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="../css/fonts.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23120a0a'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23d64550' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="../css/styles.css" />
+<!-- generated:project-jsonld -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://stefanomasneri.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Projects",
+        "item": "https://stefanomasneri.com/projects.html"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Brand recognition in football matches",
+        "item": "https://stefanomasneri.com/projects/brand-stadium.html"
+      }
+    ]
+  }
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Brand recognition in football matches",
+    "description": "A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV.",
+    "image": "https://stefanomasneri.com/img/projects/annotated-stadium.webp",
+    "author": {
+      "@type": "Person",
+      "name": "Stefano Masneri",
+      "url": "https://stefanomasneri.com/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Stefano Masneri"
+    },
+    "datePublished": "2025",
+    "url": "https://stefanomasneri.com/projects/brand-stadium.html",
+    "mainEntityOfPage": "https://stefanomasneri.com/projects/brand-stadium.html"
+  }
+</script>
+<!-- /generated:project-jsonld -->
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a class="skip-link" href="#project-content">Skip to project</a>
+
+  <nav id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="Home">
+        <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#cc5257"/>
+              <stop offset="100%" stop-color="#ba693e"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Project hero banner (semi-transparent image + title overlay) -->
+  <header class="project-hero" style="--project-hero-img: url('../img/projects/annotated-stadium.webp');" aria-label="Brand recognition in football matches">
+    <div class="project-hero__overlay" aria-hidden="true"></div>
+    <div class="project-hero__inner">
+      <p class="post-back-row">
+        <a href="../projects.html" class="cv-back-link">&larr; All projects</a>
+      </p>
+      <p class="project-detail__year">2025</p>
+      <h1 class="project-detail__title">Brand recognition in football matches</h1>
+      <div class="project-detail__tags">
+        <span class="project-tag">AI</span>
+        <span class="project-tag">Computer Vision</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="project-content" class="post">
+    <div class="post-lead">A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV.</div>
+
+    <h2>Measuring Brand Exposure in Football Footage with Computer Vision</h2>
+<p>
+We've been building a computer vision system that detects and classifies advertising holders in football footage — the perimeter boards, banners, and signage you see around a pitch — so we can measure how much exposure each brand actually gets during a match. It's a deceptively hard problem, and we wanted to share where it's landed.
+</p>
+<h2>The setup</h2>
+<p>
+The pipeline is a two-stage stack. A <strong>YOLO detector</strong> finds the advertising holders in each frame, and a <strong>DenseNet201 classifier</strong> then assigns each detected crop to one of 52 brand classes. The whole thing runs on PyTorch Lightning, with MLflow handling experiment tracking and Roboflow managing the dataset. Training happens on a single T4 GPU.
+</p>
+<figure>
+  <img src="../img/projects/brand-stadium-pipeline.svg" alt="Two-stage pipeline: a YOLO detector locates advertising holders in each broadcast frame, a DenseNet201 classifier assigns each crop to one of 52 brands, and brand exposure time is measured — with static ads trained once and dynamic LED-board ads re-fit weekly, all orchestrated on Azure." loading="lazy" width="800" height="450" />
+</figure>
+<p>
+The data is the real challenge here. We're working with ~13k crops per game that are small, noisy, and frequently motion-blurred — exactly the kind of footage you'd expect from a moving broadcast camera tracking play. On top of that, the class distribution is brutally imbalanced: roughly <strong>40× between the most and least represented classes</strong>. Some brands appear constantly, others only flash by a handful of times.
+</p>
+<p>
+There's also a structural split in the ads themselves. <strong>Static ads</strong> stay fixed across matches — the same board, the same brand, week after week — so once the model learns them they're stable. <strong>Dynamic ads</strong> are the harder case: the LED boards rotate their content and the brands on them change every week. That means we can't treat them as a fixed set of classes. Dynamic ads need their own training pipeline that can be re-fit as new brands cycle in, rather than relying on a model trained once and frozen.
+</p>
+<h2>Choosing the models</h2>
+<p>
+We tested several options for both stages and ended up with the YOLO + DenseNet201 combination after weighing cost against benefit. It wasn't about picking the most modern architecture on paper — on our data (small, blurry, long-tailed crops) the more efficient candidates didn't justify their trade-offs, and this pairing gave us the best accuracy for the compute and complexity we were willing to take on.
+</p>
+<h2>How it runs in production</h2>
+<p>
+All the code lives on Azure. We have pipelines that manage both training and inference, so the heavy lifting is orchestrated rather than run by hand. On top of that there's a web application where a user can upload new football matches and trigger the work directly — kicking off training when it's needed (mainly for the dynamic ads that change week to week) or running inference to measure exposure.
+</p>
+<p>
+To make sure the numbers actually mean something, we validated the system against exposure times measured by human annotators. Comparing the model's output to that ground truth is what gave us confidence the exposure figures are trustworthy.
+</p>
+<h2>What we'd change if we started over</h2>
+<p>
+A few things we'd approach differently with what we know now:
+</p>
+<ul>
+  <li><strong>Drop the holder-vs-creativity distinction.</strong> Splitting detection of the holders from the creatives on them added complexity we'd rather avoid. We'd experiment with models like <strong>SAM 3</strong> to (1) cut annotation requirements as much as possible and (2) preprocess crops by segmenting just the holders before classification.</li>
+  <li><strong>Try unsupervised clustering.</strong> A clustering approach would be useful in the common case where we don't care about measuring <em>every</em> ad — only a handful of specific brands, for which we might have zero or very few labeled samples. That's hard to do well with a fixed supervised classifier, and clustering sidesteps the need for a full labeled class set.</li>
+</ul>
+
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script type="module" src="/js/main.js"></script>
+<!-- generated:analytics -->
+  <img src="https://stocastico.goatcounter.com/count?p=/projects/brand-stadium.html&amp;t=Brand%20recognition%20in%20football%20matches%20%E2%80%94%20Stefano%20Masneri" alt="" width="1" height="1" referrerpolicy="no-referrer-when-downgrade" style="position:absolute;left:-9999px;width:1px;height:1px" />
+  <!-- /generated:analytics -->
+</body>
+</html>
