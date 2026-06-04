@@ -148,6 +148,26 @@
   --nav-h: 68px;
 }
 
+/* ─── Cross-document view transitions ─────────────────────────
+   Opt the whole multi-page site into the View Transitions API so same-origin
+   navigations (home ↔ projects ↔ project detail ↔ cv ↔ travel ↔ links) animate
+   as a smooth cross-fade in supporting browsers. Pages already prerender on
+   hover via the Speculation Rules API, so the transition lands instantly.
+   Unsupported browsers ignore this rule entirely — navigation just cuts. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Respect reduced-motion: keep the navigation working but drop the animation
+   so it's an instant cut rather than a fade. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 @layer base {
 
 /* ─── 1b. Entrance for research cards ───────────────────── */
