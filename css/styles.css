@@ -526,8 +526,17 @@ h3 {
   height: 100%;
   z-index: 1;
   /* above the noise gradient canvas */
-  will-change: transform;
+  will-change: transform, opacity;
   /* own compositor layer */
+  /* Hidden until the first frame paints, then faded in by the .is-visible
+     class (added from js/main.js) so the network doesn't pop in fully-formed
+     the moment the lazily-loaded Three.js chunk lands. */
+  opacity: 0;
+  transition: opacity 800ms ease;
+}
+
+#neural-canvas.is-visible {
+  opacity: 1;
 }
 
 /* Noise-gradient background canvas — sits behind the particle network */
