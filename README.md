@@ -1,6 +1,6 @@
 # stocastico.github.io
 
-Personal website of **Stefano Masneri** — Senior AI Engineer based in San Sebastián, Spain — hosted at [stocastico.github.io](https://stocastico.github.io/).
+Personal website of **Stefano Masneri** — Senior AI Engineer based in San Sebastián, Spain — live at [stefanomasneri.com](https://stefanomasneri.com/) (hosted on GitHub Pages from this repository).
 
 ## About this site
 

@@ -92,6 +92,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    /* The Three.js runtime is one ~520 KB (130 KB gzip) chunk by design — it is
+       lazy-loaded behind the first user interaction and the globe canvas, so it
+       never sits on the initial critical path. Raise the warning ceiling above
+       it so a routine build stays quiet. */
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'index.html'),

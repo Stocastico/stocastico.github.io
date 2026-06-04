@@ -95,11 +95,11 @@ export const CV_SKILLS = {
     },
     {
       name:  'Python · PyTorch · TensorFlow · Hugging Face',
-      level: 100,
+      level: 98,
     },
     {
       name:  'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)',
-      level: 100,
+      level: 97,
     },
     {
       name:  'MLOps · Docker · Kubernetes · CI/CD · GCP · Azure',
@@ -125,11 +125,11 @@ export const CV_SKILLS = {
     },
     {
       name:  'Technical Mentoring & Training (20+ sessions)',
-      level: 100,
+      level: 96,
     },
     {
       name:  'Stakeholder & Partner Coordination',
-      level: 100,
+      level: 97,
     },
     {
       name:  'Strategic AI Roadmap & Vision (OKRs · Research → Production)',
