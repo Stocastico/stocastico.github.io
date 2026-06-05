@@ -869,12 +869,11 @@ if (typeof document !== 'undefined') {
     noiseCanvas.style.display = 'none';
   }
 
-  /* Three.js neural network — falls back to Canvas2D when WebGL is missing.
-     Dynamically imported so Three.js stays out of the main chunk. Deferred
-     until the first user interaction (mousemove / scroll / touchstart) so the
-     ~130 KB chunk is off the critical path on page load; the noise gradient +
-     name shader fill the hero while it loads. On reduced-motion the canvas is
-     hidden entirely. */
+  /* Canvas2D neural-network hero background (no Three.js — see neural-net.js).
+     Dynamically imported and deferred until the first user interaction
+     (mousemove / scroll / touchstart) so it stays off the critical path on
+     load; the noise gradient fills the hero meanwhile. On reduced-motion the
+     canvas is hidden entirely. */
   const canvas = document.getElementById('neural-canvas');
   if (canvas) {
     if (prefersReducedMotion()) {
@@ -886,17 +885,13 @@ if (typeof document !== 'undefined') {
         started = true;
         ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
           window.removeEventListener(evt, startNeural));
-        import('./neural-net.js').then(({ NeuralNetwork, NeuralNetwork2D }) => {
+        import('./neural-net.js').then(({ NeuralNetwork2D }) => {
           /* Fade the canvas in once the first frame has painted (see the
              #neural-canvas opacity transition in css/styles.css), so the
              network materialises gently instead of popping in fully-formed
-             the instant the Three.js chunk lands. */
+             the instant the chunk lands. */
           const reveal = () => canvas.classList.add('is-visible');
-          _disposables.push(
-            hasWebGLSupport()
-              ? new NeuralNetwork(canvas, reveal)
-              : new NeuralNetwork2D(canvas, reveal),
-          );
+          _disposables.push(new NeuralNetwork2D(canvas, reveal));
         });
       };
       ['mousemove', 'scroll', 'touchstart'].forEach(evt =>

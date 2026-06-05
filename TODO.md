@@ -5,11 +5,16 @@ need the audit context.
 
 ## Future ideas
 
-- **Fill in the `/now` page.** The `/now` page (now-now-now.com style) is live
-  but its sections (Work, Learning, Reading, Life & hobbies, "Why a now page?")
-  currently hold `todo` placeholders — only the intro lead is written. Write the
-  real content in `now.html` and refresh the `Last updated` date occasionally.
-  (Owner: Stefano.)
+- **Light theme + toggle.** The theme pipeline already supports multiple
+  palettes, but the site is hard-locked to `data-theme="dark"`. Add a light
+  palette and an OS-preference-aware toggle (`prefers-color-scheme`).
+
+- **Remove the leftover dead flip/carousel JS.** The homepage research
+  focus-cards were removed, so `initCardFlip` (js/animations.js) and
+  `initResearchCarousel` (js/ui.js) are now no-ops (their DOM is gone). The dead
+  flip/carousel CSS was already deleted; drop the JS (and its main.js wiring +
+  unit tests) too. Keep `initCardTilt` — project/contact/publication cards still
+  use it.
 
 - **Per-paper PDF/DOI links on the publications page.** `publications.html` now
   lists every paper, but only a few carry a `url`. Backfill DOIs / open-access

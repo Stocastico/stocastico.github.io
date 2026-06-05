@@ -216,12 +216,11 @@ export function initCommandPalette() {
   /* ── Command definitions ───────────────────────────────── */
   const SECTIONS = [
     { id: 'about',        label: 'About',        hint: 'Who I am' },
-    { id: 'research',     label: 'Research',      hint: 'What I work on' },
+    { id: 'skills',       label: 'Expertise',    hint: 'Skills & domains' },
+    { id: 'projects',     label: 'Projects',      hint: 'Things I’ve built', href: 'projects.html' },
     { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
     { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: 'publications.html' },
     { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
-    { id: 'skills',       label: 'Skills',        hint: 'Expertise' },
-    { id: 'projects',     label: 'Projects',      hint: 'Things I’ve built', href: 'projects.html' },
     { id: 'places',       label: 'Places',        hint: 'Where I’ve been' },
     { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: 'links.html' },
     { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: 'now.html' },
