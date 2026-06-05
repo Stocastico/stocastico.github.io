@@ -1982,7 +1982,7 @@ h3 {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-height: 260px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -2031,7 +2031,7 @@ h3 {
 .project-card__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top,
+  background: linear-gradient(to bottom,
       rgb(var(--bg-rgb) / 0.96) 0%,
       rgb(var(--bg-rgb) / 0.9) 45%,
       rgb(var(--bg-rgb) / 0.7) 100%);

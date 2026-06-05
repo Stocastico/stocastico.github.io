@@ -79,6 +79,30 @@ test('css: named easing tokens are defined', () => {
   }
 });
 
+/* Return the declaration block (text between { and }) for a top-level rule
+   whose selector is exactly `selector`. Card rules contain no nested braces. */
+function ruleBlock(css, selector) {
+  const re = new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}');
+  const m = css.match(re);
+  return m ? m[1] : null;
+}
+
+test('css: project cards top-align their content', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const card = ruleBlock(css, '.project-card');
+  assert(card, '.project-card rule not found');
+  assert.match(card, /justify-content:\s*flex-start/,
+    '.project-card should top-align its body (justify-content: flex-start)');
+});
+
+test('css: project card overlay is darkest at the top to match top-aligned content', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const overlay = ruleBlock(css, '.project-card__overlay');
+  assert(overlay, '.project-card__overlay rule not found');
+  assert.match(overlay, /linear-gradient\(\s*to bottom/,
+    '.project-card__overlay gradient should be darkest at the top (to bottom)');
+});
+
 test('css: button state helper selectors are present', () => {
   const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
   const selectors = [
