@@ -48,6 +48,19 @@ test('buildWorldMapSvg with no highlights still renders the silhouette', () => {
   assert.match(svg, /class="wm-land"/);
 });
 
+test('buildWorldMapSvg simplifies the silhouette to keep the inline markup small', () => {
+  const svg = buildWorldMapSvg(topo, { lived: ['Germany'], visited: ['France', 'Spain'] });
+  // The land silhouette dominates the byte budget. Douglas-Peucker
+  // simplification + dropping speck-sized islands keeps the whole inline SVG
+  // well under its pre-simplification size (~78 KB) at this display scale.
+  assert.ok(svg.length < 52000, `expected simplified SVG < 52 KB, got ${svg.length}`);
+  const land = svg.match(/class="wm-land" d="([^"]*)"/)[1];
+  const verts = (land.match(/[ML]/g) || []).length;
+  // Still detailed enough to read as a world map — not over-simplified to blobs.
+  assert.ok(verts > 1200, `silhouette should keep recognisable detail, got ${verts}`);
+  assert.ok(verts < 3500, `silhouette should be meaningfully simplified, got ${verts}`);
+});
+
 test('replaceBlock swaps content between the generated markers', () => {
   const html = `<div>\n${BLOCK_START}\nOLD\n${BLOCK_END}\n</div>`;
   const out = replaceBlock(html, 'NEW');

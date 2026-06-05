@@ -82,6 +82,70 @@ function unwrapRing(coords) {
   return out;
 }
 
+/* Douglas-Peucker line simplification on a [lon, lat] ring. Drops vertices
+   whose perpendicular distance to the retained polyline is below `epsilon`
+   (degrees). First/last points are always kept so closed rings stay closed.
+   At the homepage display scale (~820px for a 360°-wide viewBox, ~2.3 px/°) an
+   epsilon of a few tenths of a degree is sub-pixel, so the silhouette looks
+   the same while the vertex count — and inline byte count — drops by ~60%. */
+function simplifyRing(points, epsilon) {
+  if (points.length < 3) return points;
+  const eps2 = epsilon * epsilon;
+  const keep = new Uint8Array(points.length);
+  keep[0] = 1;
+  keep[points.length - 1] = 1;
+  const stack = [[0, points.length - 1]];
+  while (stack.length) {
+    const [first, last] = stack.pop();
+    const [ax, ay] = points[first];
+    const [bx, by] = points[last];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const segLen2 = dx * dx + dy * dy;
+    let maxD = -1;
+    let idx = -1;
+    for (let i = first + 1; i < last; i += 1) {
+      const [px, py] = points[i];
+      let d2;
+      if (segLen2 === 0) {
+        const ex = px - ax;
+        const ey = py - ay;
+        d2 = ex * ex + ey * ey;
+      } else {
+        const t = ((px - ax) * dx + (py - ay) * dy) / segLen2;
+        const jx = ax + t * dx;
+        const jy = ay + t * dy;
+        const ex = px - jx;
+        const ey = py - jy;
+        d2 = ex * ex + ey * ey;
+      }
+      if (d2 > maxD) { maxD = d2; idx = i; }
+    }
+    if (maxD > eps2 && idx !== -1) {
+      keep[idx] = 1;
+      stack.push([first, idx], [idx, last]);
+    }
+  }
+  const out = [];
+  for (let i = 0; i < points.length; i += 1) if (keep[i]) out.push(points[i]);
+  return out;
+}
+
+/* Largest lon/lat extent of a coordinate ring, in degrees. */
+function ringSpan(coords) {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const [x, y] of coords) {
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  return Math.max(maxX - minX, maxY - minY);
+}
+
 /* Build the SVG subpath(s) for one ring. Equirectangular projection
    (x = lon, y = -lat), rounded to 1 decimal. The ring is unwrapped first;
    when the unwrapped ring spills past ±180° we also emit a copy shifted by
@@ -166,13 +230,16 @@ function geometryToPath(geom, decodeArc, round, latBounds, opts = {}) {
   const segments = [];
   for (const poly of filteredPolys || []) {
     for (const ringArcs of poly) {
-      const coords = ringCoords(ringArcs, decodeArc);
+      let coords = ringCoords(ringArcs, decodeArc);
       if (coords.length < 2) continue;
       if (opts.skipAntarctica) {
         let maxLat = -Infinity;
         for (const p of coords) if (p[1] > maxLat) maxLat = p[1];
         if (maxLat < -55) continue;
       }
+      // Drop speck-sized islands and simplify coastlines (silhouette only).
+      if (opts.minRingSpan && ringSpan(coords) < opts.minRingSpan) continue;
+      if (opts.simplifyEps) coords = simplifyRing(coords, opts.simplifyEps);
       segments.push(...ringSubpaths(coords, round, latBounds));
     }
   }
@@ -196,9 +263,16 @@ function buildWorldMapSvg(topo, countries) {
   const round = (n) => Math.round(n * 10) / 10;
   const latBounds = { min: Infinity, max: -Infinity };
 
-  // Base silhouette — the merged land object covers the full extent.
+  // Base silhouette — the merged land object covers the full extent. It holds
+  // ~80 % of the inline bytes, so simplify it (Douglas-Peucker, sub-pixel at
+  // this display scale) and drop speck-sized islands. Highlighted countries are
+  // left at full detail below so the places someone actually marks stay crisp.
   const land = topo.objects.land.geometries[0];
-  const landPath = geometryToPath(land, decodeArc, round, latBounds, { skipAntarctica: true });
+  const landPath = geometryToPath(land, decodeArc, round, latBounds, {
+    skipAntarctica: true,
+    simplifyEps: 0.4,
+    minRingSpan: 0.7,
+  });
 
   // Highlighted countries painted over the silhouette.
   const highlights = [];
