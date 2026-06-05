@@ -7,12 +7,11 @@ Personal website of **Stefano Masneri** — Senior AI Engineer based in San Seba
 A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across eight pages:
 
 - **`index.html`** — the main page, with the following sections:
-  - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Three.js neural-network particle field.
+  - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Canvas2D neural-network particle field (no Three.js).
   - **About** — short bio and key stats.
-  - **Research** — horizontal-scroll carousel of research topics (computer vision, AR, video understanding, generative AI, etc.).
-  - **Skills** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
-  - **Publications** — filterable list of selected papers, generated from `data/publications.js`.
-  - **Projects** — up to three project cards from `data/projects.js`, with a link to the full listing.
+  - **Skills (Expertise)** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
+  - **Projects** — up to three project cards from `data/projects.js`, plus a "Dive into my full CV" callout and a link to the full listing.
+  - **Publications** — list of selected papers, generated from `data/publications.js`.
   - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
 - **`projects.html`** — full project listing, with one detail page per project under `projects/`.
@@ -23,13 +22,13 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
 - **`now.html`** — a [now-now-now.com](https://nownownow.com/about)-style page describing current focus (work, reading, hobbies). Linked from the About section and the command palette; built on the shared `.post` prose layout.
 - **`404.html`** — custom not-found page with the standard navbar.
 
-Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, cross-document View Transitions, and full `prefers-reduced-motion` support throughout.
+Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress bar, 3-D tilt-and-gloss cards, a back-to-top button, cross-document View Transitions, and full `prefers-reduced-motion` support throughout.
 
 ## Tech stack
 
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
 - Modern CSS — `@layer` cascade, native nesting, `oklch()` colours, and a design-token scale (spacing / tracking / elevation / easing)
-- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the neural-network hero background and the interactive globe — lazily code-split so it stays off the initial critical path
+- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the interactive 3-D globe on the travel page — lazily code-split so it never loads on the homepage; the neural-network hero is plain Canvas2D
 - Raw WebGL (GLSL) for the noise-gradient hero background
 - Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`); a weekly GitHub Actions job rotates the active palette
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
@@ -59,7 +58,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 │   ├── three-context.js       Shared THREE binding + test mocking hook
 │   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
-│   ├── neural-net.js          NeuralNetwork (Three.js) + NeuralNetwork2D (Canvas2D fallback)
+│   ├── neural-net.js          NeuralNetwork2D (Canvas2D hero background; Three-free)
 │   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
 │   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars, timeline entrance
@@ -563,10 +562,9 @@ The navbar contains: **About**, **Work** (the Research section), **Projects**, *
 | --------- | ------------- |
 | Hero | Left-aligned layout with a palette-gradient name, animated tagline, hero CTAs |
 | About | Photo + stats and bio text in a split layout |
-| Research | Horizontal-scroll carousel of research topic cards with prominent scroll arrows; cards flip to a back face on click |
-| Skills | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
-| Publications | Filterable list of papers, rendered from `data/publications.js` |
-| Projects | Up to 3 project cards rendered from `data/projects.js`, with a "View all projects" link to `projects.html` |
+| Skills (Expertise) | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
+| Projects | Up to 3 project cards rendered from `data/projects.js`, plus a "Dive into my full CV" callout and a link to `projects.html` |
+| Publications | List of selected papers, rendered from `data/publications.js` |
 | Places | Static inline-SVG world map of lived / visited countries; links to the travel page |
 | Contact | 2×2 grid of contact cards; email address is obfuscated and revealed on click |
 
@@ -578,9 +576,9 @@ The site uses several layers of real-time rendering, all progressive-enhancement
 
 ### Neural network (hero background)
 
-A Three.js particle system of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor. Lines are drawn between nearby pairs using additive blending and vertex-coloured `LineBasicMaterial`, creating the "glowing wire" look. On low-power devices the node count drops and line updates are frame-skipped. A Canvas2D fallback (`NeuralNetwork2D`) renders the same network without WebGL.
+A Canvas2D particle system (`NeuralNetwork2D`) of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor; lines are drawn between nearby pairs and fade with distance, creating the "glowing wire" look. On low-power devices the node count drops and the frame rate is capped. The hero background is decorative, so it is rendered in plain Canvas2D rather than WebGL — which keeps the module **Three-free** and means the homepage never downloads Three.js at all (Three only ships in the globe chunk on the travel page).
 
-The module (and, through it, Three.js — ~130 KB gzipped) is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient fills the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
+The module is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient fills the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
 
 ### Interactive 3-D globe (travel page)
 
@@ -600,11 +598,7 @@ A full-screen WebGL canvas sits behind the neural-network layer in the hero. Its
 
 ### 3-D card tilt with specular gloss
 
-Cards (research, project, contact, skill-group, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. The card's bounding rect is cached once per hover (read on `mouseenter`, not on every `mousemove`) to avoid layout thrashing. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices, and torn down on `pagehide` (bfcache-friendly).
-
-### Click-to-flip research cards
-
-Each research card is a keyboard-operable button (`role="button"`, `tabindex`, `aria-expanded`) that flips on click / Enter / Space to reveal a back face with extra links. The back face's links stay out of the tab order until the card is expanded.
+Cards (project, contact, skill-group, publication) track the cursor position relative to their bounding box and apply a CSS `perspective` + `rotateX` / `rotateY` transform so the card physically tilts toward the cursor. A pseudo-element with a radial-gradient overlay moves to simulate a specular highlight — the "gloss" spot that travels across the surface as you move the mouse. The card's bounding rect is cached once per hover (read on `mouseenter`, not on every `mousemove`) to avoid layout thrashing. Transforms are spring-lerped (exponential decay toward the target value each frame) for organic, lag-free tracking. On pointer-leave the card springs back to flat. Disabled for `prefers-reduced-motion` and touch devices, and torn down on `pagehide` (bfcache-friendly).
 
 ### Scroll-driven effects
 
@@ -612,7 +606,7 @@ As the user scrolls, elements respond with transforms calculated from their posi
 
 - **Hero parallax**: the hero content translates at ~28 % of scroll speed, giving depth separation from the canvas background.
 - **Section entrance animations**: elements with `data-animate` fade and slide in as they enter the viewport.
-- **Research carousel**: cards enter with a `translateX` animation as they scroll into view.
+- **Publication cards**: enter with a horizontal `translateX` slide as they scroll into view.
 - **Skills sticky scroll**: each skill category pins to the viewport while active, then scrolls away as the next one takes over.
 
 All transforms are throttled to `requestAnimationFrame` and are disabled for `prefers-reduced-motion`.
@@ -666,7 +660,7 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 
 | Change | Impact |
 | -------- | -------- |
-| Three.js neural-net lazily imported on first interaction | Keeps the ~130 KB Three.js chunk off the initial critical path |
+| Canvas2D hero (no Three.js) + Three lazily imported only for the globe | The homepage ships zero Three.js; the ~140 KB gzip Three chunk loads only on the travel page, on scroll |
 | Globe / Europe map built only when their canvas nears the viewport | Defers Three.js + the 545 KB TopoJSON fetch until the user scrolls there |
 | Homepage world map is a static inline SVG | No runtime projection or TopoJSON fetch on the home page |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
