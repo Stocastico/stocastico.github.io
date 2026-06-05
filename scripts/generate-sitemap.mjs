@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { PROJECTS } from '../data/projects.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -52,8 +53,7 @@ function lastmodFor(relPath) {
 }
 
 async function main() {
-  const projectsMod = await import(path.join(ROOT, 'data/projects.js'));
-  const projects = projectsMod.PROJECTS;
+  const projects = PROJECTS;
 
   /* Top-level pages with curated priority and changefreq. */
   const entries = [

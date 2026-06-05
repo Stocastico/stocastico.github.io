@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -16,7 +16,7 @@ function readSitemap() {
 }
 
 async function loadProjects() {
-  const mod = await import(path.join(ROOT, 'data/projects.js'));
+  const mod = await import(pathToFileURL(path.join(ROOT, 'data/projects.js')).href);
   return mod.PROJECTS;
 }
 

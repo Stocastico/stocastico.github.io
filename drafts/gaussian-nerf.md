@@ -32,15 +32,11 @@ AI  Computer Vision  3D Reconstruction  Virtual Production
 
 Turning real-world locations into photorealistic 3D assets for virtual production — using neural radiance fields and Gaussian splatting, with a cloud-backed desktop app that makes large-scale reconstruction practical.
 
----
-
 ## Why a media company cares about 3D reconstruction
 
 Virtual production has changed how films, commercials, and sports content are made. Instead of filming an entire scene on location, productions can now shoot actors or presenters in front of a large **LED volume** — a curved wall of high-resolution LED panels displaying a photorealistic background in real time — achieving in-camera compositing without a green screen or post-production keying.
 
 The challenge is the background itself. Traditionally these are CG environments built by hand, which is expensive and slow. **3D reconstruction from real footage** offers a different path: you send a crew to a location for a fraction of the time a full shoot would require, capture the scene with cameras, and reconstruct a photorealistic 3D asset that can then be loaded into the LED volume back in the studio. You get the authenticity of a real place at a fraction of the logistical cost.
-
----
 
 ## What we investigated
 
@@ -54,8 +50,6 @@ Making sure that we could reconstruct scenes with a quality good enough for prod
 
 **Comparison with commercial solutions.** We benchmarked against established tools: [RealityCapture](https://www.capturingreality.com/) (a photogrammetry-first pipeline, best-in-class for mesh quality) and [Postshot](https://www.jawset.com/) (a fast, user-friendly desktop Gaussian splatting tool). Understanding where those products fall short — particularly around scalability — directly shaped what we built.
 
----
-
 ## The application
 
 The research eventually converged into a desktop application that takes a video or an image sequence as input and runs the full reconstruction pipeline.
@@ -64,21 +58,15 @@ The first step is always [COLMAP](https://colmap.github.io/): a structure-from-m
 
 The key architectural decision was making the compute location flexible. The app can run the entire pipeline **locally** on the user's machine if it has a capable enough GPU, or **offload the heavy training to a cloud machine hosted on Azure** when the dataset is too large or the hardware isn't available. Once reconstruction is complete, results can be visualised directly in the browser using a lightly modified version of [SuperSplat](https://playcanvas.com/supersplat/editor), PlayCanvas's open-source Gaussian splat viewer.
 
----
-
 ## The advantage over existing tools
 
 The cloud-backed compute is the differentiating feature. Existing commercial solutions like Postshot are polished and fast, but they run exclusively on local hardware — which puts a hard ceiling on how much data you can process in a reasonable time. For small captures (a few hundred images), that's fine. For large-scale scenes — a stadium, an outdoor environment, a complex architectural space — you're looking at thousands of input images, and no single workstation handles that gracefully.
 
 By routing training to Azure, our pipeline has no practical ceiling on dataset size. The same application that reconstructs a small product shot locally can handle a multi-thousand-image exterior capture in the cloud, without changing the user's workflow.
 
----
-
 ## Hardware: combining cameras and LiDAR
 
 Purely image-based reconstruction has an inherent weakness: textureless or reflective surfaces, and large uniform regions, confuse both NeRF and Gaussian methods badly. During the project we also experimented with hardware from [xGrids](https://www.xgrids.com/), whose rigs combine RGB cameras with LiDAR depth sensors to capture geometry and appearance simultaneously. The LiDAR-informed pipeline produces a **Gaussian splat and a mesh in a single pass**, with accurate geometry even where the images alone would struggle. For virtual production specifically — where you may need to place CG objects precisely in a real environment — having a reliable mesh alongside the splat is probably the best current approach.
-
----
 
 ## What's next
 

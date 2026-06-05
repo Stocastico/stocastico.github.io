@@ -19,6 +19,15 @@
 
 export const PROJECTS = [
     {
+            id: "gaussian-nerf",
+            title: "3D reconstruction using Gaussian Splatting and NeRF",
+            year: "2025",
+            tags: ["AI","Computer Vision"],
+            bg: "img/projects/gaussian-splat.webp",
+            description: "Research into NeRFs and 3D Gaussian Splatting as a pipeline for capturing real-world locations as photorealistic assets for LED-volume virtual production. Evaluated camera setups, algorithms (nerfacto, splatfacto, MCMC), and Unreal Engine integration — benchmarked against RealityCapture and Postshot. The work produced a desktop application that runs COLMAP pose estimation followed by user-chosen reconstruction either locally or on Azure, with a browser-based Gaussian splat viewer.",
+            url: "projects/gaussian-nerf.html",
+        },
+    {
             id: "brand-stadium",
             title: "Brand recognition in football matches",
             year: "2025",

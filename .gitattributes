@@ -1,0 +1,19 @@
+# Enforce LF line endings for all text files in the working tree.
+#
+# The generator scripts (generate-cards, generate-csp-meta, generate-sitemap, …)
+# emit LF. With core.autocrlf=true, Git would otherwise check text files out as
+# CRLF on Windows, so the freshly-generated LF blocks drift against the rest of
+# the (CRLF) file and the generate-cards "no drift" test fails. `eol=lf` here
+# wins over autocrlf and keeps the working tree byte-for-byte consistent with
+# what the generators produce. The repo already stores LF, so this introduces
+# no renormalization churn in the index.
+* text=auto eol=lf
+
+# Binary assets — never normalize line endings.
+*.webp  binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.pdf   binary
