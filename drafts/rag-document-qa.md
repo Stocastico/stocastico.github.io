@@ -7,9 +7,9 @@ bg:          "img/projects/rag-query.svg"
 description: "A retrieval-augmented generation system built for a large European bank, replacing manual SharePoint search with a conversational assistant that answers questions and cites the exact document and page where each answer was found."
 ---
 
-While working at **NTT DATA**, I designed and built a document question-answering system for a large European bank. The client held an extensive knowledge base — internal policies, compliance guidelines, product documentation, procedural manuals — stored as PDFs scattered across their SharePoint environment. Finding relevant information required employees to know which document to look for, navigate the folder structure, open the file, and search within it. The goal was to replace that process with a chatbot that could answer questions directly and, critically, point the user to the exact document and page containing the answer.
+While working at **[NTT DATA](https://www.nttdata.com/global/en/)**, I designed and built a document question-answering system for a large European bank. The client held an extensive knowledge base — internal policies, compliance guidelines, product documentation, procedural manuals — stored as PDFs scattered across their SharePoint environment. Finding relevant information required employees to know which document to look for, navigate the folder structure, open the file, and search within it. The goal was to replace that process with a chatbot that could answer questions directly and, critically, point the user to the exact document and page containing the answer.
 
-The solution was a **Retrieval-Augmented Generation (RAG)** pipeline, combining semantic search over a vector database with a large language model for answer synthesis.
+The solution was a **[Retrieval-Augmented Generation (RAG)](https://arxiv.org/abs/2005.11401)** pipeline, combining semantic search over a vector database with a large language model for answer synthesis.
 
 ## Ingestion Pipeline
 

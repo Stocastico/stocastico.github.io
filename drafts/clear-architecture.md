@@ -9,7 +9,7 @@ description: "cleAR is a modular, interoperable architecture for building multi-
 link_paper:  "https://link.springer.com/article/10.1007/s10055-023-00764-5"
 ---
 
-cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR) applications tailored to educational settings. It was the **core contribution of my PhD research**, developed in collaboration with the University of the Basque Country (UPV/EHU) and Vicomtech. The work was published in the *Virtual Reality* journal (Springer, 2023).
+cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR) applications tailored to educational settings. It was the **core contribution of my PhD research**, developed in collaboration with the University of the Basque Country (UPV/EHU) and [Vicomtech](https://www.vicomtech.org/en). The work was published in the *Virtual Reality* journal (Springer, 2023).
 
 Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school infrastructure and curricula. cleAR was designed to address both.
 
@@ -32,13 +32,13 @@ cleAR is structured as four loosely coupled modules that can be composed indepen
 
 ![Architecture overview](img/projects/clear-architecture.webp)
 
-**Real-time multi-user library.** A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and video streams.
+**Real-time multi-user library.** A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. [WebRTC](https://webrtc.org/) integration handles audio and video streams.
 
-**Logging and data storage module.** Student interactions are serialised and forwarded to a Learning Record Store (LRS) via the xAPI standard, making cleAR compatible with any LMS that supports xAPI. The module supports configurable data collection frequency, anonymisation, and role-based access (admin, teacher, student).
+**Logging and data storage module.** Student interactions are serialised and forwarded to a Learning Record Store (LRS) via the [xAPI](https://xapi.com/) standard, making cleAR compatible with any LMS that supports xAPI. The module supports configurable data collection frequency, anonymisation, and role-based access (admin, teacher, student).
 
 **AI-based analytics module.** A framework-agnostic server-side component processes three data types produced during AR sessions: natural text (chat, answers), structured tabular logs, and image data from camera feeds. It supports both supervised and unsupervised learning and can train models from scratch or fine-tune existing ones. The most common teacher-identified use cases were usage-pattern analysis (63%), automatic test difficulty estimation (60%), and early identification of struggling learners (58%).
 
-**Visual reporting module.** A code-free web interface for generating interactive dashboards and charts from stored xAPI data, built on D3 and Seaborn. Visualisations are rendered client-side to preserve privacy, with export options to local storage, external databases, or the school LMS.
+**Visual reporting module.** A code-free web interface for generating interactive dashboards and charts from stored xAPI data, built on [D3](https://d3js.org/) and [Seaborn](https://seaborn.pydata.org/). Visualisations are rendered client-side to preserve privacy, with export options to local storage, external databases, or the school LMS.
 
 ## Proof-of-Concept Applications
 
@@ -48,7 +48,7 @@ Three proof-of-concept applications were developed to validate the architecture 
 
 ![AR Cube proof-of-concept](img/projects/clear-ar-cube.webp)
 
-**xAPI Data Analysis** — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
+**xAPI Data Analysis** — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in [MongoDB](https://www.mongodb.com/) via Learning Locker on [AWS](https://aws.amazon.com/). Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
 
 **AR Geography Quiz** — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
 

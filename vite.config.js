@@ -104,6 +104,7 @@ export default defineConfig({
         publications: resolve(__dirname, 'publications.html'),
         travel: resolve(__dirname, 'travel.html'),
         links: resolve(__dirname, 'links.html'),
+        now: resolve(__dirname, 'now.html'),
         cv: resolve(__dirname, 'cv.html'),
         '404': resolve(__dirname, '404.html'),
         ...projectPages,

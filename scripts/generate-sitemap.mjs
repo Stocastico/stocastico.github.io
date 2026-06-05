@@ -62,6 +62,7 @@ async function main() {
     { rel: 'publications.html', loc: `${SITE}/publications.html`, changefreq: 'monthly', priority: '0.6' },
     { rel: 'travel.html',   loc: `${SITE}/travel.html`,   changefreq: 'monthly', priority: '0.6' },
     { rel: 'links.html',    loc: `${SITE}/links.html`,    changefreq: 'monthly', priority: '0.5' },
+    { rel: 'now.html',      loc: `${SITE}/now.html`,      changefreq: 'weekly',  priority: '0.5' },
     { rel: 'cv.html',       loc: `${SITE}/cv.html`,       changefreq: 'monthly', priority: '0.7' },
   ];
 

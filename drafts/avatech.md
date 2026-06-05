@@ -9,7 +9,7 @@ description: "AVATecH was a joint Fraunhofer / Max Planck project that brought s
 link_paper:  "https://aclanthology.org/L12-1137/"
 ---
 
-AVATecH (**A**udio-**V**isual **T**echnology for **H**umanities Research) was a multi-year research project I worked on at **Fraunhofer Heinrich-Hertz-Institut (HHI)** between **2009 and 2014**, in collaboration with the **Max Planck Institute for Psycholinguistics (MPI Nijmegen)** and **Fraunhofer IAIS**. It was my first major research contribution after joining HHI, and it defined the direction of my early career: applying computer vision and audio analysis to problems outside the traditional media-tech industry.
+AVATecH (**A**udio-**V**isual **T**echnology for **H**umanities Research) was a multi-year research project I worked on at **[Fraunhofer Heinrich-Hertz-Institut](https://www.hhi.fraunhofer.de/en.html) (HHI)** between **2009 and 2014**, in collaboration with the **[Max Planck Institute for Psycholinguistics](https://www.mpi.nl/) (MPI Nijmegen)** and **[Fraunhofer IAIS](https://www.iais.fraunhofer.de/en.html)**. It was my first major research contribution after joining HHI, and it defined the direction of my early career: applying computer vision and audio analysis to problems outside the traditional media-tech industry.
 
 The problem was simple to state and painful to live with. Researchers in linguistics, sign-language studies, child-development psychology, and anthropology depend on annotated audio-visual recordings: transcriptions of speech, boundaries of gestures, phases of interaction, participant labels. Creating those annotations by hand takes between **50 and 100 times the length of the media itself**. A single one-hour field recording could take a PhD student two full weeks to annotate. Corpora of hundreds of hours were common, and every new study needed fresh annotations.
 
@@ -17,7 +17,7 @@ AVATecH set out to reduce that burden by automating the most mechanical parts of
 
 ## Approach
 
-The project produced a suite of **audio and video recognizers** — independent, pluggable modules — that were integrated into **ELAN**, the multi-tier annotation tool developed at MPI and used by thousands of humanities researchers worldwide. ELAN was extended with a generic recognizer API described in XML, so each algorithm could be invoked from inside the tool, run on the loaded media, and return tiers of tentative annotations that the user could accept, edit, or reject.
+The project produced a suite of **audio and video recognizers** — independent, pluggable modules — that were integrated into **[ELAN](https://archive.mpi.nl/tla/elan)**, the multi-tier annotation tool developed at MPI and used by thousands of humanities researchers worldwide. ELAN was extended with a generic recognizer API described in XML, so each algorithm could be invoked from inside the tool, run on the loaded media, and return tiers of tentative annotations that the user could accept, edit, or reject.
 
 Among the recognizers delivered:
 

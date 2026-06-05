@@ -142,7 +142,7 @@
     <div class="post-lead">End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017.</div>
 
     <p>
-This is one of the projects I tell people about when they ask what the most fun thing I have ever worked on was. In <strong>2017</strong>, while I was a Senior Data Scientist at <strong>AGT International</strong> in Darmstadt, our team built a real-time fighter-tracking and analytics system for the <strong>UFC</strong>. The product was launched as part of <strong>HEED</strong>, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO <strong>Mati Kochavi</strong> during AWS CTO Werner Vogels' keynote at <strong>AWS re:Invent 2017</strong> in Las Vegas (see the <a href="https://www.youtube.com/watch?v=vataVq9gY_o" target="_blank" rel="noopener">recording on YouTube</a>).
+This is one of the projects I tell people about when they ask what the most fun thing I have ever worked on was. In <strong>2017</strong>, while I was a Senior Data Scientist at <strong>AGT International</strong> in Darmstadt, our team built a real-time fighter-tracking and analytics system for the <strong><a href="https://www.ufc.com/" target="_blank" rel="noopener noreferrer">UFC</a></strong>. The product was launched as part of <strong>HEED</strong>, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO <strong>Mati Kochavi</strong> during AWS CTO Werner Vogels' keynote at <strong><a href="https://reinvent.awsevents.com/" target="_blank" rel="noopener noreferrer">AWS re:Invent</a> 2017</strong> in Las Vegas (see the <a href="https://www.youtube.com/watch?v=vataVq9gY_o" target="_blank" rel="noopener">recording on YouTube</a>).
 </p>
 <p>
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
@@ -188,7 +188,7 @@ We fused the two streams in real time:
 </figure>
 <h2>Cloud and Delivery</h2>
 <p>
-Once produced at the edge, the statistics were ingested through <strong>AWS</strong> services (Kinesis for ingestion, downstream services for processing, persistence, and fan-out; see <a href="https://www.youtube.com/watch?v=zHSEnKb69go" target="_blank" rel="noopener">AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture</a>). From there they were relayed to the UFC app and to broadcast partners.
+Once produced at the edge, the statistics were ingested through <strong>AWS</strong> services (<a href="https://aws.amazon.com/kinesis/" target="_blank" rel="noopener noreferrer">Kinesis</a> for ingestion, downstream services for processing, persistence, and fan-out; see <a href="https://www.youtube.com/watch?v=zHSEnKb69go" target="_blank" rel="noopener">AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture</a>). From there they were relayed to the UFC app and to broadcast partners.
 </p>
 <p>
 This was a project where I was involved <strong>end to end</strong>:

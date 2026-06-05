@@ -9,7 +9,7 @@ description: "Two years as a scientific software developer in Gilles Laurent's d
 link_paper:  "https://www.science.org/doi/10.1126/science.aaf3621"
 ---
 
-Between **2015 and 2017** I worked as a **Scientific Software Developer** at the **Max Planck Institute for Brain Research** in Frankfurt, in the department led by **Prof. Gilles Laurent**. I want to be precise about my role from the start: I was **not a researcher** there. I did not run experiments, design studies, or co-author the papers that came out of the lab. I was the engineer who sat next to the people doing all of that, and helped them turn their data into something they could actually look at.
+Between **2015 and 2017** I worked as a **Scientific Software Developer** at the **[Max Planck Institute for Brain Research](https://brain.mpg.de/)** in Frankfurt, in the department led by **Prof. Gilles Laurent**. I want to be precise about my role from the start: I was **not a researcher** there. I did not run experiments, design studies, or co-author the papers that came out of the lab. I was the engineer who sat next to the people doing all of that, and helped them turn their data into something they could actually look at.
 
 What made the place extraordinary was the science the researchers were doing around me. The Laurent lab studies the function and dynamics of neuronal circuits, with a particular interest in **non-mammalian vertebrates** — reptiles and cephalopods — as windows into the deep evolutionary origins of the brain. In the two years I was there, I had a front-row seat to two projects that I still describe to people whenever the conversation turns to "the most interesting thing you've ever worked on".
 
@@ -33,8 +33,8 @@ The headline result is in the paper *"Spatial Information in a Non-retinotopic V
 
 My job description was much more mundane than the science, but it was indispensable to it.
 
-- **MATLAB analysis code.** Most of the lab's electrophysiology pipeline lived in MATLAB. I helped develop scripts and functions depending on the researchers' needs.
-- **Web apps in R / Shiny.** Several of the lab's analysis dashboards were built in **R with Shiny**: interactive visualisations of long electrophysiology recordings that let researchers scrub through nights of sleep data, mark interesting events, compare animals, and pull statistics on the fly without having to write a fresh script every time. Building those felt closer to product engineering than to research, and was very much my comfort zone.
+- **[MATLAB](https://www.mathworks.com/products/matlab.html) analysis code.** Most of the lab's electrophysiology pipeline lived in MATLAB. I helped develop scripts and functions depending on the researchers' needs.
+- **Web apps in R / Shiny.** Several of the lab's analysis dashboards were built in **[R](https://www.r-project.org/) with [Shiny](https://shiny.posit.co/)**: interactive visualisations of long electrophysiology recordings that let researchers scrub through nights of sleep data, mark interesting events, compare animals, and pull statistics on the fly without having to write a fresh script every time. Building those felt closer to product engineering than to research, and was very much my comfort zone.
 - **Development best practices.** As an expert developer I was tasked with providing training and teaching how to write clean code and apply DevOps practices that guarantee reproducibility and simplify maintenance of the codebase.
 
 ## Personal Reflection

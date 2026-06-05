@@ -16,7 +16,7 @@ This project, carried out at **Vicomtech** in **2020** and published at **ICAART
 
 ## The Two Modalities
 
-**Visual channel.** Standard RGB cameras feed a pipeline built on **TensorFlow** and **OpenCV**. For each frame the system runs, in sequence:
+**Visual channel.** Standard RGB cameras feed a pipeline built on **[TensorFlow](https://www.tensorflow.org/)** and **[OpenCV](https://opencv.org/)**. For each frame the system runs, in sequence:
 
 1. Person detection — locating every individual in the frame.
 2. Face detection inside each person bounding box.
@@ -26,7 +26,7 @@ This project, carried out at **Vicomtech** in **2020** and published at **ICAART
 
 The visual channel answers rich questions (how many people, where, are they looking at the stage?) but fails in poor lighting, behind obstacles, or when the camera simply does not cover a section of the venue.
 
-**Wireless channel.** A network of **Raspberry Pi scanners** passively listens for WiFi and Bluetooth probe requests from devices in the environment. The received signal strength indicator (RSSI) from each scanner, combined across multiple nodes, is used to estimate the approximate location of each device within a set of predefined zones. The processing is done on a central server using the open-source **Find3** framework; scanners and server communicate via **MQTT (Mosquitto)**.
+**Wireless channel.** A network of **[Raspberry Pi](https://www.raspberrypi.com/) scanners** passively listens for WiFi and Bluetooth probe requests from devices in the environment. The received signal strength indicator (RSSI) from each scanner, combined across multiple nodes, is used to estimate the approximate location of each device within a set of predefined zones. The processing is done on a central server using the open-source **[Find3](https://github.com/schollz/find3)** framework; scanners and server communicate via **[MQTT](https://mqtt.org/) ([Mosquitto](https://mosquitto.org/))**.
 
 The wireless channel is robust to lighting and occlusions, covers the entire venue regardless of camera placement, and — crucially — provides a **per-device identity** that persists across the event without any cooperation from the attendee.
 
@@ -45,11 +45,11 @@ An engagement score is computed by weighting these primitives. The weights are n
 
 The software stack was designed to be deployable on commodity hardware:
 
-- **Scanner nodes** — Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in **Go** for efficiency on constrained hardware.
+- **Scanner nodes** — Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in **[Go](https://go.dev/)** for efficiency on constrained hardware.
 - **Server** — Go-based aggregation and inference service, also handling MQTT brokerage.
 - **Vision processing** — Python 3 with TensorFlow and OpenCV; runs on a small GPU-equipped edge machine connected to the venue cameras.
 - **Messaging** — MQTT over Mosquitto for all inter-component communication.
-- **Deployment** — Docker images for each component to simplify installation at the venue.
+- **Deployment** — [Docker](https://www.docker.com/) images for each component to simplify installation at the venue.
 
 The deliberate choice of **Go for the wireless side** and **Python for the vision side** reflected practical trade-offs: Go gave us the single-binary deployability and tight memory footprint we needed on the Pi scanners; Python gave us the machine-learning ecosystem for everything visual.
 
