@@ -35,7 +35,7 @@ import {
 /* Three.js-backed classes are now imported from their source modules — main.js
    dynamically imports them so Three.js is not in the per-page bundle. */
 import { geocodeLocations, Globe3D, GlobeFallback2D } from '../js/globe.js';
-import { NeuralNetwork, NeuralNetwork2D } from '../js/neural-net.js';
+import { NeuralNetwork2D } from '../js/neural-net.js';
 import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -562,142 +562,6 @@ function createMinimalThree() {
     DoubleSide: 2,
   };
 }
-
-test('NeuralNetwork constructs and updates with mocked THREE', () => {
-  const prevWindow = global.window;
-  const prevDocument = global.document;
-  const prevObserver = global.IntersectionObserver;
-  const prevRAF = global.requestAnimationFrame;
-  const prevCancel = global.cancelAnimationFrame;
-
-  __setThreeForTests(createMinimalThree());
-  global.window = {
-    innerWidth: 1200,
-    innerHeight: 800,
-    devicePixelRatio: 2,
-    addEventListener() {},
-  };
-  global.document = {
-    hidden: false,
-    addEventListener() {},
-    createElement(tag) {
-      if (tag !== 'canvas') return {};
-      return {
-        width: 0,
-        height: 0,
-        getContext() {
-          return {
-            createRadialGradient() { return { addColorStop() {} }; },
-            fillRect() {},
-            fillStyle: '',
-          };
-        },
-      };
-    },
-  };
-  global.IntersectionObserver = class {
-    constructor(cb) { this.cb = cb; }
-    observe() {}
-    disconnect() {}
-  };
-  global.requestAnimationFrame = () => 1;
-  global.cancelAnimationFrame = () => {};
-
-  try {
-    const nn = new NeuralNetwork({});
-    assert.ok(nn.points);
-    assert.ok(nn.lines);
-    assert.ok(nn.lineGeo);
-
-    /* destroy() must free GPU resources (geometries, materials and the glow
-       texture) and drop the renderer/scene refs — otherwise they leak on every
-       pagehide / bfcache eviction. The mock objects have no dispose() of their
-       own, so we attach spies and assert destroy() walks the scene. */
-    const disposed = [];
-    const spy = (obj, tag) => { if (obj) obj.dispose = () => disposed.push(tag); };
-    spy(nn.points.geometry, 'points.geo');
-    spy(nn.points.material, 'points.mat');
-    spy(nn.points.material && nn.points.material.map, 'points.map');
-    spy(nn.lines.geometry, 'lines.geo');
-    spy(nn.lines.material, 'lines.mat');
-    nn.renderer.dispose = () => disposed.push('renderer');
-
-    nn.destroy();
-
-    assert.ok(disposed.includes('points.geo'), 'destroy must dispose the points geometry');
-    assert.ok(disposed.includes('points.mat'), 'destroy must dispose the points material');
-    assert.ok(disposed.includes('points.map'), 'destroy must dispose the glow texture');
-    assert.ok(disposed.includes('lines.geo'), 'destroy must dispose the lines geometry');
-    assert.ok(disposed.includes('renderer'), 'destroy must dispose the renderer');
-    assert.equal(nn.scene, null, 'destroy must drop the scene ref');
-    assert.equal(nn.renderer, null, 'destroy must drop the renderer ref');
-  } finally {
-    global.window = prevWindow;
-    global.document = prevDocument;
-    global.IntersectionObserver = prevObserver;
-    global.requestAnimationFrame = prevRAF;
-    global.cancelAnimationFrame = prevCancel;
-    __resetThreeForTests();
-  }
-});
-
-test('NeuralNetwork fires onReady once after the first painted frame', () => {
-  const prevWindow = global.window;
-  const prevDocument = global.document;
-  const prevObserver = global.IntersectionObserver;
-  const prevRAF = global.requestAnimationFrame;
-  const prevCancel = global.cancelAnimationFrame;
-
-  __setThreeForTests(createMinimalThree());
-  global.window = {
-    innerWidth: 1200,
-    innerHeight: 800,
-    devicePixelRatio: 2,
-    addEventListener() {},
-  };
-  global.document = {
-    hidden: false,
-    addEventListener() {},
-    createElement(tag) {
-      if (tag !== 'canvas') return {};
-      return {
-        width: 0,
-        height: 0,
-        getContext() {
-          return {
-            createRadialGradient() { return { addColorStop() {} }; },
-            fillRect() {},
-            fillStyle: '',
-          };
-        },
-      };
-    },
-  };
-  global.IntersectionObserver = class {
-    constructor(cb) { this.cb = cb; }
-    observe() {}
-    disconnect() {}
-  };
-  global.requestAnimationFrame = () => 1;
-  global.cancelAnimationFrame = () => {};
-
-  try {
-    let readyCalls = 0;
-    const nn = new NeuralNetwork({}, () => { readyCalls += 1; });
-    assert.equal(readyCalls, 1, 'onReady must fire after the first frame paints');
-
-    /* Subsequent frames must not re-fire onReady (the hero only fades in once). */
-    nn._animate();
-    assert.equal(readyCalls, 1, 'onReady must fire exactly once');
-  } finally {
-    global.window = prevWindow;
-    global.document = prevDocument;
-    global.IntersectionObserver = prevObserver;
-    global.requestAnimationFrame = prevRAF;
-    global.cancelAnimationFrame = prevCancel;
-    __resetThreeForTests();
-  }
-});
 
 test('Globe3D constructs with mocked THREE and location data', () => {
   const prevWindow = global.window;
@@ -1494,6 +1358,23 @@ test('initScroll3D skips on coarse pointer devices', () => {
 });
 
 /* ─── NeuralNetwork2D tests ───────────────────────────────── */
+
+test('neural-net.js stays Three-free so the homepage hero never loads Three.js', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'neural-net.js'), 'utf8');
+  assert.ok(!/three-context/.test(src),
+    'neural-net.js must not import three-context.js (that pulls all of Three onto the homepage)');
+  assert.ok(!/from ['"]three['"]/.test(src),
+    'neural-net.js must not import the three package directly');
+  assert.ok(!/\bclass NeuralNetwork\b/.test(src),
+    'the Three.js NeuralNetwork class should be gone; only the Canvas2D NeuralNetwork2D remains');
+});
+
+test('main.js hero uses the Canvas2D NeuralNetwork2D, not the Three.js path', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
+  assert.ok(/new NeuralNetwork2D\(/.test(src), 'hero should construct NeuralNetwork2D');
+  assert.ok(!/new NeuralNetwork\(/.test(src),
+    'hero should not construct the Three.js NeuralNetwork any more');
+});
 
 test('NeuralNetwork2D constructs with particles and starts animation', () => {
   const prevDoc = global.document;
@@ -2341,55 +2222,6 @@ function withPerfGlobals(fn, { lowPower = false } = {}) {
   }
 }
 
-test('perf: NeuralNetwork enforces an FPS cap (<=45 normal, <=30 low-power)', () => {
-  withPerfGlobals(() => {
-    __setThreeForTests(createMinimalThree());
-    const canvas = {
-      addEventListener() {},
-      getContext() { return {}; },
-    };
-    const nn = new NeuralNetwork(canvas);
-    assert.equal(typeof nn._minFrameTime, 'number',
-      'NeuralNetwork should expose a _minFrameTime to throttle rAF');
-    assert.ok(nn._minFrameTime >= 1 / 45 - 1e-6,
-      `expected min frame time >= 1/45s, got ${nn._minFrameTime}`);
-  });
-});
-
-test('perf: NeuralNetwork low-power FPS cap is <=30', () => {
-  withPerfGlobals(() => {
-    __setThreeForTests(createMinimalThree());
-    const canvas = { addEventListener() {}, getContext() { return {}; } };
-    const nn = new NeuralNetwork(canvas);
-    assert.ok(nn._isLowPower, 'mock should be detected as low-power');
-    assert.ok(nn._minFrameTime >= 1 / 30 - 1e-6,
-      `expected low-power min frame time >= 1/30s, got ${nn._minFrameTime}`);
-  }, { lowPower: true });
-});
-
-test('perf: NeuralNetwork _animate skips render when called faster than the cap', () => {
-  withPerfGlobals(() => {
-    __setThreeForTests(createMinimalThree());
-    const canvas = { addEventListener() {}, getContext() { return {}; } };
-    let renderCalls = 0;
-    let now = 1.0;
-    global.performance = { now: () => now * 1000 };
-    const nn = new NeuralNetwork(canvas);
-    nn.renderer.render = () => { renderCalls++; };
-    nn._visible = true;
-    nn._animate(); // first call seeds last-draw and renders
-    const after1 = renderCalls;
-    now += nn._minFrameTime / 4; // well below the cap
-    nn._animate();
-    assert.equal(renderCalls, after1,
-      'second call within the frame budget should NOT trigger a render');
-    now += nn._minFrameTime + 0.01; // well above the cap
-    nn._animate();
-    assert.ok(renderCalls > after1,
-      'call after the frame budget should trigger a render');
-  });
-});
-
 test('perf: NeuralNetwork2D enforces an FPS cap (<=30)', () => {
   withPerfGlobals(() => {
     const ctx = {
@@ -2495,40 +2327,7 @@ test('perf: Globe3D pixelRatio cap is at most 1.5 on normal devices', () => {
   });
 });
 
-/* ─── Particle / connection trim (Tier 3) ─────────────────── */
-
-test('perf: NeuralNetwork default particle count is at most 90 / connection dist <=150', () => {
-  withPerfGlobals(() => {
-    __setThreeForTests(createMinimalThree());
-    const canvas = { addEventListener() {}, getContext() { return {}; } };
-    const nn = new NeuralNetwork(canvas);
-    assert.ok(!nn._isLowPower, 'mock should be detected as normal-power');
-    assert.ok(nn.particleCount <= 90,
-      `expected <=90 particles, got ${nn.particleCount}`);
-    assert.ok(nn.connectionDist <= 150,
-      `expected connection dist <=150, got ${nn.connectionDist}`);
-  });
-});
-
 /* ─── Passive listener flags (Tier 4) ─────────────────────── */
-
-test('perf: NeuralNetwork registers mousemove/touchmove with { passive: true }', () => {
-  withPerfGlobals(() => {
-    __setThreeForTests(createMinimalThree());
-    const events = [];
-    global.window.addEventListener = (type, _fn, opts) => events.push({ type, opts });
-    const canvas = { addEventListener() {}, getContext() { return {}; } };
-    new NeuralNetwork(canvas);
-    const mm = events.find(e => e.type === 'mousemove');
-    const tm = events.find(e => e.type === 'touchmove');
-    assert.ok(mm, 'mousemove must be registered');
-    assert.ok(mm.opts && mm.opts.passive === true,
-      `mousemove should be { passive: true }, got ${JSON.stringify(mm.opts)}`);
-    assert.ok(tm, 'touchmove must be registered');
-    assert.ok(tm.opts && tm.opts.passive === true,
-      `touchmove should be { passive: true }, got ${JSON.stringify(tm.opts)}`);
-  });
-});
 
 test('perf: NeuralNetwork2D registers mousemove/touchmove with { passive: true }', () => {
   withPerfGlobals(() => {
