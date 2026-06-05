@@ -43,6 +43,7 @@ export const PUBLICATIONS = [
         title: 'A novel architecture for collaborative augmented reality experiences for education',
         authors: 'S. Masneri',
         venue: 'PhD Thesis, University of the Basque Country (UPV/EHU)',
+        url: 'https://addi.ehu.eus/handle/10810/68721',
     },
     {
         year: '2023',
@@ -149,6 +150,7 @@ export const PUBLICATIONS = [
         title: 'A Novel Production Workflow and Toolset for Opera Co-creation towards Enhanced Societal Inclusion of People',
         authors: 'M. Zorrilla, S. Masneri, A. Domínguez, I. Tamayo, A. Simiscuka, T. Röggla, P. Cesar, G.-M. Muntean',
         venue: 'NEM Summit 2020',
+        url: 'https://nem-initiative.org/wp-content/uploads/2020/07/2-2-nem2020_20200630.pdf?x79264',
     },
     {
         year: '2020',
@@ -169,6 +171,7 @@ export const PUBLICATIONS = [
         title: 'How the doctor’s behavior influences the patient’s behaviour',
         authors: 'N. Gabor, F. Vitinius, R. Obliers, O. Schreer, S. Masneri, A. Ritter, H. Lausberg',
         venue: 'DGPM Congress 2015 (abstract)',
+        url: 'https://www.jstor.org/stable/pdf/24329510.pdf',
     },
     {
         year: '2014',
@@ -189,12 +192,14 @@ export const PUBLICATIONS = [
         title: 'Coding hand movement behavior and gesture with NEUROGES supported by automatic video analysis',
         authors: 'O. Schreer, S. Masneri, H. Lausberg, H. Skomroch',
         venue: 'Measuring Behavior 2014',
+        url: 'https://archive.measuringbehavior.org/mb2014/files/2014/Proceedings/Schreer,%20O.%20-%20MB2014.pdf',
     },
     {
         year: '2014',
         title: 'Automatic video analysis for annotation of human body motion in humanities research',
         authors: 'O. Schreer, S. Masneri',
         venue: 'Workshop on Multimodal Corpora (LREC 2014)',
+        url: 'https://publica.fraunhofer.de/entities/publication/acc81d9b-3c4e-4019-95ed-7c037a675a10',
     },
     {
         year: '2013',
@@ -215,24 +220,28 @@ export const PUBLICATIONS = [
         title: 'AVATecH: Audio/Video technology for humanities research',
         authors: 'S. Tschöpel, D. Schneider, R. Bardeli, O. Schreer, S. Masneri, P. Wittenburg, H. Sloetjes, P. Lenkiewicz, E. Auer',
         venue: 'Workshop on Language Technologies for Digital Humanities and Cultural Heritage 2011',
+        url: 'https://aclanthology.org/W11-4113.pdf',
     },
     {
         year: '2011',
         title: 'A new skin colour estimation method based on change detection and cluster analysis',
         authors: 'S. Masneri, O. Schreer',
         venue: 'WIAMIS 2011',
+        url: 'https://repository.tudelft.nl/file/File_08e7dfb3-7b4a-43c7-bb53-710ce99c7e56',
     },
     {
         year: '2011',
         title: 'Application of video processing methods for linguistic research',
         authors: 'P. Lenkiewicz, P. Wittenburg, B. G. Gebre, A. Lenkiewicz, O. Schreer, S. Masneri',
         venue: 'Language & Technology Conference (LTC 2011)',
+        url: 'https://pure.mpg.de/rest/items/item_1239560_5/component/file_1239573/content',
     },
     {
         year: '2011',
         title: 'Application of audio and video processing methods for language research',
         authors: 'P. Lenkiewicz, P. Wittenburg, O. Schreer, S. Masneri, D. Schneider, S. Tschöpel',
         venue: 'Supporting Digital Humanities (SDH 2011)',
+        url: 'https://pure.mpg.de/view/item_1239580',
     },
     {
         year: '2011',
@@ -246,6 +255,7 @@ export const PUBLICATIONS = [
         title: 'Automatic annotation of media field recordings',
         authors: 'E. Auer, P. Wittenburg, H. Sloetjes, O. Schreer, S. Masneri, D. Schneider, S. Tschöpel',
         venue: 'LaTeCH 2010 (ECAI Workshop)',
+        url: 'https://publica-rest.fraunhofer.de/server/api/core/bitstreams/79f4ec6e-f9ac-43c6-b3e7-9adfb38113eb/content',
     },
     {
         year: '2010',
@@ -259,6 +269,7 @@ export const PUBLICATIONS = [
         title: 'Towards semi-automatic annotations for video and audio corpora',
         authors: 'S. Masneri, O. Schreer, D. Schneider, S. Tschöpel, R. Bardeli, S. Bordag, E. Auer, H. Sloetjes, P. Wittenburg',
         venue: 'LREC 2010',
+        url: 'https://www.isca-archive.org/interspeech_2012/lenkiewicz12_interspeech.pdf',
     },
     {
         year: '2009',
