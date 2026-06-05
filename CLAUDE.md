@@ -51,9 +51,10 @@ projects.html       Projects listing page
 publications.html   Full publication list (all papers from data/publications.js)
 travel.html         Travel page (3D globe + 2D Europe map + UNESCO World Heritage accordion)
 links.html          Links page (curated blogroll, filterable by category)
+now.html            "Now" page (now-now-now.com style — current focus; .post prose layout, sections to fill in)
 404.html            Custom 404 page
 projects/*.html     Per-project detail pages
-vite.config.js      Multi-page Vite config (index, cv, projects, publications, travel, links, 404, project pages)
+vite.config.js      Multi-page Vite config (index, cv, projects, publications, travel, links, now, 404, project pages)
 css/styles.css      All styles including print styles
 css/fonts.css       Self-hosted fonts
 js/main.js          ESM entry — orchestrates DOMContentLoaded init + page-teardown (pagehide) cleanup

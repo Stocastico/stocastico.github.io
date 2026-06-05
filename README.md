@@ -4,7 +4,7 @@ Personal website of **Stefano Masneri** — Senior AI Engineer based in San Seba
 
 ## About this site
 
-A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across seven pages:
+A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across eight pages:
 
 - **`index.html`** — the main page, with the following sections:
   - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Three.js neural-network particle field.
@@ -20,6 +20,7 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
 - **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
 - **`travel.html`** — interactive 3-D globe (Three.js) + 2-D Canvas map of Europe + a UNESCO World Heritage accordion. The globe and map visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
 - **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
+- **`now.html`** — a [now-now-now.com](https://nownownow.com/about)-style page describing current focus (work, reading, hobbies). Linked from the About section and the command palette; built on the shared `.post` prose layout.
 - **`404.html`** — custom not-found page with the standard navbar.
 
 Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress bar, 3-D tilt-and-gloss cards, click-to-flip research cards, a back-to-top button, cross-document View Transitions, and full `prefers-reduced-motion` support throughout.
@@ -46,11 +47,12 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 ├── cv.html                    Dedicated CV page (two-column: work | education)
 ├── travel.html                Travel page — 3D globe + 2D Europe map + UNESCO accordion
 ├── links.html                 Curated, category-filterable blogroll
+├── now.html                   "Now" page (current focus; .post prose layout)
 ├── 404.html                   Custom 404 page
 ├── css/
 │   ├── styles.css             All styles (@layer + nesting + oklch), including shared project-page + print rules
 │   └── fonts.css              Self-hosted @font-face declarations
-├── vite.config.js             Multi-page Vite config (index, projects, cv, travel, links, 404, project pages)
+├── vite.config.js             Multi-page Vite config (index, projects, cv, travel, links, now, 404, project pages)
 ├── js/
 │   ├── main.js                ESM entry — orchestrates DOMContentLoaded init + pagehide teardown
 │   ├── render-cards.js        Pure HTML builders for project cards + publication items (shared with generate-cards)
@@ -540,7 +542,7 @@ caught in CI.
 
 ### Navigation
 
-The navbar contains: **About**, **Work** (the Research section), **Projects**, **Travel**, **Links**, and **Contact**. The CV is accessible via the command palette or by navigating directly to `cv.html`. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
+The navbar contains: **About**, **Work** (the Research section), **Projects**, **Travel**, **Links**, and **Contact**. The CV and the **Now** page are accessible via the command palette (or by navigating directly to `cv.html` / `now.html`); the Now page is also linked from the About section. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
 
 ### Pages
 
@@ -552,6 +554,7 @@ The navbar contains: **About**, **Work** (the Research section), **Projects**, *
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
 | `travel.html` | 3-D globe + 2-D Europe map + UNESCO World Heritage accordion |
 | `links.html` | Curated, category-filterable blogroll from `data/links.yaml` |
+| `now.html` | "Now" page — current focus (work, reading, hobbies); linked from About + command palette |
 | `404.html` | Custom 404 error page. |
 
 ### Sections (index.html)
@@ -643,6 +646,7 @@ Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page
 | About / Research / Skills / Publications / Projects / Places / Contact | Scroll to that section |
 | CV | Navigate to `cv.html` |
 | Links | Navigate to `links.html` |
+| Now | Navigate to `now.html` |
 | Open CV PDF | Open the CV PDF |
 | Copy email address | Copy email address to clipboard |
 | LinkedIn profile | Open LinkedIn profile |
