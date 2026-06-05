@@ -9,7 +9,7 @@ description: "End-to-end real-time analytics for live UFC events: stereo compute
 link_video:  "https://www.youtube.com/watch?v=vataVq9gY_o"
 ---
 
-This is one of the projects I tell people about when they ask what the most fun thing I have ever worked on was. In **2017**, while I was a Senior Data Scientist at **AGT International** in Darmstadt, our team built a real-time fighter-tracking and analytics system for the **UFC**. The product was launched as part of **HEED**, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO **Mati Kochavi** during AWS CTO Werner Vogels' keynote at **AWS re:Invent 2017** in Las Vegas — see the [recording on YouTube](https://www.youtube.com/watch?v=vataVq9gY_o).
+This is one of the projects I tell people about when they ask what the most fun thing I have ever worked on was. In **2017**, while I was a Senior Data Scientist at **AGT International** in Darmstadt, our team built a real-time fighter-tracking and analytics system for the **[UFC](https://www.ufc.com/)**. The product was launched as part of **HEED**, AGT's IoT-driven sports platform, and was presented in a live demonstration by our CEO **Mati Kochavi** during AWS CTO Werner Vogels' keynote at **[AWS re:Invent](https://reinvent.awsevents.com/) 2017** in Las Vegas — see the [recording on YouTube](https://www.youtube.com/watch?v=vataVq9gY_o).
 
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 
@@ -47,7 +47,7 @@ We fused the two streams in real time:
 
 ## Cloud and Delivery
 
-Once produced at the edge, the statistics were ingested through **AWS** services (Kinesis for ingestion, downstream services for processing, persistence, and fan-out — see [AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture](https://www.youtube.com/watch?v=zHSEnKb69go)). From there they were relayed to the UFC app and to broadcast partners.
+Once produced at the edge, the statistics were ingested through **AWS** services ([Kinesis](https://aws.amazon.com/kinesis/) for ingestion, downstream services for processing, persistence, and fan-out — see [AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture](https://www.youtube.com/watch?v=zHSEnKb69go)). From there they were relayed to the UFC app and to broadcast partners.
 
 This was a project where I was involved **end to end**:
 

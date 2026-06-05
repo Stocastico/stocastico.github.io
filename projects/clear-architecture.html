@@ -153,7 +153,7 @@
     <p>
       cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR)
       applications tailored to educational settings. It was the <strong>core contribution of my PhD research</strong>,
-      developed in collaboration with the University of the Basque Country (UPV/EHU) and Vicomtech. The work was
+      developed in collaboration with the University of the Basque Country (UPV/EHU) and <a href="https://www.vicomtech.org/en" target="_blank" rel="noopener noreferrer">Vicomtech</a>. The work was
       published in the <em>Virtual Reality</em> journal (Springer, 2023).
     </p>
     <p>
@@ -196,12 +196,12 @@
     <p>
       <strong>Real-time multi-user library.</strong> A WebSocket-based server-side component manages low-latency session
       routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions,
-      exchanging messages, and synchronising multimedia playback across devices. WebRTC integration handles audio and
+      exchanging messages, and synchronising multimedia playback across devices. <a href="https://webrtc.org/" target="_blank" rel="noopener noreferrer">WebRTC</a> integration handles audio and
       video streams.
     </p>
     <p>
       <strong>Logging and data storage module.</strong> Student interactions are serialised and forwarded to a Learning
-      Record Store (LRS) via the xAPI standard, making cleAR compatible with any LMS that supports xAPI. The module
+      Record Store (LRS) via the <a href="https://xapi.com/" target="_blank" rel="noopener noreferrer">xAPI</a> standard, making cleAR compatible with any LMS that supports xAPI. The module
       supports configurable data collection frequency, anonymisation, and role-based access (admin, teacher, student).
     </p>
     <p>
@@ -213,7 +213,7 @@
     </p>
     <p>
       <strong>Visual reporting module.</strong> A code-free web interface for generating interactive dashboards and
-      charts from stored xAPI data, built on D3 and Seaborn. Visualisations are rendered client-side to preserve
+      charts from stored xAPI data, built on <a href="https://d3js.org/" target="_blank" rel="noopener noreferrer">D3</a> and <a href="https://seaborn.pydata.org/" target="_blank" rel="noopener noreferrer">Seaborn</a>. Visualisations are rendered client-side to preserve
       privacy, with export options to local storage, external databases, or the school LMS.
     </p>
     <h2>Proof-of-Concept Applications</h2>
@@ -231,7 +231,7 @@
     </figure>
     <p>
       <strong>xAPI Data Analysis</strong>: a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent
-      clients, stored in MongoDB via Learning Locker on AWS. Average processing delay was 145 ms (maximum 314 ms). A
+      clients, stored in <a href="https://www.mongodb.com/" target="_blank" rel="noopener noreferrer">MongoDB</a> via Learning Locker on <a href="https://aws.amazon.com/" target="_blank" rel="noopener noreferrer">AWS</a>. Average processing delay was 145 ms (maximum 314 ms). A
       classification model trained on the collected data successfully predicted the originating client from the xAPI
       triplet, validating DO3–DO5.
     </p>

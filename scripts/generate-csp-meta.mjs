@@ -73,6 +73,7 @@ const TARGETS = [
   'publications.html',
   'travel.html',
   'links.html',
+  'now.html',
   '404.html',
   ...fs.readdirSync(path.join(ROOT, 'projects'))
        .filter(f => f.endsWith('.html'))

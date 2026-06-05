@@ -22,7 +22,7 @@ ARoundTheWorld is built on the design objectives (DOs) defined in the [cleAR arc
 - **DO3 — Data analytics**: every student action generates an xAPI statement that is forwarded to a Learning Record Store (LRS) and integrated with the school's LMS, enabling automatic progress tracking without any manual export.
 - **DO4 — Ease of development**: the developer noted that the cleAR API handled all networking transparently, eliminating the need to deal with low-level sockets or platform-specific code.
 
-A dedicated web interface allows teachers to compose new question sets. Geographical coordinates are resolved automatically via the Wikimedia API and questions are stored as plain JSON files, so new content can be added without touching application code.
+A dedicated web interface allows teachers to compose new question sets. Geographical coordinates are resolved automatically via the [Wikimedia API](https://www.mediawiki.org/wiki/API:Main_page) and questions are stored as plain JSON files, so new content can be added without touching application code.
 
 ![ARoundTheWorld application workflow](img/projects/ARound_the_world_1.png)
 
@@ -58,6 +58,6 @@ Post-study teacher interviews confirmed that the collaborative capabilities and 
 
 ## Context and Impact
 
-The work was conducted as part of the ARETE project (Augmented Reality Interactive Educational System), funded under the EU Horizon 2020 programme (grant agreement No 856533). The evaluation results show that an application built on the cleAR architecture can fulfil all the design objectives identified by teachers, receive strong approval from students, and integrate into existing school infrastructure with minimal friction.
+The work was conducted as part of the ARETE project (Augmented Reality Interactive Educational System), funded under the EU [Horizon 2020](https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en) programme (grant agreement No 856533). The evaluation results show that an application built on the cleAR architecture can fulfil all the design objectives identified by teachers, receive strong approval from students, and integrate into existing school infrastructure with minimal friction.
 
 If there is one thing I took from this work, it is that the bottleneck for AR in schools is rarely the technology itself — it is the time teachers don't have to rebuild the same plumbing for every new application. Shared infrastructure that just works lets them focus on teaching instead.

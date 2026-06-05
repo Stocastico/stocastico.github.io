@@ -224,6 +224,7 @@ export function initCommandPalette() {
     { id: 'projects',     label: 'Projects',      hint: 'Things I’ve built', href: 'projects.html' },
     { id: 'places',       label: 'Places',        hint: 'Where I’ve been' },
     { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: 'links.html' },
+    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: 'now.html' },
     { id: 'contact',      label: 'Contact',       hint: 'Get in touch' },
   ];
 

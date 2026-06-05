@@ -149,7 +149,7 @@ This project, carried out at <strong>Vicomtech</strong> in <strong>2020</strong>
 </p>
 <h2>The Two Modalities</h2>
 <p>
-<strong>Visual channel.</strong> Standard RGB cameras feed a pipeline built on <strong>TensorFlow</strong> and <strong>OpenCV</strong>. For each frame the system runs, in sequence:
+<strong>Visual channel.</strong> Standard RGB cameras feed a pipeline built on <strong><a href="https://www.tensorflow.org/" target="_blank" rel="noopener noreferrer">TensorFlow</a></strong> and <strong><a href="https://opencv.org/" target="_blank" rel="noopener noreferrer">OpenCV</a></strong>. For each frame the system runs, in sequence:
 </p>
 <ol>
   <li>Person detection: locating every individual in the frame.</li>
@@ -162,7 +162,7 @@ This project, carried out at <strong>Vicomtech</strong> in <strong>2020</strong>
 The visual channel answers rich questions (how many people, where, are they looking at the stage?) but fails in poor lighting, behind obstacles, or when the camera simply does not cover a section of the venue.
 </p>
 <p>
-<strong>Wireless channel.</strong> A network of <strong>Raspberry Pi scanners</strong> passively listens for WiFi and Bluetooth probe requests from devices in the environment. The received signal strength indicator (RSSI) from each scanner, combined across multiple nodes, is used to estimate the approximate location of each device within a set of predefined zones. The processing is done on a central server using the open-source <strong>Find3</strong> framework; scanners and server communicate via <strong>MQTT (Mosquitto)</strong>.
+<strong>Wireless channel.</strong> A network of <strong><a href="https://www.raspberrypi.com/" target="_blank" rel="noopener noreferrer">Raspberry Pi</a> scanners</strong> passively listens for WiFi and Bluetooth probe requests from devices in the environment. The received signal strength indicator (RSSI) from each scanner, combined across multiple nodes, is used to estimate the approximate location of each device within a set of predefined zones. The processing is done on a central server using the open-source <strong><a href="https://github.com/schollz/find3" target="_blank" rel="noopener noreferrer">Find3</a></strong> framework; scanners and server communicate via <strong><a href="https://mqtt.org/" target="_blank" rel="noopener noreferrer">MQTT</a> (<a href="https://mosquitto.org/" target="_blank" rel="noopener noreferrer">Mosquitto</a>)</strong>.
 </p>
 <p>
 The wireless channel is robust to lighting and occlusions, covers the entire venue regardless of camera placement, and, crucially, provides a <strong>per-device identity</strong> that persists across the event without any cooperation from the attendee.
@@ -185,11 +185,11 @@ An engagement score is computed by weighting these primitives. The weights are n
 The software stack was designed to be deployable on commodity hardware:
 </p>
 <ul>
-  <li><strong>Scanner nodes</strong>: Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in <strong>Go</strong> for efficiency on constrained hardware.</li>
+  <li><strong>Scanner nodes</strong>: Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in <strong><a href="https://go.dev/" target="_blank" rel="noopener noreferrer">Go</a></strong> for efficiency on constrained hardware.</li>
   <li><strong>Server</strong>: Go-based aggregation and inference service, also handling MQTT brokerage.</li>
   <li><strong>Vision processing</strong>: Python 3 with TensorFlow and OpenCV; runs on a small GPU-equipped edge machine connected to the venue cameras.</li>
   <li><strong>Messaging</strong>: MQTT over Mosquitto for all inter-component communication.</li>
-  <li><strong>Deployment</strong>: Docker images for each component to simplify installation at the venue.</li>
+  <li><strong>Deployment</strong>: <a href="https://www.docker.com/" target="_blank" rel="noopener noreferrer">Docker</a> images for each component to simplify installation at the venue.</li>
 </ul>
 <p>
 The deliberate choice of <strong>Go for the wireless side</strong> and <strong>Python for the vision side</strong> reflected practical trade-offs: Go gave us the single-binary deployability and tight memory footprint we needed on the Pi scanners; Python gave us the machine-learning ecosystem for everything visual.

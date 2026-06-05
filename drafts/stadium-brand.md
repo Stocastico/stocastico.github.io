@@ -32,7 +32,7 @@ We've been building a computer vision system that detects and classifies adverti
 
 ## The setup
 
-The pipeline is a two-stage stack. A **YOLO detector** finds the advertising holders in each frame, and a **DenseNet201 classifier** then assigns each detected crop to one of 52 brand classes. The whole thing runs on PyTorch Lightning, with MLflow handling experiment tracking and Roboflow managing the dataset. Training happens on a single T4 GPU.
+The pipeline is a two-stage stack. A **[YOLO](https://docs.ultralytics.com/) detector** finds the advertising holders in each frame, and a **DenseNet201 classifier** then assigns each detected crop to one of 52 brand classes. The whole thing runs on [PyTorch Lightning](https://lightning.ai/), with [MLflow](https://mlflow.org/) handling experiment tracking and [Roboflow](https://roboflow.com/) managing the dataset. Training happens on a single T4 GPU.
 
 ![Two-stage pipeline: a YOLO detector locates advertising holders in each broadcast frame, a DenseNet201 classifier assigns each crop to one of 52 brands, and brand exposure time is measured — with static ads trained once and dynamic LED-board ads re-fit weekly, all orchestrated on Azure.](img/projects/brand-stadium-pipeline.svg)
 
@@ -46,7 +46,7 @@ We tested several options for both stages and ended up with the YOLO + DenseNet2
 
 ## How it runs in production
 
-All the code lives on Azure. We have pipelines that manage both training and inference, so the heavy lifting is orchestrated rather than run by hand. On top of that there's a web application where a user can upload new football matches and trigger the work directly — kicking off training when it's needed (mainly for the dynamic ads that change week to week) or running inference to measure exposure.
+All the code lives on [Azure](https://azure.microsoft.com/). We have pipelines that manage both training and inference, so the heavy lifting is orchestrated rather than run by hand. On top of that there's a web application where a user can upload new football matches and trigger the work directly — kicking off training when it's needed (mainly for the dynamic ads that change week to week) or running inference to measure exposure.
 
 To make sure the numbers actually mean something, we validated the system against exposure times measured by human annotators. Comparing the model's output to that ground truth is what gave us confidence the exposure figures are trustworthy.
 
