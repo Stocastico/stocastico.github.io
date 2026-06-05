@@ -2036,37 +2036,39 @@ test('initCardFlip does nothing when document is undefined', () => {
   }
 });
 
-/* ─── index.html card structure tests ────────────────────── */
+/* ─── index.html homepage structure tests ────────────────── */
 
-test('index.html research cards have card-inner, card-front, and card-back', () => {
+test('index.html no longer ships the research focus-area cards', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  const gridSection = html.slice(
-    html.indexOf('id="research-grid"'),
-    html.indexOf('</section>', html.indexOf('id="research-grid"')),
-  );
-  const cardCount = (gridSection.match(/class="research-card"/g) || []).length;
-  assert.equal(cardCount, 6, 'Should have 6 research cards in the grid');
-
-  const innerCount = (gridSection.match(/class="card-inner"/g) || []).length;
-  assert.equal(innerCount, 6, 'Each card should have a .card-inner wrapper');
-
-  const frontCount = (gridSection.match(/class="card-front"/g) || []).length;
-  assert.equal(frontCount, 6, 'Each card should have a .card-front face');
-
-  const backCount = (gridSection.match(/class="card-back"/g) || []).length;
-  assert.equal(backCount, 6, 'Each card should have a .card-back face');
+  assert.equal(html.indexOf('id="research-grid"'), -1, 'the research card grid should be removed');
+  assert.equal(html.indexOf('<section id="research"'), -1, 'the research section should be removed');
+  assert.equal(html.indexOf('href="#research"'), -1, 'no nav link or anchor should point at #research');
 });
 
-test('index.html card backs have back-title, back-body, and back-hint', () => {
+test('index.html nav links Expertise to the skills section', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  const gridSection = html.slice(
-    html.indexOf('id="research-grid"'),
-    html.indexOf('</section>', html.indexOf('id="research-grid"')),
-  );
-  assert.ok(gridSection.includes('card-back-title'), 'Card back should have a title');
-  assert.ok(gridSection.includes('card-back-body'), 'Card back should have a body text');
-  assert.ok(gridSection.includes('card-back-hint'), 'Card back should have a flip-back hint');
-  assert.ok(gridSection.includes('card-flip-hint'), 'Card front should have a flip hint');
+  const nav = html.slice(html.indexOf('<nav'), html.indexOf('</nav>'));
+  assert.ok(/href="#skills"[^>]*>\s*Expertise\s*</.test(nav),
+    'nav should expose an "Expertise" link pointing at #skills');
+});
+
+test('index.html section order is about, skills, projects, publications, places, contact', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const order = ['about', 'skills', 'projects', 'publications', 'places', 'contact']
+    .map((id) => ({ id, at: html.indexOf('id="' + id + '"') }));
+  order.forEach(({ id, at }) => assert.ok(at !== -1, 'section #' + id + ' should exist'));
+  for (let i = 1; i < order.length; i++) {
+    assert.ok(order[i - 1].at < order[i].at,
+      'section #' + order[i - 1].id + ' should come before #' + order[i].id);
+  }
+});
+
+test('index.html CV callout lives inside the projects section', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const projStart = html.indexOf('<section id="projects"');
+  const projSection = html.slice(projStart, html.indexOf('</section>', projStart));
+  assert.ok(projSection.includes('Dive into my full CV'),
+    'the “Dive into my full CV” callout should sit within the projects section');
 });
 
 // ── renderProjects tests ──────────────────────────────────────────────────────
