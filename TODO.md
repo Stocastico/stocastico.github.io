@@ -5,10 +5,6 @@ need the audit context.
 
 ## Future ideas
 
-- **Light theme + toggle.** The theme pipeline already supports multiple
-  palettes, but the site is hard-locked to `data-theme="dark"`. Add a light
-  palette and an OS-preference-aware toggle (`prefers-color-scheme`).
-
 - **Remove the leftover dead flip/carousel JS.** The homepage research
   focus-cards were removed, so `initCardFlip` (js/animations.js) and
   `initResearchCarousel` (js/ui.js) are now no-ops (their DOM is gone). The dead
