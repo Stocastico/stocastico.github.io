@@ -192,6 +192,30 @@
 }
 /* @theme-generated-light-end */
 
+/* ─── Higher contrast on request ──────────────────────────────
+   Honour an explicit `prefers-contrast: more` user setting. The base
+   palette already clears WCAG AA for body and muted text, so this only
+   firms up the elements that sit closest to the line: hairline borders /
+   separators become clearly visible, the faintest helper text steps up to
+   the (AA-passing) muted tone, and inline accent links gain an underline so
+   they no longer rely on colour alone (WCAG 1.4.1). Everything derives from
+   existing palette tokens, so it tracks any active palette and both themes.
+   (Selector list: the `[data-theme="light"]` arm wins the cascade on the
+   light root; bare `:root` covers the dark default.) */
+@media (prefers-contrast: more) {
+  :root,
+  :root[data-theme="light"] {
+    --border: rgb(var(--text-rgb) / 0.32);
+    --border-hov: rgb(var(--accent-rgb) / 0.7);
+    --text-faint: var(--text-muted);
+  }
+
+  .inline-link {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+}
+
 /* ─── Cross-document view transitions ─────────────────────────
    Opt the whole multi-page site into the View Transitions API so same-origin
    navigations (home ↔ projects ↔ project detail ↔ cv ↔ travel ↔ links) animate
