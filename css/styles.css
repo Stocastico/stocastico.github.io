@@ -2883,6 +2883,13 @@ h3 {
 
   .nav-toggle {
     display: flex;
+    /* Push the hamburger + theme toggle into a right-hand cluster. */
+    margin-left: auto;
+  }
+
+  .theme-toggle {
+    margin-left: 0.75rem;
+    margin-right: 0;
   }
 
   .pub-item {
@@ -3549,6 +3556,53 @@ h3 {
     color: var(--text-muted);
   }
 }
+
+/* ─── Theme toggle (light / dark) ────────────────────────── */
+.theme-toggle {
+  /* Consume the free space in the space-between nav so the toggle + nav links
+     cluster on the right, logo on the left. */
+  margin-left: auto;
+  margin-right: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--bg-card-hov);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Icon swap — show the icon for the theme currently in effect. Default (dark)
+   shows the moon; light (via OS preference unless pinned dark, or pinned light)
+   shows the sun. Mirrors the colour-token gating exactly. */
+.theme-toggle .theme-toggle-icon { display: none; }
+.theme-toggle .icon-moon { display: block; }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme-toggle .icon-moon { display: none; }
+  :root:not([data-theme="dark"]) .theme-toggle .icon-sun  { display: block; }
+}
+
+:root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-sun  { display: block; }
+:root[data-theme="dark"]  .theme-toggle .icon-sun  { display: none; }
+:root[data-theme="dark"]  .theme-toggle .icon-moon { display: block; }
 
 /* ─── Back to Top Button ─────────────────────────────────── */
 .back-to-top {

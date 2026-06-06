@@ -8,12 +8,15 @@
    The 3D globe (travel.html) still uses Three via js/globe.js.
    ═══════════════════════════════════════════════════════════ */
 import { isLowPowerDevice } from './utils.js';
-import { THEME, rgba } from './theme.js';
+import { getTheme, rgba } from './theme.js';
 
 /* Canvas2D hero background — drifting glow particles linked by faint lines. */
 export class NeuralNetwork2D {
   constructor(canvas, onReady) {
     this.canvas = canvas;
+    /* Resolve the active palette (dark or light) for this instance. A theme
+       switch rebuilds the instance (js/main.js), re-reading the colour. */
+    this._theme = getTheme();
     this._listeners = [];
     this._io = null;
     /* Fired once, right after the first frame paints, so the hero can fade the
@@ -120,7 +123,7 @@ export class NeuralNetwork2D {
         const d2 = dx * dx + dy * dy;
         if (d2 >= this.maxDist2) continue;
         const alpha = 1 - (d2 / this.maxDist2);
-        ctx.strokeStyle = rgba(THEME.accentHi, 0.22 * alpha);
+        ctx.strokeStyle = rgba(this._theme.accentHi, 0.22 * alpha);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
@@ -132,8 +135,8 @@ export class NeuralNetwork2D {
       const p = this.points[i];
       const r = 1.7 + p.z * 2.2;
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3);
-      g.addColorStop(0, rgba(THEME.accent2Hi, 0.95));
-      g.addColorStop(0.5, rgba(THEME.accent2, 0.35));
+      g.addColorStop(0, rgba(this._theme.accent2Hi, 0.95));
+      g.addColorStop(0.5, rgba(this._theme.accent2, 0.35));
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g;
       ctx.beginPath();

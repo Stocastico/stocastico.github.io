@@ -861,43 +861,81 @@ if (typeof document !== 'undefined') {
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
 
+  /* ── Hero background canvases ──────────────────────────────────────────
+     Both the WebGL noise gradient and the Canvas2D neural net bake their
+     palette colours in at construction (the shader source / gradient stops).
+     They are therefore built through small factory closures so a theme switch
+     can tear the instance down and rebuild it with the now-active palette. */
+  const noiseCanvas  = document.getElementById('noise-canvas');
+  const neuralCanvas = document.getElementById('neural-canvas');
+  let noiseInstance  = null;
+  let neuralInstance = null;
+  let neuralStarted  = false;
+
   /* Noise gradient — raw WebGL, runs on devices that support it */
-  const noiseCanvas = document.getElementById('noise-canvas');
-  if (noiseCanvas && !prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
-    _disposables.push(new NoiseGradient(noiseCanvas));
-  } else if (noiseCanvas) {
-    noiseCanvas.style.display = 'none';
-  }
+  const buildNoise = () => {
+    if (!noiseCanvas) return;
+    if (!prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
+      noiseCanvas.style.display = '';
+      noiseInstance = new NoiseGradient(noiseCanvas);
+      _disposables.push(noiseInstance);
+    } else {
+      noiseCanvas.style.display = 'none';
+    }
+  };
+  buildNoise();
 
   /* Canvas2D neural-network hero background (no Three.js — see neural-net.js).
      Dynamically imported and deferred until the first user interaction
      (mousemove / scroll / touchstart) so it stays off the critical path on
      load; the noise gradient fills the hero meanwhile. On reduced-motion the
      canvas is hidden entirely. */
-  const canvas = document.getElementById('neural-canvas');
-  if (canvas) {
+  const buildNeural = () => {
+    if (!neuralCanvas || prefersReducedMotion()) return;
+    import('./neural-net.js').then(({ NeuralNetwork2D }) => {
+      /* Fade the canvas in once the first frame has painted (see the
+         #neural-canvas opacity transition in css/styles.css), so the
+         network materialises gently instead of popping in fully-formed. */
+      const reveal = () => neuralCanvas.classList.add('is-visible');
+      neuralInstance = new NeuralNetwork2D(neuralCanvas, reveal);
+      _disposables.push(neuralInstance);
+    });
+  };
+
+  if (neuralCanvas) {
     if (prefersReducedMotion()) {
-      canvas.style.display = 'none';
+      neuralCanvas.style.display = 'none';
     } else {
-      let started = false;
       const startNeural = () => {
-        if (started) return;
-        started = true;
+        if (neuralStarted) return;
+        neuralStarted = true;
         ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
           window.removeEventListener(evt, startNeural));
-        import('./neural-net.js').then(({ NeuralNetwork2D }) => {
-          /* Fade the canvas in once the first frame has painted (see the
-             #neural-canvas opacity transition in css/styles.css), so the
-             network materialises gently instead of popping in fully-formed
-             the instant the chunk lands. */
-          const reveal = () => canvas.classList.add('is-visible');
-          _disposables.push(new NeuralNetwork2D(canvas, reveal));
-        });
+        buildNeural();
       };
       ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
         window.addEventListener(evt, startNeural, { passive: true, once: true }));
     }
   }
+
+  /* Recolour the colour-baked hero canvases on a theme switch — destroy the
+     old instances and rebuild with the active palette (getTheme() inside each
+     module now resolves dark/light). Only rebuild the neural net if it had
+     already started, so we never pull its chunk early. */
+  const onThemeChange = () => {
+    if (noiseInstance) {
+      try { noiseInstance.destroy(); } catch (_) { /* ignore */ }
+      noiseInstance = null;
+      buildNoise();
+    }
+    if (neuralStarted && neuralInstance) {
+      try { neuralInstance.destroy(); } catch (_) { /* ignore */ }
+      neuralInstance = null;
+      buildNeural();
+    }
+  };
+  window.addEventListener('themechange', onThemeChange);
+  _pushTeardown(() => window.removeEventListener('themechange', onThemeChange));
 
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
      canvas is about to enter the viewport. The maps live in the #places

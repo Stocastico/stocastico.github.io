@@ -5,10 +5,13 @@
    pattern, then stops — no continuous animation loop.
 
    Raw WebGL, no Three.js dependency. Colours are injected from
-   data/palettes.yaml via js/theme.js at module-load time (the
-   shader source is a template literal — no uniforms, no recompile).
+   data/palettes.yaml via js/theme.js — resolved per *instance* with
+   getTheme(), so the colours are baked into the shader source (a template
+   literal — no uniforms) at construction time. There is no recompile on the
+   fly: a theme switch rebuilds the instance (js/main.js), which recompiles the
+   shader with the new palette's colours.
    ═══════════════════════════════════════════════════════════ */
-import { THEME, glvec } from './theme.js';
+import { getTheme, glvec } from './theme.js';
 
 /* '#rrggbb' → GLSL `vec3(r, g, b)` literal. */
 const v3 = (hex) => `vec3(${glvec(hex).join(', ')})`;
@@ -16,6 +19,9 @@ const v3 = (hex) => `vec3(${glvec(hex).join(', ')})`;
 export class NoiseGradient {
   constructor(canvas) {
     this.canvas = canvas;
+    /* Resolve the active palette (dark or light) for this instance — baked
+       into the shader source below. */
+    this._theme = getTheme();
     /* No preserveDrawingBuffer — nothing reads pixels back, and keeping it on
        forces the browser to retain a second copy of the framebuffer. */
     const gl = canvas.getContext('webgl', { alpha: false, depth: false, stencil: false, antialias: false })
@@ -98,11 +104,11 @@ export class NoiseGradient {
          float f=fbm(uv*1.4+2.5*r);
          /* Palette: deep dark → mid tone → bright pop.
             Colours injected from data/palettes.yaml via js/theme.js. */
-         vec3 col=mix(${v3(THEME.noise.dark)},
-                      ${v3(THEME.noise.mid)},
+         vec3 col=mix(${v3(this._theme.noise.dark)},
+                      ${v3(this._theme.noise.mid)},
                       clamp(f*2.0-0.15,0.0,1.0));
          col=mix(col,
-                 ${v3(THEME.noise.bright)},
+                 ${v3(this._theme.noise.bright)},
                  clamp(f*f*4.0-0.4,0.0,1.0));
          col*=f*1.05+0.08;
          gl_FragColor=vec4(col,1.0);
