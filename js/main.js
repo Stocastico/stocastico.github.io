@@ -986,11 +986,20 @@ if (typeof document !== 'undefined') {
      (globe.js resolves colours from getTheme() per instance). */
   let globeCanvas = document.getElementById('globe-canvas');
   let globeInstance = null;
+  /* Monotonic build token: rapid theme toggles can fire several async
+     buildGlobe() chains; only the latest one is allowed to construct. */
+  let globeBuildToken = 0;
   const buildGlobe = () => {
+    const token = ++globeBuildToken;
     /* Dynamically imported (Three.js) and only when the globe nears the
        viewport — so Three.js downloads lazily, on scroll, not on load. */
-    import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) => {
+    return import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) =>
       geocodeLocations(LOCATIONS).then(() => {
+        /* A newer build superseded this one (e.g. another theme switch landed
+           while geocoding was in flight). Bail before constructing so we never
+           overwrite the fresh globe with a stale one or leak an orphaned
+           WebGL context. */
+        if (token !== globeBuildToken) return;
         globeInstance = (prefersReducedMotion() || !hasWebGLSupport())
           ? new GlobeFallback2D(globeCanvas)
           : new Globe3D(globeCanvas);
@@ -999,7 +1008,13 @@ if (typeof document !== 'undefined') {
            is final (i.e. all geocoding has resolved). */
         const a11yList = document.getElementById('globe-a11y-list');
         if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
-      });
+      })
+    ).catch((err) => {
+      /* Three.js import failed or geocoding (Nominatim) is unreachable —
+         leave the globe unbuilt rather than throwing into the global
+         unhandledrejection handler. The static a11y list still describes
+         the locations for non-visual users. */
+      if (typeof console !== 'undefined') console.warn('Globe build skipped:', err);
     });
   };
   if (globeCanvas && typeof LOCATIONS !== 'undefined') {
