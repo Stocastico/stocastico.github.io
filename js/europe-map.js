@@ -531,20 +531,12 @@ export class EuropeMap2D {
       lon >= nearMinLon && lon <= nearMaxLon &&
       lat >= nearMinLat && lat <= nearMaxLat;
 
-    /* Pass 1: fill only local rings (small islands that fill correctly) */
-    ctx.fillStyle = THEME.globe.land;
-    for (const ring of this._europeRings) {
-      if (!isLocal(ring)) continue;
-      ctx.beginPath();
-      ctx.moveTo(this._lonToX(ring[0][0]), this._latToY(ring[0][1]));
-      for (let i = 1; i < ring.length; i++) {
-        ctx.lineTo(this._lonToX(ring[i][0]), this._latToY(ring[i][1]));
-      }
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    /* Pass 2: stroke coastlines.
+    /* Coastlines are stroke-only (neon outline). The mainland is a single
+       "global" ring whose interior seas (Mediterranean, Black Sea) are holes
+       the TopoJSON decoder drops, so flood-filling it would paint those seas as
+       land — hence the continent is never filled. Islands ("local" rings) must
+       follow the same rule or Great Britain etc. render as solid blobs while
+       every neighbouring country is a hollow outline.
        Local rings: draw all segments normally.
        Global rings: only draw segments near Europe (eliminates cross-map artifacts). */
     const strokes = [

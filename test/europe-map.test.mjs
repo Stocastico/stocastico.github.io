@@ -204,6 +204,35 @@ test('EuropeMap2D: drawTrips renders layered neon arcs', () => {
   });
 });
 
+test('EuropeMap2D: island landmasses are not filled (consistent with the mainland outline)', () => {
+  const { canvas, fills } = createCanvasAndContext();
+  const tooltip = createTooltip();
+
+  /* A small island ring (Great Britain — longitude span < 90°, so the renderer
+     classifies it "local") and the European mainland ring (span ≥ 90°, the
+     "global" continent). The mainland is only ever stroked; the island must be
+     rendered the same way, otherwise Great Britain shows up as a solid filled
+     blob while every neighbouring country is a hollow neon outline. */
+  const greatBritain = [
+    [-5, 50], [-3, 51], [-1, 53], [0, 55], [-2, 57], [-4, 58], [-5, 56], [-5, 50],
+  ];
+  const mainland = [
+    [-10, 36], [10, 40], [40, 45], [80, 60], [100, 65], [60, 70], [20, 60], [-10, 36],
+  ];
+
+  withGlobals(makeEnv({ pins: [] }, tooltip), () => {
+    const map = new EuropeMap2D(canvas);
+    map._europeRings = [greatBritain, mainland];
+
+    map._drawEuropeBorders();
+
+    assert.ok(!fills.includes(THEME.globe.land),
+      'no landmass should be flood-filled — islands must match the mainland outline');
+    assert.equal(fills.length, 0,
+      'drawing the Europe borders should stroke coastlines only, never fill land');
+  });
+});
+
 test('EuropeMap2D: drawTrips converts hex trip color to rgba glow layers', () => {
   const { canvas, strokes } = createCanvasAndContext();
   const tooltip = createTooltip();
