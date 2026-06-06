@@ -751,6 +751,30 @@ export function initLifecycleCleanup(disposables) {
   window.addEventListener('pagehide', cleanup);
 }
 
+/* Swap a WebGL <canvas> for a pristine clone before a theme-switch rebuild.
+
+   The colour-baked WebGL surfaces (noise-gradient hero, Three.js globe) force
+   their context to be lost in destroy() (renderer.forceContextLoss() /
+   WEBGL_lose_context.loseContext()) so teardown frees the GPU resources
+   promptly. But a force-lost context is permanent for that node — getContext()
+   keeps returning the same dead context, so rebuilding the instance on the
+   *same* canvas paints onto a context that never restores and the surface goes
+   blank (the bug behind "the globe disappears in light mode" and "the hero
+   effect is gone after a theme switch").
+
+   Replacing the node with cloneNode(false) gives the rebuild a fresh canvas
+   that can acquire a live context, while preserving the id / classes / inline
+   attributes so CSS and the FOUC fade-in still apply. Returns the live canvas
+   (the clone when a swap happened, else the original), so callers must use the
+   returned reference for the rebuild. No-op (returns the input) when the node
+   is missing or detached. */
+export function freshCanvasForRebuild(canvas) {
+  if (!canvas || !canvas.parentNode || typeof canvas.cloneNode !== 'function') return canvas;
+  const clone = canvas.cloneNode(false);
+  canvas.parentNode.replaceChild(clone, canvas);
+  return clone;
+}
+
 /* Test surface — ES module exports.
    UI behaviours (js/ui.js), DOM animations (js/animations.js), and the
    noise gradient (js/noise-gradient.js) are re-exported here so the test
@@ -860,8 +884,8 @@ if (typeof document !== 'undefined') {
      palette colours in at construction (the shader source / gradient stops).
      They are therefore built through small factory closures so a theme switch
      can tear the instance down and rebuild it with the now-active palette. */
-  const noiseCanvas  = document.getElementById('noise-canvas');
-  const neuralCanvas = document.getElementById('neural-canvas');
+  let noiseCanvas  = document.getElementById('noise-canvas');
+  let neuralCanvas = document.getElementById('neural-canvas');
   let noiseInstance  = null;
   let neuralInstance = null;
   let neuralStarted  = false;
@@ -920,11 +944,16 @@ if (typeof document !== 'undefined') {
     if (noiseInstance) {
       try { noiseInstance.destroy(); } catch (_) { /* ignore */ }
       noiseInstance = null;
+      /* destroy() force-lost the WebGL context — rebuild on a fresh canvas. */
+      noiseCanvas = freshCanvasForRebuild(noiseCanvas);
       buildNoise();
     }
     if (neuralStarted && neuralInstance) {
       try { neuralInstance.destroy(); } catch (_) { /* ignore */ }
       neuralInstance = null;
+      /* Canvas2D survives reuse, but swap for symmetry + a clean drawing
+         buffer so the rebuilt net starts from a blank frame. */
+      neuralCanvas = freshCanvasForRebuild(neuralCanvas);
       buildNeural();
     }
   };
@@ -955,7 +984,7 @@ if (typeof document !== 'undefined') {
   /* Three.js Globe — geocode any entries missing lat/lon, then build. Built
      through a closure so a theme switch can rebuild it with the active palette
      (globe.js resolves colours from getTheme() per instance). */
-  const globeCanvas = document.getElementById('globe-canvas');
+  let globeCanvas = document.getElementById('globe-canvas');
   let globeInstance = null;
   const buildGlobe = () => {
     /* Dynamically imported (Three.js) and only when the globe nears the
@@ -978,7 +1007,7 @@ if (typeof document !== 'undefined') {
   }
 
   /* 2D Europe Map — Canvas-based representation of European locations */
-  const europeCanvas = document.getElementById('europe-canvas');
+  let europeCanvas = document.getElementById('europe-canvas');
   let europeInstance = null;
   const buildEurope = () => {
     europeInstance = new EuropeMap2D(europeCanvas);
@@ -994,11 +1023,16 @@ if (typeof document !== 'undefined') {
     if (globeInstance) {
       try { globeInstance.destroy?.(); } catch (_) { /* ignore */ }
       globeInstance = null;
+      /* Globe3D.destroy() calls renderer.forceContextLoss(); the WebGL
+         context can't be revived on the same node, so rebuild on a clone. */
+      globeCanvas = freshCanvasForRebuild(globeCanvas);
       buildGlobe();
     }
     if (europeInstance) {
       try { europeInstance.destroy?.(); } catch (_) { /* ignore */ }
       europeInstance = null;
+      /* Canvas2D — swap for a clean buffer to match the globe rebuild path. */
+      europeCanvas = freshCanvasForRebuild(europeCanvas);
       buildEurope();
     }
   };
