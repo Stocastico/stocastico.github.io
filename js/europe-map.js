@@ -201,7 +201,9 @@ export class EuropeMap2D {
     if (typeof this.canvas.addEventListener !== 'function') return;
 
     this._addListener(this.canvas, 'mousemove', (e) => {
-      this._rect = this.canvas.getBoundingClientRect();
+      /* Cached rect (invalidated on scroll/resize) — avoids a forced layout
+         on every mousemove while the cursor is over the map. */
+      if (!this._rect) this._rect = this.canvas.getBoundingClientRect();
       /* Scale from CSS pixels to canvas bitmap pixels */
       const scaleX = this.canvas.width / this._rect.width;
       const scaleY = this.canvas.height / this._rect.height;
@@ -226,6 +228,10 @@ export class EuropeMap2D {
       this._buildFilteredTrips();
       this._rect = null;
     }, false);
+
+    /* Scrolling moves the canvas relative to the viewport, so the cached rect
+       must be invalidated (cheap — the next mousemove re-reads it once). */
+    this._addListener(window, 'scroll', () => { this._rect = null; }, { passive: true });
   }
 
   /* Track + register a listener so destroy() can later remove it. */

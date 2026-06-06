@@ -862,8 +862,10 @@ export class Globe3D {
          and the user isn't dragging — getBoundingClientRect() forces a layout
          and the raycaster never fires anyway (gated by _mouseOver). */
       if (!this._mouseOver && !this.isDragging) return;
-      /* Refresh rect every move to avoid stale position after scroll/layout changes */
-      this._rect = cv.getBoundingClientRect();
+      /* Use a cached bounding rect — invalidated on scroll/resize — so a drag
+         or hover doesn't force a synchronous layout (getBoundingClientRect) on
+         every single mousemove. */
+      if (!this._rect) this._rect = cv.getBoundingClientRect();
       const rect = this._rect;
       this._mpos = { x: x - rect.left, y: y - rect.top };
       this.mouse.x = ((x - rect.left) / rect.width) * 2 - 1;
@@ -887,6 +889,7 @@ export class Globe3D {
     this._onTouchStart  = (e) => start(e.touches[0].clientX, e.touches[0].clientY);
     this._onTouchMove   = (e) => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); };
     this._onTouchEnd    = end;
+    this._onScroll      = () => { this._rect = null; }; /* invalidate cached rect */
     this._onResize      = () => {
       this._rect = null;   /* invalidate cached bounding rect */
       this._resize();
@@ -907,6 +910,7 @@ export class Globe3D {
     this._addListener(cv, 'touchmove', this._onTouchMove, { passive: false });
     this._addListener(cv, 'touchend', this._onTouchEnd);
     this._addListener(window, 'resize', this._onResize);
+    this._addListener(window, 'scroll', this._onScroll, { passive: true });
   }
 
   /* ── Render loop ────────────────────────────────────────── */

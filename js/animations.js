@@ -24,6 +24,8 @@ export function initScrollReveal() {
   }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
 
   targets.forEach(el => observer.observe(el));
+
+  return () => observer.disconnect();
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -208,6 +210,8 @@ export function initSkillBars() {
   }, { threshold: 0.3 });
 
   bars.forEach(bar => io.observe(bar));
+
+  return () => io.disconnect();
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -246,4 +250,6 @@ export function initTimelineScroll3D() {
     el.style.opacity = '0';
     io.observe(el);
   });
+
+  return () => io.disconnect();
 }

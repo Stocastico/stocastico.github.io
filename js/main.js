@@ -95,7 +95,6 @@ import {
   initBackToTop,
   initCommandPalette,
   initTaglineReveal,
-  initCursorGlow,
   initMobileMenu,
   initCmdTriggerHint,
 } from './ui.js';
@@ -834,29 +833,30 @@ if (typeof document !== 'undefined') {
   renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
   setFooterYear();
 
-  /* UI behaviours */
-  initTheme();
-  initNavbar();
-  initMobileMenu();
-  initEmailObfuscation();
-  initBackToTop();
-  initCommandPalette();
-  initCmdTriggerHint();
-  initCursorGlow();
-  initTaglineReveal();
-
   /* Each disposable below is recorded so a single pagehide handler at the end
      of init can release every WebGL context, RAF loop, observer, and event
      listener in one go (avoids leaks when bfcache evicts the page or the user
-     reloads). The pointer/parallax enhancers return a teardown fn, the
+     reloads). The chrome inits (navbar / mobile menu / command palette /
+     back-to-top) return a teardown fn that removes their document/window-level
+     listeners + observers; the pointer/parallax enhancers do too, and the
      WebGL/Canvas instances expose destroy() — initLifecycleCleanup() handles
      both shapes. */
   const _disposables = [];
   const _pushTeardown = (fn) => { if (typeof fn === 'function') _disposables.push({ destroy: fn }); };
 
+  /* UI behaviours */
+  initTheme();
+  _pushTeardown(initNavbar());
+  _pushTeardown(initMobileMenu());
+  initEmailObfuscation();
+  _pushTeardown(initBackToTop());
+  _pushTeardown(initCommandPalette());
+  initCmdTriggerHint();
+  initTaglineReveal();
+
   /* Scroll reveals (must come after content injection) */
-  initScrollReveal();
-  initCounters();
+  _pushTeardown(initScrollReveal());
+  _pushTeardown(initCounters());
 
   /* Scroll-driven effects: start immediately (lightweight, needed at any scroll pos) */
   _pushTeardown(initScroll3D());
@@ -873,8 +873,8 @@ if (typeof document !== 'undefined') {
   });
 
   /* CV timeline and skill bars */
-  initTimelineScroll3D();
-  initSkillBars();
+  _pushTeardown(initTimelineScroll3D());
+  _pushTeardown(initSkillBars());
 
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
