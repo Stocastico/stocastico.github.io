@@ -855,43 +855,81 @@ if (typeof document !== 'undefined') {
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();
 
+  /* ── Hero background canvases ──────────────────────────────────────────
+     Both the WebGL noise gradient and the Canvas2D neural net bake their
+     palette colours in at construction (the shader source / gradient stops).
+     They are therefore built through small factory closures so a theme switch
+     can tear the instance down and rebuild it with the now-active palette. */
+  const noiseCanvas  = document.getElementById('noise-canvas');
+  const neuralCanvas = document.getElementById('neural-canvas');
+  let noiseInstance  = null;
+  let neuralInstance = null;
+  let neuralStarted  = false;
+
   /* Noise gradient — raw WebGL, runs on devices that support it */
-  const noiseCanvas = document.getElementById('noise-canvas');
-  if (noiseCanvas && !prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
-    _disposables.push(new NoiseGradient(noiseCanvas));
-  } else if (noiseCanvas) {
-    noiseCanvas.style.display = 'none';
-  }
+  const buildNoise = () => {
+    if (!noiseCanvas) return;
+    if (!prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
+      noiseCanvas.style.display = '';
+      noiseInstance = new NoiseGradient(noiseCanvas);
+      _disposables.push(noiseInstance);
+    } else {
+      noiseCanvas.style.display = 'none';
+    }
+  };
+  buildNoise();
 
   /* Canvas2D neural-network hero background (no Three.js — see neural-net.js).
      Dynamically imported and deferred until the first user interaction
      (mousemove / scroll / touchstart) so it stays off the critical path on
      load; the noise gradient fills the hero meanwhile. On reduced-motion the
      canvas is hidden entirely. */
-  const canvas = document.getElementById('neural-canvas');
-  if (canvas) {
+  const buildNeural = () => {
+    if (!neuralCanvas || prefersReducedMotion()) return;
+    import('./neural-net.js').then(({ NeuralNetwork2D }) => {
+      /* Fade the canvas in once the first frame has painted (see the
+         #neural-canvas opacity transition in css/styles.css), so the
+         network materialises gently instead of popping in fully-formed. */
+      const reveal = () => neuralCanvas.classList.add('is-visible');
+      neuralInstance = new NeuralNetwork2D(neuralCanvas, reveal);
+      _disposables.push(neuralInstance);
+    });
+  };
+
+  if (neuralCanvas) {
     if (prefersReducedMotion()) {
-      canvas.style.display = 'none';
+      neuralCanvas.style.display = 'none';
     } else {
-      let started = false;
       const startNeural = () => {
-        if (started) return;
-        started = true;
+        if (neuralStarted) return;
+        neuralStarted = true;
         ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
           window.removeEventListener(evt, startNeural));
-        import('./neural-net.js').then(({ NeuralNetwork2D }) => {
-          /* Fade the canvas in once the first frame has painted (see the
-             #neural-canvas opacity transition in css/styles.css), so the
-             network materialises gently instead of popping in fully-formed
-             the instant the chunk lands. */
-          const reveal = () => canvas.classList.add('is-visible');
-          _disposables.push(new NeuralNetwork2D(canvas, reveal));
-        });
+        buildNeural();
       };
       ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
         window.addEventListener(evt, startNeural, { passive: true, once: true }));
     }
   }
+
+  /* Recolour the colour-baked hero canvases on a theme switch — destroy the
+     old instances and rebuild with the active palette (getTheme() inside each
+     module now resolves dark/light). Only rebuild the neural net if it had
+     already started, so we never pull its chunk early. */
+  const onThemeChange = () => {
+    if (noiseInstance) {
+      try { noiseInstance.destroy(); } catch (_) { /* ignore */ }
+      noiseInstance = null;
+      buildNoise();
+    }
+    if (neuralStarted && neuralInstance) {
+      try { neuralInstance.destroy(); } catch (_) { /* ignore */ }
+      neuralInstance = null;
+      buildNeural();
+    }
+  };
+  window.addEventListener('themechange', onThemeChange);
+  _pushTeardown(() => window.removeEventListener('themechange', onThemeChange));
 
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
      canvas is about to enter the viewport. The maps live in the #places
@@ -914,32 +952,58 @@ if (typeof document !== 'undefined') {
     io.observe(canvas);
   };
 
-  /* Three.js Globe — geocode any entries missing lat/lon, then build */
+  /* Three.js Globe — geocode any entries missing lat/lon, then build. Built
+     through a closure so a theme switch can rebuild it with the active palette
+     (globe.js resolves colours from getTheme() per instance). */
   const globeCanvas = document.getElementById('globe-canvas');
-  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+  let globeInstance = null;
+  const buildGlobe = () => {
     /* Dynamically imported (Three.js) and only when the globe nears the
        viewport — so Three.js downloads lazily, on scroll, not on load. */
-    _lazyOnViewport(globeCanvas, () => {
-      import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) => {
-        geocodeLocations(LOCATIONS).then(() => {
-          const inst = (prefersReducedMotion() || !hasWebGLSupport())
-            ? new GlobeFallback2D(globeCanvas)
-            : new Globe3D(globeCanvas);
-          _disposables.push(inst);
-          /* Render the SR-accessible alternative list once the location data
-             is final (i.e. all geocoding has resolved). */
-          const a11yList = document.getElementById('globe-a11y-list');
-          if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
-        });
+    import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) => {
+      geocodeLocations(LOCATIONS).then(() => {
+        globeInstance = (prefersReducedMotion() || !hasWebGLSupport())
+          ? new GlobeFallback2D(globeCanvas)
+          : new Globe3D(globeCanvas);
+        _disposables.push(globeInstance);
+        /* Render the SR-accessible alternative list once the location data
+           is final (i.e. all geocoding has resolved). */
+        const a11yList = document.getElementById('globe-a11y-list');
+        if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
       });
     });
+  };
+  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+    _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
   /* 2D Europe Map — Canvas-based representation of European locations */
   const europeCanvas = document.getElementById('europe-canvas');
+  let europeInstance = null;
+  const buildEurope = () => {
+    europeInstance = new EuropeMap2D(europeCanvas);
+    _disposables.push(europeInstance);
+  };
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
-    _lazyOnViewport(europeCanvas, () => _disposables.push(new EuropeMap2D(europeCanvas)));
+    _lazyOnViewport(europeCanvas, buildEurope);
   }
+
+  /* Recolour the travel-page maps on a theme switch — only if already built
+     (don't pull Three.js early). Rebuild reuses the same lazy builders. */
+  const onMapThemeChange = () => {
+    if (globeInstance) {
+      try { globeInstance.destroy?.(); } catch (_) { /* ignore */ }
+      globeInstance = null;
+      buildGlobe();
+    }
+    if (europeInstance) {
+      try { europeInstance.destroy?.(); } catch (_) { /* ignore */ }
+      europeInstance = null;
+      buildEurope();
+    }
+  };
+  window.addEventListener('themechange', onMapThemeChange);
+  _pushTeardown(() => window.removeEventListener('themechange', onMapThemeChange));
 
   /* UNESCO World Heritage accordion (travel page only) */
   const unescoAccordion = document.getElementById('unesco-accordion');

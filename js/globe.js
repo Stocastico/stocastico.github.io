@@ -14,7 +14,16 @@ import {
   hasWebGLSupport,
   getTopoJSON,
 } from './utils.js';
-import { THEME, int, rgba } from './theme.js';
+import { getTheme, int, rgba } from './theme.js';
+
+/* Active palette. The travel page hosts a single globe instance at a time, so
+   the resolved theme is held in this module-level binding (named THEME so the
+   render code reads it unchanged) and refreshed at each construction. A theme
+   switch rebuilds the globe (js/main.js), which re-runs refreshActiveTheme().
+   The static *.PIN_COLORS / TT_COLOR below keep their load-time (dark) values
+   for back-compat; instances recompute their own colours from the live THEME. */
+let THEME = getTheme();
+function refreshActiveTheme() { THEME = getTheme(); }
 
 /* THREE bindings — declared without an initial value; the onChange callback
    fires immediately on registration with the active THREE namespace and again
@@ -188,6 +197,22 @@ export class Globe3D {
       console.warn('Globe3D: data/locations.js not loaded — globe will not render.');
       return;
     }
+
+    /* Resolve the active palette for this instance (dark/light). */
+    refreshActiveTheme();
+    this.PIN_COLORS = {
+      lived:    int(THEME.pins.lived),
+      current:  int(THEME.pins.current),
+      worktrip: int(THEME.pins.worktrip),
+      holiday:  int(THEME.pins.holiday),
+    };
+    this.TT_COLOR = {
+      lived:    THEME.pins.lived,
+      current:  THEME.pins.current,
+      worktrip: THEME.pins.worktrip,
+      holiday:  THEME.pins.holiday,
+      trip:     THEME.text,
+    };
 
     this.canvas = canvasEl;
     this.parent = canvasEl.parentElement;
@@ -649,7 +674,7 @@ export class Globe3D {
         return true;
       })
       .forEach(loc => {
-      const hex = Globe3D.PIN_COLORS[loc.type] || 0xffffff;
+      const hex = this.PIN_COLORS[loc.type] || 0xffffff;
       const color = new Color(hex);
       const pos = this._ll(loc.lat, loc.lon, 1.008);
       const surf = this._ll(loc.lat, loc.lon, 1.001);
@@ -950,7 +975,7 @@ export class Globe3D {
         const { name, info, type } = hit.userData;
         if (this.tooltip) {
           this._ttType.textContent = Globe3D.TT_LABEL[type] || type;
-          this._ttType.style.color = Globe3D.TT_COLOR[type] || THEME.text;
+          this._ttType.style.color = this.TT_COLOR[type] || THEME.text;
           this._ttName.textContent = name;
           this._ttInfo.textContent = '';
           let tx = this._mpos.x + 18, ty = this._mpos.y - 14;
@@ -1043,6 +1068,14 @@ export class GlobeFallback2D {
   };
 
   constructor(canvasEl) {
+    /* Resolve the active palette for this instance (dark/light). */
+    refreshActiveTheme();
+    this.PIN_COLORS = {
+      lived:    THEME.pins.lived,
+      current:  THEME.pins.current,
+      worktrip: THEME.pins.worktrip,
+      holiday:  THEME.pins.holiday,
+    };
     this.canvas = canvasEl;
     this.parent = canvasEl.parentElement;
     this.ctx = canvasEl.getContext('2d', { alpha: true });
@@ -1181,7 +1214,7 @@ export class GlobeFallback2D {
     this._points.forEach((pt) => {
       const p = this._project(pt.lat, pt.lon);
       if (p.z <= 0.02) return;
-      const col = GlobeFallback2D.PIN_COLORS[pt.type] || THEME.text;
+      const col = this.PIN_COLORS[pt.type] || THEME.text;
       const rr = (pt.type === 'lived' || pt.type === 'current') ? 2.9 : 2.2;
       ctx.fillStyle = col;
       ctx.globalAlpha = Math.max(0.22, p.z);

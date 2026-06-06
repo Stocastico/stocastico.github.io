@@ -5,9 +5,7 @@ need the audit context.
 
 ## Future ideas
 
-- **Light theme + toggle.** The theme pipeline already supports multiple
-  palettes, but the site is hard-locked to `data-theme="dark"`. Add a light
-  palette and an OS-preference-aware toggle (`prefers-color-scheme`).
+_(none open right now)_
 
 ## Decisions (reviewed, deliberately not changed)
 

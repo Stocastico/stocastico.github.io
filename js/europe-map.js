@@ -5,7 +5,14 @@
    Uses Canvas2D rendering with neon aesthetic matching the 3D globe
    ============================================================ */
 
-import { THEME, rgba } from './theme.js';
+import { getTheme, rgba } from './theme.js';
+
+/* Active palette — single map instance per page; refreshed at construction so
+   a theme switch (which rebuilds the map via js/main.js) recolours it. Named
+   THEME so the render code reads it unchanged. The static PIN_COLORS keeps its
+   load-time value for back-compat; instances recompute from the live THEME. */
+let THEME = getTheme();
+function refreshActiveTheme() { THEME = getTheme(); }
 
 export class EuropeMap2D {
   /* Colour scheme matches Globe3D — semantic pins, re-tinted per palette */
@@ -24,11 +31,20 @@ export class EuropeMap2D {
       return;
     }
 
+    /* Resolve the active palette for this instance (dark/light). */
+    refreshActiveTheme();
+    this.PIN_COLORS = {
+      lived:    THEME.pins.lived,
+      current:  THEME.pins.current,
+      worktrip: THEME.pins.worktrip,
+      holiday:  THEME.pins.holiday,
+    };
+
     this.canvas = canvasEl;
     this.parent = canvasEl.parentElement;
     this.tooltip = document.getElementById('europe-tooltip');
     this.ctx = this.canvas.getContext('2d');
-    
+
     this.mouse = { x: -9, y: -9 };
     this._mouseOver = false;
     this._hoveredPin = null;
@@ -579,7 +595,7 @@ export class EuropeMap2D {
 
   _drawPin(pin, isHovered) {
     const ctx = this.ctx;
-    const color = EuropeMap2D.PIN_COLORS[pin.type] || THEME.text;
+    const color = this.PIN_COLORS[pin.type] || THEME.text;
     const isLarge = pin.type === 'lived' || pin.type === 'current';
     const size = isHovered ? (isLarge ? 2.8 : 2.2) : EuropeMap2D.PIN_SIZE[pin.type];
 

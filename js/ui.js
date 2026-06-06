@@ -10,6 +10,7 @@
    DOMContentLoaded orchestration stay in js/main.js.
    ═══════════════════════════════════════════════════════════ */
 import { prefersReducedMotion, escapeHtml, rafThrottle } from './utils.js';
+import { THEME, THEME_LIGHT } from './theme.js';
 
 /* ═══════════════════════════════════════════════════════════
    ANIMATED STAT COUNTERS
@@ -52,10 +53,68 @@ export function animateCounter(el, target) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   THEME (fixed dark mode — switching intentionally disabled)
+   THEME — dark by default, light opt-in
+
+   The site is dark by default regardless of OS preference. Light is opt-in via
+   the navbar toggle, which pins data-theme="light", persists the choice in
+   localStorage, and is re-applied before first paint by the <head> bootstrap.
+   Toggling flips the resolved theme, updates <meta theme-color>, and fires a
+   `themechange` event so js/main.js can rebuild the colour-baked hero canvases.
    ═══════════════════════════════════════════════════════════ */
+export const THEME_STORAGE_KEY = 'theme';
+
+/* The theme actually in effect right now: light only when explicitly pinned;
+   everything else (no pin / pinned dark / no DOM) is dark. */
+export function resolvedTheme() {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    if (document.documentElement.getAttribute('data-theme') === 'light') return 'light';
+  }
+  return 'dark';
+}
+
+/* Point the browser-chrome <meta theme-color> at the active palette's colour. */
+function syncThemeColorMeta(theme) {
+  if (typeof document === 'undefined') return;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  meta.setAttribute('content', theme === 'light' ? THEME_LIGHT.themeColor : THEME.themeColor);
+}
+
+/* Reflect the resolved theme on the toggle button (the icon swap is pure CSS;
+   here we just keep the accessible label pointing at the *action*). */
+function syncToggleButton(btn, theme) {
+  if (!btn) return;
+  const next = theme === 'dark' ? 'light' : 'dark';
+  btn.setAttribute('aria-label', `Switch to ${next} theme`);
+  btn.setAttribute('title', `Switch to ${next} theme`);
+}
+
+function broadcastThemeChange(theme) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  const Evt = typeof CustomEvent === 'function' ? CustomEvent : null;
+  const event = Evt ? new Evt('themechange', { detail: { theme } }) : { type: 'themechange', detail: { theme } };
+  window.dispatchEvent(event);
+}
+
 export function initTheme() {
-  /* Theme switching intentionally disabled: dark mode is fixed. */
+  if (typeof document === 'undefined') return;
+
+  const btn = document.getElementById('theme-toggle');
+
+  /* Initial sync — the bootstrap script already applied any stored pin. */
+  syncThemeColorMeta(resolvedTheme());
+  syncToggleButton(btn, resolvedTheme());
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const next = resolvedTheme() === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (_) { /* private mode */ }
+      syncThemeColorMeta(next);
+      syncToggleButton(btn, next);
+      broadcastThemeChange(next);
+    });
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
