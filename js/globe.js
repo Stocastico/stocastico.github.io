@@ -973,7 +973,10 @@ export class Globe3D {
           this.canvas.style.cursor = 'pointer';
         }
         const { name, info, type } = hit.userData;
-        if (this.tooltip) {
+        /* Guard the cached child refs: if the tooltip markup is ever altered
+           (CSS reset, external DOM surgery) these can be null, and writing
+           .textContent on null would throw every frame inside the RAF loop. */
+        if (this.tooltip && this._ttType && this._ttName && this._ttInfo) {
           this._ttType.textContent = Globe3D.TT_LABEL[type] || type;
           this._ttType.style.color = this.TT_COLOR[type] || THEME.text;
           this._ttName.textContent = name;

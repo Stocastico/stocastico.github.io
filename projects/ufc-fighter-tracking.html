@@ -22,8 +22,8 @@
   <meta property="og:title"       content="UFC Fighter Tracking: Multi-Modal Sensing | Stefano Masneri" />
   <meta property="og:description" content="End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017." />
   <meta property="og:image"       content="https://stefanomasneri.com/img/projects/ufc-octagon-bg.webp" />
-  <meta property="og:image:width"  content="1536" />
-  <meta property="og:image:height" content="1024" />
+  <meta property="og:image:width"  content="1280" />
+  <meta property="og:image:height" content="853" />
   <meta property="og:image:alt"   content="UFC Fighter Tracking: Multi-Modal Sensing in the Octagon" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="UFC Fighter Tracking: Multi-Modal Sensing | Stefano Masneri" />
@@ -157,7 +157,7 @@ This is one of the projects I tell people about when they ask what the most fun 
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 </p>
 <figure>
-  <img src="../img/projects/ufc-octagon-overhead.webp" alt="UFC octagon from above, camera coverage" width="1600" height="900" loading="lazy" />
+  <img src="../img/projects/ufc-octagon-overhead.webp" alt="UFC octagon from above, camera coverage" width="1280" height="720" loading="lazy" />
 </figure>
 <h2>What We Measured</h2>
 <p>
@@ -193,7 +193,7 @@ We fused the two streams in real time:
   <li>A <strong>fusion layer</strong> matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide <em>hit vs. miss</em> and to commit a final classification of the punch type.</li>
 </ul>
 <figure>
-  <img src="../img/projects/ufc-octagon-bg.webp" alt="Hardware setup and data processing" width="1536" height="1024" loading="lazy" />
+  <img src="../img/projects/ufc-octagon-bg.webp" alt="Hardware setup and data processing" width="1280" height="853" loading="lazy" />
 </figure>
 <h2>Cloud and Delivery</h2>
 <p>
