@@ -5,10 +5,7 @@ need the audit context.
 
 ## Future ideas
 
-- Optional polish (low priority, deliberately left for now): per-page footer
-  links to LinkedIn/GitHub/Scholar on standalone pages; making the title
-  role-suffix fully uniform (cv / projects / publications carry a role, others
-  don't — treated as page-appropriate, not drift).
+_(none open right now)_
 
 ## Decisions (reviewed, deliberately not changed)
 
