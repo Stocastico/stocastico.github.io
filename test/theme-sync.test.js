@@ -22,7 +22,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { parseYaml } = require('../scripts/lib/yaml');
-const { rewriteHtml, rewriteFaviconSvg, tameAccent } = require('../scripts/generate-theme.js');
+const { rewriteHtml, rewriteFaviconSvg, rewriteManifest, tameAccent } = require('../scripts/generate-theme.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -66,4 +66,13 @@ test('theme-sync: public/favicon.svg matches the active palette', () => {
   const text = fs.readFileSync(svgPath, 'utf8');
   assert.equal(rewriteFaviconSvg(text, palette), text,
     'public/favicon.svg is out of sync — run `npm run generate-theme`.');
+});
+
+test('theme-sync: public/manifest.webmanifest matches the active palette', () => {
+  const manifestPath = path.join(ROOT, 'public/manifest.webmanifest');
+  if (!fs.existsSync(manifestPath)) return; // tolerated — covered elsewhere if absent
+  const text = fs.readFileSync(manifestPath, 'utf8');
+  assert.equal(rewriteManifest(text, palette), text,
+    'public/manifest.webmanifest theme_color/background_color are out of sync — ' +
+    'run `npm run generate-theme`.');
 });

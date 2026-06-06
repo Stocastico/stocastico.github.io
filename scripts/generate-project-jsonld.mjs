@@ -76,8 +76,10 @@ function parsePage(html) {
     if (m) year = `${m[1]}-01-01`;
   }
 
-  /* Strip the " — Stefano Masneri" suffix from the headline. */
-  const headline = title ? title.replace(/\s+—\s+Stefano Masneri\s*$/, '') : null;
+  /* Strip the " — Stefano Masneri" suffix from the headline. Tolerate either
+     the em-dash or pipe separator so a stray "|" in a page <title> can't leak
+     the site suffix into the structured-data headline/breadcrumb. */
+  const headline = title ? title.replace(/\s+[—|]\s+Stefano Masneri\s*$/, '') : null;
 
   return { canonical, title, headline, description, ogImage, yearText, year };
 }
