@@ -71,7 +71,7 @@ function publicationsJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     url: `${SITE_URL}/publications.html`,
-    name: 'Publications | Stefano Masneri, AI Engineer',
+    name: 'Publications | Stefano Masneri',
     description: 'Full list of peer-reviewed publications by Stefano Masneri.',
     author: { '@type': 'Person', name: 'Stefano Masneri', url: `${SITE_URL}/` },
     mainEntity: { '@type': 'ItemList', itemListElement },

@@ -314,40 +314,23 @@ a {
   opacity: var(--o-hover);
 }
 
-/* Hallmark: 8-state coverage helpers for interactive elements */
-.btn:hover,
-.btn.is-hover {
+.btn:hover {
   opacity: var(--o-hover);
   transform: translateY(-1px);
 }
 
-.btn:focus-visible,
-.btn.is-focus {
+.btn:focus-visible {
   outline: 2px solid var(--accent2);
   outline-offset: 3px;
 }
 
-.btn:active,
-.btn.is-active {
+.btn:active {
   transform: translateY(1px);
 }
 
-.btn[disabled],
-.btn.is-disabled {
+.btn[disabled] {
   opacity: 0.5;
   pointer-events: none;
-}
-
-.btn[data-state="loading"] {
-  cursor: progress;
-}
-
-.btn[data-state="error"] {
-  box-shadow: 0 0 0 4px rgba(200, 80, 50, 0.08);
-}
-
-.btn[data-state="success"] {
-  box-shadow: 0 0 0 4px rgba(80, 200, 120, 0.06);
 }
 
 a:focus-visible,
@@ -2245,6 +2228,20 @@ h3 {
 
 .site-footer a:hover {
   color: var(--accent2);
+}
+
+/* Profile links above the copyright line — a one-click path to socials from
+   any standalone page (the homepage also has them in its Contact section). */
+.footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 0.85rem;
+}
+
+.footer-social a {
+  font-weight: 500;
 }
 
 /* ─── 16. Scroll Reveal Animations ─────────────────────── */

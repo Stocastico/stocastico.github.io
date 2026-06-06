@@ -103,20 +103,17 @@ test('css: project card overlay is darkest at the top to match top-aligned conte
     '.project-card__overlay gradient should be darkest at the top (to bottom)');
 });
 
-test('css: button state helper selectors are present', () => {
+test('css: button interactive-state selectors are present', () => {
   const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  /* The real, used states — hover/focus/active/disabled. (The previous
+     speculative `.is-*` mirror classes + `[data-state]` helpers were unused
+     dead code and were removed; the JS never sets them.) */
   const selectors = [
     '.btn:hover',
-    '.btn.is-hover',
     '.btn:focus-visible',
-    '.btn.is-focus',
     '.btn:active',
-    '.btn.is-active',
     '.btn[disabled]',
-    '.btn.is-disabled',
-    '.btn[data-state="loading"]',
-    '.btn[data-state="error"]',
   ];
   const missing = selectors.filter(s => !css.includes(s));
-  assert.deepEqual(missing, [], `Missing button state helper selectors:\n  ${missing.join('\n  ')}`);
+  assert.deepEqual(missing, [], `Missing button state selectors:\n  ${missing.join('\n  ')}`);
 });
