@@ -13,6 +13,7 @@
        projects/*.html     nav-logo <linearGradient> stops
      • scripts/new-project.js — the same three things in its HTML template
      • public/favicon.svg
+     • public/manifest.webmanifest — theme_color / background_color (PWA chrome)
 
    Usage:
      node scripts/generate-theme.js [options]
@@ -38,6 +39,7 @@ const DEFAULT_INPUT = path.join(ROOT, 'data', 'palettes.yaml');
 const CSS_FILE      = path.join(ROOT, 'css', 'styles.css');
 const THEME_FILE    = path.join(ROOT, 'js', 'theme.js');
 const FAVICON_SVG   = path.join(ROOT, 'public', 'favicon.svg');
+const MANIFEST      = path.join(ROOT, 'public', 'manifest.webmanifest');
 const NEW_PROJECT   = path.join(ROOT, 'scripts', 'new-project.js');
 
 const CSS_START = '/* @theme-generated-start';
@@ -500,6 +502,15 @@ function rewriteFaviconSvg(text, p) {
     .replace(/(<text\b[^>]*\bfill=")#[0-9a-fA-F]{6}(")/, `$1${p.faviconFg}$2`);
 }
 
+/** public/manifest.webmanifest — PWA chrome colours. theme_color drives the
+ *  Android status/task-switcher bar (mirrors the HTML <meta theme-color>);
+ *  background_color is the install splash screen, so it tracks the page bg. */
+function rewriteManifest(text, p) {
+  return text
+    .replace(/("theme_color"\s*:\s*")#[0-9a-fA-F]{6}(")/, `$1${p.themeColor}$2`)
+    .replace(/("background_color"\s*:\s*")#[0-9a-fA-F]{6}(")/, `$1${p.bg}$2`);
+}
+
 function listHtmlFiles() {
   const files = [];
   for (const entry of fs.readdirSync(ROOT)) {
@@ -567,7 +578,7 @@ function main(argv) {
     console.log(`── css/styles.css light override block ${'─'.repeat(24)}`);
     console.log(cssLight);
     console.log(`\n── would rewrite ${'─'.repeat(45)}`);
-    [...htmlFiles, NEW_PROJECT, FAVICON_SVG].forEach(f => console.log(`  • ${path.relative(ROOT, f)}`));
+    [...htmlFiles, NEW_PROJECT, FAVICON_SVG, MANIFEST].forEach(f => console.log(`  • ${path.relative(ROOT, f)}`));
     return;
   }
 
@@ -607,6 +618,16 @@ function main(argv) {
     }
   }
 
+  /* public/manifest.webmanifest — PWA theme/background colours */
+  if (fs.existsSync(MANIFEST)) {
+    const src = fs.readFileSync(MANIFEST, 'utf8');
+    const next = rewriteManifest(src, p);
+    if (next !== src) {
+      fs.writeFileSync(MANIFEST, next, 'utf8');
+      written.push(path.relative(ROOT, MANIFEST));
+    }
+  }
+
   console.log(`✓ Applied palette "${p.name}" (${id}) — ${written.length} file(s) updated:`);
   written.forEach(f => console.log(`    ${f}`));
   console.log(`\n  Raster favicons are not regenerated automatically — run:`);
@@ -621,6 +642,6 @@ module.exports = {
   parseArgs, validate, validatePaletteBody,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
   cssVarLines, generateCssBlock, generateCssLightBlock, generateThemeJs, themeObjectBody,
-  rewriteHtml, rewriteFaviconSvg,
+  rewriteHtml, rewriteFaviconSvg, rewriteManifest,
   spliceCssBlock, spliceMarked,
 };

@@ -13,6 +13,33 @@ import { prefersReducedMotion, escapeHtml, rafThrottle } from './utils.js';
 import { THEME, THEME_LIGHT } from './theme.js';
 
 /* ═══════════════════════════════════════════════════════════
+   LISTENER / OBSERVER BOOKKEEPING
+
+   The page-teardown system in js/main.js (pagehide → destroy()) needs every
+   document/window-level listener and every observer registered here to be
+   releasable, otherwise they survive into the bfcache and leak across
+   navigations. Each init below builds a `bag`, registers through it, and
+   returns `bag.teardown` so main.js can dispose it like any other disposable.
+
+   `on()` mirrors the existing guards in this file (no-op when the target has
+   no addEventListener — the hand-rolled test mocks rely on that), and uses
+   optional-chained removeEventListener so teardown is safe on mocks that only
+   implement half the EventTarget surface. */
+function listenerBag() {
+  const cleanups = [];
+  return {
+    on(target, type, fn, opts) {
+      if (!target || typeof target.addEventListener !== 'function') return;
+      target.addEventListener(type, fn, opts);
+      cleanups.push(() => { try { target.removeEventListener?.(type, fn, opts); } catch (_) { /* mock / detached */ } });
+    },
+    /* Register an arbitrary cleanup thunk (e.g. observer.disconnect()). */
+    add(fn) { if (typeof fn === 'function') cleanups.push(fn); },
+    teardown() { while (cleanups.length) { const c = cleanups.pop(); try { c(); } catch (_) { /* page going away */ } } },
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
    ANIMATED STAT COUNTERS
    ═══════════════════════════════════════════════════════════ */
 export function initCounters() {
@@ -35,6 +62,8 @@ export function initCounters() {
   }, { threshold: 0.6 });
 
   counters.forEach(el => observer.observe(el));
+
+  return () => observer.disconnect();
 }
 
 export function animateCounter(el, target) {
@@ -124,6 +153,7 @@ export function initNavbar() {
   const nav = document.getElementById('navbar');
   if (!nav) return;
 
+  const bag = listenerBag();
   const progressBar = document.getElementById('reading-progress');
 
   /* ── Project page: highlight "Projects" nav link ────────── */
@@ -161,9 +191,10 @@ export function initNavbar() {
       });
     }, { rootMargin: '-35% 0px -65% 0px' });
     targets.forEach((t) => observer.observe(t));
+    bag.add(() => observer.disconnect());
   } else if (targets.length) {
     /* Fallback for browsers without IntersectionObserver */
-    window.addEventListener('scroll', rafThrottle(() => {
+    bag.on(window, 'scroll', rafThrottle(() => {
       const checkpoint = window.scrollY + (window.innerHeight * 0.35);
       targets.forEach((section) => {
         if (checkpoint >= section.offsetTop) activeId = section.id;
@@ -186,12 +217,14 @@ export function initNavbar() {
   _recomputeDocHeight();
 
   if (typeof window !== 'undefined') {
-    window.addEventListener('resize', _recomputeDocHeight, { passive: true });
-    window.addEventListener('load', _recomputeDocHeight, { passive: true });
+    bag.on(window, 'resize', _recomputeDocHeight, { passive: true });
+    bag.on(window, 'load', _recomputeDocHeight, { passive: true });
   }
   if (typeof ResizeObserver !== 'undefined' && document?.body) {
     /* Catch dynamic content height changes (image loads, late renders) */
-    new ResizeObserver(_recomputeDocHeight).observe(document.body);
+    const ro = new ResizeObserver(_recomputeDocHeight);
+    ro.observe(document.body);
+    bag.add(() => ro.disconnect());
   }
 
   let _lastPct = -1;
@@ -219,10 +252,12 @@ export function initNavbar() {
     updateReadingProgress();
   });
 
-  window.addEventListener('scroll', onScroll, { passive: true });
+  bag.on(window, 'scroll', onScroll, { passive: true });
 
   setActiveLink();
   updateReadingProgress();
+
+  return bag.teardown;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -232,8 +267,9 @@ export function initBackToTop() {
   const btn = document.getElementById('back-to-top');
   if (!btn) return;
 
+  const bag = listenerBag();
   let _lastVisible = false;
-  window.addEventListener('scroll', rafThrottle(() => {
+  bag.on(window, 'scroll', rafThrottle(() => {
     const visible = window.scrollY > window.innerHeight * 0.6;
     if (visible !== _lastVisible) {
       _lastVisible = visible;
@@ -241,9 +277,11 @@ export function initBackToTop() {
     }
   }), { passive: true });
 
-  btn.addEventListener('click', () => {
+  bag.on(btn, 'click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  return bag.teardown;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -272,6 +310,8 @@ export function initCommandPalette() {
   const listEl   = document.getElementById('cmd-list');
   if (!overlay || !input || !listEl) return;
 
+  const bag = listenerBag();
+
   /* ── Command definitions ───────────────────────────────── */
   const SECTIONS = [
     { id: 'about',        label: 'About',        hint: 'Who I am' },
@@ -298,7 +338,20 @@ export function initCommandPalette() {
       hint: 'To clipboard',
       icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
       action() {
-        const email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
+        /* Prefer the revealed mailto: href, but fall back to decoding the
+           obfuscated contact card so "Copy email" works even before the user
+           has hovered/clicked the card to reveal it. */
+        let email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
+        if (!email) {
+          const card = document.querySelector('.contact-email-obfuscated');
+          if (card && typeof atob === 'function') {
+            try {
+              const user = atob(card.getAttribute('data-email-user') || '');
+              const domain = atob(card.getAttribute('data-email-domain') || '');
+              if (user && domain) email = `${user}@${domain}`;
+            } catch (_) { /* malformed data attrs — leave email empty */ }
+          }
+        }
         if (email && email !== 'your.email@example.com') {
           navigator.clipboard?.writeText(email).then(() => showToast('Email copied!')).catch(() => {});
         }
@@ -380,8 +433,8 @@ export function initCommandPalette() {
       <span class="cmd-item-label">${escapeHtml(item.label)}</span>
       <span class="cmd-item-hint">${escapeHtml(item.hint || '')}</span>
     `;
-    li.addEventListener('mouseenter', () => { setActive(i); });
-    li.addEventListener('click', () => { execute(item); });
+    bag.on(li, 'mouseenter', () => { setActive(i); });
+    bag.on(li, 'click', () => { execute(item); });
     listEl.appendChild(li);
     itemEls[i] = li;
   });
@@ -454,12 +507,12 @@ export function initCommandPalette() {
   }
 
   /* ── Filter on input ────────────────────────────────────── */
-  input.addEventListener('input', () => {
+  bag.on(input, 'input', () => {
     applyFilter(input.value.toLowerCase().trim());
   });
 
   /* ── Keyboard navigation ────────────────────────────────── */
-  input.addEventListener('keydown', (e) => {
+  bag.on(input, 'keydown', (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       moveActive(+1);
@@ -489,6 +542,9 @@ export function initCommandPalette() {
     const body = document.body;
     if (!body || !body.children) return;
     if (on) {
+      /* Guard against a double-open overwriting the snapshot — that would
+         strand the first batch permanently inert (they'd never be restored). */
+      if (_inertedEls.length) return;
       _inertedEls = [];
       for (const el of Array.from(body.children)) {
         if (el === overlay) continue;
@@ -532,21 +588,23 @@ export function initCommandPalette() {
   }
 
   /* Close on overlay click */
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  bag.on(overlay, 'click', (e) => { if (e.target === overlay) close(); });
 
   /* Nav hint chip opens the palette through the same open() path as ⌘K, so it
      gets the focus trap, background inert, and scroll-lock too (clicking the
      chip used to bypass all three). */
   const trigger = document.getElementById('cmd-trigger');
-  if (trigger) trigger.addEventListener('click', () => { if (overlay.hidden) open(); });
+  if (trigger) bag.on(trigger, 'click', () => { if (overlay.hidden) open(); });
 
   /* Global keyboard shortcut — ⌘K or Ctrl+K */
-  document.addEventListener('keydown', (e) => {
+  bag.on(document, 'keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
       overlay.hidden ? open() : close();
     }
   });
+
+  return bag.teardown;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -580,15 +638,6 @@ export function initTaglineReveal() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CURSOR GLOW — disabled for performance
-   The body::after radial gradient forced full-page repaints
-   on every mousemove. CSS rule also removed.
-   ═══════════════════════════════════════════════════════════ */
-export function initCursorGlow() {
-  /* intentionally empty — effect removed to save battery */
-}
-
-/* ═══════════════════════════════════════════════════════════
    MOBILE MENU TOGGLE
    ═══════════════════════════════════════════════════════════ */
 export function initMobileMenu() {
@@ -596,43 +645,53 @@ export function initMobileMenu() {
   const links = document.getElementById('nav-links');
   if (!toggle || !links) return;
 
+  const bag = listenerBag();
+
+  /* Tie the toggle to the menu it controls for assistive tech. */
+  if (typeof toggle.setAttribute === 'function') {
+    toggle.setAttribute('aria-controls', links.id || 'nav-links');
+  }
+
   const setMenuState = (open) => {
     toggle.classList.toggle('open', open);
     links.classList.toggle('open', open);
     document.body?.classList?.toggle('menu-open', open);
-    toggle.setAttribute('aria-expanded', open);
+    /* String() rather than relying on setAttribute's boolean→string coercion. */
+    toggle.setAttribute('aria-expanded', String(open));
   };
 
-  toggle.addEventListener('click', () => setMenuState(!toggle.classList.contains('open')));
+  bag.on(toggle, 'click', () => setMenuState(!toggle.classList.contains('open')));
 
   /* Close on link click */
   links.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => setMenuState(false));
+    bag.on(a, 'click', () => setMenuState(false));
   });
 
-  if (typeof document.addEventListener === 'function') {
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && toggle.classList.contains('open')) setMenuState(false);
+  /* document-level listeners — bag.on() no-ops when the (mock) document has no
+     addEventListener, matching the previous explicit guard. */
+  bag.on(document, 'keydown', (e) => {
+    if (e.key === 'Escape' && toggle.classList.contains('open')) setMenuState(false);
 
-      /* Focus trapping when mobile menu is open */
-      if (e.key === 'Tab' && toggle.classList.contains('open')) {
-        const focusable = [toggle, ...links.querySelectorAll('a')];
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey) {
-          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-        } else {
-          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-        }
+    /* Focus trapping when mobile menu is open */
+    if (e.key === 'Tab' && toggle.classList.contains('open')) {
+      const focusable = [toggle, ...links.querySelectorAll('a')];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
-    });
+    }
+  });
 
-    document.addEventListener('click', (e) => {
-      if (!toggle.classList.contains('open')) return;
-      if (toggle.contains?.(e.target) || links.contains?.(e.target)) return;
-      setMenuState(false);
-    });
-  }
+  bag.on(document, 'click', (e) => {
+    if (!toggle.classList.contains('open')) return;
+    if (toggle.contains?.(e.target) || links.contains?.(e.target)) return;
+    setMenuState(false);
+  });
+
+  return bag.teardown;
 }
 
 /* ═══════════════════════════════════════════════════════════

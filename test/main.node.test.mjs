@@ -293,15 +293,17 @@ test('initMobileMenu toggles classes and aria-expanded on click', () => {
   };
   try {
     initMobileMenu();
+    /* aria-controls ties the toggle to the menu it controls. */
+    assert.equal(toggle.attrs['aria-controls'], 'nav-links');
     toggleHandlers.click();
     assert.equal(toggle.classList.contains('open'), true);
     assert.equal(links.classList.contains('open'), true);
-    assert.equal(toggle.attrs['aria-expanded'], true);
+    assert.equal(toggle.attrs['aria-expanded'], 'true');
 
     linkHandlers[0]();
     assert.equal(toggle.classList.contains('open'), false);
     assert.equal(links.classList.contains('open'), false);
-    assert.equal(toggle.attrs['aria-expanded'], false);
+    assert.equal(toggle.attrs['aria-expanded'], 'false');
   } finally {
     global.document = prevDocument;
   }
@@ -2819,5 +2821,127 @@ test('initCommandPalette: opening makes background siblings inert and closing re
   } finally {
     global.document = prevDoc;
     global.requestAnimationFrame = prevRAF;
+  }
+});
+
+/* ─── Page-teardown / bfcache-leak regression tests ───────────
+   The chrome inits register document/window-level listeners and observers
+   that must be releasable on pagehide, or they survive into the bfcache and
+   leak across navigations. Each init must return a teardown fn that removes
+   them. (Mocks track add/remove so we can assert the round-trip.) */
+
+test('initNavbar returns a teardown that removes window listeners + disconnects observers', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const prevIO = global.IntersectionObserver;
+  const prevRO = global.ResizeObserver;
+  const nav = { classList: makeClassList() };
+  const section = { id: 'about', offsetTop: 0 };
+  const added = [];
+  const removed = [];
+  let ioDisconnected = 0;
+  let roDisconnected = 0;
+  global.IntersectionObserver = class { observe() {} unobserve() {} disconnect() { ioDisconnected++; } };
+  global.ResizeObserver = class { observe() {} disconnect() { roDisconnected++; } };
+  global.document = {
+    getElementById(id) { return id === 'navbar' ? nav : null; },
+    querySelectorAll(sel) {
+      return sel === '#nav-links a[href^="#"]'
+        ? [{ getAttribute(n) { return n === 'href' ? '#about' : null; }, setAttribute() {} }]
+        : [];
+    },
+    querySelector(sel) { return sel === '#about' ? section : null; },
+    documentElement: { scrollHeight: 2000 },
+    body: {},
+  };
+  global.window = {
+    scrollY: 0, innerHeight: 800,
+    IntersectionObserver: global.IntersectionObserver,
+    addEventListener(type) { added.push(type); },
+    removeEventListener(type) { removed.push(type); },
+  };
+  try {
+    const teardown = initNavbar();
+    assert.equal(typeof teardown, 'function', 'initNavbar must return a teardown fn');
+    assert.ok(added.includes('scroll'), 'registers a scroll listener');
+    teardown();
+    assert.ok(removed.includes('scroll'), 'teardown removes the scroll listener');
+    assert.equal(ioDisconnected, 1, 'teardown disconnects the section IntersectionObserver');
+    assert.equal(roDisconnected, 1, 'teardown disconnects the body ResizeObserver');
+  } finally {
+    global.document = prevDoc; global.window = prevWin;
+    global.IntersectionObserver = prevIO; global.ResizeObserver = prevRO;
+  }
+});
+
+test('initMobileMenu returns a teardown that removes its document listeners', () => {
+  const prevDoc = global.document;
+  const toggle = {
+    classList: makeClassList(), attrs: {},
+    addEventListener() {}, removeEventListener() {},
+    setAttribute(n, v) { this.attrs[n] = v; },
+  };
+  const links = { id: 'nav-links', classList: makeClassList(), querySelectorAll() { return []; } };
+  const docAdded = [];
+  const docRemoved = [];
+  global.document = {
+    getElementById(id) { return id === 'nav-toggle' ? toggle : id === 'nav-links' ? links : null; },
+    addEventListener(type) { docAdded.push(type); },
+    removeEventListener(type) { docRemoved.push(type); },
+    body: { classList: makeClassList() },
+  };
+  try {
+    const teardown = initMobileMenu();
+    assert.equal(typeof teardown, 'function', 'initMobileMenu must return a teardown fn');
+    assert.ok(docAdded.includes('keydown') && docAdded.includes('click'),
+      'registers document keydown + click');
+    teardown();
+    assert.ok(docRemoved.includes('keydown') && docRemoved.includes('click'),
+      'teardown removes both document listeners');
+  } finally {
+    global.document = prevDoc;
+  }
+});
+
+test('initBackToTop returns a teardown that removes the scroll listener', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const btn = { classList: makeClassList(), addEventListener() {}, removeEventListener() {} };
+  const added = [];
+  const removed = [];
+  global.document = { getElementById(id) { return id === 'back-to-top' ? btn : null; } };
+  global.window = {
+    scrollY: 0, innerHeight: 1000,
+    addEventListener(type) { added.push(type); },
+    removeEventListener(type) { removed.push(type); },
+    scrollTo() {},
+  };
+  try {
+    const teardown = initBackToTop();
+    assert.equal(typeof teardown, 'function', 'initBackToTop must return a teardown fn');
+    assert.ok(added.includes('scroll'), 'registers a scroll listener');
+    teardown();
+    assert.ok(removed.includes('scroll'), 'teardown removes the scroll listener');
+  } finally {
+    global.document = prevDoc; global.window = prevWin;
+  }
+});
+
+test('initCommandPalette returns a teardown that removes the global ⌘K keydown', () => {
+  const prevDoc = global.document;
+  const { doc } = makeCmdPaletteDom();
+  const added = [];
+  const removed = [];
+  doc.addEventListener = (type) => { added.push(type); };
+  doc.removeEventListener = (type) => { removed.push(type); };
+  global.document = doc;
+  try {
+    const teardown = initCommandPalette();
+    assert.equal(typeof teardown, 'function', 'initCommandPalette must return a teardown fn');
+    assert.ok(added.includes('keydown'), 'registers the global ⌘K/Ctrl+K keydown');
+    teardown();
+    assert.ok(removed.includes('keydown'), 'teardown removes the global keydown');
+  } finally {
+    global.document = prevDoc;
   }
 });

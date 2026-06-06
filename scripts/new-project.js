@@ -466,7 +466,7 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
       </button>
       <ul class="nav-links" id="nav-links">
         <li><a href="../index.html#about">About</a></li>
-        <li><a href="../index.html#research">Work</a></li>
+        <li><a href="../index.html#skills">Expertise</a></li>
         <li><a href="../projects.html">Projects</a></li>
         <li><a href="../travel.html">Travel</a></li>
         <li><a href="../links.html">Links</a></li>
@@ -500,7 +500,12 @@ ${linksHtml}
 
   <footer class="site-footer">
     <div class="container">
-      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Built with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>, <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &amp; <a href="https://github.com/Stocastico/stocastico.github.io" target="_blank" rel="noopener">GitHub</a> in San Sebasti&aacute;n</p>
+      <nav class="footer-social" aria-label="Profiles">
+        <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>
+        <a href="https://github.com/Stocastico" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Made with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebasti&aacute;n</p>
     </div>
   </footer>
 
