@@ -20,7 +20,7 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
 - **`travel.html`** — interactive 3-D globe (Three.js) + 2-D Canvas map of Europe + a UNESCO World Heritage accordion. The globe and map visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
 - **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
 - **`now.html`** — a [now-now-now.com](https://nownownow.com/about)-style page describing current focus (work, reading, hobbies). Linked from the About section and the command palette; built on the shared `.post` prose layout.
-- **`404.html`** — custom not-found page with the standard navbar.
+- **`404.html`** — custom not-found page sharing the standard navbar, mobile menu, theme toggle and skip-link (loads `js/main.js` so they work).
 
 Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress bar, 3-D tilt-and-gloss cards, a back-to-top button, cross-document View Transitions, and full `prefers-reduced-motion` support throughout.
 
@@ -246,8 +246,9 @@ Reads `data/palettes.yaml`, takes the `active` palette, and regenerates every pl
 - `js/theme.js` — the ESM module the WebGL / Canvas2D modules and GLSL shaders import
 - `<meta theme-color>`, the inline data-URI favicon, and the nav-logo gradient in every `*.html` page + the `scripts/new-project.js` template
 - `public/favicon.svg`
+- `public/manifest.webmanifest` — the PWA `theme_color` / `background_color` (so the install splash + Android chrome track the active palette)
 
-The accent family is **chroma-tamed** in OKLCH before it is written out (lightness and hue preserved), so accents read as refined rather than neon. The `theme-sync` test guards every HTML page against palette drift.
+The accent family is **chroma-tamed** in OKLCH before it is written out (lightness and hue preserved), so accents read as refined rather than neon. The `theme-sync` test guards every HTML page (plus `favicon.svg` and `manifest.webmanifest`) against palette drift.
 
 ```bash
 npm run generate-theme
@@ -541,13 +542,13 @@ caught in CI.
 
 ### Navigation
 
-The navbar contains: **About**, **Work** (the Research section), **Projects**, **Travel**, **Links**, and **Contact**. The CV and the **Now** page are accessible via the command palette (or by navigating directly to `cv.html` / `now.html`); the Now page is also linked from the About section. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
+The navbar contains: **About**, **Expertise** (the Skills section), **Projects**, **Travel**, **Links**, and **Contact**. The CV and the **Now** page are accessible via the command palette (or by navigating directly to `cv.html` / `now.html`); the Now page is also linked from the About section. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
 
 ### Pages
 
 | Page | Description |
 | ------ | ------------- |
-| `index.html` | Single-page application — Hero, About, Research, Skills, Publications, Projects, Places, Contact sections |
+| `index.html` | Single-page application — Hero, About, Expertise (Skills), Projects, Publications, Places, Contact sections |
 | `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
 | `publications.html` | Full publication list — all papers from `data/publications.js` |
 | `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
@@ -665,9 +666,9 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 | Homepage world map is a static inline SVG | No runtime projection or TopoJSON fetch on the home page |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
 | Cursor glow removed; hero orbs removed | Removes per-frame radial-gradient draws and large blurred animated elements |
-| Card-tilt rect cached per hover | Removes a layout read on every `mousemove` |
+| Card-tilt, globe and Europe-map bounding rects cached (invalidated on scroll/resize) | Removes a forced layout read on every `mousemove` while hovering/dragging |
 | Animated favicon replaced with static render | Removes per-frame Canvas2D draw in the background tab |
-| All WebGL/Canvas instances + pointer listeners torn down on `pagehide` | Releases GL contexts and avoids leaks on bfcache eviction |
+| All WebGL/Canvas instances, chrome inits (navbar / mobile menu / command palette / back-to-top) + observers torn down on `pagehide` | Releases GL contexts and removes every document/window listener + observer, avoiding leaks on bfcache eviction |
 
 ---
 
