@@ -42,6 +42,11 @@ const NEW_PROJECT   = path.join(ROOT, 'scripts', 'new-project.js');
 
 const CSS_START = '/* @theme-generated-start';
 const CSS_END   = '/* @theme-generated-end */';
+/* Second marked region — the light-theme override block. Lives outside :root
+   (it carries its own @media + [data-theme] selectors), so it gets its own
+   marker pair spliced independently of the dark :root block above. */
+const CSS_LIGHT_START = '/* @theme-generated-light-start';
+const CSS_LIGHT_END   = '/* @theme-generated-light-end */';
 
 /* Every flat #rrggbb key a palette must define. */
 const REQUIRED_KEYS = [
@@ -208,96 +213,158 @@ function validate(data, paletteId) {
     return errors;
   }
 
-  const checkHex = (obj, key, ctx) => {
-    if (obj[key] === undefined) { errors.push(`${ctx}.${key} is missing`); return; }
-    if (key === 'name') {
-      if (typeof obj[key] !== 'string' || !obj[key].trim()) errors.push(`${ctx}.${key} must be a non-empty string`);
-      return;
-    }
-    if (!isHex(obj[key])) errors.push(`${ctx}.${key} must be a #rrggbb hex string (got "${obj[key]}")`);
-  };
+  /* Validate the dark body, then its required light-theme counterpart. The
+     light variant is itself a full palette body (same keys), but it is a leaf —
+     it must NOT carry its own nested `light`, so we never recurse on it. */
+  validatePaletteBody(p, id, errors);
 
-  for (const k of REQUIRED_KEYS) checkHex(p, k, id);
-  if (typeof p.pins !== 'object' || p.pins === null) errors.push(`${id}.pins must be a mapping`);
-  else for (const k of REQUIRED_PINS) checkHex(p.pins, k, `${id}.pins`);
-  if (typeof p.globe !== 'object' || p.globe === null) errors.push(`${id}.globe must be a mapping`);
-  else for (const k of REQUIRED_GLOBE) checkHex(p.globe, k, `${id}.globe`);
-  if (typeof p.noise !== 'object' || p.noise === null) errors.push(`${id}.noise must be a mapping`);
-  else for (const k of REQUIRED_NOISE) checkHex(p.noise, k, `${id}.noise`);
+  if (typeof p.light !== 'object' || p.light === null) {
+    errors.push(`${id}.light must be a mapping (the light-theme colour variant)`);
+  } else {
+    validatePaletteBody(p.light, `${id}.light`, errors);
+  }
 
   return errors;
 }
 
+/* Check every required hex/name key on one palette body (dark or light). */
+function validatePaletteBody(p, ctx, errors) {
+  const checkHex = (obj, key, c) => {
+    if (obj[key] === undefined) { errors.push(`${c}.${key} is missing`); return; }
+    if (key === 'name') {
+      if (typeof obj[key] !== 'string' || !obj[key].trim()) errors.push(`${c}.${key} must be a non-empty string`);
+      return;
+    }
+    if (!isHex(obj[key])) errors.push(`${c}.${key} must be a #rrggbb hex string (got "${obj[key]}")`);
+  };
+
+  for (const k of REQUIRED_KEYS) checkHex(p, k, ctx);
+  if (typeof p.pins !== 'object' || p.pins === null) errors.push(`${ctx}.pins must be a mapping`);
+  else for (const k of REQUIRED_PINS) checkHex(p.pins, k, `${ctx}.pins`);
+  if (typeof p.globe !== 'object' || p.globe === null) errors.push(`${ctx}.globe must be a mapping`);
+  else for (const k of REQUIRED_GLOBE) checkHex(p.globe, k, `${ctx}.globe`);
+  if (typeof p.noise !== 'object' || p.noise === null) errors.push(`${ctx}.noise must be a mapping`);
+  else for (const k of REQUIRED_NOISE) checkHex(p.noise, k, `${ctx}.noise`);
+}
+
 // ─── css/styles.css :root block ───────────────────────────────────────────────
 
-function generateCssBlock(p, id) {
+/* The colour custom-property declarations for one palette body, each line
+   prefixed with `indent`. Blank separators stay truly empty (no trailing
+   indent). Shared by the dark :root block and the light override block so the
+   two can never drift in which tokens they define.
+
+   Solid colours ship as oklch() (perceptual, wide-gamut-ready); they round-trip
+   from the palette hex so rendering is unchanged. The `*-rgb` channel lists stay
+   sRGB so `rgb(var(--x-rgb) / <alpha>)` keeps working, and the `*-glow` tokens
+   stay hex8 (used directly in box-shadows). */
+function cssVarLines(p, indent) {
   const ch = hexToChannelList;
   const ok = hexToOklch;
-  /* Solid colours ship as oklch() (perceptual, wide-gamut-ready); they
-     round-trip from the palette hex so rendering is unchanged. The `*-rgb`
-     channel lists stay sRGB so `rgb(var(--x-rgb) / <alpha>)` keeps working,
-     and the `*-glow` tokens stay hex8 (used directly in box-shadows).
-     Lines carry their final 2-space :root indent already. */
+  const I = indent;
+  return [
+    `${I}--bg: ${ok(p.bg)};`,
+    `${I}--bg-rgb: ${ch(p.bg)};`,
+    `${I}--bg-alt: ${ok(p.bgAlt)};`,
+    `${I}--bg-alt-rgb: ${ch(p.bgAlt)};`,
+    `${I}--bg-card: rgb(${ch(p.text)} / 0.04);`,
+    `${I}--bg-card-hov: rgb(${ch(p.text)} / 0.07);`,
+    `${I}--border: rgb(${ch(p.text)} / 0.08);`,
+    `${I}--border-hov: rgb(${ch(p.accent)} / 0.45);`,
+    ``,
+    `${I}--accent: ${ok(p.accent)};`,
+    `${I}--accent-rgb: ${ch(p.accent)};`,
+    `${I}--accent-hi: ${ok(p.accentHi)};`,
+    `${I}--accent-glow: ${p.accent}55;`,
+    `${I}--accent2: ${ok(p.accent2)};`,
+    `${I}--accent2-rgb: ${ch(p.accent2)};`,
+    `${I}--accent2-hi: ${ok(p.accent2Hi)};`,
+    `${I}--accent2-glow: ${p.accent2}44;`,
+    `${I}--on-accent: ${ok(p.onAccent)};`,
+    ``,
+    `${I}--text: ${ok(p.text)};`,
+    `${I}--text-rgb: ${ch(p.text)};`,
+    `${I}--text-muted: ${ok(p.textMuted)};`,
+    `${I}--text-faint: ${ok(p.textFaint)};`,
+    ``,
+    `${I}--hero-grad-from: ${ok(p.heroGradFrom)};`,
+    `${I}--hero-grad-to: ${ok(p.heroGradTo)};`,
+    `${I}--map-bg: ${ok(p.mapBg)};`,
+    ``,
+    `${I}--pin-lived: ${ok(p.pins.lived)};`,
+    `${I}--pin-current: ${ok(p.pins.current)};`,
+    `${I}--pin-worktrip: ${ok(p.pins.worktrip)};`,
+    `${I}--pin-holiday: ${ok(p.pins.holiday)};`,
+  ];
+}
+
+/* Dark theme — the default :root colour block (lines carry their 2-space
+   :root indent already). */
+function generateCssBlock(p, id) {
   return [
     `  ${CSS_START} — DO NOT EDIT.`,
     `     Generated by scripts/generate-theme.js from data/palettes.yaml.`,
     `     Run \`npm run generate-theme\` to update. Active palette: ${p.name} */`,
-    `  --bg: ${ok(p.bg)};`,
-    `  --bg-rgb: ${ch(p.bg)};`,
-    `  --bg-alt: ${ok(p.bgAlt)};`,
-    `  --bg-alt-rgb: ${ch(p.bgAlt)};`,
-    `  --bg-card: rgb(${ch(p.text)} / 0.04);`,
-    `  --bg-card-hov: rgb(${ch(p.text)} / 0.07);`,
-    `  --border: rgb(${ch(p.text)} / 0.08);`,
-    `  --border-hov: rgb(${ch(p.accent)} / 0.45);`,
-    ``,
-    `  --accent: ${ok(p.accent)};`,
-    `  --accent-rgb: ${ch(p.accent)};`,
-    `  --accent-hi: ${ok(p.accentHi)};`,
-    `  --accent-glow: ${p.accent}55;`,
-    `  --accent2: ${ok(p.accent2)};`,
-    `  --accent2-rgb: ${ch(p.accent2)};`,
-    `  --accent2-hi: ${ok(p.accent2Hi)};`,
-    `  --accent2-glow: ${p.accent2}44;`,
-    `  --on-accent: ${ok(p.onAccent)};`,
-    ``,
-    `  --text: ${ok(p.text)};`,
-    `  --text-rgb: ${ch(p.text)};`,
-    `  --text-muted: ${ok(p.textMuted)};`,
-    `  --text-faint: ${ok(p.textFaint)};`,
-    ``,
-    `  --hero-grad-from: ${ok(p.heroGradFrom)};`,
-    `  --hero-grad-to: ${ok(p.heroGradTo)};`,
-    `  --map-bg: ${ok(p.mapBg)};`,
-    ``,
-    `  --pin-lived: ${ok(p.pins.lived)};`,
-    `  --pin-current: ${ok(p.pins.current)};`,
-    `  --pin-worktrip: ${ok(p.pins.worktrip)};`,
-    `  --pin-holiday: ${ok(p.pins.holiday)};`,
+    ...cssVarLines(p, '  '),
     `  ${CSS_END}`,
   ].join('\n');
 }
 
-function spliceCssBlock(cssText, block) {
-  const startIdx = cssText.indexOf(CSS_START);
-  const endMark  = cssText.indexOf(CSS_END);
-  if (startIdx === -1 || endMark === -1) {
+/* Light theme — top-level override block (sits outside :root). Applies in two
+   cases, matching the "OS preference, with manual override" model:
+     • the OS prefers light AND the user hasn't explicitly pinned dark, or
+     • the user has explicitly pinned light via [data-theme="light"].
+   The explicit pin is a separate, higher-priority rule so a manual choice
+   always beats the OS preference. `color-scheme` flips so native form controls,
+   scrollbars and the caret track the theme too. */
+function generateCssLightBlock(p, id) {
+  const media = cssVarLines(p, '      ').join('\n');
+  const pinned = cssVarLines(p, '    ').join('\n');
+  return [
+    `${CSS_LIGHT_START} — DO NOT EDIT.`,
+    `   Generated by scripts/generate-theme.js from data/palettes.yaml (light variant).`,
+    `   Run \`npm run generate-theme\` to update. Light palette: ${p.name} */`,
+    `@media (prefers-color-scheme: light) {`,
+    `  :root:not([data-theme="dark"]) {`,
+    media,
+    `    color-scheme: light;`,
+    `  }`,
+    `}`,
+    `:root[data-theme="light"] {`,
+    pinned,
+    `  color-scheme: light;`,
+    `}`,
+    `${CSS_LIGHT_END}`,
+  ].join('\n');
+}
+
+/* Replace the text between a marker pair (inclusive) with `block`. The start
+   marker is rewound to the beginning of its line so any leading indentation is
+   replaced cleanly. */
+function spliceMarked(text, block, startMark, endMark) {
+  const startIdx = text.indexOf(startMark);
+  const endPos   = text.indexOf(endMark);
+  if (startIdx === -1 || endPos === -1) {
     throw new Error(
-      `css/styles.css is missing the "${CSS_START} ... ${CSS_END}" markers. ` +
-      `Add them inside :root around the colour custom properties.`,
+      `css/styles.css is missing the "${startMark} ... ${endMark}" markers. ` +
+      `Add them around the colour custom properties.`,
     );
   }
-  /* startIdx points at the "  /* @theme-generated-start" — back up to the
-     start of that line so indentation is replaced cleanly. */
   let lineStart = startIdx;
-  while (lineStart > 0 && cssText[lineStart - 1] !== '\n') lineStart--;
-  const endIdx = endMark + CSS_END.length;
-  return cssText.slice(0, lineStart) + block + cssText.slice(endIdx);
+  while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart--;
+  const endIdx = endPos + endMark.length;
+  return text.slice(0, lineStart) + block + text.slice(endIdx);
+}
+
+function spliceCssBlock(cssText, block) {
+  return spliceMarked(cssText, block, CSS_START, CSS_END);
 }
 
 // ─── js/theme.js ──────────────────────────────────────────────────────────────
 
-function generateThemeJs(p, id) {
+/* Serialise one palette body to a THEME-shaped object literal (the `name:`
+   line through the closing brace). `indent` is the base indent of the literal. */
+function themeObjectBody(p, id, name) {
   const q = (v) => `'${v}'`;
   const flat = [
     'bg', 'bgAlt', 'text', 'textMuted', 'textFaint',
@@ -308,23 +375,9 @@ function generateThemeJs(p, id) {
   const pinLines  = REQUIRED_PINS.map(k => `    ${k}: ${q(p.pins[k])},`).join('\n');
   const globeLines = REQUIRED_GLOBE.map(k => `    ${k}: ${q(p.globe[k])},`).join('\n');
   const noiseLines = REQUIRED_NOISE.map(k => `    ${k}: ${q(p.noise[k])},`).join('\n');
-
-  return `/* ${'-'.repeat(74)}
-   Theme colours — active palette: ${p.name}
-   GENERATED by scripts/generate-theme.js — edit data/palettes.yaml to update.
-
-   Run:  npm run generate-theme
-
-   THEME holds #rrggbb hex strings. The helpers convert to the formats each
-   rendering layer needs:
-     int(hex)        → 0xRRGGBB integer   (Three.js Color / material colours)
-     rgba(hex, a)    → 'rgba(r, g, b, a)' (Canvas2D fill/stroke styles)
-     glvec(hex)      → [r, g, b] 0..1     (GLSL vec3 literals / uniforms)
-${'-'.repeat(78)} */
-
-export const THEME = {
+  return `{
   id: '${id}',
-  name: '${p.name}',
+  name: '${name}',
 ${flatLines}
   pins: {
 ${pinLines}
@@ -335,7 +388,47 @@ ${globeLines}
   noise: {
 ${noiseLines}
   },
-};
+}`;
+}
+
+function generateThemeJs(p, id, pLight) {
+  const light = pLight || p.light || p;
+  const darkObj  = themeObjectBody(p, id, p.name);
+  const lightObj = themeObjectBody(light, `${id}-light`, light.name);
+
+  return `/* ${'-'.repeat(74)}
+   Theme colours — active palette: ${p.name}  (+ light variant: ${light.name})
+   GENERATED by scripts/generate-theme.js — edit data/palettes.yaml to update.
+
+   Run:  npm run generate-theme
+
+   THEME holds the dark palette (the default); THEME_LIGHT holds the light
+   variant. getTheme() returns whichever is active for the current document
+   (data-theme attribute, else the OS prefers-color-scheme). All values are
+   #rrggbb hex strings; the helpers convert to the formats each layer needs:
+     int(hex)        → 0xRRGGBB integer   (Three.js Color / material colours)
+     rgba(hex, a)    → 'rgba(r, g, b, a)' (Canvas2D fill/stroke styles)
+     glvec(hex)      → [r, g, b] 0..1     (GLSL vec3 literals / uniforms)
+${'-'.repeat(78)} */
+
+export const THEME = ${darkObj};
+
+export const THEME_LIGHT = ${lightObj};
+
+/* Resolve the palette active for the current document. An explicit
+   data-theme="light|dark" pin always wins; otherwise follow the OS preference;
+   otherwise (SSR / no DOM) default to the dark THEME. */
+export function getTheme() {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    const pinned = document.documentElement.dataset && document.documentElement.dataset.theme;
+    if (pinned === 'light') return THEME_LIGHT;
+    if (pinned === 'dark') return THEME;
+  }
+  if (typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches) {
+    return THEME_LIGHT;
+  }
+  return THEME;
+}
 
 /* '#rrggbb' → 0xRRGGBB integer. */
 export function int(hex) {
@@ -469,17 +562,22 @@ function main(argv) {
 
   const id = opts.palette || data.active;
   const p  = tameAccent(data.palettes[id]);
+  /* The light variant gets the same accent-chroma taming as the dark palette. */
+  const pLight = tameAccent(data.palettes[id].light);
 
-  const themeJs  = generateThemeJs(p, id);
-  const cssBlock = generateCssBlock(p, id);
+  const themeJs   = generateThemeJs(p, id, pLight);
+  const cssBlock  = generateCssBlock(p, id);
+  const cssLight  = generateCssLightBlock(pLight, id);
   const htmlFiles = listHtmlFiles();
 
   if (opts.dryRun) {
-    console.log(`── Active palette: ${p.name} (${id}) ──\n`);
+    console.log(`── Active palette: ${p.name} (${id}) — light: ${pLight.name} ──\n`);
     console.log(`── js/theme.js ${'─'.repeat(50)}`);
     console.log(themeJs);
-    console.log(`── css/styles.css :root block ${'─'.repeat(33)}`);
+    console.log(`── css/styles.css :root block (dark) ${'─'.repeat(26)}`);
     console.log(cssBlock);
+    console.log(`── css/styles.css light override block ${'─'.repeat(24)}`);
+    console.log(cssLight);
     console.log(`\n── would rewrite ${'─'.repeat(45)}`);
     [...htmlFiles, NEW_PROJECT, FAVICON_SVG].forEach(f => console.log(`  • ${path.relative(ROOT, f)}`));
     return;
@@ -491,9 +589,10 @@ function main(argv) {
   fs.writeFileSync(THEME_FILE, themeJs, 'utf8');
   written.push(path.relative(ROOT, THEME_FILE));
 
-  /* css/styles.css :root block */
+  /* css/styles.css — dark :root block + light override block */
   const css = fs.readFileSync(CSS_FILE, 'utf8');
-  const nextCss = spliceCssBlock(css, cssBlock);
+  let nextCss = spliceCssBlock(css, cssBlock);
+  nextCss = spliceMarked(nextCss, cssLight, CSS_LIGHT_START, CSS_LIGHT_END);
   if (nextCss !== css) {
     fs.writeFileSync(CSS_FILE, nextCss, 'utf8');
     written.push(path.relative(ROOT, CSS_FILE));
@@ -531,9 +630,9 @@ if (require.main === module) {
 }
 
 module.exports = {
-  parseArgs, validate,
+  parseArgs, validate, validatePaletteBody,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
-  generateCssBlock, generateThemeJs,
+  cssVarLines, generateCssBlock, generateCssLightBlock, generateThemeJs, themeObjectBody,
   rewriteHtml, rewriteFaviconSvg,
-  spliceCssBlock,
+  spliceCssBlock, spliceMarked,
 };
