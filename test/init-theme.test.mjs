@@ -60,10 +60,15 @@ test('resolvedTheme: an explicit pin wins over the OS', () => {
   try { assert.equal(resolvedTheme(), 'light'); } finally { teardownEnv(); }
 });
 
-test('resolvedTheme: with no pin, follows the OS preference', () => {
-  setupEnv({ pinned: null, osLight: true });
-  try { assert.equal(resolvedTheme(), 'light'); } finally { teardownEnv(); }
+test('resolvedTheme: with no pin, defaults to dark regardless of OS', () => {
+  setupEnv({ pinned: null, osLight: true }); /* OS prefers light… */
+  try { assert.equal(resolvedTheme(), 'dark', 'OS light is ignored — dark default'); } finally { teardownEnv(); }
   setupEnv({ pinned: null, osLight: false });
+  try { assert.equal(resolvedTheme(), 'dark'); } finally { teardownEnv(); }
+});
+
+test('resolvedTheme: pinned dark stays dark even if OS prefers light', () => {
+  setupEnv({ pinned: 'dark', osLight: true });
   try { assert.equal(resolvedTheme(), 'dark'); } finally { teardownEnv(); }
 });
 
@@ -99,27 +104,18 @@ test('initTheme: the toggle label points at the action (next theme)', () => {
   } finally { teardownEnv(); }
 });
 
-/* ── initTheme: live OS change on an unpinned page ────────────────────────── */
+/* ── initTheme: OS preference is not followed ─────────────────────────────── */
 
-test('initTheme: an unpinned page tracks OS preference changes', () => {
+test('initTheme: does not follow OS preference changes (dark by default)', () => {
   const env = setupEnv({ pinned: null, osLight: false });
   try {
     initTheme();
-    env.dispatched.length = 0;
-    env.mq._change(true); /* OS flips to light */
-    assert.equal(env.meta.getAttribute('content'), THEME_LIGHT.themeColor);
-    assert.equal(env.dispatched.at(-1).detail.theme, 'light');
-  } finally { teardownEnv(); }
-});
-
-test('initTheme: a pinned page ignores OS preference changes', () => {
-  const env = setupEnv({ pinned: 'dark', osLight: false });
-  try {
-    initTheme();
-    env.dispatched.length = 0;
-    env.mq._change(true); /* OS flips to light, but user pinned dark */
-    assert.equal(env.dispatched.length, 0, 'no themechange while pinned');
+    /* initial sync is dark */
     assert.equal(env.meta.getAttribute('content'), THEME.themeColor);
+    env.dispatched.length = 0;
+    env.mq._change(true); /* OS flips to light — must be ignored */
+    assert.equal(env.dispatched.length, 0, 'no themechange from an OS flip');
+    assert.equal(env.meta.getAttribute('content'), THEME.themeColor, 'stays dark');
   } finally { teardownEnv(); }
 });
 

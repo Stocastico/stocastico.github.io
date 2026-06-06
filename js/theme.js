@@ -5,9 +5,10 @@
    Run:  npm run generate-theme
 
    THEME holds the dark palette (the default); THEME_LIGHT holds the light
-   variant. getTheme() returns whichever is active for the current document
-   (data-theme attribute, else the OS prefers-color-scheme). All values are
-   #rrggbb hex strings; the helpers convert to the formats each layer needs:
+   variant. The site defaults to dark regardless of OS preference — light is
+   opt-in, applied only when the document is explicitly pinned to
+   data-theme="light". All values are #rrggbb hex strings; the helpers convert
+   to the formats each layer needs:
      int(hex)        → 0xRRGGBB integer   (Three.js Color / material colours)
      rgba(hex, a)    → 'rgba(r, g, b, a)' (Canvas2D fill/stroke styles)
      glvec(hex)      → [r, g, b] 0..1     (GLSL vec3 literals / uniforms)
@@ -117,17 +118,13 @@ export const THEME_LIGHT = {
   },
 };
 
-/* Resolve the palette active for the current document. An explicit
-   data-theme="light|dark" pin always wins; otherwise follow the OS preference;
-   otherwise (SSR / no DOM) default to the dark THEME. */
+/* Resolve the palette active for the current document. Light only when the
+   document is explicitly pinned to data-theme="light"; everything else
+   (no pin, data-theme="dark", or SSR / no DOM) is the dark THEME. */
 export function getTheme() {
   if (typeof document !== 'undefined' && document.documentElement) {
     const pinned = document.documentElement.dataset && document.documentElement.dataset.theme;
     if (pinned === 'light') return THEME_LIGHT;
-    if (pinned === 'dark') return THEME;
-  }
-  if (typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches) {
-    return THEME_LIGHT;
   }
   return THEME;
 }

@@ -169,15 +169,15 @@ test('generateCssBlock: emits markers, oklch vars, channel lists and pin vars', 
 
 // ─── generateCssLightBlock ───────────────────────────────────────────────────
 
-test('generateCssLightBlock: emits OS-preference + explicit-override selectors', () => {
+test('generateCssLightBlock: applies only when explicitly pinned to light', () => {
   const css = generateCssLightBlock(sampleLight(), 'test');
   assert.match(css, /@theme-generated-light-start/);
   assert.match(css, /@theme-generated-light-end/);
-  /* Auto-apply when the OS prefers light AND the user hasn't pinned dark. */
-  assert.match(css, /@media \(prefers-color-scheme: light\)/);
-  assert.match(css, /:root:not\(\[data-theme="dark"\]\)/);
-  /* Explicit manual override always wins. */
+  /* Light is opt-in: the only selector is the explicit pin. */
   assert.match(css, /:root\[data-theme="light"\]/);
+  /* No OS-preference auto-apply — the site defaults to dark regardless of OS. */
+  assert.doesNotMatch(css, /prefers-color-scheme/);
+  assert.doesNotMatch(css, /:root:not\(/);
   /* Native UI flips to light too. */
   assert.match(css, /color-scheme: light;/);
   /* Light surfaces present as oklch, derived from the light palette hex. */
@@ -251,7 +251,7 @@ test('generateThemeJs: emits THEME_LIGHT and a getTheme() accessor', () => {
   assert.match(js, /bg: '#faf6f3'/);
 });
 
-test('generateThemeJs: getTheme() returns dark by default and light when pinned', () => {
+test('generateThemeJs: getTheme() is dark by default, light only when pinned', () => {
   const body = generateThemeJs(samplePalette(), 'test', sampleLight()).replace(/export /g, '');
   const vm = require('node:vm');
 
@@ -265,21 +265,18 @@ test('generateThemeJs: getTheme() returns dark by default and light when pinned'
   vm.runInNewContext(body + '\nthis.getTheme = getTheme;', pinnedLight);
   assert.equal(pinnedLight.getTheme().bg, '#faf6f3', 'data-theme=light selects light');
 
-  /* documentElement pinned to dark → dark palette even if OS prefers light. */
-  const pinnedDark = {
-    document: { documentElement: { dataset: { theme: 'dark' } } },
-    matchMedia: () => ({ matches: true }),
-  };
+  /* documentElement pinned to dark → dark palette. */
+  const pinnedDark = { document: { documentElement: { dataset: { theme: 'dark' } } } };
   vm.runInNewContext(body + '\nthis.getTheme = getTheme;', pinnedDark);
   assert.equal(pinnedDark.getTheme().bg, '#0a120e', 'data-theme=dark pins dark');
 
-  /* No pin, OS prefers light → light palette. */
+  /* No pin — dark, regardless of OS preference (OS is intentionally ignored). */
   const osLight = {
     document: { documentElement: { dataset: {} } },
     matchMedia: (q) => ({ matches: /light/.test(q) }),
   };
   vm.runInNewContext(body + '\nthis.getTheme = getTheme;', osLight);
-  assert.equal(osLight.getTheme().bg, '#faf6f3', 'OS light pref selects light');
+  assert.equal(osLight.getTheme().bg, '#0a120e', 'OS light pref is ignored; defaults dark');
 });
 
 test('generateThemeJs: the emitted helpers behave correctly', () => {

@@ -4,10 +4,10 @@
 
    Three idempotent, marker-wrapped edits per HTML file:
 
-     1. Drop the hard-coded `data-theme="dark"` from <html> so a first-time
-        visitor follows their OS `prefers-color-scheme` (the CSS light block is
-        gated on `:root:not([data-theme="dark"])`). A stored manual choice is
-        re-applied before paint by …
+     1. Drop the hard-coded `data-theme="dark"` from <html>. The site is dark by
+        default (the :root tokens), so no attribute is needed; this lets a
+        stored *light* choice be applied without fighting an inline attribute.
+        That stored choice is re-applied before paint by …
 
      2. … the <head> bootstrap <script> (wrapped in <!-- theme-bootstrap -->):
         reads localStorage and pins data-theme before first paint — no FOUC.

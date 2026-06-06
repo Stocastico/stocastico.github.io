@@ -53,27 +53,21 @@ export function animateCounter(el, target) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   THEME — light / dark with OS preference + manual override
+   THEME — dark by default, light opt-in
 
-   Default: follow the OS (prefers-color-scheme); the CSS light block is gated
-   on :root:not([data-theme="dark"]). A manual choice is persisted in
-   localStorage and re-applied before first paint by the <head> bootstrap, then
-   honoured here. Toggling pins the opposite of the *resolved* theme; the
-   matchMedia listener keeps an unpinned page in sync if the OS flips.
-
-   Every theme change (manual or OS) updates the <meta theme-color> and fires a
+   The site is dark by default regardless of OS preference. Light is opt-in via
+   the navbar toggle, which pins data-theme="light", persists the choice in
+   localStorage, and is re-applied before first paint by the <head> bootstrap.
+   Toggling flips the resolved theme, updates <meta theme-color>, and fires a
    `themechange` event so js/main.js can rebuild the colour-baked hero canvases.
    ═══════════════════════════════════════════════════════════ */
 export const THEME_STORAGE_KEY = 'theme';
 
-/* The theme actually in effect right now: an explicit pin wins, else the OS. */
+/* The theme actually in effect right now: light only when explicitly pinned;
+   everything else (no pin / pinned dark / no DOM) is dark. */
 export function resolvedTheme() {
   if (typeof document !== 'undefined' && document.documentElement) {
-    const pinned = document.documentElement.getAttribute('data-theme');
-    if (pinned === 'light' || pinned === 'dark') return pinned;
-  }
-  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    if (document.documentElement.getAttribute('data-theme') === 'light') return 'light';
   }
   return 'dark';
 }
@@ -120,22 +114,6 @@ export function initTheme() {
       syncToggleButton(btn, next);
       broadcastThemeChange(next);
     });
-  }
-
-  /* Keep an *unpinned* page in step with live OS preference changes. */
-  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-    const mq = window.matchMedia('(prefers-color-scheme: light)');
-    const onOsChange = () => {
-      let pinned = false;
-      try { pinned = localStorage.getItem(THEME_STORAGE_KEY) != null; } catch (_) { /* ignore */ }
-      if (pinned) return; /* a manual choice overrides the OS */
-      const theme = mq.matches ? 'light' : 'dark';
-      syncThemeColorMeta(theme);
-      syncToggleButton(btn, theme);
-      broadcastThemeChange(theme);
-    };
-    if (typeof mq.addEventListener === 'function') mq.addEventListener('change', onOsChange);
-    else if (typeof mq.addListener === 'function') mq.addListener(onOsChange); /* Safari < 14 */
   }
 }
 
