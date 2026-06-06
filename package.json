@@ -43,6 +43,7 @@
     "generate-links": "node scripts/generate-links.js",
     "generate-cards": "node scripts/generate-cards.mjs",
     "test:playwright": "node test/playwright.ui.test.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-project-jsonld": "node scripts/generate-project-jsonld.mjs",
     "generate-csp-meta": "node scripts/generate-csp-meta.mjs",

@@ -958,32 +958,58 @@ if (typeof document !== 'undefined') {
     io.observe(canvas);
   };
 
-  /* Three.js Globe — geocode any entries missing lat/lon, then build */
+  /* Three.js Globe — geocode any entries missing lat/lon, then build. Built
+     through a closure so a theme switch can rebuild it with the active palette
+     (globe.js resolves colours from getTheme() per instance). */
   const globeCanvas = document.getElementById('globe-canvas');
-  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+  let globeInstance = null;
+  const buildGlobe = () => {
     /* Dynamically imported (Three.js) and only when the globe nears the
        viewport — so Three.js downloads lazily, on scroll, not on load. */
-    _lazyOnViewport(globeCanvas, () => {
-      import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) => {
-        geocodeLocations(LOCATIONS).then(() => {
-          const inst = (prefersReducedMotion() || !hasWebGLSupport())
-            ? new GlobeFallback2D(globeCanvas)
-            : new Globe3D(globeCanvas);
-          _disposables.push(inst);
-          /* Render the SR-accessible alternative list once the location data
-             is final (i.e. all geocoding has resolved). */
-          const a11yList = document.getElementById('globe-a11y-list');
-          if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
-        });
+    import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) => {
+      geocodeLocations(LOCATIONS).then(() => {
+        globeInstance = (prefersReducedMotion() || !hasWebGLSupport())
+          ? new GlobeFallback2D(globeCanvas)
+          : new Globe3D(globeCanvas);
+        _disposables.push(globeInstance);
+        /* Render the SR-accessible alternative list once the location data
+           is final (i.e. all geocoding has resolved). */
+        const a11yList = document.getElementById('globe-a11y-list');
+        if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
       });
     });
+  };
+  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+    _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
   /* 2D Europe Map — Canvas-based representation of European locations */
   const europeCanvas = document.getElementById('europe-canvas');
+  let europeInstance = null;
+  const buildEurope = () => {
+    europeInstance = new EuropeMap2D(europeCanvas);
+    _disposables.push(europeInstance);
+  };
   if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
-    _lazyOnViewport(europeCanvas, () => _disposables.push(new EuropeMap2D(europeCanvas)));
+    _lazyOnViewport(europeCanvas, buildEurope);
   }
+
+  /* Recolour the travel-page maps on a theme switch — only if already built
+     (don't pull Three.js early). Rebuild reuses the same lazy builders. */
+  const onMapThemeChange = () => {
+    if (globeInstance) {
+      try { globeInstance.destroy?.(); } catch (_) { /* ignore */ }
+      globeInstance = null;
+      buildGlobe();
+    }
+    if (europeInstance) {
+      try { europeInstance.destroy?.(); } catch (_) { /* ignore */ }
+      europeInstance = null;
+      buildEurope();
+    }
+  };
+  window.addEventListener('themechange', onMapThemeChange);
+  _pushTeardown(() => window.removeEventListener('themechange', onMapThemeChange));
 
   /* UNESCO World Heritage accordion (travel page only) */
   const unescoAccordion = document.getElementById('unesco-accordion');
