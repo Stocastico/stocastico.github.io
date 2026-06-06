@@ -2960,6 +2960,13 @@ h3 {
     min-height: 44px;
   }
 
+  /* Grow the theme toggle's tap target to the 44px WCAG 2.5.5 minimum on
+     touch devices (the icon stays 18px; only the hit area grows). */
+  .theme-toggle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .nav-links a {
     padding-block: 0.55rem;
   }
