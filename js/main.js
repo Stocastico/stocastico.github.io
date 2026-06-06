@@ -76,18 +76,17 @@ import { NoiseGradient } from './noise-gradient.js';
    GlobeFallback2D/geocodeLocations) are dynamically imported at their init
    sites below — see the Three.js loading-strategy note at the top. */
 
-/* DOM animations: scroll reveal, card tilt, card flip, parallax, skill bars (extracted) */
+/* DOM animations: scroll reveal, card tilt, parallax, skill bars (extracted) */
 import {
   initScrollReveal,
   initCardTilt,
-  initCardFlip,
   initScroll3D,
   initSkillBars,
   initTimelineScroll3D,
 } from './animations.js';
 
 /* UI behaviours: navbar, command palette, side dots, mobile menu, counters,
-   tagline reveal, research carousel, etc. (extracted to js/ui.js) */
+   tagline reveal, etc. (extracted to js/ui.js) */
 import {
   initCounters,
   animateCounter,
@@ -98,7 +97,6 @@ import {
   initTaglineReveal,
   initCursorGlow,
   initMobileMenu,
-  initResearchCarousel,
   initCmdTriggerHint,
 } from './ui.js';
 
@@ -789,9 +787,7 @@ export {
   decodeBase64,
   getObfuscatedContactEmail,
   initEmailObfuscation,
-  initResearchCarousel,
   initCmdTriggerHint,
-  initCardFlip,
 };
 
 /* ═══════════════════════════════════════════════════════════
@@ -822,7 +818,6 @@ if (typeof document !== 'undefined') {
   initBackToTop();
   initCommandPalette();
   initCmdTriggerHint();
-  initResearchCarousel();
   initCursorGlow();
   initTaglineReveal();
 
@@ -849,7 +844,6 @@ if (typeof document !== 'undefined') {
   const whenIdle = typeof requestIdleCallback !== 'undefined'
     ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
     : (fn) => setTimeout(fn, 0);
-  initCardFlip();
   whenIdle(() => {
     _pushTeardown(initCardTilt());
   });

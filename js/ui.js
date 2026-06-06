@@ -636,39 +636,6 @@ export function initMobileMenu() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   RESEARCH CAROUSEL SCROLL BUTTONS
-   ═══════════════════════════════════════════════════════════ */
-export function initResearchCarousel() {
-  const grid = document.getElementById('research-grid');
-  const leftBtn = document.getElementById('research-scroll-left');
-  const rightBtn = document.getElementById('research-scroll-right');
-  const wrap = grid?.closest('.research-carousel-wrap');
-  if (!grid || !leftBtn || !rightBtn || !wrap) return;
-
-  function updateButtons() {
-    const { scrollLeft, scrollWidth, clientWidth } = grid;
-    const atStart = scrollLeft <= 8;
-    const atEnd = scrollLeft + clientWidth >= scrollWidth - 8;
-    leftBtn.classList.toggle('visible', !atStart);
-    rightBtn.classList.toggle('visible', !atEnd);
-    wrap.classList.toggle('fade-left', !atStart);
-    wrap.classList.toggle('fade-right-off', atEnd);
-  }
-
-  leftBtn.addEventListener('click', () => {
-    grid.scrollBy({ left: -320, behavior: 'smooth' });
-  });
-  rightBtn.addEventListener('click', () => {
-    grid.scrollBy({ left: 320, behavior: 'smooth' });
-  });
-
-  grid.addEventListener('scroll', updateButtons, { passive: true });
-  updateButtons();
-  /* Re-check after cards animate in */
-  setTimeout(updateButtons, 600);
-}
-
-/* ═══════════════════════════════════════════════════════════
    COMMAND PALETTE TRIGGER HINT
    ═══════════════════════════════════════════════════════════ */
 export function initCmdTriggerHint() {

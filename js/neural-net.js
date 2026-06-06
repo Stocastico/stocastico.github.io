@@ -133,10 +133,10 @@ export class NeuralNetwork2D {
 
     for (let i = 0; i < this.points.length; i++) {
       const p = this.points[i];
-      const r = 1.7 + p.z * 2.2;
+      const r = 1.2 + p.z * 1.6;
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3);
-      g.addColorStop(0, rgba(this._theme.accent2Hi, 0.95));
-      g.addColorStop(0.5, rgba(this._theme.accent2, 0.35));
+      g.addColorStop(0, rgba(this._theme.accent2Hi, 0.7));
+      g.addColorStop(0.5, rgba(this._theme.accent2, 0.22));
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g;
       ctx.beginPath();

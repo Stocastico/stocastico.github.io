@@ -389,7 +389,7 @@ h3 {
   padding-inline: clamp(1.25rem, 5vw, 3rem);
 }
 
-/* Wide container variant — allows carousel to use more horizontal space */
+/* Wide container variant — allows content to use more horizontal space */
 .container--wide {
   max-width: calc(var(--container) + 6rem);
   margin-inline: auto;
