@@ -66,7 +66,7 @@ pins:
     name: Gdansk, Poland
     info: Work with UFC
   # worked there
-  - type: workplace
+  - type: worktrip
     name: Darmstadt, Germany
     info: Worked there for 1 year
 
@@ -226,6 +226,12 @@ pins:
     info: Holiday
   - type: holiday
     name: Palma de Mallorca, Spain
+    info: Holiday
+  - type: holiday
+    name: Formentera, Spain
+    info: Holiday
+  - type: holiday
+    name: Eivissa, Spain
     info: Holiday
   - type: holiday
     name: Santa Cruz de Tenerife, Spain
@@ -423,7 +429,7 @@ trips:
       - Santa Monica, California, USA
       - San Diego, California, USA
 
-  - name: 70 anni mamma
+  - name: Napoli, Cilento, Matera 2024
     cycleSec: 14
     cities:
       - Napoli, Italy
