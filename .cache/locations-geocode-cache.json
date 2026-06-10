@@ -770,5 +770,17 @@
   "Eivissa, Spain": {
     "lat": 38.9743901,
     "lon": 1.4197463
+  },
+  "Arrecife, Spain": {
+    "lat": 28.9639681,
+    "lon": -13.5499014
+  },
+  "Puerto del Rosario, Spain": {
+    "lat": 28.4993424,
+    "lon": -13.8599051
+  },
+  "Las Palmas de Gran Canaria, Spain": {
+    "lat": 28.1288694,
+    "lon": -15.4349015
   }
 }

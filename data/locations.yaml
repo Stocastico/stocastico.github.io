@@ -236,6 +236,15 @@ pins:
   - type: holiday
     name: Santa Cruz de Tenerife, Spain
     info: Holiday
+  - type: holiday
+    name: Arrecife, Spain
+    info: Holiday
+  - type: holiday
+    name: Puerto del Rosario, Spain
+    info: Holiday
+  - type: holiday
+    name: Las Palmas de Gran Canaria, Spain
+    info: Holiday
 # Benelux
   - type: holiday
     name: Ghent, Belgium
