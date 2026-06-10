@@ -14,6 +14,13 @@ import { getTheme, rgba } from './theme.js';
 let THEME = getTheme();
 function refreshActiveTheme() { THEME = getTheme(); }
 
+/* Geographic extent of the 2D Europe map. Exported so the globe hides the exact
+   same region's worktrip/holiday pins (js/globe.js → isEuropeanSecondaryPin),
+   keeping "European secondary pins live only on the 2D map" consistent and
+   guaranteeing nothing hidden from the globe falls outside the map. The bounds
+   reach west to Iceland (~−22°E) and south to the Canary Islands (~28.5°N). */
+export const EUROPE_BOUNDS = { minLon: -25, maxLon: 40, minLat: 27, maxLat: 71 };
+
 export class EuropeMap2D {
   /* Colour scheme matches Globe3D — semantic pins, re-tinted per palette */
   static PIN_COLORS = {
@@ -65,8 +72,9 @@ export class EuropeMap2D {
     this.filteredPins = [];
     this.filteredTrips = [];
 
-    /* Europe bounding box (simplified): roughly [lon_min, lat_min, lon_max, lat_max] */
-    this.bounds = { minLon: -14, maxLon: 40, minLat: 35, maxLat: 71 };
+    /* Europe bounding box — shared with the globe's pin filter (single source
+       of truth, so the two views can't drift). */
+    this.bounds = { ...EUROPE_BOUNDS };
 
     /* TopoJSON-decoded land rings (filled async) */
     this._europeRings = [];
@@ -119,7 +127,11 @@ export class EuropeMap2D {
     this.canvas.width = containerW;
     this.canvas.height = containerH;
 
-    this._rect = this.canvas.getBoundingClientRect();
+    /* Don't cache the rect here — at construction the page may still be
+       reflowing (web fonts / images above the map), and a layout shift that
+       fires neither scroll nor resize would leave a stale rect that offsets
+       the tooltip. Read it lazily on the first mousemove of each hover. */
+    this._rect = null;
   }
 
   _buildFilteredPins() {
@@ -219,6 +231,9 @@ export class EuropeMap2D {
 
     this._addListener(this.canvas, 'mouseleave', () => {
       this._mouseOver = false;
+      /* Invalidate the cached rect so the next hover re-reads the canvas's
+         current position — guards against layout shifts between sessions. */
+      this._rect = null;
       this._hideTooltip();
     }, false);
 
@@ -497,14 +512,14 @@ export class EuropeMap2D {
     const ox = this._offsetX || 0;
     const oy = this._offsetY || 0;
 
-    for (let lon = 0; lon <= 30; lon += 10) {
+    for (let lon = -20; lon <= 40; lon += 10) {
       const x = this._lonToX(lon);
       ctx.beginPath();
       ctx.moveTo(x, oy);
       ctx.lineTo(x, oy + this.h);
       ctx.stroke();
     }
-    for (let lat = 40; lat <= 65; lat += 5) {
+    for (let lat = 30; lat <= 70; lat += 10) {
       const y = this._latToY(lat);
       ctx.beginPath();
       ctx.moveTo(ox, y);

@@ -33,7 +33,7 @@ import {
 } from '../js/main.js';
 /* Three.js-backed classes are now imported from their source modules — main.js
    dynamically imports them so Three.js is not in the per-page bundle. */
-import { geocodeLocations, Globe3D, GlobeFallback2D } from '../js/globe.js';
+import { geocodeLocations, Globe3D, GlobeFallback2D, isEuropeanSecondaryPin } from '../js/globe.js';
 import { NeuralNetwork2D } from '../js/neural-net.js';
 import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
@@ -78,6 +78,24 @@ test('formatIsoDate gracefully handles invalid values', () => {
   assert.equal(formatIsoDate(''), '');
   assert.equal(formatIsoDate('invalid-date'), 'invalid-date');
   assert.equal(formatIsoDate(undefined), '');
+});
+
+test('isEuropeanSecondaryPin hides European worktrips/holidays incl. Iceland & Canaries', () => {
+  /* Mainland European secondary pins live on the 2D map, not the globe. */
+  assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 38.70622, lon: 1.43341 }), true); // Formentera
+  assert.equal(isEuropeanSecondaryPin({ type: 'worktrip', lat: 49.87277, lon: 8.65118 }), true); // Darmstadt
+  /* Iceland (~-22°E) and the Canaries (~28.5°N) are now inside the bounds. */
+  assert.equal(isEuropeanSecondaryPin({ type: 'worktrip', lat: 64.14598, lon: -21.94224 }), true); // Reykjavik
+  assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 28.46718, lon: -16.25078 }), true); // Tenerife
+});
+
+test('isEuropeanSecondaryPin never hides homes or non-European pins', () => {
+  /* Homes (lived/current) always stay on the globe, even in Europe. */
+  assert.equal(isEuropeanSecondaryPin({ type: 'lived', lat: 43.31, lon: -1.98 }), false);   // San Sebastián
+  assert.equal(isEuropeanSecondaryPin({ type: 'current', lat: 43.31, lon: -1.98 }), false);
+  /* Non-European secondary pins stay on the globe. */
+  assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 35.68, lon: 139.69 }), false); // Tokyo
+  assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 25, lon: -30 }), false);       // mid-Atlantic
 });
 
 test('geocodeLocations does not call fetch when all coordinates are present', async () => {
