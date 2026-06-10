@@ -15,6 +15,7 @@ import {
   getTopoJSON,
 } from './utils.js';
 import { getTheme, int, rgba } from './theme.js';
+import { EUROPE_BOUNDS } from './europe-map.js';
 
 /* Active palette. The travel page hosts a single globe instance at a time, so
    the resolved theme is held in this module-level binding (named THEME so the
@@ -163,12 +164,12 @@ const GLOBE_CONTINENTS = [
 
 /* European worktrips/holidays are shown only on the 2D Europe map, not on the
    globe — this keeps the globe focused on homes (lived/current) and the trip
-   arcs. The box matches the 2D map's bounds (longitude is the narrower
-   −10…40 here so no globe-hidden pin falls outside the map and vanishes). */
+   arcs. Uses the 2D map's exact bounds (EUROPE_BOUNDS) so the two views can't
+   drift and no globe-hidden pin ever falls outside the map and vanishes. */
 export function isEuropeanSecondaryPin(loc) {
   return (loc.type === 'worktrip' || loc.type === 'holiday') &&
-         loc.lat >= 35 && loc.lat <= 71 &&
-         loc.lon >= -10 && loc.lon <= 40;
+         loc.lat >= EUROPE_BOUNDS.minLat && loc.lat <= EUROPE_BOUNDS.maxLat &&
+         loc.lon >= EUROPE_BOUNDS.minLon && loc.lon <= EUROPE_BOUNDS.maxLon;
 }
 
 /* ═══════════════════════════════════════════════════════════
