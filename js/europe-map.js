@@ -119,7 +119,11 @@ export class EuropeMap2D {
     this.canvas.width = containerW;
     this.canvas.height = containerH;
 
-    this._rect = this.canvas.getBoundingClientRect();
+    /* Don't cache the rect here — at construction the page may still be
+       reflowing (web fonts / images above the map), and a layout shift that
+       fires neither scroll nor resize would leave a stale rect that offsets
+       the tooltip. Read it lazily on the first mousemove of each hover. */
+    this._rect = null;
   }
 
   _buildFilteredPins() {
@@ -219,6 +223,9 @@ export class EuropeMap2D {
 
     this._addListener(this.canvas, 'mouseleave', () => {
       this._mouseOver = false;
+      /* Invalidate the cached rect so the next hover re-reads the canvas's
+         current position — guards against layout shifts between sessions. */
+      this._rect = null;
       this._hideTooltip();
     }, false);
 

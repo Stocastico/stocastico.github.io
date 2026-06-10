@@ -762,5 +762,13 @@
   "Ghent, Belgium": {
     "lat": 51.05373,
     "lon": 3.72098
+  },
+  "Formentera, Spain": {
+    "lat": 38.7062157,
+    "lon": 1.4334101
+  },
+  "Eivissa, Spain": {
+    "lat": 38.9743901,
+    "lon": 1.4197463
   }
 }

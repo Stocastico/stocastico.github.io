@@ -161,6 +161,16 @@ const GLOBE_CONTINENTS = [
   [[-38,174],[-37,175],[-37,176],[-39,176],[-41,175],[-40,172],[-38,174]],
 ];
 
+/* European worktrips/holidays are shown only on the 2D Europe map, not on the
+   globe — this keeps the globe focused on homes (lived/current) and the trip
+   arcs. The box matches the 2D map's bounds (longitude is the narrower
+   −10…40 here so no globe-hidden pin falls outside the map and vanishes). */
+export function isEuropeanSecondaryPin(loc) {
+  return (loc.type === 'worktrip' || loc.type === 'holiday') &&
+         loc.lat >= 35 && loc.lat <= 71 &&
+         loc.lon >= -10 && loc.lon <= 40;
+}
+
 /* ═══════════════════════════════════════════════════════════
    GLOBE 3D — interactive world map in the About section
    Location data lives in  data/locations.js  (edit that file).
@@ -666,11 +676,7 @@ export class Globe3D {
       .filter(loc => {
         if (loc._skip) return false;
         /* Hide European worktrips and holidays on globe — show only on 2D map */
-        if ((loc.type === 'worktrip' || loc.type === 'holiday') && 
-            loc.lat >= 35 && loc.lat <= 71 && 
-            loc.lon >= -10 && loc.lon <= 40) {
-          return false;
-        }
+        if (isEuropeanSecondaryPin(loc)) return false;
         return true;
       })
       .forEach(loc => {
@@ -1129,6 +1135,8 @@ export class GlobeFallback2D {
     this._points.length = 0;
     (LOCATIONS.pins || []).forEach((p) => {
       if (p._skip) return;
+      /* Match Globe3D: European worktrips/holidays live on the 2D map only. */
+      if (isEuropeanSecondaryPin(p)) return;
       this._points.push({ lat: p.lat, lon: p.lon, type: p.type });
     });
   }

@@ -259,3 +259,41 @@ test('EuropeMap2D: drawTrips converts hex trip color to rgba glow layers', () =>
     assert.ok(strokes.includes('rgba(0, 170, 255, 0.5)'));
   });
 });
+
+test('EuropeMap2D: tooltip uses a fresh bounding rect after a post-construction layout shift', () => {
+  /* Regression: the cursor→canvas offset must be computed against the canvas's
+     *current* viewport position. If the map's rect is cached at construction
+     and the page reflows afterwards (web fonts / images above the map loading)
+     WITHOUT firing scroll or resize, a stale rect offsets the tooltip — the
+     "tooltip in the wrong place" bug. The rect must be (re)read lazily. */
+  const { ctx } = createCanvasAndContext();
+  const listeners = {};
+  let rect = { left: 0, top: 0, width: 900, height: 450 };
+
+  const canvas = {
+    tagName: 'CANVAS',
+    parentElement: { clientWidth: 900 },
+    width: 0,
+    height: 0,
+    _europe: null,
+    getContext() { return ctx; },
+    getBoundingClientRect() { return rect; },
+    addEventListener(type, fn) { (listeners[type] ||= []).push(fn); },
+  };
+  const tooltip = createTooltip();
+
+  withGlobals(makeEnv({ pins: [] }, tooltip), () => {
+    const map = new EuropeMap2D(canvas);
+
+    /* Page reflows after construction — canvas pushed 100px down, no event. */
+    rect = { left: 0, top: 100, width: 900, height: 450 };
+
+    const move = (listeners.mousemove || [])[0];
+    assert.ok(typeof move === 'function', 'mousemove handler should be registered');
+    move({ clientX: 100, clientY: 200 });
+
+    /* Fresh rect → cssY = 200 - 100 = 100. Stale (top:0) → 200. */
+    assert.equal(map._cssMouseY, 100);
+    assert.equal(map._cssMouseX, 100);
+  });
+});

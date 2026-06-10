@@ -129,7 +129,7 @@ export const LOCATIONS = {
       "info": "Work with UFC"
     },
     {
-      "type": "lived",
+      "type": "worktrip",
       "name": "Darmstadt, Germany",
       "lat": 49.87277,
       "lon": 8.65118,
@@ -483,6 +483,20 @@ export const LOCATIONS = {
       "name": "Palma de Mallorca, Spain",
       "lat": 39.56958,
       "lon": 2.65007,
+      "info": "Holiday"
+    },
+    {
+      "type": "holiday",
+      "name": "Formentera, Spain",
+      "lat": 38.70622,
+      "lon": 1.43341,
+      "info": "Holiday"
+    },
+    {
+      "type": "holiday",
+      "name": "Eivissa, Spain",
+      "lat": 38.97439,
+      "lon": 1.41975,
       "info": "Holiday"
     },
     {
@@ -1197,7 +1211,7 @@ export const LOCATIONS = {
       ]
     },
     {
-      "name": "70 anni mamma",
+      "name": "Napoli, Cilento, Matera 2024",
       "color": "#22c55e",
       "cycleSec": 14,
       "cities": [
