@@ -252,3 +252,6 @@ demo2-before/
 demo2-after/
 scripts/_compose4.mjs
 demo2-compare/
+
+# MNIST idx archives pulled by scripts/train-cnn.mjs — ~11 MB, re-downloadable
+.cache/mnist/

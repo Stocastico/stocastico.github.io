@@ -1,0 +1,240 @@
+#!/usr/bin/env node
+/* ============================================================
+   train-cnn
+   --------------------------------------------------------------
+   Trains the small LeNet-5 in scripts/lib/lenet.mjs on MNIST and writes:
+
+     data/cnn-model.json    the trained weights (base64 float32) + metadata
+     data/cnn-samples.json  ten test digits (one per class) the hero cycles through
+
+   This is a one-off, run-by-hand step — it downloads ~11 MB of MNIST into
+   .cache/mnist/ (gitignored) and takes a few minutes of pure-JS CPU. Neither
+   the dataset nor any ML library ever ships to the browser: only the
+   activations produced later by `generate-cnn-activations` do.
+
+   Run:  node scripts/train-cnn.mjs [--epochs 8] [--train 60000] [--seed 1337]
+                                    [--lr 0.05] [--decay 0.68] [--batch 32]
+                                    [--pick-only] [--dry-run]
+
+   --pick-only reuses the committed weights and only re-chooses the ten
+   showcase digits, skipping the training run.
+   ============================================================ */
+import fs from 'node:fs';
+import path from 'node:path';
+import zlib from 'node:zlib';
+import { fileURLToPath } from 'node:url';
+
+import {
+  createModel, createState, createGrads, createBackState, zeroGrads,
+  forward, backward, argmax, serializeModel, deserializeModel, PARAM_KEYS, rng,
+} from './lib/lenet.mjs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const CACHE = path.join(ROOT, '.cache', 'mnist');
+
+const args = process.argv.slice(2);
+if (args.includes('--help') || args.includes('-h')) {
+  process.stdout.write(
+    'Usage: node scripts/train-cnn.mjs [--epochs N] [--train N] [--seed N] ' +
+    '[--lr F] [--decay F] [--batch N] [--pick-only] [--dry-run]\n');
+  process.exit(0);
+}
+const flag = (name, fallback) => {
+  const i = args.indexOf(`--${name}`);
+  return i === -1 ? fallback : Number(args[i + 1]);
+};
+const DRY_RUN = args.includes('--dry-run');
+const PICK_ONLY = args.includes('--pick-only');
+const EPOCHS = flag('epochs', 8);
+const N_TRAIN = flag('train', 60000);
+const SEED = flag('seed', 1337);
+const LR0 = flag('lr', 0.05);
+const DECAY = flag('decay', 0.68);
+const BATCH = flag('batch', 32);
+
+/* MNIST mirror maintained by the CVDF (same bytes as the original LeCun
+   distribution, which has been rate-limiting direct downloads for years). */
+const BASE = 'https://storage.googleapis.com/cvdf-datasets/mnist';
+const FILES = {
+  trainImages: 'train-images-idx3-ubyte.gz',
+  trainLabels: 'train-labels-idx1-ubyte.gz',
+  testImages: 't10k-images-idx3-ubyte.gz',
+  testLabels: 't10k-labels-idx1-ubyte.gz',
+};
+
+async function fetchIdx(name) {
+  fs.mkdirSync(CACHE, { recursive: true });
+  const gz = path.join(CACHE, name);
+  if (!fs.existsSync(gz)) {
+    process.stdout.write(`  downloading ${name}…\n`);
+    const res = await fetch(`${BASE}/${name}`);
+    if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+    fs.writeFileSync(gz, Buffer.from(await res.arrayBuffer()));
+  }
+  return zlib.gunzipSync(fs.readFileSync(gz));
+}
+
+/* IDX format: 4-byte magic (last byte = number of dimensions), then one
+   big-endian int32 per dimension, then the raw uint8 payload. */
+function parseIdx(buf) {
+  const dims = buf[3];
+  let offset = 4;
+  const shape = [];
+  for (let d = 0; d < dims; d++) { shape.push(buf.readInt32BE(offset)); offset += 4; }
+  return { shape, data: new Uint8Array(buf.subarray(offset)) };
+}
+
+async function loadSplit(imagesFile, labelsFile) {
+  const images = parseIdx(await fetchIdx(imagesFile));
+  const labels = parseIdx(await fetchIdx(labelsFile));
+  return { count: images.shape[0], pixels: images.data, labels: labels.data };
+}
+
+function evaluate(model, split, limit = split.count) {
+  const s = createState();
+  let correct = 0;
+  for (let i = 0; i < limit; i++) {
+    forward(model, split.pixels.subarray(i * 784, i * 784 + 784), s);
+    if (argmax(s.probs) === split.labels[i]) correct++;
+  }
+  return correct / limit;
+}
+
+/* Pick one test digit per class for the hero to cycle through. Not the most
+   confident one: at p = 1.0000 the softmax bar chart the hero draws is a
+   single bar and nine invisible ones. Aiming just under that keeps the glyph
+   clean and canonical while leaving a visible runner-up. */
+const TARGET_CONFIDENCE = 0.985;
+
+function pickSamples(model, split) {
+  const s = createState();
+  const best = Array.from({ length: 10 }, () => ({ index: -1, confidence: -1, distance: Infinity }));
+  for (let i = 0; i < split.count; i++) {
+    const label = split.labels[i];
+    forward(model, split.pixels.subarray(i * 784, i * 784 + 784), s);
+    if (argmax(s.probs) !== label) continue;
+    const confidence = s.probs[label];
+    const distance = Math.abs(confidence - TARGET_CONFIDENCE);
+    if (distance < best[label].distance) best[label] = { index: i, confidence, distance };
+  }
+  return best.map((b, digit) => ({
+    digit,
+    testIndex: b.index,
+    confidence: Number(b.confidence.toFixed(6)),
+    pixels: Buffer.from(split.pixels.subarray(b.index * 784, b.index * 784 + 784))
+      .toString('base64'),
+  }));
+}
+
+function writeSamples(samples) {
+  fs.writeFileSync(path.join(ROOT, 'data', 'cnn-samples.json'),
+    JSON.stringify({ dataset: 'MNIST test split', samples }, null, 2) + '\n');
+}
+
+/* Re-pick the ten showcase digits against the already-trained weights,
+   without spending another few minutes on training. */
+async function pickOnly() {
+  const test = await loadSplit(FILES.testImages, FILES.testLabels);
+  const model = deserializeModel(
+    JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'cnn-model.json'), 'utf8')));
+  const samples = pickSamples(model, test);
+  for (const s of samples) {
+    process.stdout.write(`  ${s.digit}: test #${s.testIndex} · p=${s.confidence.toFixed(4)}\n`);
+  }
+  if (DRY_RUN) { process.stdout.write('  --dry-run: nothing written\n'); return; }
+  writeSamples(samples);
+  process.stdout.write('  wrote data/cnn-samples.json\n');
+}
+
+async function main() {
+  process.stdout.write('LeNet-5 / MNIST — plain-JS trainer\n');
+  if (PICK_ONLY) return pickOnly();
+  const train = await loadSplit(FILES.trainImages, FILES.trainLabels);
+  const test = await loadSplit(FILES.testImages, FILES.testLabels);
+  process.stdout.write(`  train ${train.count} · test ${test.count}\n`);
+
+  const nTrain = Math.min(N_TRAIN, train.count);
+  const model = createModel(SEED);
+  const grads = createGrads();
+  const velocity = {};
+  for (const k of PARAM_KEYS) velocity[k] = new Float32Array(model[k].length);
+  const state = createState();
+  const back = createBackState();
+
+  const rand = rng(SEED ^ 0x9e3779b9);
+  const order = new Int32Array(nTrain);
+  for (let i = 0; i < nTrain; i++) order[i] = i;
+
+  const MOMENTUM = 0.9;
+  const t0 = Date.now();
+
+  for (let epoch = 0; epoch < EPOCHS; epoch++) {
+    /* Fisher-Yates with the seeded PRNG so a rerun reproduces the same model. */
+    for (let i = nTrain - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+    }
+    /* Geometric step decay — enough late-epoch fine-tuning to clear 99%. */
+    const lr = LR0 * Math.pow(DECAY, epoch);
+    let loss = 0, seen = 0;
+
+    for (let b = 0; b < nTrain; b += BATCH) {
+      const size = Math.min(BATCH, nTrain - b);
+      zeroGrads(grads);
+      for (let k = 0; k < size; k++) {
+        const i = order[b + k];
+        forward(model, train.pixels.subarray(i * 784, i * 784 + 784), state);
+        loss += backward(model, state, grads, back, train.labels[i]);
+      }
+      const scale = lr / size;
+      for (const key of PARAM_KEYS) {
+        const p = model[key], g = grads[key], v = velocity[key];
+        for (let i = 0; i < p.length; i++) {
+          v[i] = MOMENTUM * v[i] - scale * g[i];
+          p[i] += v[i];
+        }
+      }
+      seen += size;
+      if (seen % 6400 === 0) {
+        const pct = ((seen / nTrain) * 100).toFixed(0).padStart(3);
+        process.stdout.write(
+          `  epoch ${epoch + 1}/${EPOCHS} ${pct}%  loss ${(loss / seen).toFixed(4)}\r`);
+      }
+    }
+    const acc = evaluate(model, test, 2000);
+    process.stdout.write(
+      `  epoch ${epoch + 1}/${EPOCHS} done · loss ${(loss / seen).toFixed(4)} · ` +
+      `val ${(acc * 100).toFixed(2)}% · ${((Date.now() - t0) / 1000).toFixed(0)}s\n`);
+  }
+
+  const accuracy = evaluate(model, test);
+  process.stdout.write(`  final test accuracy: ${(accuracy * 100).toFixed(2)}%\n`);
+
+  const samples = pickSamples(model, test);
+  const modelJson = serializeModel(model, {
+    dataset: 'MNIST',
+    trainedOn: nTrain,
+    epochs: EPOCHS,
+    seed: SEED,
+    lr: LR0,
+    lrDecay: DECAY,
+    batch: BATCH,
+    testAccuracy: Number(accuracy.toFixed(4)),
+  });
+
+  if (DRY_RUN) {
+    process.stdout.write('  --dry-run: nothing written\n');
+    return;
+  }
+  fs.writeFileSync(path.join(ROOT, 'data', 'cnn-model.json'),
+    JSON.stringify(modelJson) + '\n');
+  writeSamples(samples);
+  process.stdout.write('  wrote data/cnn-model.json + data/cnn-samples.json\n');
+  process.stdout.write('  next: npm run generate-cnn-activations\n');
+}
+
+main().catch((err) => {
+  process.stderr.write(`train-cnn failed: ${err.message}\n`);
+  process.exit(1);
+});
