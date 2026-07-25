@@ -56,7 +56,7 @@ import { LINKS as DEFAULT_LINKS } from '../data/links.js';
 import './europe-map.js';
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
-import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml } from './utils.js';
+import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, supportsCnnHero, CNN_HERO_QUERY } from './utils.js';
 
 /* Card / list-item markup — shared with the static generator
    (scripts/generate-cards.mjs) so SSR and client markup never drift. */
@@ -903,21 +903,42 @@ if (typeof document !== 'undefined') {
   };
   buildNoise();
 
-  /* Canvas2D neural-network hero background (no Three.js — see neural-net.js).
-     Dynamically imported and deferred until the first user interaction
-     (mousemove / scroll / touchstart) so it stays off the critical path on
-     load; the noise gradient fills the hero meanwhile. On reduced-motion the
-     canvas is hidden entirely. */
+  /* Canvas2D hero background (no Three.js on this page — see neural-net.js).
+     Two implementations share the canvas:
+       · js/cnn-hero.js   — a real LeNet-5 forward pass replayed from
+                            precomputed activations, on roomy pointer-driven
+                            viewports where its labels are legible;
+       · js/neural-net.js — the lighter drifting particle field everywhere else.
+     Whichever applies is dynamically imported and deferred until the first
+     user interaction (mousemove / scroll / touchstart) so it stays off the
+     critical path on load; the noise gradient fills the hero meanwhile. The
+     branch happens *before* the import so phones never download the CNN
+     chunk's activation data. On reduced-motion the canvas is hidden entirely. */
   const buildNeural = () => {
     if (!neuralCanvas || prefersReducedMotion()) return;
-    import('./neural-net.js').then(({ NeuralNetwork2D }) => {
+    const loading = supportsCnnHero()
+      ? import('./cnn-hero.js').then((m) => m.CnnHero)
+      : import('./neural-net.js').then((m) => m.NeuralNetwork2D);
+    loading.then((Background) => {
       /* Fade the canvas in once the first frame has painted (see the
          #neural-canvas opacity transition in css/styles.css), so the
          network materialises gently instead of popping in fully-formed. */
       const reveal = () => neuralCanvas.classList.add('is-visible');
-      neuralInstance = new NeuralNetwork2D(neuralCanvas, reveal);
+      neuralInstance = new Background(neuralCanvas, reveal);
       _disposables.push(neuralInstance);
     });
+  };
+
+  /* Tear the current hero background down and build the one that now applies —
+     shared by the theme switch and the breakpoint watcher below. Canvas2D
+     survives reuse, but swapping the node gives the rebuild a clean drawing
+     buffer (and drops the .is-visible class, so it fades back in). */
+  const rebuildNeural = () => {
+    if (!neuralStarted || !neuralInstance) return;
+    try { neuralInstance.destroy(); } catch (_) { /* ignore */ }
+    neuralInstance = null;
+    neuralCanvas = freshCanvasForRebuild(neuralCanvas);
+    buildNeural();
   };
 
   if (neuralCanvas) {
@@ -948,17 +969,22 @@ if (typeof document !== 'undefined') {
       noiseCanvas = freshCanvasForRebuild(noiseCanvas);
       buildNoise();
     }
-    if (neuralStarted && neuralInstance) {
-      try { neuralInstance.destroy(); } catch (_) { /* ignore */ }
-      neuralInstance = null;
-      /* Canvas2D survives reuse, but swap for symmetry + a clean drawing
-         buffer so the rebuilt net starts from a blank frame. */
-      neuralCanvas = freshCanvasForRebuild(neuralCanvas);
-      buildNeural();
-    }
+    rebuildNeural();
   };
   window.addEventListener('themechange', onThemeChange);
   _pushTeardown(() => window.removeEventListener('themechange', onThemeChange));
+
+  /* Resizing across the CNN-hero breakpoint swaps the two backgrounds —
+     without this, a window dragged narrow would keep painting a scene whose
+     labels no longer fit (and vice versa). */
+  if (typeof window.matchMedia === 'function') {
+    const heroMq = window.matchMedia(CNN_HERO_QUERY);
+    if (typeof heroMq.addEventListener === 'function') {
+      const onHeroBreakpoint = () => rebuildNeural();
+      heroMq.addEventListener('change', onHeroBreakpoint);
+      _pushTeardown(() => heroMq.removeEventListener('change', onHeroBreakpoint));
+    }
+  }
 
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
      canvas is about to enter the viewport. The maps live in the #places

@@ -36,6 +36,28 @@ export function isLowPowerDevice() {
   return coarsePointer || narrowViewport || cores <= 4 || savesData || slowNetwork;
 }
 
+/* The CNN hero (js/cnn-hero.js) draws a labelled LeNet-5 with 8×8 feature maps
+   and 7px layer captions — information-dense by design. Below laptop widths,
+   or on a touch-first device, none of that is legible and the scene is just
+   noise, so those viewports keep the lighter particle background instead.
+   Exported as a string too so js/main.js can watch the same query for changes
+   and swap backgrounds when the window crosses the breakpoint. */
+export const CNN_HERO_QUERY = '(min-width: 1100px) and (pointer: fine)';
+
+export function supportsCnnHero() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  if (!window.matchMedia(CNN_HERO_QUERY).matches) return false;
+  /* Deliberately NOT gated on isLowPowerDevice(): its core-count and
+     viewport-width heuristics are aimed at phones, which the media query above
+     already excludes, and they would veto perfectly capable quad-core laptops.
+     What still applies is the user asking for less: data-saver mode, a slow
+     connection, or a machine too small to spare a thread. */
+  const nav = typeof navigator !== 'undefined' ? navigator : null;
+  if (nav?.connection?.saveData) return false;
+  if (nav?.connection?.effectiveType && nav.connection.effectiveType !== '4g') return false;
+  return !(typeof nav?.hardwareConcurrency === 'number' && nav.hardwareConcurrency <= 2);
+}
+
 export function prefersReducedMotion() {
   return typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'

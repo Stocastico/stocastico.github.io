@@ -1388,9 +1388,15 @@ test('neural-net.js stays Three-free so the homepage hero never loads Three.js',
     'the Three.js NeuralNetwork class should be gone; only the Canvas2D NeuralNetwork2D remains');
 });
 
-test('main.js hero uses the Canvas2D NeuralNetwork2D, not the Three.js path', () => {
+test('main.js hero uses the Canvas2D backgrounds, not the Three.js path', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
-  assert.ok(/new NeuralNetwork2D\(/.test(src), 'hero should construct NeuralNetwork2D');
+  /* Two Canvas2D implementations share the hero canvas — the CNN forward-pass
+     scene on roomy viewports, the particle field everywhere else — and both
+     are reached through a dynamic import so neither lands in the main chunk. */
+  assert.ok(/import\(['"]\.\/neural-net\.js['"]\)[\s\S]{0,80}NeuralNetwork2D/.test(src),
+    'hero should still fall back to NeuralNetwork2D');
+  assert.ok(/import\(['"]\.\/cnn-hero\.js['"]\)[\s\S]{0,80}CnnHero/.test(src),
+    'hero should load the CNN background on capable viewports');
   assert.ok(!/new NeuralNetwork\(/.test(src),
     'hero should not construct the Three.js NeuralNetwork any more');
 });

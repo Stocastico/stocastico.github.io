@@ -7,7 +7,7 @@ Personal website of **Stefano Masneri** — Senior AI Engineer based in San Seba
 A single-page portfolio that doubles as a small showcase of real-time WebGL effects. The content is organised across eight pages:
 
 - **`index.html`** — the main page, with the following sections:
-  - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and a Canvas2D neural-network particle field (no Three.js).
+  - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and, on desktop, a real LeNet-5 classifying MNIST digits (Canvas2D, no Three.js, no ML runtime; narrow/touch viewports get a particle field instead).
   - **About** — short bio and key stats.
   - **Skills (Expertise)** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
   - **Projects** — up to three project cards from `data/projects.js`, plus a "Dive into my full CV" callout and a link to the full listing.
@@ -28,7 +28,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 
 - Vanilla HTML / CSS / JavaScript bundled by [Vite](https://vitejs.dev/) (multi-page input, no framework)
 - Modern CSS — `@layer` cascade, native nesting, `oklch()` colours, and a design-token scale (spacing / tracking / elevation / easing)
-- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the interactive 3-D globe on the travel page — lazily code-split so it never loads on the homepage; the neural-network hero is plain Canvas2D
+- [Three.js](https://threejs.org/) (single runtime dependency, bundled by Vite) for the interactive 3-D globe on the travel page — lazily code-split so it never loads on the homepage; both hero backgrounds are plain Canvas2D
 - Raw WebGL (GLSL) for the noise-gradient hero background
 - Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`); a weekly GitHub Actions job rotates the active palette
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
@@ -58,7 +58,8 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   ├── ui.js                  Chrome/UI — navbar, mobile menu, command palette, counters, toast, back-to-top, carousel
 │   ├── three-context.js       Shared THREE binding + test mocking hook
 │   ├── utils.js               isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, getTopoJSON
-│   ├── neural-net.js          NeuralNetwork2D (Canvas2D hero background; Three-free)
+│   ├── neural-net.js          NeuralNetwork2D (Canvas2D hero background — narrow/touch viewports)
+│   ├── cnn-hero.js            CnnHero (Canvas2D LeNet-5 forward pass — desktop hero background)
 │   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
 │   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars, timeline entrance
@@ -575,7 +576,19 @@ The navbar contains: **About**, **Expertise** (the Skills section), **Projects**
 
 The site uses several layers of real-time rendering, all progressive-enhancement: each effect degrades gracefully on low-power devices, and respects `prefers-reduced-motion`.
 
-### Neural network (hero background)
+### LeNet-5 forward pass (hero background, desktop)
+
+The homepage hero runs a **real convolutional network classifying real MNIST digits** — but the browser never performs inference.
+
+A small LeNet-5 (28×28 → conv 6@5×5 → maxpool → conv 16@5×5 → maxpool → 120 → 84 → 10; ~44 k parameters, **98.5 % test accuracy**) is trained offline by `scripts/train-cnn.mjs`, which implements forward *and* backward passes in **plain JavaScript with no dependencies** — no TensorFlow, no Python, no BLAS. `scripts/generate-cnn-activations.mjs` then replays ten forward passes (one per digit), quantises every layer's activations to `uint8` and base64-packs them into `data/cnn-activations.js`: **42 KB of source, ~11 KB gzipped**.
+
+`js/cnn-hero.js` is a *player* for that data. It lays the network out in oblique projection — feature maps as sheared planes stacked back-to-front per channel, dense layers as neuron columns — and animates the signal travelling layer by layer: cells light up in proportion to their activation, a pulse runs down each wire, and the softmax column resolves to the predicted digit with its probability. Then it fades out and picks the next digit.
+
+The obvious library for this is [TensorSpace.js](https://tensorspace.org/), and it was deliberately not used: it stacks Three.js on TensorFlow.js on tween.js — several hundred KB gzipped, onto a page that currently ships none of them — and it is built to be an *inspection tool*, not a background. Precomputing the activations gets the same picture for ~11 KB and zero runtime inference cost.
+
+Gated on `(min-width: 1100px) and (pointer: fine)` plus data-saver / slow-connection checks: below that, the labels and 8×8 feature maps stop being legible, so those viewports keep the particle field below. The branch happens *before* the dynamic `import()`, so phones never download the activation chunk.
+
+### Neural network particle field (hero background, narrow viewports)
 
 A Canvas2D particle system (`NeuralNetwork2D`) of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor; lines are drawn between nearby pairs and fade with distance, creating the "glowing wire" look. On low-power devices the node count drops and the frame rate is capped. The hero background is decorative, so it is rendered in plain Canvas2D rather than WebGL — which keeps the module **Three-free** and means the homepage never downloads Three.js at all (Three only ships in the globe chunk on the travel page).
 
@@ -595,7 +608,7 @@ Mouse dragging rotates the globe with inertia; auto-spin resumes when idle. Rayc
 
 ### Animated GLSL noise gradient (hero background)
 
-A full-screen WebGL canvas sits behind the neural-network layer in the hero. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette built from the active palette's `noise` stops (dark / mid / bright). To save battery, the gradient renders only 3 frames at startup and then stops — the last rendered frame persists as a static background.
+A full-screen WebGL canvas sits behind the hero's network layer. Its fragment shader generates an organic, flowing colour field using **domain-warped fractional Brownian motion** (fbm-of-fbm): the input UV coordinates are first displaced by one fbm evaluation, then fed into a second, creating the folded, turbulent look characteristic of fluid simulations. The resulting scalar field drives a colour palette built from the active palette's `noise` stops (dark / mid / bright). To save battery, the gradient renders only 3 frames at startup and then stops — the last rendered frame persists as a static background.
 
 ### 3-D card tilt with specular gloss
 
@@ -662,6 +675,8 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 | Change | Impact |
 | -------- | -------- |
 | Canvas2D hero (no Three.js) + Three lazily imported only for the globe | The homepage ships zero Three.js; the ~140 KB gzip Three chunk loads only on the travel page, on scroll |
+| Hero CNN activations precomputed offline instead of running TensorSpace.js / TensorFlow.js | ~11 KB gzip of `uint8` data and no inference at runtime, versus several hundred KB of ML runtime |
+| CNN hero gated behind a media query checked *before* its dynamic import | Phones and tablets never download the activation chunk at all |
 | Globe / Europe map built only when their canvas nears the viewport | Defers Three.js + the 545 KB TopoJSON fetch until the user scrolls there |
 | Homepage world map is a static inline SVG | No runtime projection or TopoJSON fetch on the home page |
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
