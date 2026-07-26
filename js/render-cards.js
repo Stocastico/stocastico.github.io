@@ -12,20 +12,13 @@ export function projectCardHtml(project, i = 0) {
   const tagsHtml = (project.tags || [])
     .map((t) => '<span class="project-tag">' + escapeHtml(t) + '</span>')
     .join('');
-  const bgSrc = project.bg || '';
-  const hasBg = Boolean(bgSrc);
-  /* Make the url() root-absolute. Chromium resolves a relative url() inside a
-     CSS custom property against the stylesheet that *uses* var(--card-bg)
-     (the bundled /assets/styles.css), not the document — so a bare
-     "img/projects/…" path would 404 at /assets/img/projects/…. Leading "/"
-     pins it to the site root. */
-  const bgUrl = /^(https?:|data:|\/)/.test(bgSrc) ? bgSrc : '/' + bgSrc;
-  const style = hasBg
-    ? ' style="--card-bg: url(\'' + escapeHtml(bgUrl) + '\')"'
-    : '';
-  const cls = 'project-card' + (hasBg ? ' project-card--has-bg' : '');
-  return '<a href="' + escapeHtml(project.url || '#') + '" class="' + cls + '" data-animate data-delay="' + (i * 80) + '"' + style + '>' +
-    '<div class="project-card__overlay" aria-hidden="true"></div>' +
+  /* `project.bg` is deliberately NOT used here. It stays the hero image of the
+     project's own detail page (and its og:image), but as a card background it
+     was never legible: faint enough not to fight the body copy meant faint
+     enough to be invisible, and several of the images are diagrams whose own
+     text showed through behind the description. Dropping it also means the
+     listing pages stop fetching a few hundred KB of imagery nobody could see. */
+  return '<a href="' + escapeHtml(project.url || '#') + '" class="project-card" data-animate data-delay="' + (i * 80) + '">' +
     '<div class="project-card__body">' +
       '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
       '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +

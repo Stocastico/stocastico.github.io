@@ -22,7 +22,7 @@
  *   title:       "My Project Title"
  *   year:        "2024"
  *   tags:        "AI, CV, Unity"         # comma-separated
- *   bg:          "img/projects/my-bg.jpg"   # card bg + project-page hero
+ *   bg:          "img/projects/my-bg.jpg"   # project-page hero + og:image
  *   description: "Short 2–3 sentence summary for the homepage card."
  *   ---
  *
@@ -78,7 +78,7 @@ Frontmatter fields (YAML between --- delimiters):
   title        (required)  Project title
   year         (required)  Project year
   tags         (required)  Comma-separated tag keywords
-  bg           (required)  Card background + project detail hero image
+  bg           (required)  Project detail hero image + og:image
   description  (required)  Short summary for the homepage card
   link_paper              URL to paper (optional)
   link_github             URL to GitHub repo (optional)

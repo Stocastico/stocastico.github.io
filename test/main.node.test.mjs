@@ -1887,7 +1887,7 @@ test('renderProjects injects project cards with title, year, and tags', () => {
   }
 });
 
-test('renderProjects uses bg image as CSS background when provided', () => {
+test('renderProjects never puts the project bg image on the card', () => {
   const grid = { innerHTML: '', parentNode: { appendChild() {} } };
   const prevDocument = global.document;
   global.document = {
@@ -1910,10 +1910,15 @@ test('renderProjects uses bg image as CSS background when provided', () => {
       description: 'A project with a background image.',
       url: 'projects/with-bg.html',
     }]);
-    // bg URL should end up as a root-absolute CSS custom property on the card
-    assert.match(grid.innerHTML, /--card-bg:\s*url\(['"]?\/img\/projects\/with-bg-hero\.jpg['"]?\)/);
-    // has-bg class toggled when bg is present
-    assert.match(grid.innerHTML, /project-card--has-bg/);
+    /* `bg` belongs to the project's detail page (hero + og:image), not to the
+       card: behind the body copy it was either illegible or distracting, and
+       it made the listing pages fetch imagery nobody could see. */
+    assert.doesNotMatch(grid.innerHTML, /--card-bg/);
+    assert.doesNotMatch(grid.innerHTML, /project-card--has-bg/);
+    assert.doesNotMatch(grid.innerHTML, /with-bg-hero\.jpg/);
+    assert.doesNotMatch(grid.innerHTML, /project-card__overlay/);
+    /* …but the card itself still renders. */
+    assert.match(grid.innerHTML, /Project With BG/);
   } finally {
     global.document = prevDocument;
   }

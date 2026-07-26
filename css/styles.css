@@ -1757,44 +1757,9 @@ h3 {
   box-shadow: var(--elev-3);
 }
 
-/* When a bg image is supplied, render it semi-transparent behind the content.
-   The image URL is injected by main.js as a CSS custom property (--card-bg).
-   We deliberately split the URL declaration from background-image so that
-   the browser only kicks off the fetch once JS adds .bg-loaded — see
-   _initLazyCardBackgrounds() in js/main.js. */
-.project-card--has-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  opacity: 0;
-  z-index: -2;
-  transition: opacity 0.5s ease, transform 0.4s ease;
-}
-
-.project-card--has-bg.bg-loaded::before {
-  background-image: var(--card-bg);
-  opacity: 0.17;
-}
-
-.project-card--has-bg.bg-loaded:hover::before {
-  opacity: 0.32;
-  transform: scale(1.04);
-}
-
-/* Soft gradient overlay for legibility over the bg image */
-.project-card__overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom,
-      rgb(var(--bg-rgb) / 0.96) 0%,
-      rgb(var(--bg-rgb) / 0.9) 45%,
-      rgb(var(--bg-rgb) / 0.78) 100%);
-  z-index: -1;
-  pointer-events: none;
-}
-
+/* Cards carry no background artwork: see projectCardHtml() in
+   js/render-cards.js. The project's image lives on its detail page, where it
+   gets the room to actually be seen. */
 .project-card__body {
   padding: 1.2rem 1.4rem 1.4rem;
   display: flex;
@@ -1967,13 +1932,6 @@ h3 {
     transform: none;
   }
 
-  .project-card--has-bg::before {
-    transition: none;
-  }
-
-  .project-card--has-bg:hover::before {
-    transform: none;
-  }
 }
 
 /* ─── 12. Skills Section — sticky header layout ──────────── */

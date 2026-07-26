@@ -8,7 +8,7 @@
      title:       'My Project Title',         // short title (one line)
      year:        '2024',                     // project year (string)
      tags:        ['AI', 'CV'],               // 1–3 keyword badges
-     bg:          'img/projects/my-bg.jpg',    // card background + hero image
+     bg:          'img/projects/my-bg.jpg',    // detail-page hero + og:image
      description: 'Short 2–3 sentence summary shown on the homepage card.',
      url:         'projects.html#my-project', // link to detail section
    }
