@@ -3651,11 +3651,61 @@ h3 {
   pointer-events: auto;
 }
 
+} /* end @layer components */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Print styles live OUTSIDE @layer on purpose. The palette is defined on an
+   unlayered :root, and unlayered normal declarations beat every layered one
+   no matter how specific — so the same block inside @layer components could
+   restyle .section-title but silently failed to repoint --text, and the CV
+   still printed its job titles in light grey on white paper.
+   ───────────────────────────────────────────────────────────────────────── */
 /* ─── Print Styles ───────────────────────────────────── */
 @media print {
+  /* Repoint the palette itself rather than chasing individual selectors: every
+     rule already reads var(--text) / var(--bg-card) / …, so one override sheet
+     turns the whole site legible on paper. The dark and light variants are
+     both listed because :root[data-theme="…"] outranks a bare :root — without
+     them, printing with a theme pinned would keep the screen colours. */
+  :root,
+  :root[data-theme='dark'],
+  :root[data-theme='light'] {
+    --bg: #fff;
+    --bg-alt: #fff;
+    --bg-card: #fff;
+    --bg-card-hov: #fff;
+    --bg-rgb: 255 255 255;
+    --bg-alt-rgb: 255 255 255;
+    --text: #111;
+    --text-muted: #333;
+    --text-faint: #555;
+    --text-rgb: 17 17 17;
+    --border: #bbb;
+    --border-hov: #999;
+    /* Darkened so the accents survive as ink instead of washing out. */
+    --accent: #6d5410;
+    --accent-hi: #5a4409;
+    --accent-rgb: 109 84 16;
+    --accent2: #1f5c3a;
+    --accent2-hi: #17462c;
+    --accent2-rgb: 31 92 58;
+  }
+
   body {
     background: white;
     color: black;
+  }
+
+  /* Gradient-filled headings paint from a background, and backgrounds are not
+     printed — so these came out as ghosts. The worst case was the CV, where
+     every job title disappeared. */
+  .hero-name,
+  .section-title,
+  .globe-title,
+  .photo-initials {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: #111;
   }
 
   #navbar,
@@ -3690,5 +3740,3 @@ h3 {
     color: #333;
   }
 }
-
-} /* end @layer components */
