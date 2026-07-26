@@ -118,15 +118,248 @@ export const THEME_LIGHT = {
   },
 };
 
-/* Resolve the palette active for the current document. Light only when the
-   document is explicitly pinned to data-theme="light"; everything else
-   (no pin, data-theme="dark", or SSR / no DOM) is the dark THEME. */
+/* The palette shipped as the CSS :root default. */
+export const ACTIVE_PALETTE = 'forest';
+
+/* Every palette, so the picker can recolour the canvases live. The active one
+   reuses THEME / THEME_LIGHT rather than repeating them. */
+export const PALETTES = {
+  forest: { id: 'forest', name: 'Forest & Brass', dark: THEME, light: THEME_LIGHT },
+  apricot: {
+    id: 'apricot',
+    name: 'Mocha & Apricot',
+    dark: {
+      id: 'apricot',
+      name: 'Mocha & Apricot',
+      bg: '#0c0908',
+      bgAlt: '#15110d',
+      text: '#f4ebe1',
+      textMuted: '#a39588',
+      textFaint: '#877b6b',
+      accent: '#eca670',
+      accentHi: '#f1b98a',
+      accent2: '#dd775d',
+      accent2Hi: '#e79079',
+      onAccent: '#2a1a0d',
+      heroGradFrom: '#f6d2a8',
+      heroGradTo: '#e76f51',
+      mapBg: '#0a0706',
+      themeColor: '#0c0908',
+      faviconBg: '#0c0908',
+      faviconFg: '#f4a261',
+      pins: {
+        lived: '#f4a261',
+        current: '#ffd166',
+        worktrip: '#c97b4a',
+        holiday: '#e76f51',
+      },
+      globe: {
+        ocean: '#140b07',
+        land: '#2a1810',
+        landEurope: '#4a2818',
+        coast: '#d98a52',
+        coastBright: '#ffe0c0',
+        ambient: '#241410',
+        keyLight: '#5a3a28',
+        rimLight: '#f4a261',
+        fillLight: '#e76f51',
+        atmInner: '#f4a261',
+        atmShell: '#5a2e1f',
+        atmHalo: '#e76f51',
+        grid: '#b06a3f',
+        gridBright: '#f4b87f',
+        stars: '#f4ebe1',
+        fallback1: '#965f3c',
+        fallback2: '#462819',
+        fallback3: '#140b07',
+      },
+      noise: {
+        dark: '#0c0908',
+        mid: '#7a4424',
+        bright: '#d98a52',
+      },
+    },
+    light: {
+      id: 'apricot-light',
+      name: 'Mocha & Apricot (Light)',
+      bg: '#fbf7f3',
+      bgAlt: '#f3ebe2',
+      text: '#261a12',
+      textMuted: '#6e5c4c',
+      textFaint: '#93826f',
+      accent: '#b16833',
+      accentHi: '#c77e45',
+      accent2: '#b7523c',
+      accent2Hi: '#cf6c55',
+      onAccent: '#fdf5ef',
+      heroGradFrom: '#c2682e',
+      heroGradTo: '#c0492f',
+      mapBg: '#f0e5d9',
+      themeColor: '#fbf7f3',
+      faviconBg: '#fbf7f3',
+      faviconFg: '#b8631f',
+      pins: {
+        lived: '#b8631f',
+        current: '#c08a2a',
+        worktrip: '#a85a38',
+        holiday: '#c0492f',
+      },
+      globe: {
+        ocean: '#ece0d4',
+        land: '#dcc1a6',
+        landEurope: '#cf9468',
+        coast: '#d98a52',
+        coastBright: '#a85a30',
+        ambient: '#f0e6db',
+        keyLight: '#ddb189',
+        rimLight: '#b8631f',
+        fillLight: '#c0492f',
+        atmInner: '#f4a261',
+        atmShell: '#f0d0b8',
+        atmHalo: '#c0492f',
+        grid: '#caa285',
+        gridBright: '#a05a30',
+        stars: '#6e5c4c',
+        fallback1: '#cf9468',
+        fallback2: '#e2caba',
+        fallback3: '#f0e6db',
+      },
+      noise: {
+        dark: '#fbf7f3',
+        mid: '#f3d2b5',
+        bright: '#e89a6a',
+      },
+    },
+  },
+  crimson: {
+    id: 'crimson',
+    name: 'Crimson & Rust',
+    dark: {
+      id: 'crimson',
+      name: 'Crimson & Rust',
+      bg: '#120a0a',
+      bgAlt: '#1a0f0e',
+      text: '#f0e6e3',
+      textMuted: '#a3908c',
+      textFaint: '#8a7b78',
+      accent: '#cc5257',
+      accentHi: '#de726c',
+      accent2: '#ba693e',
+      accent2Hi: '#d28e5f',
+      onAccent: '#fbeae9',
+      heroGradFrom: '#f2c9b0',
+      heroGradTo: '#c2632e',
+      mapBg: '#0e0808',
+      themeColor: '#120a0a',
+      faviconBg: '#120a0a',
+      faviconFg: '#d64550',
+      pins: {
+        lived: '#d64550',
+        current: '#f2b56a',
+        worktrip: '#a8516b',
+        holiday: '#c2632e',
+      },
+      globe: {
+        ocean: '#140807',
+        land: '#2a1310',
+        landEurope: '#3d1f1a',
+        coast: '#b85040',
+        coastBright: '#f0c0b0',
+        ambient: '#241010',
+        keyLight: '#5a2a28',
+        rimLight: '#d64550',
+        fillLight: '#c2632e',
+        atmInner: '#d64550',
+        atmShell: '#4a1f1c',
+        atmHalo: '#c2632e',
+        grid: '#a04a40',
+        gridBright: '#e08070',
+        stars: '#f0e6e3',
+        fallback1: '#8a4540',
+        fallback2: '#3a1815',
+        fallback3: '#140807',
+      },
+      noise: {
+        dark: '#120a0a',
+        mid: '#6e2828',
+        bright: '#b8543a',
+      },
+    },
+    light: {
+      id: 'crimson-light',
+      name: 'Crimson & Rust (Light)',
+      bg: '#faf6f3',
+      bgAlt: '#f2e8e4',
+      text: '#241715',
+      textMuted: '#6e5852',
+      textFaint: '#94817b',
+      accent: '#ae3234',
+      accentHi: '#c54549',
+      accent2: '#994f2b',
+      accent2Hi: '#b5653a',
+      onAccent: '#fdf3f1',
+      heroGradFrom: '#c2632e',
+      heroGradTo: '#b81f2a',
+      mapBg: '#efe3de',
+      themeColor: '#faf6f3',
+      faviconBg: '#faf6f3',
+      faviconFg: '#b81f2a',
+      pins: {
+        lived: '#b81f2a',
+        current: '#c2812a',
+        worktrip: '#8a3a52',
+        holiday: '#a04a1c',
+      },
+      globe: {
+        ocean: '#e6dcd6',
+        land: '#d3b3a4',
+        landEurope: '#c2855f',
+        coast: '#b85040',
+        coastBright: '#8a2f28',
+        ambient: '#efe3dd',
+        keyLight: '#d8a48c',
+        rimLight: '#b81f2a',
+        fillLight: '#c2632e',
+        atmInner: '#d64550',
+        atmShell: '#ecc4b6',
+        atmHalo: '#c2632e',
+        grid: '#c39588',
+        gridBright: '#9c463c',
+        stars: '#6e5852',
+        fallback1: '#c2855f',
+        fallback2: '#ddc3b8',
+        fallback3: '#efe3dd',
+      },
+      noise: {
+        dark: '#faf6f3',
+        mid: '#f1cdbb',
+        bright: '#e79a7b',
+      },
+    },
+  },
+};
+
+/* Resolve the palette in effect for the current document, along both axes:
+   which palette (data-palette, default ACTIVE_PALETTE) and which variant
+   (light only when explicitly pinned to data-theme="light" — everything else,
+   including no pin and SSR, is dark). */
 export function getTheme() {
-  if (typeof document !== 'undefined' && document.documentElement) {
-    const pinned = document.documentElement.dataset && document.documentElement.dataset.theme;
-    if (pinned === 'light') return THEME_LIGHT;
+  let paletteId = ACTIVE_PALETTE;
+  let variant = 'dark';
+  const root = typeof document !== 'undefined' ? document.documentElement : null;
+  if (root) {
+    /* getAttribute first, dataset second: js/ui.js reads the same attributes
+       that way, and it keeps this working against the minimal document stubs
+       the tests use. */
+    const read = (attr, key) => (typeof root.getAttribute === 'function'
+      ? root.getAttribute(attr)
+      : (root.dataset || {})[key]);
+    const pid = read('data-palette', 'palette');
+    if (pid && PALETTES[pid]) paletteId = pid;
+    if (read('data-theme', 'theme') === 'light') variant = 'light';
   }
-  return THEME;
+  const entry = PALETTES[paletteId] || PALETTES[ACTIVE_PALETTE];
+  return variant === 'light' ? entry.light : entry.dark;
 }
 
 /* '#rrggbb' → 0xRRGGBB integer. */

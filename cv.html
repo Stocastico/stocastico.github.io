@@ -5,10 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-C4OfiBJzAbybW8tl7g3MDqz9205LgnjfRFtT6S40N0w=' 'sha256-wBdtWdXsHnAU2DdByySW4LlXFAScrBvmBgkXtydwJdg='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-C4OfiBJzAbybW8tl7g3MDqz9205LgnjfRFtT6S40N0w=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
-  <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
   <!-- /theme-bootstrap -->
   <meta name="description"
     content="Curriculum Vitae of Stefano Masneri, Senior AI Engineer with 15+ years in machine learning, computer vision, AR and generative AI, with a PhD and 30+ publications." />
@@ -94,8 +94,8 @@
         <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <defs>
             <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#c4a55d"/>
-              <stop offset="100%" stop-color="#75ae8b"/>
+              <stop offset="0%" stop-color="var(--accent)"/>
+              <stop offset="100%" stop-color="var(--accent2)"/>
             </linearGradient>
           </defs>
           <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>

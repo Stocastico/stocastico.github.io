@@ -10,7 +10,11 @@
         That stored choice is re-applied before paint by …
 
      2. … the <head> bootstrap <script> (wrapped in <!-- theme-bootstrap -->):
-        reads localStorage and pins data-theme before first paint — no FOUC.
+        reads localStorage and pins data-theme (and data-palette) before first
+        paint — no FOUC. The palette id is pattern-checked rather than matched
+        against the known list: the bootstrap has no access to the generated
+        palette table, and an unknown id simply matches no CSS rule and falls
+        back to the :root default.
         Inserted after the CSP <meta> so the CSP hash (added by
         generate-csp-meta) covers it.
 
@@ -34,7 +38,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const BOOTSTRAP = [
   '  <!-- theme-bootstrap -->',
-  "  <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>",
+  "  <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>",
   '  <!-- /theme-bootstrap -->',
 ].join('\n');
 
