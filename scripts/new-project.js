@@ -505,7 +505,7 @@ ${linksHtml}
         <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>
         <a href="https://github.com/Stocastico" target="_blank" rel="noopener">GitHub</a>
       </nav>
-      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Made with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebasti&aacute;n</p>
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Written by me, coded with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebasti&aacute;n</p>
     </div>
   </footer>
 

@@ -97,7 +97,7 @@
   --space-3xl: 3rem;
   --space-4xl: 4rem;
 
-  --section-py: clamp(7rem, 12vw, 11rem);
+  --section-py: clamp(4.5rem, 8vw, 7rem);
   --container: 1180px;
   --gap: var(--space-lg);
 
@@ -840,22 +840,18 @@ h3 {
 }
 
 .section-header {
-  text-align: center;
-  margin-bottom: clamp(3.5rem, 7vw, 6rem);
+  text-align: left;
+  margin-bottom: clamp(2.25rem, 4vw, 3.25rem);
 }
 
 .section-tag {
-  display: inline-block;
+  display: block;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 0.75rem;
-  padding: 0.25em 0.9em;
-  border-radius: 999px;
-  border: 1px solid rgb(var(--accent-rgb) / 0.22);
-  background: rgb(var(--accent-rgb) / 0.07);
+  margin-bottom: 0.6rem;
 }
 
 .section-title {
@@ -874,7 +870,7 @@ h3 {
   font-size: 1.05rem;
   line-height: 1.65;
   max-width: 60ch;
-  margin: 1rem auto 0;
+  margin: 1rem 0 0;
 }
 
 
@@ -1030,14 +1026,9 @@ h3 {
 }
 
 /* ─── Travel page ───────────────────────────────────────────────────────── */
-.travel-page .section-header {
-  text-align: center;
-}
-
 .travel-intro,
 .travel-outro {
   max-width: 62ch;
-  margin-inline: auto;
   color: var(--text-muted);
 }
 
@@ -1195,13 +1186,9 @@ h3 {
 }
 
 /* ─── Links page (curated blogroll) ─────────────────────────────────────── */
-.links-page .section-header {
-  text-align: center;
-}
-
 .links-intro {
   max-width: 60ch;
-  margin: 1rem auto 0;
+  margin: 1rem 0 0;
   color: var(--text-muted);
 }
 
@@ -1218,7 +1205,6 @@ h3 {
 .links-toolbar {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 0.6rem;
 }
 
@@ -1267,7 +1253,7 @@ h3 {
 }
 
 .links-count {
-  text-align: center;
+  text-align: left;
   margin: 1rem 0 0;
   color: var(--text-faint);
   font-size: 0.82rem;
@@ -1789,11 +1775,11 @@ h3 {
 
 .project-card--has-bg.bg-loaded::before {
   background-image: var(--card-bg);
-  opacity: 0.09;
+  opacity: 0.17;
 }
 
 .project-card--has-bg.bg-loaded:hover::before {
-  opacity: 0.16;
+  opacity: 0.32;
   transform: scale(1.04);
 }
 
@@ -1804,7 +1790,7 @@ h3 {
   background: linear-gradient(to bottom,
       rgb(var(--bg-rgb) / 0.96) 0%,
       rgb(var(--bg-rgb) / 0.9) 45%,
-      rgb(var(--bg-rgb) / 0.7) 100%);
+      rgb(var(--bg-rgb) / 0.78) 100%);
   z-index: -1;
   pointer-events: none;
 }
@@ -2032,12 +2018,8 @@ h3 {
     position: static;
   }
 
-  .section-header--left {
-    text-align: center;
-  }
-
   .skills-sticky-desc {
-    margin-inline: auto;
+    margin-inline: 0;
   }
 }
 
@@ -2418,10 +2400,12 @@ h3 {
   border-left: 3px solid var(--accent2);
 }
 
-/* Left cell (career) */
+/* Left cell (career). The cards hang off the right of the spine, but their
+   *text* stays left-aligned: right-aligned body copy gives every paragraph a
+   ragged left edge, which is measurably slower to read. */
 .tl-left {
   padding-right: 1rem;
-  text-align: right;
+  text-align: left;
 }
 
 /* Right cell (education) */
@@ -2506,10 +2490,7 @@ h3 {
   gap: 0.35rem;
 }
 
-/* On career (left) cards, align tags to the right */
-.tl-left .tl-tags {
-  justify-content: flex-end;
-}
+/* Tags follow the card's text, which is left-aligned on both sides now. */
 
 .tl-tag {
   font-size: 0.67rem;
@@ -2697,10 +2678,6 @@ h3 {
 
   .tl-left .tl-location {
     text-align: right;
-  }
-
-  .tl-left .tl-tags {
-    justify-content: flex-start;
   }
 
   .tl-empty {
