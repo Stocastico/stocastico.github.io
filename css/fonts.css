@@ -47,3 +47,27 @@
   font-weight: 700;
   src: url(../fonts/outfit-latin-700-normal.woff2) format('woff2'), url(../fonts/outfit-latin-700-normal.woff) format('woff');
 }
+
+/* Self-hosted JetBrains Mono (latin, variable weight 400-700).
+
+   Used only for metadata — eyebrows, tags, years, domains, stat labels — never
+   for prose. See the "typographic system" note in css/styles.css.
+
+   Provenance, so this is reproducible: the file is the latin subset from
+   @fontsource-variable/jetbrains-mono (SIL OFL 1.1), further reduced with
+   fonttools —
+     · subset to U+0020-007E, U+00A0-00FF, U+0131, U+00B7, U+00D7, U+20AC,
+       U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2192
+       (kern/ccmp/locl/mark/mkmk retained; coding ligatures dropped — this is
+       a label face here, not an editor face)
+     · weight axis clipped to 400-700, the only range the CSS asks for
+   40.4 KB -> 13.3 KB. woff2 only: every browser that runs this site's ES
+   modules has supported woff2 since 2016. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 700;
+  src: url(../fonts/jetbrains-mono-latin-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+2000-206F,U+20AC,U+2192,U+2212;
+}
