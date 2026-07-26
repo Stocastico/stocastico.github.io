@@ -358,18 +358,21 @@ function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) 
 
     var n = careerPairs.length;
 
-    /* Left column + spine: one career card per grid row */
+    /* Column 1 is the spine, column 2 the concurrent career cards (one per
+       grid row), column 3 the education card beside them. Placement is inline
+       because the row index depends on how many careers the entry overlaps,
+       which CSS cannot express — see .tl-concurrent-block in css/styles.css. */
     var leftCells = careerPairs.map(function(c, i) {
       var row = i + 1;
-      return '<div class="tl-left tl-row--career" style="grid-column:1;grid-row:' + row + '">'
+      return '<div class="tl-left tl-row--career" style="grid-column:2;grid-row:' + row + '">'
            +   cardHtml(c, 'career')
            + '</div>'
-           + '<div class="tl-spine" style="grid-column:2;grid-row:' + row + '">'
+           + '<div class="tl-spine" style="grid-column:1;grid-row:' + row + '">'
            +   '<div class="tl-dot" aria-hidden="true"></div>'
            + '</div>';
     }).join('');
 
-    /* Right column: education card spans all career rows */
+    /* Education card spans every career row it overlaps */
     var rightCell = '<div class="tl-right tl-row--education" style="grid-column:3;grid-row:1/' + (n + 1) + '">'
                   + cardHtml(eduEntry, 'education')
                   + '</div>';

@@ -878,24 +878,21 @@ h3 {
 /* Asymmetric layout: bio on the left, globe filling the right half */
 /* ─── About: top area (photo + stats + bio) ──────────────── */
 .about-top {
-  display: flex;
+  display: grid;
+  /* The bio's own measure caps around 666px, so a flex row left ~180px of
+     dead space at the right edge. Giving the photo column the slack instead
+     balances the row: the portrait was 200px wide, which is small for the
+     only photograph on the site. */
+  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
   gap: 2.5rem;
-  align-items: flex-start;
-  margin-bottom: 3rem;
+  align-items: start;
+  margin-bottom: 2.5rem;
 }
 
 .about-photo-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 1.5rem;
-  flex-shrink: 0;
-}
-
-.about-photo-col .stats-row {
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-top: 0;
 }
 
 /* ─── About: maps area (globe + europe side by side) ─────── */
@@ -1384,7 +1381,10 @@ h3 {
   border: 1px solid var(--border);
   background: var(--bg-card);
   aspect-ratio: 4/5;
-  max-width: 200px;
+  /* Fills the About photo column (up to 340px). It is the only photograph on
+     the site — 200px was undersized for that job. */
+  max-width: 340px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1426,6 +1426,15 @@ h3 {
 }
 
 /* Photo when you add a real image */
+/* <picture> is the flex item, so the <img> inside was resolving height: 100%
+   against the picture's intrinsic (square) box and letterboxing inside the
+   4/5 card. Stretch the wrapper so object-fit: cover actually crops. */
+.photo-card>picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .photo-img {
   width: 100%;
   height: 100%;
@@ -1967,6 +1976,19 @@ h3 {
   gap: var(--gap);
 }
 
+/* Beside the sticky header the grid always resolves to two columns anyway;
+   saying so explicitly lets an odd-numbered last group span the full row
+   rather than sitting alone next to a hole. */
+@media (min-width: 901px) {
+  .skills-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .skill-group:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 900px) {
   .skills-split {
     grid-template-columns: 1fr;
@@ -2250,17 +2272,21 @@ h3 {
 /* ── Unified timeline container ───────────────────────── */
 .cv-timeline {
   position: relative;
-  max-width: 900px;
-  margin: 0 auto;
   padding: 2rem 0;
 
-  /* Central vertical spine */
+  /* Vertical spine, aligned to the centre of the 52px spine column.
+     It used to run down the middle with career cards on the left and
+     education on the right — but there is one point in the history where
+     both sides are occupied (the PhD, which overlaps two jobs). Everywhere
+     else half the row was empty, so the spine sits on the left and cards
+     take the full width; the overlap is preserved by the concurrent block
+     below, which splits internally. */
   &::before {
     content: '';
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 50%;
+    left: 26px;
     width: 2px;
     transform: translateX(-50%);
     background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
@@ -2272,21 +2298,39 @@ h3 {
 /* ── Timeline row — one per entry ─────────────────────── */
 .tl-row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0;
   align-items: start;
   margin-bottom: 1.5rem;
   position: relative;
 }
 
+.tl-row>.tl-spine {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Exactly one of these carries content on a plain row; the other is an empty
+   placeholder of zero height, so auto-placing both into column 2 costs
+   nothing (row-gap is 0) and stays correct if both are ever filled. */
+.tl-row>.tl-left,
+.tl-row>.tl-right {
+  grid-column: 2;
+}
+
 /* ── Concurrent block: education spans multiple career rows ── */
 .tl-concurrent-block {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /* spine | the concurrent career cards | the education card beside them */
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 1.5rem;
   row-gap: 1.5rem;
   align-items: start;
   margin-bottom: 1.5rem;
   position: relative;
+
+  /* Cell placement is set inline by renderCvTimeline() in js/main.js — the
+     row index depends on how many career entries the education overlaps. */
 
   /* Dots inside concurrent block use career colour */
   .tl-spine .tl-dot {
@@ -2348,9 +2392,10 @@ h3 {
   }
 }
 
-/* Career cards: left side — accent bar on right edge (toward spine) */
+/* Every card hangs off the same spine now, so the accent bar is always on
+   the left edge — the colour still distinguishes career from education. */
 .tl-row--career .tl-card-single {
-  border-right: 3px solid var(--accent);
+  border-left: 3px solid var(--accent);
 }
 
 /* Education cards: right side — accent bar on left edge (toward spine) */
@@ -2358,17 +2403,10 @@ h3 {
   border-left: 3px solid var(--accent2);
 }
 
-/* Left cell (career). The cards hang off the right of the spine, but their
-   *text* stays left-aligned: right-aligned body copy gives every paragraph a
-   ragged left edge, which is measurably slower to read. */
-.tl-left {
-  padding-right: 1rem;
-  text-align: left;
-}
-
-/* Right cell (education) */
+/* Both cells sit to the right of the spine now. */
+.tl-left,
 .tl-right {
-  padding-left: 1rem;
+  text-align: left;
 }
 
 /* Empty side placeholder */
@@ -2418,14 +2456,7 @@ h3 {
   margin-bottom: 0.25rem;
 }
 
-/* On career (left) cards, reverse header so location is on the left */
-.tl-left .tl-card-header {
-  flex-direction: row-reverse;
-}
-
-.tl-left .tl-location {
-  text-align: left;
-}
+/* Header order is the same on both sides now: year first, location trailing. */
 
 .tl-location {
   color: var(--text-faint);
@@ -2746,23 +2777,11 @@ h3 {
 /* ─── 18. Responsive ────────────────────────────────────── */
 @media (max-width: 1024px) {
   .about-top {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .about-photo-col {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 1.5rem;
-  }
-
-  .about-photo-col .stats-row {
-    grid-template-columns: repeat(3, 1fr);
-    flex: 1;
-  }
-
-  .about-photo-col .photo-card {
-    max-width: 180px;
+    align-items: center;
   }
 
   .maps-row {
@@ -2840,17 +2859,8 @@ h3 {
     justify-content: center;
   }
 
-  /* Portrait phones: revert .about-photo-col to a column so the profile
-     photo gets the full content width instead of being squeezed next to
-     the stats grid (which collapses it to a sliver below ~400px). */
-  .about-photo-col {
-    flex-direction: column;
-    align-items: center;
-  }
-
   .about-photo-col .photo-card {
     max-width: 260px;
-    width: 100%;
   }
 }
 
