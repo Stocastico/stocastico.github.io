@@ -18,7 +18,6 @@ const ROOT = path.resolve(__dirname, '..');
 /* Custom properties injected at runtime — via JS .style.setProperty() or an
    inline style="" attribute — so they legitimately have no :root definition. */
 const RUNTIME_VARS = new Set([
-  '--card-bg',          // js/main.js renderProjectCard (lazy bg)
   '--pct',              // js/main.js skill bars
   '--gloss-x',          // js/animations.js card tilt gloss
   '--gloss-y',
@@ -95,12 +94,12 @@ test('css: project cards top-align their content', () => {
     '.project-card should top-align its body (justify-content: flex-start)');
 });
 
-test('css: project card overlay is darkest at the top to match top-aligned content', () => {
+test('css: project cards carry no background artwork', () => {
   const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
-  const overlay = ruleBlock(css, '.project-card__overlay');
-  assert(overlay, '.project-card__overlay rule not found');
-  assert.match(overlay, /linear-gradient\(\s*to bottom/,
-    '.project-card__overlay gradient should be darkest at the top (to bottom)');
+  for (const selector of ['.project-card__overlay', '.project-card--has-bg']) {
+    assert(!css.includes(selector),
+      `${selector} should be gone — card artwork was removed, see js/render-cards.js`);
+  }
 });
 
 test('css: button interactive-state selectors are present', () => {

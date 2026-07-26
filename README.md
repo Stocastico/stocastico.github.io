@@ -454,7 +454,7 @@ Prints the generated HTML and the `data/projects.js` entry without writing any f
 | `title`       | string | Yes      | Project title                                        |
 | `year`        | string | Yes      | Year of the project, e.g. `"2024"`                   |
 | `tags`        | string | Yes      | Comma-separated keyword badges, e.g. `"AI, CV"`      |
-| `bg`          | string | Yes      | Card background + hero image on the detail page      |
+| `bg`          | string | Yes      | Hero image + `og:image` on the project detail page   |
 | `description` | string | Yes      | Short summary shown on the homepage and listing card |
 | `url`         | string | No       | Override the output URL path                         |
 

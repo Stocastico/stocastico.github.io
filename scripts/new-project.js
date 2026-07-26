@@ -22,7 +22,7 @@
  *   title:       "My Project Title"
  *   year:        "2024"
  *   tags:        "AI, CV, Unity"         # comma-separated
- *   bg:          "img/projects/my-bg.jpg"   # card bg + project-page hero
+ *   bg:          "img/projects/my-bg.jpg"   # project-page hero + og:image
  *   description: "Short 2–3 sentence summary for the homepage card."
  *   ---
  *
@@ -78,7 +78,7 @@ Frontmatter fields (YAML between --- delimiters):
   title        (required)  Project title
   year         (required)  Project year
   tags         (required)  Comma-separated tag keywords
-  bg           (required)  Card background + project detail hero image
+  bg           (required)  Project detail hero image + og:image
   description  (required)  Short summary for the homepage card
   link_paper              URL to paper (optional)
   link_github             URL to GitHub repo (optional)
@@ -505,7 +505,7 @@ ${linksHtml}
         <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>
         <a href="https://github.com/Stocastico" target="_blank" rel="noopener">GitHub</a>
       </nav>
-      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Made with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebasti&aacute;n</p>
+      <p>&copy; <span id="footer-year"></span> Stefano Masneri &nbsp;&middot;&nbsp; Written by me, coded with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebasti&aacute;n</p>
     </div>
   </footer>
 
