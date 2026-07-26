@@ -878,24 +878,21 @@ h3 {
 /* Asymmetric layout: bio on the left, globe filling the right half */
 /* ─── About: top area (photo + stats + bio) ──────────────── */
 .about-top {
-  display: flex;
+  display: grid;
+  /* The bio's own measure caps around 666px, so a flex row left ~180px of
+     dead space at the right edge. Giving the photo column the slack instead
+     balances the row: the portrait was 200px wide, which is small for the
+     only photograph on the site. */
+  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
   gap: 2.5rem;
-  align-items: flex-start;
-  margin-bottom: 3rem;
+  align-items: start;
+  margin-bottom: 2.5rem;
 }
 
 .about-photo-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 1.5rem;
-  flex-shrink: 0;
-}
-
-.about-photo-col .stats-row {
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-top: 0;
 }
 
 /* ─── About: maps area (globe + europe side by side) ─────── */
@@ -1384,7 +1381,10 @@ h3 {
   border: 1px solid var(--border);
   background: var(--bg-card);
   aspect-ratio: 4/5;
-  max-width: 200px;
+  /* Fills the About photo column (up to 340px). It is the only photograph on
+     the site — 200px was undersized for that job. */
+  max-width: 340px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1426,6 +1426,15 @@ h3 {
 }
 
 /* Photo when you add a real image */
+/* <picture> is the flex item, so the <img> inside was resolving height: 100%
+   against the picture's intrinsic (square) box and letterboxing inside the
+   4/5 card. Stretch the wrapper so object-fit: cover actually crops. */
+.photo-card>picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .photo-img {
   width: 100%;
   height: 100%;
@@ -1965,6 +1974,19 @@ h3 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--gap);
+}
+
+/* Beside the sticky header the grid always resolves to two columns anyway;
+   saying so explicitly lets an odd-numbered last group span the full row
+   rather than sitting alone next to a hole. */
+@media (min-width: 901px) {
+  .skills-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .skill-group:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
@@ -2746,23 +2768,11 @@ h3 {
 /* ─── 18. Responsive ────────────────────────────────────── */
 @media (max-width: 1024px) {
   .about-top {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .about-photo-col {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 1.5rem;
-  }
-
-  .about-photo-col .stats-row {
-    grid-template-columns: repeat(3, 1fr);
-    flex: 1;
-  }
-
-  .about-photo-col .photo-card {
-    max-width: 180px;
+    align-items: center;
   }
 
   .maps-row {
@@ -2840,17 +2850,8 @@ h3 {
     justify-content: center;
   }
 
-  /* Portrait phones: revert .about-photo-col to a column so the profile
-     photo gets the full content width instead of being squeezed next to
-     the stats grid (which collapses it to a sliver below ~400px). */
-  .about-photo-col {
-    flex-direction: column;
-    align-items: center;
-  }
-
   .about-photo-col .photo-card {
     max-width: 260px;
-    width: 100%;
   }
 }
 
