@@ -319,9 +319,19 @@ test('rewriteHtml: rewrites theme-color, favicon and nav-gradient stops', () => 
   assert.match(out, /content="#0a120e"/);
   assert.match(out, /fill='%230a120e'/);
   assert.match(out, /fill='%23c8a44d'/);
-  assert.match(out, /id="nav-grad"><stop offset="0%" stop-color="#c8a44d"\/><stop offset="100%" stop-color="#6db088"\/>/);
+  /* The nav mark points at the custom properties, not baked hex, so it follows
+     a runtime palette switch (js/ui.js applyPalette) instead of freezing on
+     whichever palette was active at build time. */
+  assert.match(out, /id="nav-grad"><stop offset="0%" stop-color="var\(--accent\)"\/><stop offset="100%" stop-color="var\(--accent2\)"\/>/);
   /* a non-nav-grad gradient must be left untouched */
   assert.match(out, /id="other"><stop offset="0%" stop-color="#123456"\/>/);
+});
+
+test('rewriteHtml: rewrites nav-gradient stops idempotently', () => {
+  const html = '<linearGradient id="nav-grad"><stop offset="0%" stop-color="#6c63ff"/><stop offset="100%" stop-color="#00d4ff"/></linearGradient>';
+  const once = rewriteHtml(html, samplePalette());
+  assert.equal(rewriteHtml(once, samplePalette()), once,
+    'a second run must not double-rewrite the already-var() stops');
 });
 
 test('rewriteHtml: is idempotent', () => {

@@ -453,8 +453,8 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
         <svg class="nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="url(#nav-grad)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <defs>
             <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#c4a55d"/>
-              <stop offset="100%" stop-color="#75ae8b"/>
+              <stop offset="0%" stop-color="var(--accent)"/>
+              <stop offset="100%" stop-color="var(--accent2)"/>
             </linearGradient>
           </defs>
           <path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>

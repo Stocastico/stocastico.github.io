@@ -10,7 +10,7 @@
    DOMContentLoaded orchestration stay in js/main.js.
    ═══════════════════════════════════════════════════════════ */
 import { prefersReducedMotion, escapeHtml, rafThrottle } from './utils.js';
-import { THEME, THEME_LIGHT } from './theme.js';
+import { THEME, THEME_LIGHT, PALETTES, ACTIVE_PALETTE, getTheme } from './theme.js';
 
 /* ═══════════════════════════════════════════════════════════
    LISTENER / OBSERVER BOOKKEEPING
@@ -91,6 +91,32 @@ export function animateCounter(el, target) {
    `themechange` event so js/main.js can rebuild the colour-baked hero canvases.
    ═══════════════════════════════════════════════════════════ */
 export const THEME_STORAGE_KEY = 'theme';
+export const PALETTE_STORAGE_KEY = 'palette';
+
+/* Which palette the document is wearing. data/palettes.yaml ships one as the
+   CSS :root default (ACTIVE_PALETTE); the others are [data-palette] scoped
+   overrides emitted by generate-theme, so switching is one attribute. */
+export function resolvedPalette() {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    const id = document.documentElement.getAttribute('data-palette');
+    if (id && PALETTES[id]) return id;
+  }
+  return ACTIVE_PALETTE;
+}
+
+/* Apply a palette: pin it, persist it, repoint the browser-chrome colour, and
+   tell the colour-baked canvases to rebuild. Same `themechange` event the
+   light/dark toggle fires — from their side a palette swap and a theme swap
+   are the same job. */
+export function applyPalette(id) {
+  if (typeof document === 'undefined' || !PALETTES[id]) return;
+  const root = document.documentElement;
+  if (id === ACTIVE_PALETTE) root.removeAttribute('data-palette');
+  else root.setAttribute('data-palette', id);
+  try { localStorage.setItem(PALETTE_STORAGE_KEY, id); } catch (_) { /* private mode */ }
+  syncThemeColorMeta(resolvedTheme());
+  broadcastThemeChange(resolvedTheme());
+}
 
 /* The theme actually in effect right now: light only when explicitly pinned;
    everything else (no pin / pinned dark / no DOM) is dark. */
@@ -106,7 +132,11 @@ function syncThemeColorMeta(theme) {
   if (typeof document === 'undefined') return;
   const meta = document.querySelector('meta[name="theme-color"]');
   if (!meta) return;
-  meta.setAttribute('content', theme === 'light' ? THEME_LIGHT.themeColor : THEME.themeColor);
+  /* getTheme() reads both axes off the document, so this stays correct when
+     the palette changes as well as when the light/dark variant does. */
+  const active = getTheme();
+  const fallback = theme === 'light' ? THEME_LIGHT : THEME;
+  meta.setAttribute('content', (active && active.themeColor) || fallback.themeColor);
 }
 
 /* Reflect the resolved theme on the toggle button (the icon swap is pure CSS;
@@ -373,6 +403,31 @@ export function initCommandPalette() {
 
   const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
+  /* ── Palettes ───────────────────────────────────────────────
+     The whole site's colour scheme is generated from one YAML key, and until
+     now no visitor could ever see that. Each entry swaps [data-palette]; CSS
+     custom properties repaint instantly and the canvases rebuild off the
+     `themechange` event. The swatch is the palette's own accent pair, so the
+     list is self-describing without needing a colour name in the label. */
+  const paletteSwatch = (entry) =>
+    `<svg viewBox="0 0 24 24" aria-hidden="true">`
+    + `<circle cx="9" cy="12" r="6" fill="${entry.dark.accent}"/>`
+    + `<circle cx="16" cy="12" r="6" fill="${entry.dark.accent2}" opacity="0.9"/>`
+    + `</svg>`;
+
+  const PALETTE_ITEMS = Object.keys(PALETTES).map((id) => {
+    const entry = PALETTES[id];
+    return {
+      label: entry.name,
+      hint: id === ACTIVE_PALETTE ? 'Palette · default' : 'Palette',
+      icon: paletteSwatch(entry),
+      action() {
+        applyPalette(id);
+        showToast(`Palette: ${entry.name}`);
+      },
+    };
+  });
+
   /* ── Build all command items ────────────────────────────── */
   const allItems = [
     ...SECTIONS.map(s => ({
@@ -390,6 +445,7 @@ export function initCommandPalette() {
       group: 'Navigate',
     })),
     ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
+    ...PALETTE_ITEMS.map(p => ({ ...p, group: 'Appearance' })),
   ];
 
   /* allItems index → filtered set; activeIdx is an index into allItems. */

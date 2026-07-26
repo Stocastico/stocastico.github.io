@@ -588,6 +588,12 @@ The obvious library for this is [TensorSpace.js](https://tensorspace.org/), and 
 
 Gated on `(min-width: 1100px) and (pointer: fine)` plus data-saver / slow-connection checks: below that, the labels and 8×8 feature maps stop being legible, so those viewports keep the particle field below. The branch happens *before* the dynamic `import()`, so phones never download the activation chunk.
 
+### Palette picker
+
+The whole site's colour scheme is generated from a single `active:` key in `data/palettes.yaml`, and until recently no visitor could ever see that. Open the command palette (⌘K / Ctrl-K) and the **Appearance** group lists every palette; picking one swaps `data-palette` on `<html>`, the CSS custom properties repaint instantly, and the colour-baked canvases (hero, globe, Europe map) rebuild off the same `themechange` event the light/dark toggle fires. The choice persists in `localStorage` and is re-applied before first paint, so there is no flash on reload.
+
+Total cost: ~2.6 KB gzip — the non-active palettes as `[data-palette]` scoped custom-property blocks, plus their JS equivalents for the canvases.
+
 ### Neural network particle field (hero background, narrow viewports)
 
 A Canvas2D particle system (`NeuralNetwork2D`) of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor; lines are drawn between nearby pairs and fade with distance, creating the "glowing wire" look. On low-power devices the node count drops and the frame rate is capped. The hero background is decorative, so it is rendered in plain Canvas2D rather than WebGL — which keeps the module **Three-free** and means the homepage never downloads Three.js at all (Three only ships in the globe chunk on the travel page).
