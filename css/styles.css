@@ -84,6 +84,7 @@
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Spacing — modular scale (rem). Prefer these tokens over ad-hoc rem values
      so vertical rhythm and gaps stay consistent across components. */
@@ -846,9 +847,10 @@ h3 {
 
 .section-tag {
   display: block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 0.6rem;
@@ -934,18 +936,20 @@ h3 {
 }
 
 .places-teaser .globe-header {
-  text-align: center;
   margin-bottom: 1.75rem;
 }
 
 .places-teaser .globe-intro {
   max-width: 52ch;
-  margin-inline: auto;
 }
 
 .world-map-figure {
   margin: 0 auto;
-  max-width: 820px;
+  /* The one element allowed out of the container. The viewBox is ~2.5:1, so
+     width drives height — the cap keeps the map from becoming a 1000px-tall
+     wall on ultra-wide displays. */
+  max-width: 1600px;
+  padding-inline: clamp(0.5rem, 2vw, 2rem);
 }
 
 .world-map {
@@ -978,7 +982,6 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
-  justify-content: center;
   margin-top: 1.25rem;
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -1006,9 +1009,8 @@ h3 {
 }
 
 .places-more {
-  text-align: center;
   max-width: 60ch;
-  margin: 1.5rem auto 0;
+  margin: 1.5rem 0 0;
   color: var(--text-muted);
 }
 
@@ -1358,8 +1360,9 @@ h3 {
 }
 
 .link-card-host {
+  font-family: var(--font-mono);
   color: var(--text-faint);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   letter-spacing: var(--tracking-normal);
 }
 
@@ -1479,10 +1482,11 @@ h3 {
 
 .stat-label {
   display: block;
-  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   margin-top: 0.4rem;
 }
 
@@ -1663,9 +1667,9 @@ h3 {
 }
 
 .pub-year {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--accent);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
@@ -1777,9 +1781,9 @@ h3 {
 }
 
 .project-card__year {
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
   color: var(--accent);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
@@ -1799,10 +1803,11 @@ h3 {
 }
 
 .project-tag {
-  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   padding: 0.2em 0.6em;
   border-radius: 3px;
   background: rgb(var(--accent-rgb) / 0.12);
@@ -2043,7 +2048,8 @@ h3 {
 }
 
 .skill-tag {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
   color: var(--text-muted);
   background: rgb(var(--text-rgb) / 0.05);
   border: 1px solid var(--border);
@@ -2418,9 +2424,10 @@ h3 {
 
 .tl-year {
   display: block;
+  font-family: var(--font-mono);
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: var(--tracking-widest);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   margin-bottom: 0.4rem;
 }
@@ -2459,8 +2466,9 @@ h3 {
 /* Header order is the same on both sides now: year first, location trailing. */
 
 .tl-location {
+  font-family: var(--font-mono);
   color: var(--text-faint);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   white-space: nowrap;
   text-align: right;
   flex-shrink: 0;
@@ -2482,7 +2490,8 @@ h3 {
 /* Tags follow the card's text, which is left-aligned on both sides now. */
 
 .tl-tag {
-  font-size: 0.67rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
   font-weight: 600;
   padding: 0.2em 0.65em;
   border-radius: 999px;
@@ -2774,6 +2783,22 @@ h3 {
   contain-intrinsic-block-size: auto 650px;
 }
 
+/* ─── Typographic system ─────────────────────────────────────
+   Three faces, and the split is by *kind of content*, not by size:
+
+     --font-display  Outfit   headlines and numerals with presence
+     --font-sans     Inter    everything a human reads as prose
+     --font-mono     JetBrains Mono   metadata: eyebrows, tags, years,
+                                      domains, stat labels, keyboard hints
+
+   The mono is the point. Outfit + Inter is a clean pairing and also the
+   default pairing of half the web, so it carries no signal; a monospace on
+   the metadata does two things at once — it separates data from prose at a
+   glance, and on a page about computer vision and 3D reconstruction it is
+   honest about the subject. Prose never gets it: mono is slower to read and
+   these labels are things you scan, not things you read.
+   ───────────────────────────────────────────────────────────── */
+
 /* ─── 18. Responsive ────────────────────────────────────── */
 @media (max-width: 1024px) {
   .about-top {
@@ -2939,7 +2964,6 @@ h3 {
   color: var(--text-muted);
   line-height: 1.6;
   margin-bottom: 1rem;
-  text-align: center;
 }
 
 .globe-subtitle {
@@ -3475,8 +3499,8 @@ h3 {
     display: inline-flex;
     align-items: center;
     gap: 0.2em;
-    font-family: inherit;
-    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
     color: var(--text-faint);
     background: transparent;
     border: 1px solid var(--border);

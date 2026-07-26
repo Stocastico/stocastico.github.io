@@ -64,6 +64,12 @@ const T_HOLD = 2.7;    /* dwell once the prediction has resolved */
 const T_FADE = 0.9;    /* cross-fade out before the next digit */
 const T_IN = 0.5;      /* scene fade-in */
 
+/* Same face the CSS uses for every other technical label on the site — see
+   the typographic-system note in css/styles.css. Canvas has no font-loading
+   hook, but the stylesheet requests it on every page, so by the time the hero
+   paints its first frame it is available; the fallbacks cover the gap. */
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
@@ -335,7 +341,7 @@ export class CnnHero {
       }
 
       if (isOut) {
-        ctx.font = `600 ${9 * this._textScale}px Inter, system-ui, sans-serif`;
+        ctx.font = `600 ${9 * this._textScale}px ${MONO}`;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = rgba(isWinner ? this._theme.accentHi : this._theme.textMuted,
@@ -407,7 +413,7 @@ export class CnnHero {
 
       const label = CONNECTORS[`${from.id}→${to.id}`];
       if (label && reveals[i + 1] > 0.2) {
-        ctx.font = `500 ${7.5 * this._textScale}px Inter, system-ui, sans-serif`;
+        ctx.font = `500 ${7.5 * this._textScale}px ${MONO}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = rgba(this._theme.textFaint, 0.55 * alpha * reveals[i + 1]);
@@ -427,12 +433,12 @@ export class CnnHero {
     else if (layer.kind === 'output') x = p.x + 12;
     else x = p.x + ((Math.ceil(layer.n / p.rows) - 1) * p.gap * 0.95) / 2;
 
-    ctx.font = `600 ${8 * this._textScale}px Inter, system-ui, sans-serif`;
+    ctx.font = `600 ${8 * this._textScale}px ${MONO}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = rgba(this._theme.textMuted, 0.72 * alpha);
     ctx.fillText(layer.label.toUpperCase(), x, REF_H - 44);
-    ctx.font = `400 ${7.5 * this._textScale}px Inter, system-ui, sans-serif`;
+    ctx.font = `400 ${7.5 * this._textScale}px ${MONO}`;
     ctx.fillStyle = rgba(this._theme.textFaint, 0.6 * alpha);
     ctx.fillText(layer.detail, x, REF_H - 33);
   }
@@ -453,7 +459,7 @@ export class CnnHero {
     ctx.fillStyle = rgba(this._theme.accentHi, 0.8 * a);
     ctx.fillText(String(sample.predicted), x, y - 6);
 
-    ctx.font = `500 ${8.5 * this._textScale}px Inter, system-ui, sans-serif`;
+    ctx.font = `500 ${8.5 * this._textScale}px ${MONO}`;
     ctx.fillStyle = rgba(this._theme.textMuted, 0.6 * a);
     ctx.fillText(`p = ${sample.confidence.toFixed(3)}`, x, y + 34);
   }
