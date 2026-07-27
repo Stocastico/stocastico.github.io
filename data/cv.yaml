@@ -127,8 +127,10 @@ education:
 # languages:              name (string) + proficiency (string)
 skills:
   technical:
-    - name: "GenAI & LLMs (Fine-tuning · RAG · LangChain · Vector DBs)"
+    - name: "GenAI & LLMs (Agentic AI · Fine-tuning · RAG · LangChain · Vector DBs)"
       level: 95
+    - name: "LLM Evaluation & Observability (Evals · Guardrails · Tracing)"
+      level: 88
     - name: "Python · PyTorch · TensorFlow · Hugging Face"
       level: 98
     - name: "Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)"

@@ -142,13 +142,6 @@ console.log('── Desktop (1280×800) — index.html ────────�
     assert(el !== null, '#about not found');
   });
 
-  await test('Skill groups are rendered', async () => {
-    await page.evaluate(() => document.getElementById('skills')?.scrollIntoView());
-    await page.waitForTimeout(300);
-    const groups = await page.$$('.skill-group');
-    assert(groups.length >= 1, `Skill groups: ${groups.length}`);
-  });
-
   await test('Homepage Places teaser renders the static world map', async () => {
     await page.evaluate(() => document.getElementById('places')?.scrollIntoView());
     await page.waitForTimeout(300);
@@ -182,11 +175,6 @@ console.log('── Desktop (1280×800) — index.html ────────�
       return style.display === 'none';
     });
     assert(hidden, 'Location filter controls should be hidden');
-  });
-
-  await test('Skill tags are present', async () => {
-    const tags = await page.$$('.skill-tag');
-    assert(tags.length >= 3, `Skill tags: ${tags.length}`);
   });
 
   await test('Projects section renders project cards', async () => {

@@ -90,8 +90,12 @@ export const CV_EDUCATION = [
 export const CV_SKILLS = {
   technical:  [
     {
-      name:  'GenAI & LLMs (Fine-tuning · RAG · LangChain · Vector DBs)',
+      name:  'GenAI & LLMs (Agentic AI · Fine-tuning · RAG · LangChain · Vector DBs)',
       level: 95,
+    },
+    {
+      name:  'LLM Evaluation & Observability (Evals · Guardrails · Tracing)',
+      level: 88,
     },
     {
       name:  'Python · PyTorch · TensorFlow · Hugging Face',

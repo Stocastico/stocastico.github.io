@@ -1809,16 +1809,22 @@ test('index.html no longer ships the research focus-area cards', () => {
   assert.equal(html.indexOf('href="#research"'), -1, 'no nav link or anchor should point at #research');
 });
 
-test('index.html nav links Expertise to the skills section', () => {
+test('index.html nav links CV to the CV page', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const nav = html.slice(html.indexOf('<nav'), html.indexOf('</nav>'));
-  assert.ok(/href="#skills"[^>]*>\s*Expertise\s*</.test(nav),
-    'nav should expose an "Expertise" link pointing at #skills');
+  assert.ok(/href="cv\.html"[^>]*>\s*CV\s*</.test(nav),
+    'nav should expose a "CV" link pointing at cv.html');
 });
 
-test('index.html section order is about, skills, projects, publications, places, contact', () => {
+test('index.html no longer ships the homepage Expertise/skills section', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  const order = ['about', 'skills', 'projects', 'publications', 'places', 'contact']
+  assert.equal(html.indexOf('id="skills"'), -1, 'the skills section should be removed');
+  assert.equal(html.indexOf('href="#skills"'), -1, 'no nav link or anchor should point at #skills');
+});
+
+test('index.html section order is about, projects, publications, places, contact', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const order = ['about', 'projects', 'publications', 'places', 'contact']
     .map((id) => ({ id, at: html.indexOf('id="' + id + '"') }));
   order.forEach(({ id, at }) => assert.ok(at !== -1, 'section #' + id + ' should exist'));
   for (let i = 1; i < order.length; i++) {
