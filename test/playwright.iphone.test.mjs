@@ -296,10 +296,10 @@ console.log('── iPhone SE (375×667, touch, Safari UA) ───────
   // devices (Apple HIG suggests 44, but inline pills can be smaller; we
   // enforce a softer 32 to ensure reasonable touch comfort).
   await test('tag-style touch targets are at least 32px tall', async () => {
-    await page.evaluate(() => document.getElementById('skills')?.scrollIntoView());
+    await page.evaluate(() => document.getElementById('projects')?.scrollIntoView());
     await page.waitForTimeout(300);
     const tooSmall = await page.evaluate(() => {
-      const tags = Array.from(document.querySelectorAll('.skill-tag, .project-tag, .tl-tag'));
+      const tags = Array.from(document.querySelectorAll('.project-tag, .tl-tag'));
       const bad = [];
       for (const t of tags.slice(0, 30)) {
         const r = t.getBoundingClientRect();

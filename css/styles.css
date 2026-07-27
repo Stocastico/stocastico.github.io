@@ -2098,122 +2098,6 @@ h3 {
 
 }
 
-/* ─── 12. Skills Section — sticky header layout ──────────── */
-/* Apple-style sticky storytelling: the header pins in place
-   while skill groups scroll past on the right.               */
-.skills-split {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 3rem;
-  align-items: start;
-}
-
-.skills-sticky-header {
-  position: sticky;
-  top: calc(var(--nav-h) + 2rem);
-}
-
-.section-header--left {
-  text-align: left;
-}
-
-.skills-sticky-desc {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-top: 0.75rem;
-  max-width: 26ch;
-  line-height: 1.6;
-}
-
-.skills-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--gap);
-}
-
-/* Beside the sticky header the grid always resolves to two columns anyway;
-   saying so explicitly lets an odd-numbered last group span the full row
-   rather than sitting alone next to a hole. */
-@media (min-width: 901px) {
-  .skills-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .skill-group:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 900px) {
-  .skills-split {
-    grid-template-columns: 1fr;
-  }
-
-  .skills-sticky-header {
-    position: static;
-  }
-
-  .skills-sticky-desc {
-    margin-inline: 0;
-  }
-}
-
-.skill-group {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 1.75rem;
-  transition: border-color var(--t-med), background var(--t-med);
-}
-
-.skill-group:hover {
-  border-color: var(--border-hov);
-  background: var(--bg-card-hov);
-  box-shadow: var(--elev-2);
-}
-
-.skill-group-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.skill-group-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-.skill-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.skill-tag {
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  background: rgb(var(--text-rgb) / 0.05);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.3em 0.9em;
-  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
-}
-
-.skill-tag:hover {
-  border-color: var(--accent2);
-  color: var(--accent2);
-  background: rgb(var(--accent2-rgb) / 0.06);
-}
-
 /* ─── 14. Contact Section ───────────────────────────────── */
 .contact-wrap {
   max-width: 760px;
@@ -3088,8 +2972,7 @@ h3 {
     padding-block: 0.55rem;
   }
 
-  .tl-tag,
-  .skill-tag {
+  .tl-tag {
     padding: 0.35em 0.75em;
   }
 }
