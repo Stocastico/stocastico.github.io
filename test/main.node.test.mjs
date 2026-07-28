@@ -1954,75 +1954,8 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
     // Should only render PROJECTS_MAX_HOMEPAGE cards
     const cardCount = (grid.innerHTML.match(/<a[^>]*class="project-card(?:\s|")/g) || []).length;
     assert.equal(cardCount, PROJECTS_MAX_HOMEPAGE);
-    // Should show "View all" link
-    assert.equal(appended.length, 1);
-    assert.match(appended[0].innerHTML, /View all projects/);
-  } finally {
-    global.document = prevDocument;
-  }
-});
-
-test('renderProjects does not stack duplicate "View all" footers on re-render', () => {
-  let children = [];
-  const parentNode = {
-    appendChild(el) { el.parentNode = parentNode; children.push(el); },
-    querySelector(sel) {
-      if (sel === '.projects-view-all') {
-        return children.find(c => c.className === 'projects-view-all') || null;
-      }
-      return null;
-    },
-  };
-  const grid = { innerHTML: '', parentNode };
-  const prevDocument = global.document;
-  global.document = {
-    getElementById(id) { return id === 'projects-grid' ? grid : null; },
-    createElement() {
-      return {
-        className: '', innerHTML: '', parentNode: null,
-        setAttribute() {},
-        remove() { children = children.filter(c => c !== this); },
-      };
-    },
-  };
-  const many = [];
-  for (let i = 0; i < PROJECTS_MAX_HOMEPAGE + 2; i++) {
-    many.push({ id: `p-${i}`, title: `P ${i}`, year: '2024', tags: ['T'],
-      thumb: `img/projects/p${i}.jpg`, description: `D ${i}`, url: `projects.html#p-${i}` });
-  }
-  try {
-    renderProjects(many);
-    renderProjects(many);
-    const footers = children.filter(c => c.className === 'projects-view-all');
-    assert.equal(footers.length, 1, 'a re-render should not append a second footer');
-  } finally {
-    global.document = prevDocument;
-  }
-});
-
-test('renderProjects does not show "View all" when projects fit within limit', () => {
-  const appended = [];
-  const grid = { innerHTML: '', parentNode: { children: [], appendChild(el) { appended.push(el); } } };
-  const prevDocument = global.document;
-  global.document = {
-    getElementById(id) {
-      if (id === 'projects-grid') return grid;
-      return null;
-    },
-    createElement(tag) {
-      return { className: '', setAttribute() {}, innerHTML: '' };
-    },
-  };
-  try {
-    renderProjects([{
-      id: 'solo',
-      title: 'Solo Project',
-      year: '2024',
-      tags: ['AI'],
-      thumb: 'img/projects/solo.jpg',
-      description: 'Only project.',
-      url: 'projects.html#solo',
-    }]);
+    // The full list is linked from the section's intro prose in the static
+    // HTML, so nothing is appended to the grid's parent.
     assert.equal(appended.length, 0);
   } finally {
     global.document = prevDocument;
