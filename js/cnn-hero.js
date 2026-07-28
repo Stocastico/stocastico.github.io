@@ -28,23 +28,35 @@ const SHEAR_X = -0.42;   /* × cell — how far the plane leans left going down 
 const SKEW_Y = -0.10;    /* × cell — slight tilt along the plane's own x axis */
 const SQUASH = 0.86;     /* vertical foreshortening */
 
-/* Pointer yaw: SHEAR_X is not a constant at draw time — it is re-derived each
-   frame from the pointer's horizontal position, so the planes actually re-lean
-   (the scene turns about its vertical axis) rather than sliding as a block.
-   Every plane pivots about its own vertical centre, which is what makes this
-   cheap: the mid-height point of each layer is invariant under the pivot, and
-   every anchor in the layout (wires, captions, the verdict) is taken at mid
-   height — so the hand-tuned placement stays pixel-identical at rest and the
-   wires stay attached at full deflection.
+/* Pointer turntable.
 
-   The range is deliberately asymmetric. Turning *toward* the viewer (flatter
-   planes, pointer right) only makes the feature maps easier to read, so it
-   gets the long half; turning away piles the rows on top of each other and a
-   28×28 digit degenerates into a diagonal ribbon, so that half is short.
-   Both halves meet at SHEAR_X, which keeps the untouched first paint on the
-   hand-tuned geometry. */
-const YAW_LEAN = 0.14;      /* pointer left — steeper, legibility-limited */
-const YAW_UPRIGHT = 0.26;   /* pointer right — flatter, reads fine */
+   The layers are not just spread left-to-right across the picture: the
+   recession below also spreads them along the depth axis, input nearest and
+   verdict farthest. That makes them a set of points in the horizontal plane,
+   and the pointer's x rotates that whole arrangement about the scene's
+   vertical axis — so each layer travels along an arc of its own circle
+   rather than sliding in a straight line.
+
+   The signature of a real rotation is that the two ends counter-move: the
+   input sits in front of the pivot and the verdict behind it, so as the wheel
+   turns one swings right while the other swings left, and the near one grows
+   as it comes toward the viewer while the far one shrinks. That is the whole
+   effect — it falls out of rotating (x, z) and re-projecting, with no extra
+   parallax term.
+
+   The planes' own lean (SHEAR_X) deliberately stays *fixed* through all of
+   this. A physically rigid turntable would re-lean every card as it swung,
+   which is the version that was tried and rejected: at this scale it turns a
+   28×28 digit into a diagonal ribbon and reads as wobble rather than as
+   rotation. Positions ride the wheel; card orientation does not. */
+const FOCAL = 700;        /* REF units from viewer to the scene's front plane */
+const DEPTH_SPAN = 300;   /* REF units of depth between input and verdict */
+/* Radians of wheel travel across the viewport. This can be generous because
+   the geometry limits itself: swinging the input left also swings it *away*,
+   and the shrink that comes with the extra depth very nearly cancels the
+   extra travel, so the input plane's left edge barely moves further into the
+   mask no matter how far the wheel turns. */
+const TURN_RANGE = 0.22;
 
 /* Per-layer placement + drawing scale.
 
@@ -82,29 +94,18 @@ const T_HOLD = 2.7;    /* dwell once the prediction has resolved */
 const T_FADE = 0.9;    /* cross-fade out before the next digit */
 const T_IN = 0.5;      /* scene fade-in */
 
-/* Depth parallax: each layer gets its own share of the mouse-driven shift, so
-   the pipeline reads as a receding 3-D structure instead of one flat card
-   sliding around as a whole. LAYER_RECEDE is how much factor is given up from
-   first layer to last — at 2 the share runs +1 (input, nearest) through 0
-   (the middle of the pipeline) to -1 (output, farthest), so the layers
-   *scissor about the scene's centre* the way a solid turning on the spot
-   does. A one-directional taper instead spends nearly all of its travel
-   budget sliding the whole scene sideways and leaves only a few pixels of
-   actual differential, which is the part the eye reads as depth — the reason
-   the two can be this small and still register.
+/* Vertical parallax: each layer gets its own signed share of the pointer's y,
+   +1 at the input through 0 mid-pipeline to -1 at the verdict, so the two ends
+   scissor about the scene's centre instead of drifting together. There is no
+   horizontal counterpart — the turntable above owns the x axis outright, and
+   a second sideways term on top of it would only muddy the rotation.
 
    STACK_RECEDE additionally fades a map layer's own feature-map stack (front
    plane full factor, back plane dimmed) — the same "nearer maps overlap the
    ones behind" depth already used for alpha. It scales the magnitude, so it
-   rides on top of a signed share unchanged.
-
-   PAR_X is capped by the left-edge mask rather than by taste: the input plane
-   sits at the scene's left edge, and travel much past this pushes the most
-   legible thing in the picture into the gradient that hides the network
-   behind the hero copy. */
+   rides on top of a signed share unchanged. */
 const LAYER_RECEDE = 2;
 const STACK_RECEDE = 0.5;
-const PAR_X = 15;
 const PAR_Y = 9;
 const PAR_EASE = 0.09;   /* per-frame approach to the pointer target */
 
@@ -112,17 +113,22 @@ const PAR_EASE = 0.09;   /* per-frame approach to the pointer target */
    across a flat band. Each successive layer is drawn a little smaller and a
    little higher, so the 28×28 input sits low and large in the foreground and
    the network's verdict sits high, small and far off. This is the depth cue
-   that survives a still screenshot; the pointer effects above only modulate
-   it.
+   that survives a still screenshot; the pointer only modulates it.
 
-   Both ramps are anchored on the layers' own centres, which the hand-tuned
-   PLACEMENT already puts on one flat y ≈ 220 line — so the ramp is the only
-   thing establishing the staircase and no per-layer renormalisation is
-   needed. RISE is split either side of that line (first layer down, last
-   layer up) so the composition stays vertically centred in its box; SHRINK
-   is one-directional, since scaling the input *up* is the one direction that
-   can overflow the reference frame. */
-const DEPTH_SHRINK = 0.30;   /* size given up from the first layer to the last */
+   RISE is anchored on the layers' own centres, which the hand-tuned PLACEMENT
+   already puts on one flat y ≈ 220 line — so the ramp is the only thing
+   establishing the staircase and no per-layer renormalisation is needed. It
+   is split either side of that line (first layer down, last layer up) so the
+   composition stays vertically centred in its box, and it is *not* touched by
+   the turntable: rotation about a vertical axis moves nothing vertically.
+
+   The shrink is not a hand-set ramp — each layer gets a real depth coordinate
+   (0 at the input, DEPTH_SPAN at the verdict) and its scale is the honest
+   FOCAL / (FOCAL + z), normalised to 1 at the front. FOCAL and DEPTH_SPAN are
+   chosen so the far end lands near 0.70, the ramp that had been tuned by eye;
+   going through an actual z is what lets the turntable modulate the size for
+   free, since rotating the arrangement is exactly what changes each layer's
+   depth. */
 const DEPTH_RISE = 84;       /* REF units between the first and last centre */
 
 /* Same face the CSS uses for every other technical label on the site — see
@@ -165,12 +171,17 @@ export class CnnHero {
     this._cycle = T_IN + (this._layers.length - 1) * T_STEP + T_RAMP + T_HOLD + T_FADE;
     this._t0 = null;
 
-    /* Mouse parallax target/current, in REF units, plus the yaw (-1..1) that
-       drives the shear. Each layer only takes its own depth-scaled share of
-       the translation (see _depthFactor / LAYER_RECEDE); the yaw applies to
-       the whole scene, since a rotation is not a per-layer offset. */
-    this._par = { x: 0, y: 0, yaw: 0, tx: 0, ty: 0, tyaw: 0 };
-    this._shear = SHEAR_X;
+    /* Pointer state, eased toward its target each frame: `y` is the vertical
+       parallax in REF units (each layer taking its signed depth share), and
+       `turn` is the turntable angle in radians, which applies to the whole
+       arrangement at once because a rotation is not a per-layer offset. */
+    this._par = { y: 0, turn: 0, ty: 0, tturn: 0 };
+
+    /* The wheel's axis: the mean of the layer centres, so the arrangement
+       pivots about the middle of the pipeline and the two ends counter-move
+       rather than the whole scene swinging off to one side. */
+    this._sceneCx = this._layers.reduce((sum, l) => sum + this._layerCentre(l)[0], 0)
+      / this._layers.length;
 
     /* Reusable per-alpha-bucket rect batches, so a plane is painted with a
        handful of fill() calls instead of ~1000 fillRect()s. */
@@ -179,10 +190,8 @@ export class CnnHero {
     this._onResize();
     this._addListener(window, 'resize', () => this._onResize());
     this._addListener(window, 'mousemove', (e) => {
-      const nx = e.clientX / this.w - 0.5;
-      this._par.tx = nx * PAR_X;
       this._par.ty = (e.clientY / this.h - 0.5) * PAR_Y;
-      this._par.tyaw = nx * 2;
+      this._par.tturn = (e.clientX / this.w - 0.5) * 2 * TURN_RANGE;
     }, { passive: true });
 
     this._io = new IntersectionObserver(([entry]) => {
@@ -269,31 +278,50 @@ export class CnnHero {
     return [p.x + ((cols - 1) * p.gap * 0.95) / 2, p.y + ((p.rows - 1) * p.gap * 0.42) / 2];
   }
 
-  /* Everything depth-related about one layer, resolved once per frame: where
-     it sits on the recession ramp and what share of the pointer shift it
-     takes. Passing this around instead of a bare depth number is what lets
-     the wires, captions and verdict follow the ramp without re-deriving it. */
+  /* Everything depth-related about one layer, resolved once per frame. The
+     layer is treated as a point (cx, z) in the horizontal plane, which the
+     turntable rotates about the scene's vertical axis; the rotated depth then
+     sets both where the layer lands horizontally and how big it is drawn.
+
+     `cx` stays the *layout* centre — a layer's own geometry has to keep being
+     measured from where PLACEMENT put it — while `tx` is where the rotation
+     has carried that centre to. At rest the rotation is the identity and
+     tx === cx, so the hand-tuned composition is reproduced exactly. */
   _view(i, layer) {
     const n = this._layers.length;
     const u = n > 1 ? i / (n - 1) : 0;
     const [cx, cy] = this._layerCentre(layer);
+
+    const cos = Math.cos(this._par.turn);
+    const sin = Math.sin(this._par.turn);
+    const dx = cx - this._sceneCx;
+    const dz = DEPTH_SPAN * (u - 0.5);
+
+    /* Rotation in the horizontal plane. The front of the wheel swings one way
+       and the back the other — the counter-motion that reads as a rotation
+       rather than a slide — and each end's depth changes with it, so the near
+       one grows as it comes round toward the viewer while the far one shrinks. */
+    const z = DEPTH_SPAN / 2 + dx * sin + dz * cos;
+
     return {
       cx,
       cy,
-      s: 1 - DEPTH_SHRINK * u,
+      tx: this._sceneCx + dx * cos - dz * sin,
+      s: FOCAL / (FOCAL + z),
       rise: DEPTH_RISE * (u - 0.5),
       depth: this._depthFactor(i),
     };
   }
 
-  /* Layout point → scene point: shrink about the layer's own centre, lift it
-     onto the recession ramp, then add its share of the pointer parallax.
-     `par` overrides the layer's share for planes inside a feature-map stack,
-     which recede a little further still. */
+  /* Layout point → scene point: shrink about the layer's own centre, land it
+     on the centre the turntable carried that layer to, and lift it onto the
+     recession ramp. `par` overrides the layer's share of the vertical
+     parallax for planes inside a feature-map stack, which recede a little
+     further still. */
   _project(view, x, y, par) {
     const share = par === undefined ? view.depth : par;
     return [
-      view.cx + (x - view.cx) * view.s + this._par.x * share,
+      view.tx + (x - view.cx) * view.s,
       view.cy + (y - view.cy) * view.s - view.rise + this._par.y * share,
     ];
   }
@@ -328,11 +356,9 @@ export class CnnHero {
     const envelope = Math.min(fadeIn, fadeOut);
     if (envelope <= 0.001) return;
 
-    /* Ease the parallax and the yaw toward the pointer. */
-    this._par.x += (this._par.tx - this._par.x) * PAR_EASE;
+    /* Ease the parallax and the wheel toward the pointer. */
     this._par.y += (this._par.ty - this._par.y) * PAR_EASE;
-    this._par.yaw += (this._par.tyaw - this._par.yaw) * PAR_EASE;
-    this._shear = SHEAR_X + this._par.yaw * (this._par.yaw > 0 ? YAW_UPRIGHT : YAW_LEAN);
+    this._par.turn += (this._par.tturn - this._par.turn) * PAR_EASE;
 
     ctx.save();
     ctx.translate(this._ox, this._oy);
@@ -341,7 +367,7 @@ export class CnnHero {
 
     const reveals = this._layers.map((_, i) =>
       easeOut(clamp01((t - (T_IN + i * T_STEP)) / T_RAMP)));
-    /* One resolved depth view per layer — see DEPTH_SHRINK / LAYER_RECEDE. */
+    /* One resolved depth view per layer — see _view / TURN_RANGE. */
     const views = this._layers.map((layer, i) => this._view(i, layer));
 
     this._drawConnectors(reveals, envelope, views);
@@ -390,14 +416,9 @@ export class CnnHero {
          planes further back give up a further STACK_RECEDE of it — the
          stack itself gains depth, on top of the layer's own. */
       const planeParallax = view.depth * (1 - STACK_RECEDE * ((1 - depth) / 0.4));
-      /* Pivot the lean about the plane's vertical centre rather than its top
-         edge: cancelling the shear delta at cy = h/2 leaves the mid-height
-         point exactly where the fixed layout puts it, so the plane turns in
-         place instead of sliding sideways as the pointer moves. */
-      const pivot = ((layer.h * p.cell) / 2) * (this._shear - SHEAR_X);
       const [ox, oy] = this._project(
         view,
-        p.x + stackIndex * p.groupGap + inStack * p.stack[0] - pivot,
+        p.x + stackIndex * p.groupGap + inStack * p.stack[0],
         p.y - (layer.h * p.cell * SQUASH) / 2 + inStack * p.stack[1],
         planeParallax,
       );
@@ -408,7 +429,7 @@ export class CnnHero {
          0.09 plane-local line width alike — shrinks as one. */
       const c = p.cell * view.s;
       ctx.save();
-      ctx.transform(c, c * SKEW_Y, c * this._shear, c * SQUASH, ox, oy);
+      ctx.transform(c, c * SKEW_Y, c * SHEAR_X, c * SQUASH, ox, oy);
 
       /* Plane outline — the scaffold stays faint even where nothing fires. */
       ctx.lineWidth = 0.09;
@@ -442,29 +463,13 @@ export class CnnHero {
 
   /* ── Dense layers: columns of neurons ──────────────────────────────────── */
 
-  /* The neuron columns lean with the same yaw as the feature-map planes —
-     without this the convolutional half of the pipeline would turn while the
-     dense half stayed frozen, which reads as a glitch rather than a rotation.
-     A plane's lean per unit of *screen* y is shear/SQUASH (its own y is
-     foreshortened by SQUASH, the columns' is not), and only the delta from
-     SHEAR_X is applied, about the column's vertical centre — same invariant
-     as the planes, so the anchors need no correction. */
-  _lean(dy, mid) {
-    return (dy - mid) * ((this._shear - SHEAR_X) / SQUASH);
-  }
-
+  /* Plain upright columns. The turntable carries them bodily, like every other
+     layer, so they need no orientation term of their own. */
   _vectorDot(layer, i) {
     const p = PLACEMENT[layer.id];
-    if (layer.kind === 'output') {
-      const dy = i * p.gap;
-      return [p.x + this._lean(dy, ((layer.n - 1) * p.gap) / 2), p.y + dy];
-    }
+    if (layer.kind === 'output') return [p.x, p.y + i * p.gap];
     const col = Math.floor(i / p.rows);
-    const dy = (i % p.rows) * p.gap * 0.42;
-    return [
-      p.x + col * p.gap * 0.95 + this._lean(dy, ((p.rows - 1) * p.gap * 0.42) / 2),
-      p.y + dy,
-    ];
+    return [p.x + col * p.gap * 0.95, p.y + (i % p.rows) * p.gap * 0.42];
   }
 
   _drawVectorLayer(layer, sample, reveal, alpha, view) {
@@ -598,12 +603,13 @@ export class CnnHero {
   _drawLayerLabel(layer, alpha, view) {
     if (alpha <= 0.02) return;
     const ctx = this.ctx;
-    /* Only x tracks the layer — the captions share one flat baseline
-       (REF_H - 44/33). Keeping the strip level while the pipeline climbs away
-       from it is the point: it reads as the ground line the scene recedes
-       over, which is a depth cue in its own right. Raking the row to match
-       would throw that away and just misalign the text. */
-    const x = view.cx + this._par.x * view.depth;
+    /* Only x tracks the layer — and it tracks the *turned* centre, so a
+       caption stays under its layer as the wheel carries it. The captions
+       themselves share one flat baseline (REF_H - 44/33): keeping the strip
+       level while the pipeline climbs away from it is the point, since it
+       reads as the ground line the scene recedes over. Raking the row to
+       match would throw that away and just misalign the text. */
+    const x = view.tx;
 
     ctx.font = `600 ${8 * this._textScale}px ${MONO}`;
     ctx.textAlign = 'center';
