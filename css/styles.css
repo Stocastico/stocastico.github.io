@@ -1689,46 +1689,6 @@ h3 {
   background: rgb(var(--accent-rgb) / 0.08);
 }
 
-/* ─── 10. "Full CV" callout (rendered in the Projects section) ─── */
-.research-cv-callout {
-  margin-bottom: 1.4rem;
-  padding: 1rem 1.1rem;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  background: linear-gradient(120deg, rgb(var(--accent-rgb) / 0.1), rgb(var(--accent2-rgb) / 0.08));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.research-cv-copy {
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.research-cv-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.52em 1em;
-  border-radius: 999px;
-  border: 1px solid var(--border-hov);
-  background: rgb(var(--bg-rgb) / 0.72);
-  color: var(--accent2);
-  font-size: 0.84rem;
-  font-weight: 600;
-  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast), color var(--t-fast);
-}
-
-.research-cv-link:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent2);
-  color: var(--accent2-hi);
-}
-
 .research-card {
   background: var(--bg-card);
   border: 1px solid var(--border);

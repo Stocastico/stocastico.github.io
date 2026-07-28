@@ -1833,14 +1833,6 @@ test('index.html section order is about, projects, publications, places, contact
   }
 });
 
-test('index.html CV callout lives inside the projects section', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  const projStart = html.indexOf('<section id="projects"');
-  const projSection = html.slice(projStart, html.indexOf('</section>', projStart));
-  assert.ok(projSection.includes('Dive into my full CV'),
-    'the “Dive into my full CV” callout should sit within the projects section');
-});
-
 // ── renderProjects tests ──────────────────────────────────────────────────────
 
 test('renderProjects shows empty state when PROJECTS is empty', () => {

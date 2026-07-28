@@ -10,7 +10,7 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
   - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and, on desktop, a real LeNet-5 classifying MNIST digits (Canvas2D, no Three.js, no ML runtime; narrow/touch viewports get a particle field instead).
   - **About** — short bio and key stats.
   - **Skills (Expertise)** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
-  - **Projects** — up to three project cards from `data/projects.js`, plus a "Dive into my full CV" callout and a link to the full listing.
+  - **Projects** — up to three project cards from `data/projects.js`, plus a link to the full listing.
   - **Publications** — list of selected papers, generated from `data/publications.js`.
   - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
@@ -617,7 +617,7 @@ The navbar contains: **About**, **Expertise** (the Skills section), **Projects**
 | Hero | Left-aligned layout with a palette-gradient name, animated tagline, hero CTAs |
 | About | Photo + stats and bio text in a split layout |
 | Skills (Expertise) | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
-| Projects | Up to 3 project cards rendered from `data/projects.js`, plus a "Dive into my full CV" callout and a link to `projects.html` |
+| Projects | Up to 3 project cards rendered from `data/projects.js`, plus a link to `projects.html` |
 | Publications | List of selected papers, rendered from `data/publications.js` |
 | Places | Static inline-SVG world map of lived / visited countries; links to the travel page |
 | Contact | 2×2 grid of contact cards; email address is obfuscated and revealed on click |
