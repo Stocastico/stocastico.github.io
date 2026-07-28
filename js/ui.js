@@ -215,7 +215,7 @@ export function initNavbar() {
   /* ── Project page: highlight "Projects" nav link ────────── */
   const isProjectPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/projects/');
   if (isProjectPage) {
-    const projectLink = document.querySelector('#nav-links a[href*="#projects"]');
+    const projectLink = document.querySelector('#nav-links a[href$="projects.html"]');
     if (projectLink) projectLink.setAttribute('aria-current', 'page');
   }
 
