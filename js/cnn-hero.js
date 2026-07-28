@@ -28,6 +28,24 @@ const SHEAR_X = -0.42;   /* × cell — how far the plane leans left going down 
 const SKEW_Y = -0.10;    /* × cell — slight tilt along the plane's own x axis */
 const SQUASH = 0.86;     /* vertical foreshortening */
 
+/* Pointer yaw: SHEAR_X is not a constant at draw time — it is re-derived each
+   frame from the pointer's horizontal position, so the planes actually re-lean
+   (the scene turns about its vertical axis) rather than sliding as a block.
+   Every plane pivots about its own vertical centre, which is what makes this
+   cheap: the mid-height point of each layer is invariant under the pivot, and
+   every anchor in the layout (wires, captions, the verdict) is taken at mid
+   height — so the hand-tuned placement stays pixel-identical at rest and the
+   wires stay attached at full deflection.
+
+   The range is deliberately asymmetric. Turning *toward* the viewer (flatter
+   planes, pointer right) only makes the feature maps easier to read, so it
+   gets the long half; turning away piles the rows on top of each other and a
+   28×28 digit degenerates into a diagonal ribbon, so that half is short.
+   Both halves meet at SHEAR_X, which keeps the untouched first paint on the
+   hand-tuned geometry. */
+const YAW_LEAN = 0.14;      /* pointer left — steeper, legibility-limited */
+const YAW_UPRIGHT = 0.26;   /* pointer right — flatter, reads fine */
+
 /* Per-layer placement + drawing scale.
 
    Map layers: `x` is the left edge of the frontmost plane, `y` the vertical
@@ -64,15 +82,31 @@ const T_HOLD = 2.7;    /* dwell once the prediction has resolved */
 const T_FADE = 0.9;    /* cross-fade out before the next digit */
 const T_IN = 0.5;      /* scene fade-in */
 
-/* Depth parallax: each layer gets its own share of the mouse-driven shift
-   (input nearest/most responsive, output farthest/most still), so the
-   pipeline reads as a receding 3-D structure instead of one flat card
-   sliding around as a whole. RECEDE is how much factor is given up from
-   first layer to last; STACK_RECEDE additionally fades a map layer's own
-   feature-map stack (front plane full factor, back plane dimmed) — the
-   same "nearer maps overlap the ones behind" depth already used for alpha. */
-const LAYER_RECEDE = 0.7;
+/* Depth parallax: each layer gets its own share of the mouse-driven shift, so
+   the pipeline reads as a receding 3-D structure instead of one flat card
+   sliding around as a whole. LAYER_RECEDE is how much factor is given up from
+   first layer to last — at 2 the share runs +1 (input, nearest) through 0
+   (the middle of the pipeline) to -1 (output, farthest), so the layers
+   *scissor about the scene's centre* the way a solid turning on the spot
+   does. A one-directional taper instead spends nearly all of its travel
+   budget sliding the whole scene sideways and leaves only a few pixels of
+   actual differential, which is the part the eye reads as depth — the reason
+   the two can be this small and still register.
+
+   STACK_RECEDE additionally fades a map layer's own feature-map stack (front
+   plane full factor, back plane dimmed) — the same "nearer maps overlap the
+   ones behind" depth already used for alpha. It scales the magnitude, so it
+   rides on top of a signed share unchanged.
+
+   PAR_X is capped by the left-edge mask rather than by taste: the input plane
+   sits at the scene's left edge, and travel much past this pushes the most
+   legible thing in the picture into the gradient that hides the network
+   behind the hero copy. */
+const LAYER_RECEDE = 2;
 const STACK_RECEDE = 0.5;
+const PAR_X = 15;
+const PAR_Y = 9;
+const PAR_EASE = 0.09;   /* per-frame approach to the pointer target */
 
 /* Same face the CSS uses for every other technical label on the site — see
    the typographic-system note in css/styles.css. Canvas has no font-loading
@@ -114,10 +148,12 @@ export class CnnHero {
     this._cycle = T_IN + (this._layers.length - 1) * T_STEP + T_RAMP + T_HOLD + T_FADE;
     this._t0 = null;
 
-    /* Mouse parallax target/current, in REF units. Each layer only takes its
-       own depth-scaled share of this (see _depthFactor / LAYER_RECEDE),
-       drawn per layer rather than as one uniform scene shift. */
-    this._par = { x: 0, y: 0, tx: 0, ty: 0 };
+    /* Mouse parallax target/current, in REF units, plus the yaw (-1..1) that
+       drives the shear. Each layer only takes its own depth-scaled share of
+       the translation (see _depthFactor / LAYER_RECEDE); the yaw applies to
+       the whole scene, since a rotation is not a per-layer offset. */
+    this._par = { x: 0, y: 0, yaw: 0, tx: 0, ty: 0, tyaw: 0 };
+    this._shear = SHEAR_X;
 
     /* Reusable per-alpha-bucket rect batches, so a plane is painted with a
        handful of fill() calls instead of ~1000 fillRect()s. */
@@ -126,8 +162,10 @@ export class CnnHero {
     this._onResize();
     this._addListener(window, 'resize', () => this._onResize());
     this._addListener(window, 'mousemove', (e) => {
-      this._par.tx = (e.clientX / this.w - 0.5) * 20;
-      this._par.ty = (e.clientY / this.h - 0.5) * 13;
+      const nx = e.clientX / this.w - 0.5;
+      this._par.tx = nx * PAR_X;
+      this._par.ty = (e.clientY / this.h - 0.5) * PAR_Y;
+      this._par.tyaw = nx * 2;
     }, { passive: true });
 
     this._io = new IntersectionObserver(([entry]) => {
@@ -190,8 +228,9 @@ export class CnnHero {
     this._maskTo = Math.min(this.w * 0.44, this._ox);
   }
 
-  /* Share of the pointer parallax this layer gets: 1 for the input (nearest),
-     tapering to 1 - LAYER_RECEDE for the output (farthest). */
+  /* Signed share of the pointer parallax this layer gets: +1 for the input
+     (nearest), tapering through 0 at mid-pipeline to 1 - LAYER_RECEDE = -1 for
+     the output (farthest), so the two ends travel in opposite directions. */
   _depthFactor(i) {
     const n = this._layers.length;
     return n > 1 ? 1 - (i / (n - 1)) * LAYER_RECEDE : 1;
@@ -227,9 +266,11 @@ export class CnnHero {
     const envelope = Math.min(fadeIn, fadeOut);
     if (envelope <= 0.001) return;
 
-    /* Ease the parallax toward the pointer. */
-    this._par.x += (this._par.tx - this._par.x) * 0.05;
-    this._par.y += (this._par.ty - this._par.y) * 0.05;
+    /* Ease the parallax and the yaw toward the pointer. */
+    this._par.x += (this._par.tx - this._par.x) * PAR_EASE;
+    this._par.y += (this._par.ty - this._par.y) * PAR_EASE;
+    this._par.yaw += (this._par.tyaw - this._par.yaw) * PAR_EASE;
+    this._shear = SHEAR_X + this._par.yaw * (this._par.yaw > 0 ? YAW_UPRIGHT : YAW_LEAN);
 
     ctx.save();
     ctx.translate(this._ox, this._oy);
@@ -287,12 +328,18 @@ export class CnnHero {
          planes further back give up a further STACK_RECEDE of it — the
          stack itself gains depth, on top of the layer's own. */
       const planeParallax = layerDepth * (1 - STACK_RECEDE * ((1 - depth) / 0.4));
-      const ox = p.x + stackIndex * p.groupGap + inStack * p.stack[0] + this._par.x * planeParallax;
+      /* Pivot the lean about the plane's vertical centre rather than its top
+         edge: cancelling the shear delta at cy = h/2 leaves the mid-height
+         point exactly where the fixed layout puts it, so the plane turns in
+         place instead of sliding sideways as the pointer moves. */
+      const pivot = ((layer.h * p.cell) / 2) * (this._shear - SHEAR_X);
+      const ox = p.x + stackIndex * p.groupGap + inStack * p.stack[0]
+        - pivot + this._par.x * planeParallax;
       const oy = p.y - (layer.h * p.cell * SQUASH) / 2 + inStack * p.stack[1] + this._par.y * planeParallax;
       const base = decodeOffset(layer, m, plane);
 
       ctx.save();
-      ctx.transform(p.cell, p.cell * SKEW_Y, p.cell * SHEAR_X, p.cell * SQUASH, ox, oy);
+      ctx.transform(p.cell, p.cell * SKEW_Y, p.cell * this._shear, p.cell * SQUASH, ox, oy);
 
       /* Plane outline — the scaffold stays faint even where nothing fires. */
       ctx.lineWidth = 0.09;
@@ -326,12 +373,29 @@ export class CnnHero {
 
   /* ── Dense layers: columns of neurons ──────────────────────────────────── */
 
+  /* The neuron columns lean with the same yaw as the feature-map planes —
+     without this the convolutional half of the pipeline would turn while the
+     dense half stayed frozen, which reads as a glitch rather than a rotation.
+     A plane's lean per unit of *screen* y is shear/SQUASH (its own y is
+     foreshortened by SQUASH, the columns' is not), and only the delta from
+     SHEAR_X is applied, about the column's vertical centre — same invariant
+     as the planes, so the anchors need no correction. */
+  _lean(dy, mid) {
+    return (dy - mid) * ((this._shear - SHEAR_X) / SQUASH);
+  }
+
   _vectorDot(layer, i) {
     const p = PLACEMENT[layer.id];
-    if (layer.kind === 'output') return [p.x, p.y + i * p.gap];
+    if (layer.kind === 'output') {
+      const dy = i * p.gap;
+      return [p.x + this._lean(dy, ((layer.n - 1) * p.gap) / 2), p.y + dy];
+    }
     const col = Math.floor(i / p.rows);
-    const row = i % p.rows;
-    return [p.x + col * p.gap * 0.95, p.y + row * p.gap * 0.42];
+    const dy = (i % p.rows) * p.gap * 0.42;
+    return [
+      p.x + col * p.gap * 0.95 + this._lean(dy, ((p.rows - 1) * p.gap * 0.42) / 2),
+      p.y + dy,
+    ];
   }
 
   _drawVectorLayer(layer, sample, reveal, alpha, layerDepth) {
