@@ -108,6 +108,23 @@ const PAR_X = 15;
 const PAR_Y = 9;
 const PAR_EASE = 0.09;   /* per-frame approach to the pointer target */
 
+/* Static depth recession — the pipeline runs *away* from the viewer, not
+   across a flat band. Each successive layer is drawn a little smaller and a
+   little higher, so the 28×28 input sits low and large in the foreground and
+   the network's verdict sits high, small and far off. This is the depth cue
+   that survives a still screenshot; the pointer effects above only modulate
+   it.
+
+   Both ramps are anchored on the layers' own centres, which the hand-tuned
+   PLACEMENT already puts on one flat y ≈ 220 line — so the ramp is the only
+   thing establishing the staircase and no per-layer renormalisation is
+   needed. RISE is split either side of that line (first layer down, last
+   layer up) so the composition stays vertically centred in its box; SHRINK
+   is one-directional, since scaling the input *up* is the one direction that
+   can overflow the reference frame. */
+const DEPTH_SHRINK = 0.30;   /* size given up from the first layer to the last */
+const DEPTH_RISE = 84;       /* REF units between the first and last centre */
+
 /* Same face the CSS uses for every other technical label on the site — see
    the typographic-system note in css/styles.css. Canvas has no font-loading
    hook, but the stylesheet requests it on every page, so by the time the hero
@@ -236,6 +253,51 @@ export class CnnHero {
     return n > 1 ? 1 - (i / (n - 1)) * LAYER_RECEDE : 1;
   }
 
+  /* A layer's own centre in layout space — what the depth recession scales
+     about, and (for map layers) the point the stack's upward drift is already
+     folded into, so every layer's centre lands on the same y before the ramp
+     lifts it. */
+  _layerCentre(layer) {
+    const p = PLACEMENT[layer.id];
+    if (layer.kind === 'map') {
+      return [p.x + this._mapWidth(layer) / 2, p.y + ((p.group - 1) * p.stack[1]) / 2];
+    }
+    if (layer.kind === 'output') {
+      return [p.x, p.y + ((layer.n - 1) * p.gap) / 2];
+    }
+    const cols = Math.ceil(layer.n / p.rows);
+    return [p.x + ((cols - 1) * p.gap * 0.95) / 2, p.y + ((p.rows - 1) * p.gap * 0.42) / 2];
+  }
+
+  /* Everything depth-related about one layer, resolved once per frame: where
+     it sits on the recession ramp and what share of the pointer shift it
+     takes. Passing this around instead of a bare depth number is what lets
+     the wires, captions and verdict follow the ramp without re-deriving it. */
+  _view(i, layer) {
+    const n = this._layers.length;
+    const u = n > 1 ? i / (n - 1) : 0;
+    const [cx, cy] = this._layerCentre(layer);
+    return {
+      cx,
+      cy,
+      s: 1 - DEPTH_SHRINK * u,
+      rise: DEPTH_RISE * (u - 0.5),
+      depth: this._depthFactor(i),
+    };
+  }
+
+  /* Layout point → scene point: shrink about the layer's own centre, lift it
+     onto the recession ramp, then add its share of the pointer parallax.
+     `par` overrides the layer's share for planes inside a feature-map stack,
+     which recede a little further still. */
+  _project(view, x, y, par) {
+    const share = par === undefined ? view.depth : par;
+    return [
+      view.cx + (x - view.cx) * view.s + this._par.x * share,
+      view.cy + (y - view.cy) * view.s - view.rise + this._par.y * share,
+    ];
+  }
+
   /* ── Timeline ──────────────────────────────────────────────────────────── */
 
   _phase(now) {
@@ -279,22 +341,22 @@ export class CnnHero {
 
     const reveals = this._layers.map((_, i) =>
       easeOut(clamp01((t - (T_IN + i * T_STEP)) / T_RAMP)));
-    /* One depth factor per layer — see LAYER_RECEDE. */
-    const depths = this._layers.map((_, i) => this._depthFactor(i));
+    /* One resolved depth view per layer — see DEPTH_SHRINK / LAYER_RECEDE. */
+    const views = this._layers.map((layer, i) => this._view(i, layer));
 
-    this._drawConnectors(reveals, envelope, depths);
+    this._drawConnectors(reveals, envelope, views);
 
     for (let i = 0; i < this._layers.length; i++) {
       const layer = this._layers[i];
       const reveal = reveals[i];
       if (reveal <= 0) continue;
       const alpha = envelope;
-      if (layer.kind === 'map') this._drawMapLayer(layer, sample, reveal, alpha, depths[i]);
-      else this._drawVectorLayer(layer, sample, reveal, alpha, depths[i]);
-      this._drawLayerLabel(layer, reveal * alpha, depths[i]);
+      if (layer.kind === 'map') this._drawMapLayer(layer, sample, reveal, alpha, views[i]);
+      else this._drawVectorLayer(layer, sample, reveal, alpha, views[i]);
+      this._drawLayerLabel(layer, reveal * alpha, views[i]);
     }
 
-    this._drawVerdict(sample, reveals[reveals.length - 1], envelope, depths[depths.length - 1]);
+    this._drawVerdict(sample, reveals[reveals.length - 1], envelope, views[views.length - 1]);
     ctx.restore();
 
     /* Punch the network out from under the hero copy on the left. */
@@ -313,7 +375,7 @@ export class CnnHero {
 
   /* ── Feature-map planes ────────────────────────────────────────────────── */
 
-  _drawMapLayer(layer, sample, reveal, alpha, layerDepth) {
+  _drawMapLayer(layer, sample, reveal, alpha, view) {
     const ctx = this.ctx;
     const p = PLACEMENT[layer.id];
     const plane = layer.w * layer.h;
@@ -327,19 +389,26 @@ export class CnnHero {
       /* The front plane of a stack keeps the layer's full parallax share;
          planes further back give up a further STACK_RECEDE of it — the
          stack itself gains depth, on top of the layer's own. */
-      const planeParallax = layerDepth * (1 - STACK_RECEDE * ((1 - depth) / 0.4));
+      const planeParallax = view.depth * (1 - STACK_RECEDE * ((1 - depth) / 0.4));
       /* Pivot the lean about the plane's vertical centre rather than its top
          edge: cancelling the shear delta at cy = h/2 leaves the mid-height
          point exactly where the fixed layout puts it, so the plane turns in
          place instead of sliding sideways as the pointer moves. */
       const pivot = ((layer.h * p.cell) / 2) * (this._shear - SHEAR_X);
-      const ox = p.x + stackIndex * p.groupGap + inStack * p.stack[0]
-        - pivot + this._par.x * planeParallax;
-      const oy = p.y - (layer.h * p.cell * SQUASH) / 2 + inStack * p.stack[1] + this._par.y * planeParallax;
+      const [ox, oy] = this._project(
+        view,
+        p.x + stackIndex * p.groupGap + inStack * p.stack[0] - pivot,
+        p.y - (layer.h * p.cell * SQUASH) / 2 + inStack * p.stack[1],
+        planeParallax,
+      );
       const base = decodeOffset(layer, m, plane);
 
+      /* Folding the recession into the cell size scales the plane about the
+         projected origin, so the whole parallelogram — outline, cells and the
+         0.09 plane-local line width alike — shrinks as one. */
+      const c = p.cell * view.s;
       ctx.save();
-      ctx.transform(p.cell, p.cell * SKEW_Y, p.cell * this._shear, p.cell * SQUASH, ox, oy);
+      ctx.transform(c, c * SKEW_Y, c * this._shear, c * SQUASH, ox, oy);
 
       /* Plane outline — the scaffold stays faint even where nothing fires. */
       ctx.lineWidth = 0.09;
@@ -398,24 +467,25 @@ export class CnnHero {
     ];
   }
 
-  _drawVectorLayer(layer, sample, reveal, alpha, layerDepth) {
+  _drawVectorLayer(layer, sample, reveal, alpha, view) {
     const ctx = this.ctx;
     const p = PLACEMENT[layer.id];
     const isOut = layer.kind === 'output';
     const winner = sample.predicted;
-    const px = this._par.x * layerDepth;
-    const py = this._par.y * layerDepth;
+    const s = view.s;
 
     for (let i = 0; i < layer.n; i++) {
       const v = sample.bytes[layer.offset + i] / 255;
       const [dotX, dotY] = this._vectorDot(layer, i);
-      const x = dotX + px;
-      const y = dotY + py;
+      const [x, y] = this._project(view, dotX, dotY);
       const lit = clamp01((reveal - 0.35 * (i / layer.n)) / 0.65);
       if (lit <= 0) continue;
 
       const isWinner = isOut && i === winner;
-      const r = isOut ? p.dot : p.dot;
+      /* The neuron itself recedes with its layer, same as a feature map's
+         cells do — otherwise the dense half keeps its foreground weight while
+         everything around it shrinks. */
+      const r = p.dot * s;
       /* Idle neurons stay as faint outlines — the contrast between "fired"
          and "did not fire" is the whole point of the picture. */
       ctx.beginPath();
@@ -439,11 +509,11 @@ export class CnnHero {
         ctx.textBaseline = 'middle';
         ctx.fillStyle = rgba(isWinner ? this._theme.accentHi : this._theme.textMuted,
           (isWinner ? 0.9 : 0.42) * lit * alpha);
-        ctx.fillText(String(i), x - r - 5, y);
+        ctx.fillText(String(i), x - r - 5 * s, y);
         /* Probability bar to the right of each output neuron. */
         ctx.fillStyle = rgba(isWinner ? this._theme.accentHi : this._theme.accent2,
           (0.14 + v * 0.6) * lit * alpha);
-        ctx.fillRect(x + r + 5, y - 2.2, Math.max(1.2, v * 34), 4.4);
+        ctx.fillRect(x + r + 5 * s, y - 2.2 * s, Math.max(1.2, v * 34 * s), 4.4 * s);
       }
     }
   }
@@ -458,34 +528,36 @@ export class CnnHero {
     return (stacks - 1) * p.groupGap + layer.w * p.cell + (p.group - 1) * p.stack[0];
   }
 
-  _layerAnchor(layer, side, layerDepth) {
+  /* Both anchors sit at the layer's mid height, which is exactly the row the
+     recession scales about and the yaw pivots about — so a wire stays welded
+     to its layer through both effects without any correction of its own. */
+  _layerAnchor(layer, side, view) {
     const p = PLACEMENT[layer.id];
-    const px = this._par.x * layerDepth;
-    const py = this._par.y * layerDepth;
     if (layer.kind === 'map') {
-      const midY = p.y + ((p.group - 1) * p.stack[1]) / 2;
-      return [(side === 'in' ? p.x - 4 : p.x + this._mapWidth(layer) + 4) + px, midY + py];
+      const x = side === 'in' ? p.x - 4 : p.x + this._mapWidth(layer) + 4;
+      return this._project(view, x, p.y + ((p.group - 1) * p.stack[1]) / 2);
     }
     if (layer.kind === 'output') {
-      return [(side === 'in' ? p.x - p.dot - 16 : p.x + p.dot) + px, p.y + (layer.n - 1) * p.gap / 2 + py];
+      const x = side === 'in' ? p.x - p.dot - 16 : p.x + p.dot;
+      return this._project(view, x, p.y + ((layer.n - 1) * p.gap) / 2);
     }
     const cols = Math.ceil(layer.n / p.rows);
     const width = (cols - 1) * p.gap * 0.95;
-    const midY = p.y + (p.rows - 1) * p.gap * 0.42 / 2;
-    return [(side === 'in' ? p.x - p.dot - 6 : p.x + width + p.dot + 6) + px, midY + py];
+    const x = side === 'in' ? p.x - p.dot - 6 : p.x + width + p.dot + 6;
+    return this._project(view, x, p.y + ((p.rows - 1) * p.gap * 0.42) / 2);
   }
 
-  /* Wires connect two layers that (thanks to LAYER_RECEDE) sit at different
-     depths, so their endpoints drift apart slightly as the pointer moves —
-     wires flexing rather than staying rigid reads as more three-dimensional
-     than a uniform shift ever could. */
-  _drawConnectors(reveals, alpha, depths) {
+  /* Wires connect two layers that sit at different depths, so they run
+     visibly uphill along the recession ramp, and their endpoints drift apart
+     as the pointer moves — wires flexing rather than staying rigid reads as
+     more three-dimensional than a uniform shift ever could. */
+  _drawConnectors(reveals, alpha, views) {
     const ctx = this.ctx;
     for (let i = 0; i < this._layers.length - 1; i++) {
       const from = this._layers[i];
       const to = this._layers[i + 1];
-      const [x1, y1] = this._layerAnchor(from, 'out', depths[i]);
-      const [x2, y2] = this._layerAnchor(to, 'in', depths[i + 1]);
+      const [x1, y1] = this._layerAnchor(from, 'out', views[i]);
+      const [x2, y2] = this._layerAnchor(to, 'in', views[i + 1]);
       const progress = reveals[i + 1];
       const live = reveals[i] > 0.05;
       if (!live) continue;
@@ -523,18 +595,15 @@ export class CnnHero {
     }
   }
 
-  _drawLayerLabel(layer, alpha, layerDepth) {
+  _drawLayerLabel(layer, alpha, view) {
     if (alpha <= 0.02) return;
     const ctx = this.ctx;
-    const p = PLACEMENT[layer.id];
-    let x = p.x;
-    if (layer.kind === 'map') x = p.x + this._mapWidth(layer) / 2;
-    else if (layer.kind === 'output') x = p.x + 12;
-    else x = p.x + ((Math.ceil(layer.n / p.rows) - 1) * p.gap * 0.95) / 2;
-    /* Only x tracks the layer's own depth — captions share one baseline
-       (REF_H - 44/33) as a caption strip, and drifting that row vertically
-       per layer would break its alignment. */
-    x += this._par.x * layerDepth;
+    /* Only x tracks the layer — the captions share one flat baseline
+       (REF_H - 44/33). Keeping the strip level while the pipeline climbs away
+       from it is the point: it reads as the ground line the scene recedes
+       over, which is a depth cue in its own right. Raking the row to match
+       would throw that away and just misalign the text. */
+    const x = view.cx + this._par.x * view.depth;
 
     ctx.font = `600 ${8 * this._textScale}px ${MONO}`;
     ctx.textAlign = 'center';
@@ -548,23 +617,26 @@ export class CnnHero {
 
   /* ── The answer ────────────────────────────────────────────────────────── */
 
-  _drawVerdict(sample, outReveal, alpha, layerDepth) {
+  _drawVerdict(sample, outReveal, alpha, view) {
     if (outReveal <= 0.15) return;
     const ctx = this.ctx;
     const p = PLACEMENT.out;
     const a = clamp01((outReveal - 0.15) / 0.85) * alpha;
-    const x = p.x + 108 + this._par.x * layerDepth;
-    const y = p.y + (CNN.layers[CNN.layers.length - 1].n - 1) * p.gap / 2 + this._par.y * layerDepth;
+    /* The verdict belongs to the output layer, so it rides the same view:
+       it is the farthest thing in the scene and reads smallest and highest,
+       which is the whole shape of the picture in one glyph. */
+    const [x, y] = this._project(view, p.x + 108,
+      p.y + ((CNN.layers[CNN.layers.length - 1].n - 1) * p.gap) / 2);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '700 62px Outfit, system-ui, sans-serif';
+    ctx.font = `700 ${62 * view.s}px Outfit, system-ui, sans-serif`;
     ctx.fillStyle = rgba(this._theme.accentHi, 0.8 * a);
-    ctx.fillText(String(sample.predicted), x, y - 6);
+    ctx.fillText(String(sample.predicted), x, y - 6 * view.s);
 
     ctx.font = `500 ${8.5 * this._textScale}px ${MONO}`;
     ctx.fillStyle = rgba(this._theme.textMuted, 0.6 * a);
-    ctx.fillText(`p = ${sample.confidence.toFixed(3)}`, x, y + 34);
+    ctx.fillText(`p = ${sample.confidence.toFixed(3)}`, x, y + 34 * view.s);
   }
 
   /* ── Loop ──────────────────────────────────────────────────────────────── */
