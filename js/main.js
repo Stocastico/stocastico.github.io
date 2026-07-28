@@ -1054,6 +1054,21 @@ if (typeof document !== 'undefined') {
   const linksGrid = document.getElementById('links-grid');
   if (linksGrid) renderLinks(linksGrid, DEFAULT_LINKS);
 
+  /* Interactive MNIST lab (projects/mnist-lenet.html only).
+     Dynamically imported behind the element check, so the int8 weights
+     (data/lenet-weights.js, ~44 KB gzip) and the forward pass never reach
+     any other page — the homepage hero replays precomputed activations and
+     downloads no model at all. */
+  const mnistLab = document.getElementById('mnist-lab');
+  if (mnistLab) {
+    import('./mnist-lab.js')
+      .then(({ initMnistLab }) => initMnistLab(mnistLab))
+      .then((lab) => { if (lab) _disposables.push(lab); })
+      .catch((err) => {
+        if (typeof console !== 'undefined') console.warn('MNIST lab failed to load:', err);
+      });
+  }
+
   initLifecycleCleanup(_disposables);
 
   });

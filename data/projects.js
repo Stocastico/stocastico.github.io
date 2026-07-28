@@ -19,6 +19,15 @@
 
 export const PROJECTS = [
     {
+            id: "mnist-lenet",
+            title: "Draw a digit, watch a LeNet-5 read it",
+            year: "2026",
+            tags: ["Deep Learning","Interactive","JavaScript"],
+            bg: "img/projects/mnist-lenet.svg",
+            description: "A LeNet-5 trained on MNIST, running live in the browser. Draw a digit with the mouse and watch every layer's activations light up as the signal propagates to a verdict.",
+            url: "projects/mnist-lenet.html",
+        },
+    {
             id: "gaussian-nerf",
             title: "3D reconstruction using Gaussian Splatting and NeRF",
             year: "2025",
