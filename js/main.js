@@ -822,7 +822,7 @@ if (typeof document !== 'undefined') {
   const _pushTeardown = (fn) => { if (typeof fn === 'function') _disposables.push({ destroy: fn }); };
 
   /* UI behaviours */
-  initTheme();
+  _pushTeardown(initTheme());
   _pushTeardown(initNavbar());
   _pushTeardown(initMobileMenu());
   initEmailObfuscation();

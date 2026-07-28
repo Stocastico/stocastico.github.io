@@ -158,14 +158,29 @@ function broadcastThemeChange(theme) {
 export function initTheme() {
   if (typeof document === 'undefined') return;
 
+  const bag = listenerBag();
   const btn = document.getElementById('theme-toggle');
+  const dots = typeof document.querySelectorAll === 'function'
+    ? Array.from(document.querySelectorAll('.palette-dot'))
+    : [];
+
+  /* Keep the navbar dots in sync with whichever palette is actually in
+     effect — the ⌘K "Appearance" list can also change it, and a stored pin
+     from a previous visit may disagree with the generated default. */
+  const syncDots = () => {
+    const current = resolvedPalette();
+    dots.forEach((dot) => {
+      dot.setAttribute('aria-pressed', dot.getAttribute('data-palette') === current ? 'true' : 'false');
+    });
+  };
 
   /* Initial sync — the bootstrap script already applied any stored pin. */
   syncThemeColorMeta(resolvedTheme());
   syncToggleButton(btn, resolvedTheme());
+  syncDots();
 
   if (btn) {
-    btn.addEventListener('click', () => {
+    bag.on(btn, 'click', () => {
       const next = resolvedTheme() === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (_) { /* private mode */ }
@@ -174,6 +189,17 @@ export function initTheme() {
       broadcastThemeChange(next);
     });
   }
+
+  dots.forEach((dot) => {
+    bag.on(dot, 'click', () => {
+      applyPalette(dot.getAttribute('data-palette'));
+      syncDots();
+    });
+  });
+
+  bag.on(window, 'themechange', syncDots);
+
+  return bag.teardown;
 }
 
 /* ═══════════════════════════════════════════════════════════
