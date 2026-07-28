@@ -18,12 +18,16 @@
         Inserted after the CSP <meta> so the CSP hash (added by
         generate-csp-meta) covers it.
 
-     3. The navbar toggle <button> (wrapped in <!-- theme-toggle -->), inserted
-        right after the mobile hamburger. Pages without the standard navbar
-        (e.g. 404.html) are skipped for the button but still get 1 + 2.
+     3. The navbar controls (wrapped in <!-- theme-toggle -->), inserted right
+        after the mobile hamburger: one palette-dot button per entry in
+        data/palettes.yaml (colours baked in at generate time, same swatch
+        motif as the ⌘K "Appearance" list), plus the light/dark toggle button.
+        Pages without the standard navbar (e.g. 404.html) are skipped for
+        these but still get 1 + 2.
 
-   Re-run after adding an HTML page, then run generate-csp-meta (the bootstrap
-   script is hashed into each page's CSP).
+   Re-run after adding an HTML page, or after editing data/palettes.yaml
+   (to refresh the baked-in dot colours/order), then run generate-csp-meta
+   (the bootstrap script is hashed into each page's CSP).
 
    Usage: node scripts/generate-theme-toggle.mjs [--dry-run] [--help]
 ──────────────────────────────────────────────────────────────────────────────*/
@@ -31,6 +35,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { parseYaml } = require('./lib/yaml.js');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -42,14 +50,37 @@ const BOOTSTRAP = [
   '  <!-- /theme-bootstrap -->',
 ].join('\n');
 
-const TOGGLE = [
-  '      <!-- theme-toggle -->',
-  '      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch colour theme" title="Switch colour theme">',
-  '        <svg class="theme-toggle-icon icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
-  '        <svg class="theme-toggle-icon icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
-  '      </button>',
-  '      <!-- /theme-toggle -->',
-].join('\n');
+/* Palette dots use the same overlapping-circle swatch as the ⌘K "Appearance"
+   list (js/ui.js paletteSwatch) — one visual language for palette identity.
+   Colours are baked from data/palettes.yaml at generate time (like the OG
+   cards / favicons), so no hex ever needs hand-authoring here. */
+function buildPaletteDots() {
+  const data = parseYaml(fs.readFileSync(path.join(ROOT, 'data', 'palettes.yaml'), 'utf8'));
+  const palettes = data.palettes || {};
+  return Object.keys(palettes).map((id) => {
+    const p = palettes[id];
+    const pressed = id === data.active ? 'true' : 'false';
+    return `          <button type="button" class="palette-dot" data-palette="${id}" aria-pressed="${pressed}" aria-label="${p.name} palette" title="${p.name}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6" fill="${p.accent}"/><circle cx="16" cy="12" r="6" fill="${p.accent2}" opacity="0.9"/></svg></button>`;
+  }).join('\n');
+}
+
+function buildToggle() {
+  return [
+    '      <!-- theme-toggle -->',
+    '      <div class="theme-controls">',
+    '        <div class="palette-picker" role="group" aria-label="Colour palette">',
+    buildPaletteDots(),
+    '        </div>',
+    '        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch colour theme" title="Switch colour theme">',
+    '          <svg class="theme-toggle-icon icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    '          <svg class="theme-toggle-icon icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    '        </button>',
+    '      </div>',
+    '      <!-- /theme-toggle -->',
+  ].join('\n');
+}
+
+const TOGGLE = buildToggle();
 
 /* The exact hamburger block every standard navbar carries — anchor for (3). */
 const HAMBURGER = [

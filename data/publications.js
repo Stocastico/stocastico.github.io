@@ -13,7 +13,7 @@
    }
 
    The most recent papers should appear first. Entries with `featured: true`
-   surface in the homepage "Selected Work" section; the full list (this whole
+   surface in the homepage "Selected Papers" section; the full list (this whole
    array) is rendered on publications.html. Both pages are server-rendered into
    static HTML by `npm run generate-cards`, then hydrated by js/main.js.
 

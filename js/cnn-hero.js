@@ -64,6 +64,16 @@ const T_HOLD = 2.7;    /* dwell once the prediction has resolved */
 const T_FADE = 0.9;    /* cross-fade out before the next digit */
 const T_IN = 0.5;      /* scene fade-in */
 
+/* Depth parallax: each layer gets its own share of the mouse-driven shift
+   (input nearest/most responsive, output farthest/most still), so the
+   pipeline reads as a receding 3-D structure instead of one flat card
+   sliding around as a whole. RECEDE is how much factor is given up from
+   first layer to last; STACK_RECEDE additionally fades a map layer's own
+   feature-map stack (front plane full factor, back plane dimmed) — the
+   same "nearer maps overlap the ones behind" depth already used for alpha. */
+const LAYER_RECEDE = 0.7;
+const STACK_RECEDE = 0.5;
+
 /* Same face the CSS uses for every other technical label on the site — see
    the typographic-system note in css/styles.css. Canvas has no font-loading
    hook, but the stylesheet requests it on every page, so by the time the hero
@@ -104,7 +114,9 @@ export class CnnHero {
     this._cycle = T_IN + (this._layers.length - 1) * T_STEP + T_RAMP + T_HOLD + T_FADE;
     this._t0 = null;
 
-    /* Mouse parallax — a couple of pixels, just enough to feel dimensional. */
+    /* Mouse parallax target/current, in REF units. Each layer only takes its
+       own depth-scaled share of this (see _depthFactor / LAYER_RECEDE),
+       drawn per layer rather than as one uniform scene shift. */
     this._par = { x: 0, y: 0, tx: 0, ty: 0 };
 
     /* Reusable per-alpha-bucket rect batches, so a plane is painted with a
@@ -114,8 +126,8 @@ export class CnnHero {
     this._onResize();
     this._addListener(window, 'resize', () => this._onResize());
     this._addListener(window, 'mousemove', (e) => {
-      this._par.tx = (e.clientX / this.w - 0.5) * 14;
-      this._par.ty = (e.clientY / this.h - 0.5) * 9;
+      this._par.tx = (e.clientX / this.w - 0.5) * 20;
+      this._par.ty = (e.clientY / this.h - 0.5) * 13;
     }, { passive: true });
 
     this._io = new IntersectionObserver(([entry]) => {
@@ -178,6 +190,13 @@ export class CnnHero {
     this._maskTo = Math.min(this.w * 0.44, this._ox);
   }
 
+  /* Share of the pointer parallax this layer gets: 1 for the input (nearest),
+     tapering to 1 - LAYER_RECEDE for the output (farthest). */
+  _depthFactor(i) {
+    const n = this._layers.length;
+    return n > 1 ? 1 - (i / (n - 1)) * LAYER_RECEDE : 1;
+  }
+
   /* ── Timeline ──────────────────────────────────────────────────────────── */
 
   _phase(now) {
@@ -213,26 +232,28 @@ export class CnnHero {
     this._par.y += (this._par.ty - this._par.y) * 0.05;
 
     ctx.save();
-    ctx.translate(this._ox + this._par.x, this._oy + this._par.y);
+    ctx.translate(this._ox, this._oy);
     ctx.scale(this._scale, this._scale);
     ctx.globalAlpha = 1;
 
     const reveals = this._layers.map((_, i) =>
       easeOut(clamp01((t - (T_IN + i * T_STEP)) / T_RAMP)));
+    /* One depth factor per layer — see LAYER_RECEDE. */
+    const depths = this._layers.map((_, i) => this._depthFactor(i));
 
-    this._drawConnectors(reveals, envelope);
+    this._drawConnectors(reveals, envelope, depths);
 
     for (let i = 0; i < this._layers.length; i++) {
       const layer = this._layers[i];
       const reveal = reveals[i];
       if (reveal <= 0) continue;
       const alpha = envelope;
-      if (layer.kind === 'map') this._drawMapLayer(layer, sample, reveal, alpha);
-      else this._drawVectorLayer(layer, sample, reveal, alpha);
-      this._drawLayerLabel(layer, reveal * alpha);
+      if (layer.kind === 'map') this._drawMapLayer(layer, sample, reveal, alpha, depths[i]);
+      else this._drawVectorLayer(layer, sample, reveal, alpha, depths[i]);
+      this._drawLayerLabel(layer, reveal * alpha, depths[i]);
     }
 
-    this._drawVerdict(sample, reveals[reveals.length - 1], envelope);
+    this._drawVerdict(sample, reveals[reveals.length - 1], envelope, depths[depths.length - 1]);
     ctx.restore();
 
     /* Punch the network out from under the hero copy on the left. */
@@ -251,7 +272,7 @@ export class CnnHero {
 
   /* ── Feature-map planes ────────────────────────────────────────────────── */
 
-  _drawMapLayer(layer, sample, reveal, alpha) {
+  _drawMapLayer(layer, sample, reveal, alpha, layerDepth) {
     const ctx = this.ctx;
     const p = PLACEMENT[layer.id];
     const plane = layer.w * layer.h;
@@ -261,9 +282,13 @@ export class CnnHero {
     for (let m = layer.maps - 1; m >= 0; m--) {
       const inStack = m % p.group;
       const stackIndex = Math.floor(m / p.group);
-      const ox = p.x + stackIndex * p.groupGap + inStack * p.stack[0];
-      const oy = p.y - (layer.h * p.cell * SQUASH) / 2 + inStack * p.stack[1];
       const depth = p.group > 1 ? 1 - (inStack / (p.group - 1)) * 0.4 : 1;
+      /* The front plane of a stack keeps the layer's full parallax share;
+         planes further back give up a further STACK_RECEDE of it — the
+         stack itself gains depth, on top of the layer's own. */
+      const planeParallax = layerDepth * (1 - STACK_RECEDE * ((1 - depth) / 0.4));
+      const ox = p.x + stackIndex * p.groupGap + inStack * p.stack[0] + this._par.x * planeParallax;
+      const oy = p.y - (layer.h * p.cell * SQUASH) / 2 + inStack * p.stack[1] + this._par.y * planeParallax;
       const base = decodeOffset(layer, m, plane);
 
       ctx.save();
@@ -309,15 +334,19 @@ export class CnnHero {
     return [p.x + col * p.gap * 0.95, p.y + row * p.gap * 0.42];
   }
 
-  _drawVectorLayer(layer, sample, reveal, alpha) {
+  _drawVectorLayer(layer, sample, reveal, alpha, layerDepth) {
     const ctx = this.ctx;
     const p = PLACEMENT[layer.id];
     const isOut = layer.kind === 'output';
     const winner = sample.predicted;
+    const px = this._par.x * layerDepth;
+    const py = this._par.y * layerDepth;
 
     for (let i = 0; i < layer.n; i++) {
       const v = sample.bytes[layer.offset + i] / 255;
-      const [x, y] = this._vectorDot(layer, i);
+      const [dotX, dotY] = this._vectorDot(layer, i);
+      const x = dotX + px;
+      const y = dotY + py;
       const lit = clamp01((reveal - 0.35 * (i / layer.n)) / 0.65);
       if (lit <= 0) continue;
 
@@ -365,28 +394,34 @@ export class CnnHero {
     return (stacks - 1) * p.groupGap + layer.w * p.cell + (p.group - 1) * p.stack[0];
   }
 
-  _layerAnchor(layer, side) {
+  _layerAnchor(layer, side, layerDepth) {
     const p = PLACEMENT[layer.id];
+    const px = this._par.x * layerDepth;
+    const py = this._par.y * layerDepth;
     if (layer.kind === 'map') {
       const midY = p.y + ((p.group - 1) * p.stack[1]) / 2;
-      return [side === 'in' ? p.x - 4 : p.x + this._mapWidth(layer) + 4, midY];
+      return [(side === 'in' ? p.x - 4 : p.x + this._mapWidth(layer) + 4) + px, midY + py];
     }
     if (layer.kind === 'output') {
-      return [side === 'in' ? p.x - p.dot - 16 : p.x + p.dot, p.y + (layer.n - 1) * p.gap / 2];
+      return [(side === 'in' ? p.x - p.dot - 16 : p.x + p.dot) + px, p.y + (layer.n - 1) * p.gap / 2 + py];
     }
     const cols = Math.ceil(layer.n / p.rows);
     const width = (cols - 1) * p.gap * 0.95;
     const midY = p.y + (p.rows - 1) * p.gap * 0.42 / 2;
-    return [side === 'in' ? p.x - p.dot - 6 : p.x + width + p.dot + 6, midY];
+    return [(side === 'in' ? p.x - p.dot - 6 : p.x + width + p.dot + 6) + px, midY + py];
   }
 
-  _drawConnectors(reveals, alpha) {
+  /* Wires connect two layers that (thanks to LAYER_RECEDE) sit at different
+     depths, so their endpoints drift apart slightly as the pointer moves —
+     wires flexing rather than staying rigid reads as more three-dimensional
+     than a uniform shift ever could. */
+  _drawConnectors(reveals, alpha, depths) {
     const ctx = this.ctx;
     for (let i = 0; i < this._layers.length - 1; i++) {
       const from = this._layers[i];
       const to = this._layers[i + 1];
-      const [x1, y1] = this._layerAnchor(from, 'out');
-      const [x2, y2] = this._layerAnchor(to, 'in');
+      const [x1, y1] = this._layerAnchor(from, 'out', depths[i]);
+      const [x2, y2] = this._layerAnchor(to, 'in', depths[i + 1]);
       const progress = reveals[i + 1];
       const live = reveals[i] > 0.05;
       if (!live) continue;
@@ -424,7 +459,7 @@ export class CnnHero {
     }
   }
 
-  _drawLayerLabel(layer, alpha) {
+  _drawLayerLabel(layer, alpha, layerDepth) {
     if (alpha <= 0.02) return;
     const ctx = this.ctx;
     const p = PLACEMENT[layer.id];
@@ -432,6 +467,10 @@ export class CnnHero {
     if (layer.kind === 'map') x = p.x + this._mapWidth(layer) / 2;
     else if (layer.kind === 'output') x = p.x + 12;
     else x = p.x + ((Math.ceil(layer.n / p.rows) - 1) * p.gap * 0.95) / 2;
+    /* Only x tracks the layer's own depth — captions share one baseline
+       (REF_H - 44/33) as a caption strip, and drifting that row vertically
+       per layer would break its alignment. */
+    x += this._par.x * layerDepth;
 
     ctx.font = `600 ${8 * this._textScale}px ${MONO}`;
     ctx.textAlign = 'center';
@@ -445,13 +484,13 @@ export class CnnHero {
 
   /* ── The answer ────────────────────────────────────────────────────────── */
 
-  _drawVerdict(sample, outReveal, alpha) {
+  _drawVerdict(sample, outReveal, alpha, layerDepth) {
     if (outReveal <= 0.15) return;
     const ctx = this.ctx;
     const p = PLACEMENT.out;
     const a = clamp01((outReveal - 0.15) / 0.85) * alpha;
-    const x = p.x + 108;
-    const y = p.y + (CNN.layers[CNN.layers.length - 1].n - 1) * p.gap / 2;
+    const x = p.x + 108 + this._par.x * layerDepth;
+    const y = p.y + (CNN.layers[CNN.layers.length - 1].n - 1) * p.gap / 2 + this._par.y * layerDepth;
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
