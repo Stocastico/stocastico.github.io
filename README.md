@@ -33,7 +33,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 - Centralised theme system — one YAML palette drives every colour across CSS, the WebGL/Canvas modules, the GLSL shaders, and the favicon (`npm run generate-theme`); a weekly GitHub Actions job rotates the active palette
 - Node.js ≥ 18 for scripts and tests (built-in test runner, no extra test dependencies); CI runs on Node 24
 - [Playwright](https://playwright.dev/) and [sharp](https://sharp.pixelplumbing.com/) as dev dependencies (E2E tests + favicon rasterisation)
-- Self-hosted fonts: Inter (body), Outfit (headings + the hero name) and JetBrains Mono (metadata — eyebrows, tags, years, domains). The mono is subsetted and weight-clipped to 13.3 KB; see the provenance note in `css/fonts.css`
+- Self-hosted fonts: **JetBrains Mono** (the hero name, headings *and* metadata) and **Source Serif 4** (prose, roman + real italic). Both are variable, subsetted and weight-clipped with fonttools — 13.3 KB + 30.7/31.9 KB, down from 137 KB when this was Inter + Outfit + mono; see the provenance notes in `css/fonts.css`
 - Privacy-first: no third-party scripts, no cookies. The only external request is a cookieless [GoatCounter](https://www.goatcounter.com/) no-JS analytics pixel (aggregate counts, no personal data)
 
 ## Project structure

@@ -472,7 +472,7 @@ function initAnimatedFavicon() {
     ctx.shadowBlur  = 10;
     ctx.shadowColor = rgba(THEME.faviconFg, 0.73);
     ctx.fillStyle   = THEME.faviconFg;
-    ctx.font        = 'bold 44px "Outfit", "Inter", system-ui, sans-serif';
+    ctx.font        = 'bold 44px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('S', 0, 2); /* +2 px optical centre correction */
@@ -481,7 +481,7 @@ function initAnimatedFavicon() {
     link.href = canvas.toDataURL('image/png');
   }
 
-  /* Render after fonts are loaded so Outfit is available */
+  /* Render after fonts are loaded so the display face is available */
   const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
     ? document.fonts.ready
     : Promise.resolve();

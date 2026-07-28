@@ -107,7 +107,7 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - Generated files (`data/cv.js`, `data/locations.js`, `js/theme.js`, and the `@theme-generated` block in `css/styles.css`) should never be edited manually
 - Tests use Node.js built-in test runner (`node --test`) — no Jest, no Mocha
 - YAML source files → JS ESM data files via generator scripts
-- Self-hosted fonts (no Google Fonts CDN). Three faces, split by kind of content: **Outfit** display, **Inter** prose, **JetBrains Mono** metadata (`--font-mono`: eyebrows, tags, years, domains, stat labels, keyboard hints, CNN hero captions). Prose never gets the mono
+- Self-hosted fonts (no Google Fonts CDN). **Two faces, three roles** — the mono leads. **JetBrains Mono** is both `--font-display` (hero name, section titles, `.link-card-name`, the CNN hero's verdict digit) and `--font-mono` (metadata: eyebrows, tags, years, domains, stat labels, keyboard hints, CNN captions) *and* UI chrome (nav links, `.btn`, `.social-btn`, `.link-chip`). The two variables hold the same stack deliberately — they answer different questions, so a future display face swaps at one line. **Source Serif 4** is `--font-prose`: paragraphs, card descriptions, and `.project-card__title` (full-sentence titles that a monospace would blow out — length decides, not rank). Prose never gets the mono. Note `--font-sans` was **renamed to `--font-prose`**; a variable named `-sans` holding a serif is a lie that rots
 - `prefers-reduced-motion` is respected everywhere — all animations degrade gracefully
 
 ## Workflow Rules

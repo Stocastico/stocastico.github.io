@@ -64,7 +64,7 @@ for (const rel of PAGES) {
   test(`html: ${rel} preloads the two above-the-fold web fonts`, () => {
     /* Every page loads css/fonts.css; preloading the two critical woff2 files
        avoids FOUT/layout shift. One missing page = an inconsistent flash. */
-    for (const font of ['inter-latin-400-normal.woff2', 'outfit-latin-700-normal.woff2']) {
+    for (const font of ['source-serif-4-latin-wght-normal.woff2', 'jetbrains-mono-latin-wght-normal.woff2']) {
       const re = new RegExp(
         `<link[^>]*rel="preload"[^>]*href="[^"]*${font.replace(/\./g, '\\.')}"[^>]*as="font"`, 'i');
       assert.match(html, re, `${rel} missing <link rel="preload"> for ${font}`);

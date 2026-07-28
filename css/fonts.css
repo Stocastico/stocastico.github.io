@@ -1,65 +1,57 @@
-/* Self-hosted Inter (latin, weights 400-700) */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url(../fonts/inter-latin-400-normal.woff2) format('woff2'), url(../fonts/inter-latin-400-normal.woff) format('woff');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 500;
-  src: url(../fonts/inter-latin-500-normal.woff2) format('woff2'), url(../fonts/inter-latin-500-normal.woff) format('woff');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 600;
-  src: url(../fonts/inter-latin-600-normal.woff2) format('woff2'), url(../fonts/inter-latin-600-normal.woff) format('woff');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 700;
-  src: url(../fonts/inter-latin-700-normal.woff2) format('woff2'), url(../fonts/inter-latin-700-normal.woff) format('woff');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
-}
+/* Self-hosted Source Serif 4 (latin, variable weight 400-700, roman + italic).
 
-/* Self-hosted Outfit (latin, 400/700 normal) */
+   The prose face. Replaces Inter, which was four static weights (96 KB) and
+   also the default sans of half the modern web — it read as "template" no
+   matter what sat above it. A serif in the body copy is the single change
+   that moves this site from landing-page to publication.
+
+   Provenance, so this is reproducible: the files are the latin subsets from
+   @fontsource-variable/source-serif-4 (SIL OFL 1.1), further reduced with
+   fonttools —
+     · subset to the same latin range Inter shipped with (below), keeping
+       kern/ccmp/locl/mark/mkmk plus liga/calt — unlike the mono, this *is* a
+       reading face, so its standard ligatures stay
+     · weight axis clipped to 400-700, the only range the CSS asks for
+   Order matters: subset first, then clip the axis. Clipping first leaves
+   `gvar` holding deltas for glyphs the subsetter then removes, and the
+   subset step dies on the dangling key.
+   49.6 KB -> 30.7 KB roman, 50.3 KB -> 31.9 KB italic.
+
+   The italic is real, not synthesised. Inter shipped no italic and the
+   browser's oblique fallback — the roman mechanically slanted — is passable
+   on a sans and openly bad on a serif, whose italic is a different set of
+   letterforms rather than a tilt. The project pages use <em> in running
+   prose, so this one earns its 32 KB. woff2 only, as with the mono. */
 @font-face {
-  font-family: 'Outfit';
+  font-family: 'Source Serif 4';
   font-style: normal;
   font-display: swap;
-  font-weight: 400;
-  src: url(../fonts/outfit-latin-400-normal.woff2) format('woff2'), url(../fonts/outfit-latin-400-normal.woff) format('woff');
+  font-weight: 400 700;
+  src: url(../fonts/source-serif-4-latin-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 @font-face {
-  font-family: 'Outfit';
-  font-style: normal;
+  font-family: 'Source Serif 4';
+  font-style: italic;
   font-display: swap;
-  font-weight: 700;
-  src: url(../fonts/outfit-latin-700-normal.woff2) format('woff2'), url(../fonts/outfit-latin-700-normal.woff) format('woff');
+  font-weight: 400 700;
+  src: url(../fonts/source-serif-4-latin-wght-italic.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 
 /* Self-hosted JetBrains Mono (latin, variable weight 400-700).
 
-   Used only for metadata — eyebrows, tags, years, domains, stat labels — never
-   for prose. See the "typographic system" note in css/styles.css.
+   Both the metadata face and — since the type system was rebuilt around it —
+   the *display* face: the hero name, section titles and card titles. See the
+   "typographic system" note in css/styles.css for why the mono leads.
 
    Provenance, so this is reproducible: the file is the latin subset from
    @fontsource-variable/jetbrains-mono (SIL OFL 1.1), further reduced with
    fonttools —
      · subset to U+0020-007E, U+00A0-00FF, U+0131, U+00B7, U+00D7, U+20AC,
        U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2192
-       (kern/ccmp/locl/mark/mkmk retained; coding ligatures dropped — this is
-       a label face here, not an editor face)
+       (kern/ccmp/locl/mark/mkmk retained; coding ligatures dropped — the
+       arrows and `!=` of an editor face have no business in a headline)
      · weight axis clipped to 400-700, the only range the CSS asks for
    40.4 KB -> 13.3 KB. woff2 only: every browser that runs this site's ES
    modules has supported woff2 since 2016. */

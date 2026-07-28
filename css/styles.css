@@ -81,9 +81,9 @@
   /* Match native UI (form controls, scrollbars, caret) to the dark theme */
   color-scheme: dark;
 
-  /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  /* Typography — see the "Typographic system" note further down */
+  --font-prose: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-display: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Spacing — modular scale (rem). Prefer these tokens over ad-hoc rem values
@@ -104,6 +104,15 @@
 
   /* Letter-spacing (tracking) scale — replaces a dozen ad-hoc em values.
      Uppercase labels/eyebrows use the wider end. */
+  /* --tracking-display is for the mono at headline sizes, and is much
+     tighter than --tracking-tight (which was tuned for Outfit). A monospace
+     gives every glyph the same advance, so at 8rem the narrow letters — i,
+     l, t — sit in visible pools of their own whitespace and the word reads
+     as spaced-out rather than set. Pulling the tracking in closes those
+     pools without touching the wide letters, which have no slack to give.
+     Metadata keeps the wider end of the scale: there the airiness is the
+     signal that says "this is data". */
+  --tracking-display: -0.045em;
   --tracking-tight: -0.02em;
   --tracking-normal: 0.02em;
   --tracking-wide: 0.04em;
@@ -420,7 +429,7 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
+  font-family: var(--font-prose);
   font-size: clamp(15px, 1.05vw, 17px);
   line-height: 1.7;
   overflow-x: clip;
@@ -622,6 +631,10 @@ h3 {
   gap: 2.5rem;
 
   a {
+    /* Chrome, not prose: the nav is a control strip, so it takes the mono
+       like every other label on the page. Left to inherit, it came out as
+       wide-tracked uppercase serif, which reads as letterhead. */
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-muted);
@@ -806,7 +819,7 @@ h3 {
   font-size: clamp(3.5rem, 9vw, 8.5rem);
   font-weight: 700;
   line-height: 1.1;
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: var(--tracking-display);
   margin-bottom: 0;
   /* spacing now on .hero-name-wrap */
   background: linear-gradient(135deg, var(--hero-grad-from) 30%, var(--hero-grad-to) 100%);
@@ -918,6 +931,8 @@ h3 {
   gap: 0.5rem;
   padding: 0.8em 1.9em;
   border-radius: 999px;
+  /* Buttons are chrome too — a label you act on, not a sentence you read. */
+  font-family: var(--font-mono);
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -1020,7 +1035,7 @@ h3 {
   font-family: var(--font-display);
   font-size: clamp(2.25rem, 4.5vw, 3.75rem);
   line-height: 1.08;
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: var(--tracking-display);
   background: linear-gradient(135deg, var(--text) 50%, var(--text-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1372,7 +1387,7 @@ h3 {
   align-items: center;
   gap: 0.45rem;
   padding: 0.45rem 0.9rem;
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 0.88rem;
   color: var(--text-muted);
   background: var(--bg-card);
@@ -1415,6 +1430,7 @@ h3 {
   text-align: left;
   margin: 1rem 0 0;
   color: var(--text-faint);
+  font-family: var(--font-mono);
   font-size: 0.82rem;
 }
 
@@ -1443,6 +1459,7 @@ h3 {
 }
 
 .link-card-cat {
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: var(--tracking-normal);
   padding: 0.15rem 0.5rem;
@@ -1571,6 +1588,7 @@ h3 {
 .photo-initials {
   font-family: var(--font-display);
   font-size: 4rem;
+  letter-spacing: var(--tracking-display);
   font-weight: 700;
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   -webkit-background-clip: text;
@@ -1630,6 +1648,7 @@ h3 {
   display: block;
   font-family: var(--font-display);
   font-size: 2rem;
+  letter-spacing: var(--tracking-display);
   font-weight: 700;
   line-height: 1;
   color: var(--accent);
@@ -1680,6 +1699,10 @@ h3 {
   padding: 0.6em 1.4em;
   border-radius: 999px;
   border: 1px solid var(--border);
+  /* Same call as .btn — these are controls sitting at the end of a prose
+     column, and the mono is what keeps them from reading as another
+     sentence. */
+  font-family: var(--font-mono);
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-muted);
@@ -1910,6 +1933,13 @@ h3 {
 }
 
 .project-card__title {
+  /* Prose, not the display mono — deliberately, and unlike .link-card-name.
+     These titles are full sentences ("TRACTION: Opera Co-creation for Social
+     Transformation") and run to three lines inside a narrow card; a
+     monospace sets every one of those characters at the same wide advance
+     and the card stops being readable. Link cards get the mono because a
+     site name is two or three short words. Length decides, not rank. */
+  font-family: var(--font-prose);
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--text);
@@ -1998,6 +2028,7 @@ h3 {
   font-family: var(--font-display);
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 700;
+  letter-spacing: var(--tracking-display);
   color: var(--text);
   margin: 0;
   line-height: 1.2;
@@ -2783,19 +2814,37 @@ h3 {
 }
 
 /* ─── Typographic system ─────────────────────────────────────
-   Three faces, and the split is by *kind of content*, not by size:
+   Two faces, three roles. The split is by *kind of content*, not by size:
 
-     --font-display  Outfit   headlines and numerals with presence
-     --font-sans     Inter    everything a human reads as prose
+     --font-display  JetBrains Mono   the hero name, section titles, card
+                                      titles — anything that announces
      --font-mono     JetBrains Mono   metadata: eyebrows, tags, years,
                                       domains, stat labels, keyboard hints
+     --font-prose    Source Serif 4   everything a human reads as prose
 
-   The mono is the point. Outfit + Inter is a clean pairing and also the
-   default pairing of half the web, so it carries no signal; a monospace on
-   the metadata does two things at once — it separates data from prose at a
-   glance, and on a page about computer vision and 3D reconstruction it is
-   honest about the subject. Prose never gets it: mono is slower to read and
-   these labels are things you scan, not things you read.
+   This used to be Outfit + Inter + a mono confined to metadata. That pairing
+   was clean, and it was also the default pairing of half the modern web, so
+   it carried no signal at all — the site looked generated because its type
+   was the type every generator reaches for.
+
+   So the mono was promoted rather than merely kept. It already had the
+   strongest claim on the page: a monospace separates data from prose at a
+   glance, and on a site about computer vision it is honest about the
+   subject. Letting it set the headlines too makes that the voice instead of
+   an accent, and the hero — a LeNet-5 forward pass drawn by hand — now
+   agrees with the type instead of arguing with it.
+
+   --font-display and --font-mono are deliberately the same stack. They stay
+   separate variables because they answer different questions ("what
+   announces?" vs "what is data?"), and a future display face can be swapped
+   in at one line without dragging every tag and year along with it.
+
+   Prose is the counterweight and still never gets the mono: mono is slower
+   to read, and a page set entirely in it is a terminal, not a piece of
+   writing. Source Serif 4 carries the paragraphs — a serif reads as
+   editorial where a geometric sans reads as product, which is the whole
+   point of the change. Its real italic ships alongside the roman; see
+   css/fonts.css for why that was worth the bytes.
    ───────────────────────────────────────────────────────────── */
 
 /* ─── 18. Responsive ────────────────────────────────────── */
@@ -2969,6 +3018,7 @@ h3 {
 .globe-title {
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.25rem);
+  letter-spacing: var(--tracking-display);
   background: linear-gradient(135deg, var(--text) 50%, var(--text-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -3228,6 +3278,7 @@ h3 {
 .post-title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: var(--tracking-display);
   line-height: 1.2;
   margin-bottom: 1rem;
 }
@@ -3423,7 +3474,7 @@ h3 {
   background: transparent;
   border: none;
   outline: none;
-  font-family: var(--font-sans);
+  font-family: var(--font-prose);
   font-size: 1rem;
   color: var(--text);
   caret-color: var(--accent2);
@@ -3439,7 +3490,7 @@ h3 {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.1em 0.4em;
-  font-family: var(--font-sans);
+  font-family: var(--font-prose);
   flex-shrink: 0;
 }
 
