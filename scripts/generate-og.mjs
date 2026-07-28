@@ -6,7 +6,7 @@
    matches whatever palette the site is currently wearing (the palette rotates
    weekly via CI). Each card is a deterministic 1200×630 PNG built from an SVG
    template — no headless browser — using the same colours generate-theme reads
-   from data/palettes.yaml. The hero/body fonts are embedded as base64 so the
+   from data/palettes.yaml. The display/prose fonts are embedded as base64 so the
    text renders identically regardless of the host's installed fonts.
 
    Output: img/og/og-<paletteKey>.png  (e.g. og-crimson.png)
@@ -42,8 +42,8 @@ const H = 630;
 function b64Font(rel) {
   return fs.readFileSync(path.join(ROOT, rel)).toString('base64');
 }
-const OUTFIT = b64Font('fonts/outfit-latin-700-normal.woff2');
-const INTER = b64Font('fonts/inter-latin-400-normal.woff2');
+const MONO = b64Font('fonts/jetbrains-mono-latin-wght-normal.woff2');
+const SERIF = b64Font('fonts/source-serif-4-latin-wght-normal.woff2');
 
 function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -60,10 +60,10 @@ function svgFor(p) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <style>
-      @font-face { font-family: 'Outfit'; font-weight: 700; src: url(data:font/woff2;base64,${OUTFIT}) format('woff2'); }
-      @font-face { font-family: 'Inter'; font-weight: 400; src: url(data:font/woff2;base64,${INTER}) format('woff2'); }
-      .name { font-family: 'Outfit', sans-serif; font-weight: 700; }
-      .body { font-family: 'Inter', sans-serif; font-weight: 400; }
+      @font-face { font-family: 'JetBrains Mono'; font-weight: 400 700; src: url(data:font/woff2;base64,${MONO}) format('woff2'); }
+      @font-face { font-family: 'Source Serif 4'; font-weight: 400 700; src: url(data:font/woff2;base64,${SERIF}) format('woff2'); }
+      .name { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+      .body { font-family: 'Source Serif 4', serif; font-weight: 400; }
     </style>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="${bgAlt}"/>
@@ -87,10 +87,10 @@ function svgFor(p) {
   <rect width="${W}" height="${H}" fill="url(#glow)"/>
   <rect width="${W}" height="${H}" fill="url(#glow2)"/>
 
-  <text class="name" x="90" y="250" font-size="118" fill="url(#name)" letter-spacing="-2">Stefano</text>
-  <text class="name" x="90" y="370" font-size="118" fill="url(#name)" letter-spacing="-2">Masneri</text>
+  <text class="name" x="90" y="250" font-size="118" fill="url(#name)" letter-spacing="-5">Stefano</text>
+  <text class="name" x="90" y="370" font-size="118" fill="url(#name)" letter-spacing="-5">Masneri</text>
 
-  <text class="body" x="94" y="446" font-size="30" fill="${esc(muted)}" letter-spacing="1.5">AI · Machine Learning · Computer Vision · Augmented Reality</text>
+  <text class="body" x="94" y="446" font-size="30" fill="${esc(muted)}" letter-spacing="0.5">AI · Machine Learning · Computer Vision · Augmented Reality</text>
 
   <rect x="94" y="486" width="34" height="3" rx="1.5" fill="${accent}"/>
   <text class="body" x="146" y="496" font-size="26" fill="${esc(p.text)}">San Sebastián, Spain</text>

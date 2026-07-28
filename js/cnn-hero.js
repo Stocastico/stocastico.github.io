@@ -636,7 +636,7 @@ export class CnnHero {
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = `700 ${62 * view.s}px Outfit, system-ui, sans-serif`;
+    ctx.font = `700 ${62 * view.s}px ${MONO}`;
     ctx.fillStyle = rgba(this._theme.accentHi, 0.8 * a);
     ctx.fillText(String(sample.predicted), x, y - 6 * view.s);
 
