@@ -886,6 +886,53 @@ h3 {
   flex-wrap: wrap;
 }
 
+/* Aside pointing at the interactive version of the hero's own background.
+   Deliberately not a second .btn — the CV download is the hero's one call to
+   action, and this is a caption on the artwork, so it takes the mono metadata
+   voice every other label on the site uses. Hidden by default and revealed by
+   syncHeroCnnLink() in js/main.js only when the LeNet scene is what painted. */
+.hero-cnn-link {
+  margin-top: 1.5rem;
+  max-width: 34ch;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.hero-cnn-link[hidden] {
+  display: none;
+}
+
+.hero-cnn-link a {
+  color: var(--text-faint);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease);
+}
+
+.hero-cnn-link a:hover,
+.hero-cnn-link a:focus-visible {
+  color: var(--accent);
+  border-bottom-color: rgb(var(--accent-rgb) / 0.4);
+}
+
+.hero-cnn-link svg {
+  vertical-align: -1px;
+  margin-left: 0.15rem;
+  transition: transform var(--t-fast) var(--ease);
+}
+
+.hero-cnn-link a:hover svg {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cnn-link a:hover svg {
+    transform: none;
+  }
+}
+
 /* Scroll hint */
 .scroll-hint {
   position: absolute;

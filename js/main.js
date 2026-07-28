@@ -895,6 +895,20 @@ if (typeof document !== 'undefined') {
     });
   };
 
+  /* The hero's "draw it a digit" aside points at projects/mnist-lenet.html, and
+     it only makes sense while the LeNet scene is the background actually
+     painting: a narrow or touch viewport gets the abstract particle field
+     instead, and reduced-motion gets no canvas at all. Gate it on the same
+     predicate buildNeural() branches on — but evaluated independently, so the
+     link does not have to wait for an import that is deferred until the first
+     scroll or mousemove. */
+  const heroCnnLink = document.querySelector('.hero-cnn-link');
+  const syncHeroCnnLink = () => {
+    if (!heroCnnLink) return;
+    heroCnnLink.hidden = prefersReducedMotion() || !supportsCnnHero();
+  };
+  syncHeroCnnLink();
+
   /* Tear the current hero background down and build the one that now applies —
      shared by the theme switch and the breakpoint watcher below. Canvas2D
      survives reuse, but swapping the node gives the rebuild a clean drawing
@@ -946,7 +960,7 @@ if (typeof document !== 'undefined') {
   if (typeof window.matchMedia === 'function') {
     const heroMq = window.matchMedia(CNN_HERO_QUERY);
     if (typeof heroMq.addEventListener === 'function') {
-      const onHeroBreakpoint = () => rebuildNeural();
+      const onHeroBreakpoint = () => { syncHeroCnnLink(); rebuildNeural(); };
       heroMq.addEventListener('change', onHeroBreakpoint);
       _pushTeardown(() => heroMq.removeEventListener('change', onHeroBreakpoint));
     }
