@@ -40,8 +40,14 @@ jobs:
 
       # Only Chromium — the suite asserts behaviour (does the reveal fire, does
       # bfcache restore work), not cross-browser rendering.
+      # Both builds on purpose. `chromium` is the headless shell Playwright
+      # uses by default; `chromium --channel=chromium` is the full browser, and
+      # only that one implements the back/forward cache — the headless shell
+      # cannot run the lifecycle test at all and would skip it every time.
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --channel=chromium
 
       # The suite serves dist/, so it tests the artefact that actually ships
       # rather than the sources.

@@ -19,19 +19,32 @@ import assert from 'node:assert/strict';
 import test, { after, before, describe } from 'node:test';
 
 import {
-  VIEWPORTS, blockExternalRequests, launchBrowser, launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
+  BFCACHE_ARGS, BFCACHE_IGNORE, VIEWPORTS, bfcacheWorks, blockExternalRequests, launchBrowser,
+  launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
 } from './harness.mjs';
 
-let server, browser, bfBrowser;
+let server, browser, bfBrowser, bfcacheAvailable = false;
 
 before(async () => {
   server = await startServer();
   browser = await launchBrowser();
-  bfBrowser = await launchBrowserWithBfcache();
+  /* The full chromium channel may not be installed. Fall back rather than
+     failing the whole file — but keep the bfcache flags on the fallback, since
+     a locally-substituted full Chromium can still do it and dropping them
+     would make the round trip skip on every machine but CI. The probe below
+     decides what is actually testable either way. */
+  try { bfBrowser = await launchBrowserWithBfcache(); }
+  catch {
+    bfBrowser = await launchBrowser({ ignoreDefaultArgs: BFCACHE_IGNORE, args: BFCACHE_ARGS });
+  }
+  bfcacheAvailable = await bfcacheWorks(bfBrowser, server.base + '/index.html');
+  if (!bfcacheAvailable) {
+    console.warn('[e2e] no bfcache in this browser — the real Back round trip will skip');
+  }
 });
 after(async () => {
+  if (bfBrowser && bfBrowser !== browser) await bfBrowser.close();
   await browser?.close();
-  await bfBrowser?.close();
   await server?.close();
 });
 
@@ -167,45 +180,88 @@ describe('theme', () => {
 
 /* ─── Lifecycle: the back/forward cache ──────────────────────────────────── */
 
+/* Two tests, because the property and the integration are different claims and
+   only one of them can be checked everywhere.
+
+   The property — a `pagehide` with `persisted: true` must not tear the page
+   down — is what actually broke, and it can be checked on any browser by
+   dispatching that event. It runs unconditionally.
+
+   The integration — the browser really freezes and restores the document —
+   needs a browser that implements bfcache. `chrome-headless-shell`, which is
+   Playwright's default headless build, does not. Where it is unavailable that
+   test skips with its reason stated, rather than failing (the code is fine, the
+   browser simply cannot exercise it) or quietly passing (which is the habit
+   that shipped the bug). The property test above still holds the line. */
+
 describe('lifecycle: the page survives Back', () => {
-  test('a bfcache restore leaves the page fully alive', async () => {
+  const heroIsAnimating = (page) => page.evaluate(async () => {
+    const c = document.getElementById('neural-canvas');
+    if (!c) return 'no-canvas';
+    const ctx = c.getContext('2d');
+    const hash = () => {
+      const d = ctx.getImageData(0, 0, c.width, c.height).data;
+      let h = 0;
+      for (let i = 3; i < d.length; i += 4 * 13) h = (h * 31 + d[i]) | 0;
+      return h;
+    };
+    const before = hash();
+    await new Promise((r) => setTimeout(r, 900));
+    return before !== hash();
+  });
+
+  const paletteOpens = async (page) => {
+    await page.keyboard.press('Control+k');
+    await page.waitForTimeout(250);
+    const open = await page.evaluate(() => !document.getElementById('cmd-overlay').hidden);
+    if (open) { await page.keyboard.press('Escape'); await page.waitForTimeout(200); }
+    return open;
+  };
+
+  test('a freeze into the bfcache does not tear the page down', async () => {
+    /* The regression itself, checked directly: dispatch the pagehide the
+       browser fires when it freezes a page, and require everything to still be
+       alive afterwards. No bfcache support needed, so this runs everywhere. */
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await nudgePointer(page);
+      await page.waitForTimeout(2200);
+
+      assert.equal(await heroIsAnimating(page), true, 'hero was not animating to begin with');
+      assert.equal(await paletteOpens(page), true, '⌘K did not work to begin with');
+
+      await page.evaluate(() =>
+        dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+      await page.waitForTimeout(600);
+
+      assert.equal(await heroIsAnimating(page), true,
+        'the hero canvas died on a persisted pagehide — teardown ran on a bfcache freeze');
+      assert.equal(await paletteOpens(page), true,
+        '⌘K died on a persisted pagehide');
+      assert.equal(
+        await page.evaluate(() => document.getElementById('nav-toggle')?.getAttribute('aria-expanded')),
+        'false', 'the mobile menu lost its wiring on a persisted pagehide');
+    } finally { await page.close(); }
+  });
+
+  test('a real Back restores a working page', async (t) => {
+    if (!bfcacheAvailable) {
+      t.skip('this browser does not implement the back/forward cache ' +
+        '(chrome-headless-shell has no bfcache; install the full chromium channel to cover this)');
+      return;
+    }
     const page = await bfBrowser.newPage({ viewport: VIEWPORTS.desktop });
     await page.addInitScript(() => {
       window.__lifecycle = [];
       addEventListener('pagehide', (e) => window.__lifecycle.push(`pagehide:${e.persisted}`));
       addEventListener('pageshow', (e) => window.__lifecycle.push(`pageshow:${e.persisted}`));
     });
-
-    const heroIsAnimating = () => page.evaluate(async () => {
-      const c = document.getElementById('neural-canvas');
-      if (!c) return 'no-canvas';
-      const ctx = c.getContext('2d');
-      const hash = () => {
-        const d = ctx.getImageData(0, 0, c.width, c.height).data;
-        let h = 0;
-        for (let i = 3; i < d.length; i += 4 * 13) h = (h * 31 + d[i]) | 0;
-        return h;
-      };
-      const before = hash();
-      await new Promise((r) => setTimeout(r, 900));
-      return before !== hash();
-    });
-
-    const paletteOpens = async () => {
-      await page.keyboard.press('Control+k');
-      await page.waitForTimeout(250);
-      const open = await page.evaluate(() => !document.getElementById('cmd-overlay').hidden);
-      if (open) { await page.keyboard.press('Escape'); await page.waitForTimeout(200); }
-      return open;
-    };
-
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       await nudgePointer(page);
       await page.waitForTimeout(2200);
-
-      assert.equal(await heroIsAnimating(), true, 'the hero was not animating before navigating away');
-      assert.equal(await paletteOpens(), true, '⌘K did not work before navigating away');
+      assert.equal(await heroIsAnimating(page), true, 'hero was not animating before navigating away');
 
       await page.goto(server.base + '/cv.html', { waitUntil: 'networkidle' });
       await page.waitForTimeout(600);
@@ -213,21 +269,14 @@ describe('lifecycle: the page survives Back', () => {
       await page.waitForTimeout(1800);
 
       const lifecycle = await page.evaluate(() => window.__lifecycle);
-      /* If the browser declined to bfcache, this test has nothing to say —
-         but it must not silently pass, so assert we got the path we wanted. */
       assert.ok(lifecycle.includes('pageshow:true'),
         `expected a bfcache restore, saw ${JSON.stringify(lifecycle)}`);
 
       await nudgePointer(page);
       await page.waitForTimeout(2000);
-
-      assert.equal(await heroIsAnimating(), true,
-        'the hero canvas is dead after coming back — the page was torn down on a bfcache freeze');
-      assert.equal(await paletteOpens(), true,
-        '⌘K is dead after coming back');
-      assert.equal(
-        await page.evaluate(() => document.getElementById('nav-toggle')?.getAttribute('aria-expanded')),
-        'false', 'the mobile menu lost its wiring after coming back');
+      assert.equal(await heroIsAnimating(page), true,
+        'the hero canvas is dead after coming back');
+      assert.equal(await paletteOpens(page), true, '⌘K is dead after coming back');
     } finally { await page.close(); }
   });
 
@@ -239,8 +288,6 @@ describe('lifecycle: the page survives Back', () => {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       const destroyed = await page.evaluate(() => new Promise((resolve) => {
         let called = false;
-        /* Stand in for a disposable: a pagehide listener registered the same
-           way initLifecycleCleanup registers its own. */
         addEventListener('pagehide', (e) => { if (!e.persisted) called = true; });
         dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false }));
         setTimeout(() => resolve(called), 50);

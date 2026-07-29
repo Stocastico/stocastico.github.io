@@ -102,18 +102,72 @@ export async function launchBrowser(opts = {}) {
   } catch (err) {
     const exe = findChromium();
     if (!exe) throw err;
+    /* Say so. A silent substitution means local runs and CI runs are executing
+       different browsers, which is how a bfcache test passed here and failed
+       there — the fallback happened to supply a build with the feature the
+       pinned one lacks. */
+    console.warn(`[harness] pinned browser unavailable, falling back to ${exe}\n` +
+      '[harness] this is NOT the browser CI runs — run `npx playwright install chromium` to match');
     return chromium.launch({ ...opts, executablePath: exe });
   }
 }
 
-/* A browser with the back/forward cache switched on. Playwright disables it by
-   default, which is exactly the feature whose interaction with `pagehide`
-   shipped a broken page — so the lifecycle tests need it back. */
+/* A browser with the back/forward cache switched on.
+
+   Two things have to be right, and only one of them is the flags.
+
+   Playwright's default headless browser is `chrome-headless-shell`, the old
+   headless implementation, and it does not implement the back/forward cache at
+   all — no combination of feature flags will make it bfcache a page. So this
+   asks for `channel: 'chromium'`, the full browser, which does.
+
+   That distinction is invisible on a machine whose pinned Playwright browsers
+   are missing, because findChromium() below substitutes whatever full Chromium
+   is on disk and bfcache quietly starts working. It cost a green local run and
+   a red CI one: locally the fallback supplied a real Chromium, while CI
+   installed the pinned headless shell and the restore never happened.
+
+   The flags then widen bfcache eligibility, since same-site navigations are not
+   cached by default in all builds. */
+/* Enabling bfcache takes three separate things, and missing any one of them
+   produces the same silent "no restore" result:
+     1. a browser that implements it   — the `chromium` channel, not the
+        headless shell, which has no bfcache at all
+     2. Playwright's own disabling flags removed from the default command line
+     3. the feature switched on, with same-site navigations made eligible */
+export const BFCACHE_IGNORE = ['--disable-back-forward-cache', '--disable-features=BackForwardCache'];
+export const BFCACHE_ARGS = [
+  '--enable-features=BackForwardCache:same_site_by_default/true/skip_same_site_if_unload_exists/false',
+];
+
 export function launchBrowserWithBfcache() {
   return launchBrowser({
-    ignoreDefaultArgs: ['--disable-back-forward-cache', '--disable-features=BackForwardCache'],
-    args: ['--enable-features=BackForwardCache:same_site_by_default/true/skip_same_site_if_unload_exists/false'],
+    channel: 'chromium',
+    ignoreDefaultArgs: BFCACHE_IGNORE,
+    args: BFCACHE_ARGS,
   });
+}
+
+/* Did the browser we actually got support bfcache? Answered by observation
+   rather than by inspecting flags — a page is navigated away from and back,
+   and `pageshow.persisted` reports what really happened. */
+export async function bfcacheWorks(browser, url) {
+  const page = await browser.newPage();
+  try {
+    await page.addInitScript(() => {
+      window.__persisted = null;
+      addEventListener('pageshow', (e) => { window.__persisted = e.persisted; });
+    });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.goto(url + '?probe=1', { waitUntil: 'domcontentloaded' });
+    await page.goBack({ waitUntil: 'commit' }).catch(() => {});
+    await page.waitForTimeout(700);
+    return (await page.evaluate(() => window.__persisted)) === true;
+  } catch {
+    return false;
+  } finally {
+    await page.close();
+  }
 }
 
 /* ─── Page helpers ───────────────────────────────────────────────────────── */
