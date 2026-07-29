@@ -98,6 +98,21 @@ const DISTORTIONS = [
   { name: 'slant+tremor', fn: (s) => tremorPath(slantPath(s, 0.22), 0.04), steps: 2 },
 ];
 
+/* The environments a visitor is actually in. Everything above runs at
+   deviceScaleFactor 1 on a desktop viewport, which is the one configuration
+   nobody browses from: the canvas backing store is DRAW * dpr and the context
+   is scaled to match, so a retina screen puts the same logical stroke onto
+   twice the pixels before the downsample sees it. `_dpr` is clamped to 2, so 3
+   exercises the clamp as well. Mobile additionally halves the canvas's CSS
+   size, which changes the pointer-to-canvas mapping in _point(). */
+const DEVICES = [
+  { name: 'desktop dpr1', viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 },
+  { name: 'retina dpr2',  viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 },
+  { name: 'retina dpr3',  viewport: { width: 1440, height: 900 }, deviceScaleFactor: 3 },
+  { name: 'phone dpr2',   viewport: { width: 390,  height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
+  { name: 'phone dpr3',   viewport: { width: 390,  height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
+];
+
 /* ─── Measures ───────────────────────────────────────────────────────────── */
 
 const INK = 8;   /* same threshold mnist-preprocess uses for ink bounds */
@@ -206,10 +221,11 @@ function mnistSamples() {
 
 /* ─── Drawn: the real page, driven by a real pointer ─────────────────────── */
 
-async function drawnSamples(set = DIGITS, transform = (x) => x, steps = 12) {
+async function drawnSamples(set = DIGITS, transform = (x) => x, steps = 12, device = DEVICES[0]) {
   const server = await startServer();
   const browser = await launchBrowser();
-  const page = await newPage(browser, server, { viewport: { width: 1440, height: 900 } });
+  const { name, ...ctxOpts } = device;
+  const page = await newPage(browser, server, ctxOpts);
   const out = [];
   try {
     await page.goto(server.base + LAB, { waitUntil: 'networkidle' });
@@ -345,6 +361,17 @@ for (const d of euro) {
 }
 console.log(`  ${euro.length - euroWrong.length}/${euro.length} correct`);
 table('EUROPEAN forms (canvas, through the real preprocessing)', euro);
+
+console.log('\nDevice matrix (the environments people actually browse from)');
+console.log('  device            correct   misreads');
+for (const dev of DEVICES) {
+  const rows = (await drawnSamples(DIGITS, (x) => x, 12, dev)).map(shape);
+  const bad = rows.filter((r) => r.verdict.read !== String(r.digit));
+  const detail = bad.map((r) => `${r.digit}→${r.verdict.read}`).join(' ');
+  const strokes = rows.map((r) => r.m.stroke);
+  const meanStroke = (strokes.reduce((a, b) => a + b, 0) / strokes.length).toFixed(1);
+  console.log(`  ${dev.name.padEnd(16)}  ${String(rows.length - bad.length).padStart(2)}/${rows.length}     ${detail.padEnd(24)} stroke ${meanStroke}px`);
+}
 
 console.log('\nRobustness to what a hand actually does');
 console.log('  distortion        correct   misreads');
