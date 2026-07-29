@@ -100,6 +100,11 @@ export async function launchBrowser(opts = {}) {
   try {
     return await chromium.launch(opts);
   } catch (err) {
+    /* Never paper over an explicit channel. Substituting some other binary for
+       `channel: 'chromium'` yields a browser that silently lacks the feature
+       the channel was requested for — which is precisely how the bfcache test
+       came to pass locally and skip in CI. Let the caller see the failure. */
+    if (opts.channel) throw err;
     const exe = findChromium();
     if (!exe) throw err;
     /* Say so. A silent substitution means local runs and CI runs are executing

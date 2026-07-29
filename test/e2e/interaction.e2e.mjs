@@ -23,23 +23,39 @@ import {
   launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
 } from './harness.mjs';
 
-let server, browser, bfBrowser, bfcacheAvailable = false;
+let server, browser, bfBrowser, bfcacheAvailable = false, bfWhy = '';
 
 before(async () => {
   server = await startServer();
   browser = await launchBrowser();
-  /* The full chromium channel may not be installed. Fall back rather than
-     failing the whole file — but keep the bfcache flags on the fallback, since
-     a locally-substituted full Chromium can still do it and dropping them
-     would make the round trip skip on every machine but CI. The probe below
-     decides what is actually testable either way. */
-  try { bfBrowser = await launchBrowserWithBfcache(); }
-  catch {
+
+  /* Only one configuration actually produces a bfcache restore, measured:
+
+       default (headless shell)        no
+       headless shell + flags          no
+       channel:'chromium' alone        no
+       channel:'chromium' + flags      YES
+
+     So a launch failure on the channel is the whole story, and it used to be
+     swallowed twice over — once by launchBrowser's executable fallback and
+     again here — leaving a browser that simply cannot bfcache and a skip that
+     said only "this browser does not implement it". True, but not why.
+     Record the reason so one CI run identifies the cause instead of another
+     round of guessing. */
+  try {
+    bfBrowser = await launchBrowserWithBfcache();
+    bfWhy = `channel:'chromium' launched (v${bfBrowser.version()})`;
+  } catch (err) {
+    bfWhy = `channel:'chromium' failed to launch — ${String(err.message).split('\n')[0]}`;
     bfBrowser = await launchBrowser({ ignoreDefaultArgs: BFCACHE_IGNORE, args: BFCACHE_ARGS });
   }
+
   bfcacheAvailable = await bfcacheWorks(bfBrowser, server.base + '/index.html');
+  console.warn(`[e2e] bfcache ${bfcacheAvailable ? 'available' : 'UNAVAILABLE'} — ${bfWhy}`);
   if (!bfcacheAvailable) {
-    console.warn('[e2e] no bfcache in this browser — the real Back round trip will skip');
+    console.warn('[e2e] the real Back round trip will skip. Only channel:\'chromium\' plus the ' +
+      'BackForwardCache flags produces a restore; `npx playwright install chromium` provides ' +
+      'that build alongside the headless shell.');
   }
 });
 after(async () => {
@@ -247,8 +263,9 @@ describe('lifecycle: the page survives Back', () => {
 
   test('a real Back restores a working page', async (t) => {
     if (!bfcacheAvailable) {
-      t.skip('this browser does not implement the back/forward cache ' +
-        '(chrome-headless-shell has no bfcache; install the full chromium channel to cover this)');
+      t.skip(`no back/forward cache in this browser — ${bfWhy}. ` +
+        'Only channel:\'chromium\' with the BackForwardCache flags restores a page; ' +
+        'the headless shell cannot, whatever flags it is given.');
       return;
     }
     const page = await bfBrowser.newPage({ viewport: VIEWPORTS.desktop });

@@ -48,6 +48,12 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      # Which builds actually landed. The lifecycle test needs chromium-<rev>
+      # (the full browser) and skips without it; printing this means a skip can
+      # be diagnosed from the log instead of by guessing at the next commit.
+      - name: Show installed browsers
+        run: npx playwright install --dry-run chromium
+
       # The suite serves dist/, so it tests the artefact that actually ships
       # rather than the sources.
       - name: Build site
