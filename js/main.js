@@ -37,7 +37,13 @@
    project pages) and is off the critical path on the home page.
    Do NOT statically import three-context.js / globe.js / neural-net.js here —
    that pulls all of Three.js back into every page. Tests import the THREE
-   mock hook (__setThreeForTests) directly from ./three-context.js. */
+   mock hook (__setThreeForTests) directly from ./three-context.js.
+
+   europe-map.js follows the same rule for the same reason, even though it has
+   no Three.js in it: it was statically imported here, which put its chunk in
+   the eager graph of all 21 pages when exactly one has a #europe-canvas. Any
+   module that serves a single page belongs behind a dynamic import at its
+   init site, not up here. */
 
 /* ─── Data files ──────────────────────────────────────────
    PROJECTS / PUBLICATIONS / CV_* are imported by name; render
@@ -53,7 +59,6 @@ import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
 import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
 import { UNESCO as DEFAULT_UNESCO } from '../data/unesco.js';
 import { LINKS as DEFAULT_LINKS } from '../data/links.js';
-import './europe-map.js';
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
 import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, supportsCnnHero, CNN_HERO_QUERY } from './utils.js';
@@ -82,7 +87,6 @@ import {
   initCardTilt,
   initScroll3D,
   initSkillBars,
-  initTimelineScroll3D,
 } from './animations.js';
 
 /* UI behaviours: navbar, command palette, side dots, mobile menu, counters,
@@ -786,7 +790,6 @@ export {
   initTheme,
   initCardTilt,
   initSkillBars,
-  initTimelineScroll3D,
   initAnimatedFavicon,
   initScroll3D,
   initNavbar,
@@ -862,8 +865,7 @@ if (typeof document !== 'undefined') {
     _pushTeardown(initCardTilt());
   });
 
-  /* CV timeline and skill bars */
-  _pushTeardown(initTimelineScroll3D());
+  /* CV skill bars */
   _pushTeardown(initSkillBars());
 
   /* Animated favicon — starts after fonts load (async, non-blocking) */
@@ -1051,14 +1053,29 @@ if (typeof document !== 'undefined') {
     _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
-  /* 2D Europe Map — Canvas-based representation of European locations */
+  /* 2D Europe Map — Canvas-based representation of European locations.
+
+     Dynamically imported, like the globe above and for the same reason: a
+     static `import './europe-map.js'` put its chunk in the eager module graph
+     of *every* page, so all twenty pages without a #europe-canvas were
+     downloading, parsing and executing 10 KB for a map they do not have. Only
+     travel.html has the canvas, and only when it nears the viewport. */
   let europeCanvas = document.getElementById('europe-canvas');
   let europeInstance = null;
+  let europeBuildToken = 0;
   const buildEurope = () => {
-    europeInstance = new EuropeMap2D(europeCanvas);
-    _disposables.push(europeInstance);
+    const token = ++europeBuildToken;
+    return import('./europe-map.js').then(({ EuropeMap2D }) => {
+      /* A newer build superseded this one (a theme switch landed while the
+         import was in flight) — same guard the globe uses. */
+      if (token !== europeBuildToken) return;
+      europeInstance = new EuropeMap2D(europeCanvas);
+      _disposables.push(europeInstance);
+    }).catch((err) => {
+      if (typeof console !== 'undefined') console.warn('Europe map build skipped:', err);
+    });
   };
-  if (europeCanvas && typeof LOCATIONS !== 'undefined' && typeof EuropeMap2D !== 'undefined') {
+  if (europeCanvas && typeof LOCATIONS !== 'undefined') {
     _lazyOnViewport(europeCanvas, buildEurope);
   }
 

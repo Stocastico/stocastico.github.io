@@ -1400,6 +1400,12 @@ h3 {
 }
 
 .unesco-site {
+  /* inline-block + vertical padding, so the 15px text hits the 24×24 minimum
+     of WCAG 2.2 SC 2.5.8. The list is 109 stacked links and is the whole point
+     of the page, so a 21px-tall row was the worst offender on the site.
+     Padding counts toward target size, so the type size is untouched. */
+  display: inline-block;
+  padding: 0.2rem 0;
   color: var(--accent);
   text-decoration: none;
 }
@@ -2329,7 +2335,19 @@ h3 {
 }
 
 .footer-social a {
+  /* Padding rather than a larger type size: keeps the footer's visual weight
+     while clearing the 24px target minimum — see .unesco-site. */
+  display: inline-block;
+  padding: 0.2rem 0;
   font-weight: 500;
+}
+
+/* The "Claude" link in the footer credit line sits in running prose, so SC
+   2.5.8's inline exception applies — but it was the smallest target measured
+   anywhere (42×17), and it costs nothing to give it the same breathing room. */
+.site-footer p a {
+  display: inline-block;
+  padding: 0.15rem 0;
 }
 
 /* ─── 16. Scroll Reveal Animations ─────────────────────── */
@@ -2895,6 +2913,8 @@ h3 {
 
 .cv-back-link {
   display: inline-block;
+  /* Vertical padding to clear the 24px target minimum — see .unesco-site. */
+  padding: 0.25rem 0;
   font-size: 0.82rem;
   color: var(--accent);
   text-decoration: none;

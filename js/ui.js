@@ -679,7 +679,9 @@ export function initCommandPalette() {
 
   /* Global keyboard shortcut — ⌘K or Ctrl+K */
   bag.on(document, 'keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    /* Compare case-insensitively: with Shift or Caps Lock held, e.key is 'K'
+       and the shortcut silently did nothing. */
+    if ((e.metaKey || e.ctrlKey) && typeof e.key === 'string' && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       overlay.hidden ? open() : close();
     }
@@ -696,7 +698,11 @@ export function initTaglineReveal() {
   const tagline = document.querySelector('.hero-tagline');
   if (!tagline) return;
 
-  /* Split on the · separator, then further split each phrase into words */
+  /* Split on the · separator, then further split each phrase into words.
+     textContent *decodes* entities, and the words go back in through
+     innerHTML below — so they have to be re-escaped, or a tagline containing
+     "&" or "<" would round-trip into raw markup. Every other renderer on the
+     site escapes; this was the one that did not. */
   const text = tagline.textContent.trim();
   const parts = text.split('·');
   let delay = 120; /* ms — start after a brief pause */
@@ -706,7 +712,7 @@ export function initTaglineReveal() {
   parts.forEach((phrase, partIdx) => {
     const words = phrase.trim().split(/\s+/).filter(Boolean);
     words.forEach(word => {
-      spans.push(`<span class="tagline-word" style="animation-delay:${delay}ms">${word}</span>`);
+      spans.push(`<span class="tagline-word" style="animation-delay:${delay}ms">${escapeHtml(word)}</span>`);
       delay += STEP;
     });
     if (partIdx < parts.length - 1) {

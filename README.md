@@ -62,8 +62,8 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   ├── cnn-hero.js            CnnHero (Canvas2D LeNet-5 forward pass — desktop hero background)
 │   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
-│   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars, timeline entrance
-│   ├── europe-map.js          Interactive 2D Canvas map of Europe
+│   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars
+│   ├── europe-map.js          Interactive 2D Canvas map of Europe (lazy chunk — travel page only)
 │   └── theme.js               Generated — active palette (hex/int/glvec) + helpers (do not edit manually)
 ├── data/
 │   ├── cv.yaml / cv.js        CV source (YAML) → generated ESM (run generate-cv)
