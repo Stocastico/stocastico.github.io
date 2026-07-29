@@ -34,7 +34,7 @@ import {
   CanvasTexture,
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
-  AdditiveBlending, BackSide, DoubleSide,
+  AdditiveBlending, NormalBlending, BackSide, DoubleSide,
 } from 'three';
 
 const _THREE_NPM = {
@@ -48,7 +48,7 @@ const _THREE_NPM = {
   CanvasTexture,
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
-  AdditiveBlending, BackSide, DoubleSide,
+  AdditiveBlending, NormalBlending, BackSide, DoubleSide,
 };
 
 let _current = _THREE_NPM;

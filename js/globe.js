@@ -41,7 +41,7 @@ let WebGLRenderer, Scene, PerspectiveCamera,
   CanvasTexture,
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
-  AdditiveBlending, BackSide, DoubleSide;
+  AdditiveBlending, NormalBlending, BackSide, DoubleSide;
 
 onChange((t) => {
   ({
@@ -55,7 +55,7 @@ onChange((t) => {
     CanvasTexture,
     Vector2, Vector3, QuadraticBezierCurve3,
     Raycaster, Color,
-    AdditiveBlending, BackSide, DoubleSide,
+    AdditiveBlending, NormalBlending, BackSide, DoubleSide,
   } = t);
 });
 
@@ -639,12 +639,31 @@ export class Globe3D {
     ));
   }
 
+  /* Is the resolved palette a light one? Decided by measuring the background's
+     luminance rather than by reading data-theme, so a palette added later gets
+     the right answer without touching this code — the same test js/mnist-lab.js
+     uses to pick its ink shade. */
+  _isLightTheme() {
+    const n = parseInt(String(THEME.bg).replace('#', ''), 16);
+    if (!Number.isFinite(n)) return false;
+    const ch = (c) => { const s = c / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; };
+    const lum = 0.2126 * ch((n >> 16) & 255) + 0.7152 * ch((n >> 8) & 255) + 0.0722 * ch(n & 255);
+    return lum > 0.4;
+  }
+
   _buildGrid() {
-    /* Lat-lon grid with additive blending for glow */
+    /* Additive blending is what makes the graticule read as a glow on a dark
+       sphere — but additive means "add source to destination", so on a light
+       one every line comes out *lighter* than the surface under it and clips
+       toward white. The light palettes define perfectly good grid colours
+       (apricot light: grid #caa285, gridBright #a05a30) and additive threw all
+       of them away: #dcc1a6 land + 0.20·#caa285 = (255,225,193), i.e. a white
+       line on cream. Normal blending in light mode paints the authored colour. */
+    const glow = !this._isLightTheme();
     const mat = (op, bright) => new LineBasicMaterial({
       color: bright ? int(THEME.globe.gridBright) : int(THEME.globe.grid),
       transparent: true, opacity: op,
-      blending: AdditiveBlending, depthWrite: false,
+      blending: glow ? AdditiveBlending : NormalBlending, depthWrite: false,
     });
     const R = 1.002;
     for (let lat = -80; lat <= 80; lat += 20) {

@@ -233,6 +233,10 @@ export class MnistLab {
     this.dctx.clearRect(0, 0, DRAW, DRAW);
     this._dirty = false;
     this._hasResult = false;
+    /* Forget what was last announced, so redrawing the same digit after a
+       clear is announced again instead of being deduplicated into silence. */
+    this._lastSpoken = null;
+    this._lastSpokenP = null;
     this._stopAnimation();
     this._renderIdle();
     this._say('Canvas cleared.');

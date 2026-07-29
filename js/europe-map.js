@@ -124,8 +124,18 @@ export class EuropeMap2D {
     this._offsetX = Math.round((containerW - this.w) / 2);
     this._offsetY = Math.round((containerH - this.h) / 2);
 
-    this.canvas.width = containerW;
-    this.canvas.height = containerH;
+    /* All the geometry above is in CSS pixels and stays that way — only the
+       backing store is scaled, with _draw() applying the matching transform.
+       Without this the map was the one canvas on the site rendering at 1×
+       (globe 1.7, cnn-hero 1.75, mnist-lab 2.0), and its coastlines are
+       hairlines, which is precisely what a half-resolution buffer ruins.
+       Capped at 2: beyond that the fill cost climbs faster than anyone can
+       see the difference. */
+    this._cssW = containerW;
+    this._cssH = containerH;
+    this._dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 2);
+    this.canvas.width = Math.round(containerW * this._dpr);
+    this.canvas.height = Math.round(containerH * this._dpr);
 
     /* Don't cache the rect here — at construction the page may still be
        reflowing (web fonts / images above the map), and a layout shift that
@@ -216,9 +226,12 @@ export class EuropeMap2D {
       /* Cached rect (invalidated on scroll/resize) — avoids a forced layout
          on every mousemove while the cursor is over the map. */
       if (!this._rect) this._rect = this.canvas.getBoundingClientRect();
-      /* Scale from CSS pixels to canvas bitmap pixels */
-      const scaleX = this.canvas.width / this._rect.width;
-      const scaleY = this.canvas.height / this._rect.height;
+      /* Into the CSS-pixel space the pins are projected in — NOT the bitmap,
+         which is devicePixelRatio times larger. Scaling to the bitmap would
+         put the cursor at 2× the pins' coordinates on a retina screen and
+         nothing would ever hit. */
+      const scaleX = (this._cssW || this.canvas.width) / this._rect.width;
+      const scaleY = (this._cssH || this.canvas.height) / this._rect.height;
       this.mouse.x = (e.clientX - this._rect.left) * scaleX;
       this.mouse.y = (e.clientY - this._rect.top) * scaleY;
       /* Keep CSS-space coords for tooltip positioning */
@@ -369,9 +382,14 @@ export class EuropeMap2D {
       ? performance.now()
       : Date.now();
 
+    /* Everything below draws in CSS pixels; this is the only place the device
+       pixel ratio is applied. setTransform (not scale) so repeated frames
+       don't compound it. */
+    ctx.setTransform(this._dpr || 1, 0, 0, this._dpr || 1, 0, 0);
+
     /* Clear */
     ctx.fillStyle = THEME.mapBg;
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.fillRect(0, 0, this._cssW || this.canvas.width, this._cssH || this.canvas.height);
 
     /* Draw continental Europe with neon glow */
     this._drawEuropeBorders();
@@ -461,7 +479,9 @@ export class EuropeMap2D {
 
   async _loadTopoJSON() {
     try {
-      const topo = await fetch('./data/land-50m.json')
+      /* Root-relative for the same reason as getTopoJSON() in js/utils.js:
+         page-relative breaks the moment the map is embedded below the root. */
+      const topo = await fetch('/data/land-50m.json')
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
       const allRings = this._decodeTopoJSON(topo);
       /* Keep only rings that have at least one vertex inside Europe bounds */

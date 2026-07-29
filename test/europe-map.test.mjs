@@ -46,6 +46,11 @@ function createCanvasAndContext() {
     fillRect() {},
     strokeRect() {},
     setLineDash() {},
+    /* Recorded, not ignored: _draw() applies the device pixel ratio here and
+       nowhere else, so a mock that silently swallowed it would let the map go
+       back to rendering at 1× without a test noticing. */
+    setTransform(a, b, c, d, e, f) { this.transforms.push([a, b, c, d, e, f]); },
+    transforms: [],
     save() {},
     restore() {},
     clip() {},
@@ -295,5 +300,53 @@ test('EuropeMap2D: tooltip uses a fresh bounding rect after a post-construction 
     /* Fresh rect → cssY = 200 - 100 = 100. Stale (top:0) → 200. */
     assert.equal(map._cssMouseY, 100);
     assert.equal(map._cssMouseX, 100);
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Device pixel ratio.
+
+   The map used to set canvas.width straight from the container's CSS width, so
+   on any retina display it rendered at half resolution — the only canvas on the
+   site that did (globe caps at 1.7, cnn-hero at 1.75, mnist-lab at 2.0). Its
+   coastlines are one-pixel strokes, which is exactly the content a
+   half-resolution buffer destroys.
+
+   The fix scales only the backing store; every coordinate the class computes
+   stays in CSS pixels and _draw() applies the ratio once via setTransform. The
+   third assertion below is the one that matters most: if a later change ever
+   scales the geometry too, the cursor and the pins end up in different
+   coordinate spaces and no pin is ever hoverable on a retina screen.
+   ────────────────────────────────────────────────────────────────────────────*/
+test('EuropeMap2D: scales the backing store by devicePixelRatio, not the geometry', () => {
+  const { canvas, ctx } = createCanvasAndContext();
+  const tooltip = createTooltip();
+  const env = makeEnv({ pins: [] }, tooltip);
+  env.window = { addEventListener() {}, devicePixelRatio: 2 };
+
+  withGlobals(env, () => {
+    const map = new EuropeMap2D(canvas);
+
+    /* Backing store is 2×; the layout the map projects into is not. */
+    assert.equal(canvas.width, 900 * 2);
+    assert.equal(map._cssW, 900);
+    assert.equal(map._dpr, 2);
+
+    /* _draw() applied the ratio exactly once, as a set (not a compounding scale). */
+    assert.deepEqual(ctx.transforms.at(-1), [2, 0, 0, 2, 0, 0]);
+
+    /* Pins are projected in CSS pixels, so they must stay inside the CSS box —
+       not the 1800px-wide bitmap. */
+    const x = map._lonToX(0);
+    assert.ok(x >= 0 && x <= map._cssW, `projected x ${x} escaped the CSS box`);
+  });
+});
+
+test('EuropeMap2D: caps the pixel ratio at 2', () => {
+  const { canvas } = createCanvasAndContext();
+  const env = makeEnv({ pins: [] }, createTooltip());
+  env.window = { addEventListener() {}, devicePixelRatio: 4 };
+  withGlobals(env, () => {
+    assert.equal(new EuropeMap2D(canvas)._dpr, 2);
   });
 });

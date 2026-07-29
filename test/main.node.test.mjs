@@ -22,7 +22,6 @@ import {
   initTheme,
   initCardTilt,
   initSkillBars,
-  initTimelineScroll3D,
   initAnimatedFavicon,
   initScroll3D,
   initBackToTop,
@@ -1177,52 +1176,6 @@ test('initSkillBars adds animated class immediately when no bars exist', () => {
   };
   try {
     initSkillBars(); /* early return, no throw */
-  } finally {
-    global.document = prevDoc;
-  }
-});
-
-/* ─── initTimelineScroll3D tests ──────────────────────────── */
-
-test('initTimelineScroll3D sets initial opacity to 0 on entries', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevIO = global.IntersectionObserver;
-  const entry1 = { style: {}, querySelectorAll() { return []; } };
-  const entry2 = { style: {}, querySelectorAll() { return []; } };
-  const stage = {
-    querySelectorAll(sel) {
-      if (sel === '.tl-entry') return [entry1, entry2];
-      return [];
-    },
-  };
-  global.document = {
-    getElementById(id) { return id === 'timeline-stage' ? stage : null; },
-  };
-  global.window = {
-    matchMedia() { return { matches: false }; },
-  };
-  global.IntersectionObserver = class {
-    constructor(cb) { this.cb = cb; }
-    observe() {}
-    unobserve() {}
-  };
-  try {
-    initTimelineScroll3D();
-    assert.equal(entry1.style.opacity, '0');
-    assert.equal(entry2.style.opacity, '0');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.IntersectionObserver = prevIO;
-  }
-});
-
-test('initTimelineScroll3D does nothing when stage is missing', () => {
-  const prevDoc = global.document;
-  global.document = { getElementById() { return null; } };
-  try {
-    initTimelineScroll3D(); /* should not throw */
   } finally {
     global.document = prevDoc;
   }

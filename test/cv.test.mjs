@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Tests for renderCV, renderSkills, initSkillBars, initTimelineScroll3D,
+   Tests for renderCV, renderSkills, initSkillBars,
    and initAnimatedFavicon.
    TDD: these tests are written before (or alongside) the implementation.
    Run:  npm run test:cv
@@ -11,7 +11,6 @@ import {
   renderCV,
   renderSkills,
   initSkillBars,
-  initTimelineScroll3D,
   initAnimatedFavicon,
 } from '../js/main.js';
 
@@ -348,25 +347,6 @@ test('initSkillBars: returns without throwing when document is undefined', () =>
 test('initSkillBars: returns without throwing when no bars in DOM', () => {
   const { restore } = setupDom([]);
   assert.doesNotThrow(() => initSkillBars());
-  restore();
-});
-
-/* ── initTimelineScroll3D ────────────────────────────────────────────────── */
-
-test('initTimelineScroll3D: exported as a function', () => {
-  assert.strictEqual(typeof initTimelineScroll3D, 'function');
-});
-
-test('initTimelineScroll3D: returns without throwing when document is undefined', () => {
-  const prev = global.document;
-  global.document = undefined;
-  assert.doesNotThrow(() => initTimelineScroll3D());
-  global.document = prev;
-});
-
-test('initTimelineScroll3D: returns without throwing when timeline-stage absent', () => {
-  const { restore } = setupDom([]); // getElementById returns null for any id
-  assert.doesNotThrow(() => initTimelineScroll3D());
   restore();
 });
 

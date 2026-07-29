@@ -392,7 +392,7 @@ export const UNESCO = {
           "sites": [
             {
               "name": "The works of Jože Plečnik in Ljubljana – Human Centred Urban Design",
-              "url": "https://whc.unesco.org/en/list/1628"
+              "url": "https://whc.unesco.org/en/list/1643"
             }
           ]
         },

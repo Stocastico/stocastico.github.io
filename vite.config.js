@@ -30,9 +30,19 @@ function copyDocsPdfs() {
   };
 }
 
-/* Copy data/*.json into dist/data/ — globe.js fetches world-110m.json and
-   europe-map.js fetches land-50m.json at runtime via fetch(), so they are
-   not in the Rollup module graph and Vite won't include them automatically. */
+/* Copy the data JSON that is fetched at *runtime* into dist/data/ — globe.js
+   fetches world-110m.json and europe-map.js fetches land-50m.json via fetch(),
+   so they are not in the Rollup module graph and Vite won't include them.
+
+   An explicit allowlist, not `*.json`. Copying the whole directory published
+   356 KB that nothing ever requests: cnn-model.json (237 KB of float32
+   training weights — the browser gets the int8 data/lenet-weights.js instead),
+   countries-110m.json (108 KB, consumed by generate-world-map at build time
+   and emitted as inline SVG), cnn-samples.json (Rollup already bundles it, so
+   the copy was a second unreferenced one) and the {"type":"module"} stub.
+   Adding a runtime fetch means adding its file here. */
+const RUNTIME_DATA_JSON = ['world-110m.json', 'land-50m.json'];
+
 function copyDataJson() {
   return {
     name: 'copy-data-json',
@@ -41,10 +51,8 @@ function copyDataJson() {
       const srcDir = resolve(__dirname, 'data');
       const outDir = resolve(__dirname, 'dist', 'data');
       mkdirSync(outDir, { recursive: true });
-      for (const f of readdirSync(srcDir)) {
-        if (f.toLowerCase().endsWith('.json')) {
-          copyFileSync(resolve(srcDir, f), resolve(outDir, f));
-        }
+      for (const f of RUNTIME_DATA_JSON) {
+        copyFileSync(resolve(srcDir, f), resolve(outDir, f));
       }
     },
   };
