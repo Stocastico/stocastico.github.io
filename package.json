@@ -58,7 +58,12 @@
     "generate-og": "node scripts/generate-og.mjs",
     "set-domain": "node scripts/set-domain.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1",
-    "test:contrast": "node --test test/contrast.test.mjs"
+    "test:contrast": "node --test test/contrast.test.mjs",
+    "test:e2e": "npm run build && node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs",
+    "test:e2e:content": "npm run build && node --test test/e2e/content.e2e.mjs",
+    "test:e2e:pages": "npm run build && node --test test/e2e/pages.e2e.mjs",
+    "test:e2e:interaction": "npm run build && node --test test/e2e/interaction.e2e.mjs",
+    "test:e2e:mnist": "npm run build && node --test test/e2e/mnist.e2e.mjs"
   },
   "engines": {
     "node": ">=18"

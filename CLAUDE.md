@@ -20,7 +20,9 @@ npm run dev                 # Vite dev server (HMR, serves source unbundled)
 npm run build               # Vite build → dist/
 npm run preview             # Preview the dist/ build locally
 
-npm test                    # Run all tests (Node built-in runner)
+npm test                    # Fast suite: unit + static + contrast (~3s, no browser)
+npm run test:e2e            # Browser suite: builds dist/, then drives real Chromium (~2-4 min)
+npm run test:contrast       # Palette legibility (WCAG AA + OKLab surface steps)
 npm run test:main           # js/main.js tests only
 npm run test:cv             # CV rendering tests only
 npm run test:project        # new-project.js tests only
@@ -116,6 +118,16 @@ public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt
 - YAML source files → JS ESM data files via generator scripts
 - Self-hosted fonts (no Google Fonts CDN). **Two faces, three roles** — the mono leads. **JetBrains Mono** is both `--font-display` (hero name, section titles, `.link-card-name`, the CNN hero's verdict digit) and `--font-mono` (metadata: eyebrows, tags, years, domains, stat labels, keyboard hints, CNN captions) *and* UI chrome (nav links, `.btn`, `.social-btn`, `.link-chip`). The two variables hold the same stack deliberately — they answer different questions, so a future display face swaps at one line. **Source Serif 4** is `--font-prose`: paragraphs, card descriptions, and `.project-card__title` (full-sentence titles that a monospace would blow out — length decides, not rank). Prose never gets the mono. Note `--font-sans` was **renamed to `--font-prose`**; a variable named `-sans` holding a serif is a lie that rots
 - `prefers-reduced-motion` is respected everywhere — all animations degrade gracefully
+
+## Testing layers
+
+See `docs/TESTING.md` for the full rationale. In short:
+
+- **`npm test`** — ~780 assertions: pure functions, generator round-trips, drift checks on generated artefacts, static analysis over source, and DOM-stubbed behaviour. Fast, and **structurally blind to anything that needs a rendered page**.
+- **`test/contrast.test.mjs`** — measures every palette (dark *and* light) rather than trusting the eye. Text pairs against WCAG 2.1 AA; surface pairs against an **OKLab lightness step**, because a contrast ratio cannot express one threshold that is meaningful in both light and dark mode. Imports `SURFACE_ALPHA` from `scripts/generate-theme.js` so the two can't drift.
+- **`test/e2e/`** — real Chromium against the built `dist/`. This layer exists because four shipped bugs were all invisible to the layer above: content stuck at `opacity: 0`, a page torn down on a bfcache freeze, and a map drawn in its background colour. Covers the reveal invariant (nothing on screen may be invisible — after scrolling, after landing on an anchor, after clicking each nav link, at three widths), no-JS and reduced-motion paths, horizontal overflow, console errors, 404s, theme + palette switching, the bfcache round trip, and the MNIST lab. The page list is read from `dist/`, so a new page is covered automatically.
+
+**Which layer does a new test belong in?** If the question can be answered by reading a file, it goes in `npm test`. If answering it requires knowing where something landed on screen, what colour it painted, or what the browser did to the page, only `test/e2e/` will do. CI runs `npm test` on build + deploy, and the browser suite on every push/PR *and* as a deploy gate (`.github/workflows/e2e.yml`).
 
 ## Workflow Rules
 

@@ -1,0 +1,52 @@
+name: E2E
+
+# Browser-based tests, kept in their own workflow because they need a real
+# Chromium and take a couple of minutes — `npm test` stays fast enough to run
+# on every save locally.
+#
+# This exists because the fast suite cannot, in principle, catch the class of
+# bug that reached visitors: content stuck at opacity 0, a page that came back
+# dead from the back/forward cache, a map drawn in the same colour as its
+# background. Each needed layout, compositing or the browser's own lifecycle to
+# be observable at all. Static analysis and DOM stubs were green throughout.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Only Chromium — the suite asserts behaviour (does the reveal fire, does
+      # bfcache restore work), not cross-browser rendering.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # The suite serves dist/, so it tests the artefact that actually ships
+      # rather than the sources.
+      - name: Build site
+        run: npm run build
+
+      - name: Run browser tests
+        run: node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs
