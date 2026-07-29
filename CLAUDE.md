@@ -105,6 +105,8 @@ scripts/lib/lenet.mjs  Training-side LeNet-5 (init + backward + float32 serialis
 test/               Tests for each script + main.js + europe-map.js + SEO + Playwright E2E
 docs/               DATA-FORMATS.md, DEPLOYMENT.md, project-template.md, cv.pdf, defense.pdf
 drafts/             Markdown source for projects/*.html — feed into `npm run new-project`. Not deployed.
+tools/capture-digits.js  Browser console snippet — collects real handwriting from the MNIST lab into a JSON dump. Paste into devtools on projects/mnist-lenet.html; 0-9 labels the digit just drawn, `d` downloads. Feeds test/fixtures/real-digits.json. Not deployed, not bundled.
+test/fixtures/real-digits.json  45 real digits, HELD OUT — the only set that ever disagreed with MNIST test accuracy. Never train on these.
 public/             Vite copies these straight to dist/ (sitemap.xml, robots.txt).
 ```
 
