@@ -5,6 +5,10 @@
 #
 # Required:
 #   id:          kebab-case identifier, becomes the HTML filename
+#   kind:        work | personal. 'work' is professional or research work and
+#                is what the homepage shows; 'personal' is a side project — it
+#                gets a badge on its card and never appears on the homepage.
+#                No default: leaving it out fails the script.
 #   title:       Project title (quoted string)
 #   year:        Project year (quoted string)
 #   tags:        Comma-separated keywords, 1–3 (quoted string)
@@ -19,6 +23,7 @@
 #   link_video:  "https://youtube.com/..."
 
 id:          my-project-slug
+kind:        work
 title:       "My Project Title"
 year:        "2024"
 tags:        "AI, Computer Vision"

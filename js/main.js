@@ -60,7 +60,7 @@ import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, su
 
 /* Card / list-item markup — shared with the static generator
    (scripts/generate-cards.mjs) so SSR and client markup never drift. */
-import { projectCardHtml, publicationsListLines } from './render-cards.js';
+import { projectCardHtml, publicationsListLines, homepageProjects } from './render-cards.js';
 
 /* Theme colours — single source of truth (data/palettes.yaml → js/theme.js).
    Only the favicon renderer below reads THEME/rgba now; the noise shader
@@ -205,11 +205,6 @@ function renderProjects(projects = DEFAULT_PROJECTS) {
   var grid = document.getElementById('projects-grid');
   if (!grid) return;
 
-  if (!projects.length) {
-    grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
-    return;
-  }
-
   // On projects.html (listing page) the grid opts in via data-render="all"
   // and shows every project. Elsewhere (homepage) we pick a random subset.
   var showAll = grid.getAttribute && grid.getAttribute('data-render') === 'all';
@@ -217,12 +212,24 @@ function renderProjects(projects = DEFAULT_PROJECTS) {
   if (showAll) {
     shown = projects;
   } else {
-    var pool = projects.slice();
+    /* Professional work only, filtered BEFORE the shuffle — otherwise a
+       personal project can (and did) take one of the three front-page slots.
+       generate-cards bakes the static homepage set through the same
+       homepageProjects() call, so this re-shuffle can't disagree with the HTML
+       a no-JS visitor or a crawler was served. */
+    var pool = homepageProjects(projects);
     for (var i = pool.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
     }
     shown = pool.slice(0, PROJECTS_MAX_HOMEPAGE);
+  }
+
+  /* Checked after filtering, not before: a homepage whose every entry is
+     personal has nothing to show and needs the empty state, same as no data. */
+  if (!shown.length) {
+    grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
+    return;
   }
   grid.innerHTML = shown.map(renderProjectCard).join('');
 
@@ -771,6 +778,7 @@ export {
   renderPublications,
   renderProjects,
   renderProjectCard,
+  homepageProjects,
   PROJECTS_MAX_HOMEPAGE,
   renderCV,
   renderSkills,

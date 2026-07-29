@@ -19,6 +19,8 @@
  * Markdown frontmatter (required fields):
  *   ---
  *   id:          my-project              # kebab-case, used as filename
+ *   kind:        work                    # work | personal — 'personal' is
+ *                                        # badged and kept off the homepage
  *   title:       "My Project Title"
  *   year:        "2024"
  *   tags:        "AI, CV, Unity"         # comma-separated
@@ -75,6 +77,8 @@ Options:
 
 Frontmatter fields (YAML between --- delimiters):
   id           (required)  kebab-case identifier, becomes filename
+  kind         (required)  work | personal — personal projects get a card
+                           badge and never appear on the homepage
   title        (required)  Project title
   year         (required)  Project year
   tags         (required)  Comma-separated tag keywords
@@ -123,12 +127,26 @@ function parseFrontmatter(text) {
   return result;
 }
 
+/* Mirrors PROJECT_KINDS in js/render-cards.js. Duplicated rather than imported
+   because this script is CJS and that module is ESM; test/generate-cards.test.mjs
+   asserts the two lists stay identical, so the copy cannot drift. */
+const PROJECT_KINDS = ['work', 'personal'];
+
 function validateProjectFrontmatter(fm, filePath) {
-  const required = ['id', 'title', 'year', 'tags', 'bg', 'description'];
+  const required = ['id', 'kind', 'title', 'year', 'tags', 'bg', 'description'];
   for (const field of required) {
     if (fm[field] === undefined || fm[field] === '') {
       throw new Error(`Missing required frontmatter field "${field}" in ${filePath}`);
     }
+  }
+  /* Caught here rather than defaulted: a typo'd kind that quietly became
+     'work' would put a side project on the front page, which is the whole
+     reason the field exists. */
+  if (!PROJECT_KINDS.includes(String(fm.kind))) {
+    throw new Error(
+      `Invalid frontmatter field "kind" in ${filePath}: got ${JSON.stringify(String(fm.kind))}, ` +
+      `expected one of ${PROJECT_KINDS.map((k) => `'${k}'`).join(' | ')}`,
+    );
   }
 }
 
@@ -538,6 +556,7 @@ function updateProjectsJs(projectsJsPath, entry, src) {
   const lines = [
     '{',
     `        id: ${JSON.stringify(entry.id)},`,
+    `        kind: ${JSON.stringify(entry.kind)},`,
     `        title: ${JSON.stringify(entry.title)},`,
     `        year: ${JSON.stringify(entry.year)},`,
     `        tags: ${tagsStr},`,
@@ -586,6 +605,7 @@ function main() {
 
   const projectEntry = {
     id: String(fm.id),
+    kind: String(fm.kind),
     title: String(fm.title),
     year: String(fm.year),
     tags: tags,
@@ -629,6 +649,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  PROJECT_KINDS,
   splitFrontmatter,
   parseFrontmatter,
   validateProjectFrontmatter,
