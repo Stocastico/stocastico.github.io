@@ -59,6 +59,29 @@ const CSS_LIGHT_END   = '/* @theme-generated-light-end */';
 const CSS_ALT_START = '/* @theme-generated-alt-start';
 const CSS_ALT_END   = '/* @theme-generated-alt-end */';
 
+/* Alpha of every translucent surface, as a fraction of `text` over `bg`.
+   These are palette-independent on purpose: a surface is an *elevation* step,
+   and the step should read the same whichever palette is active.
+
+   They were 0.04 / 0.07 / 0.08, which over a near-black background produced
+   contrast ratios of 1.07, 1.13 and 1.16 against the page — that is, none.
+   Cards had no visible edge, and the world map's land silhouette (which used
+   the hover token) disappeared entirely on a dimmed screen, leaving only the
+   highlighted countries floating on black. `mapLand` is now its own token
+   rather than borrowing `bg-card-hov`, so the map can be tuned without
+   dragging every card with it.
+
+   test/contrast.test.mjs asserts the resulting ratios for every palette in
+   both variants — change these and the thresholds there decide whether the
+   change is acceptable. */
+const SURFACE_ALPHA = {
+  card:        0.12,
+  cardHover:   0.17,
+  border:      0.20,
+  borderHover: 0.45,   /* accent-tinted, already well clear of the background */
+  mapLand:     0.20,
+};
+
 /* Every flat #rrggbb key a palette must define. */
 const REQUIRED_KEYS = [
   'name',
@@ -278,10 +301,11 @@ function cssVarLines(p, indent) {
     `${I}--bg-rgb: ${ch(p.bg)};`,
     `${I}--bg-alt: ${ok(p.bgAlt)};`,
     `${I}--bg-alt-rgb: ${ch(p.bgAlt)};`,
-    `${I}--bg-card: rgb(${ch(p.text)} / 0.04);`,
-    `${I}--bg-card-hov: rgb(${ch(p.text)} / 0.07);`,
-    `${I}--border: rgb(${ch(p.text)} / 0.08);`,
-    `${I}--border-hov: rgb(${ch(p.accent)} / 0.45);`,
+    `${I}--bg-card: rgb(${ch(p.text)} / ${SURFACE_ALPHA.card});`,
+    `${I}--bg-card-hov: rgb(${ch(p.text)} / ${SURFACE_ALPHA.cardHover});`,
+    `${I}--border: rgb(${ch(p.text)} / ${SURFACE_ALPHA.border});`,
+    `${I}--border-hov: rgb(${ch(p.accent)} / ${SURFACE_ALPHA.borderHover});`,
+    `${I}--map-land: rgb(${ch(p.text)} / ${SURFACE_ALPHA.mapLand});`,
     ``,
     `${I}--accent: ${ok(p.accent)};`,
     `${I}--accent-rgb: ${ch(p.accent)};`,
@@ -716,6 +740,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  SURFACE_ALPHA,
   parseArgs, validate, validatePaletteBody,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
   cssVarLines, generateCssBlock, generateCssLightBlock, generateThemeJs, themeObjectBody,

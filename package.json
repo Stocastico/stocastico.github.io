@@ -1,13 +1,13 @@
 {
   "name": "stocastico-github-io",
   "version": "1.0.0",
-  "description": "Personal website of Stefano Masneri — AI Engineer",
+  "description": "Personal website of Stefano Masneri \u2014 AI Engineer",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test test/main.node.test.mjs test/europe-map.test.mjs test/locations-generator.test.js test/new-project.test.js test/cv.test.mjs test/generate-cv.test.js test/generate-theme.test.js test/rotate-palette.test.js test/generate-countries.test.js test/generate-world-map.test.js test/generate-unesco.test.js test/generate-links.test.js test/generate-cards.test.mjs test/seo.test.js test/sitemap.test.mjs test/project-jsonld.test.mjs test/html-quality.test.mjs test/css-assets.test.mjs test/theme-sync.test.js test/cname.test.js test/analytics.test.mjs test/csp.test.mjs test/generate-theme-toggle.test.mjs test/init-theme.test.mjs test/cnn-activations.test.mjs test/lenet-weights.test.mjs test/mnist-preprocess.test.mjs",
+    "test": "node --test test/main.node.test.mjs test/europe-map.test.mjs test/locations-generator.test.js test/new-project.test.js test/cv.test.mjs test/generate-cv.test.js test/generate-theme.test.js test/rotate-palette.test.js test/generate-countries.test.js test/generate-world-map.test.js test/generate-unesco.test.js test/generate-links.test.js test/generate-cards.test.mjs test/seo.test.js test/sitemap.test.mjs test/project-jsonld.test.mjs test/html-quality.test.mjs test/css-assets.test.mjs test/theme-sync.test.js test/cname.test.js test/analytics.test.mjs test/csp.test.mjs test/contrast.test.mjs test/generate-theme-toggle.test.mjs test/init-theme.test.mjs test/cnn-activations.test.mjs test/lenet-weights.test.mjs test/mnist-preprocess.test.mjs",
     "test:theme-sync": "node --test test/theme-sync.test.js",
     "test:generate-theme-toggle": "node --test test/generate-theme-toggle.test.mjs",
     "test:init-theme": "node --test test/init-theme.test.mjs",
@@ -57,7 +57,8 @@
     "generate-favicons": "node scripts/generate-favicons.mjs",
     "generate-og": "node scripts/generate-og.mjs",
     "set-domain": "node scripts/set-domain.mjs",
-    "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1"
+    "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1",
+    "test:contrast": "node --test test/contrast.test.mjs"
   },
   "engines": {
     "node": ">=18"
