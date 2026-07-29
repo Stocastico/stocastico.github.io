@@ -5,6 +5,7 @@
    Each entry shape:
    {
      id:          'my-project',               // kebab-case, used as HTML anchor
+     kind:        'work',                     // REQUIRED — 'work' | 'personal'
      title:       'My Project Title',         // short title (one line)
      year:        '2024',                     // project year (string)
      tags:        ['AI', 'CV'],               // 1–3 keyword badges
@@ -13,13 +14,19 @@
      url:         'projects.html#my-project', // link to detail section
    }
 
+   `kind` has no default on purpose. 'work' is professional or research work;
+   'personal' is a side project, which gets a badge on its card and is kept off
+   the homepage entirely. Omitting the field fails `npm run generate-cards`
+   rather than silently defaulting — see js/render-cards.js.
+
    The newest project should appear first.
-   The homepage shows up to 3 projects; the rest appear only on projects.html.
+   The homepage shows up to 3 'work' projects; projects.html shows everything.
    ============================================================ */
 
 export const PROJECTS = [
     {
             id: "mnist-lenet",
+            kind: "personal",
             title: "Draw a digit, watch a LeNet-5 read it",
             year: "2026",
             tags: ["Deep Learning","Interactive","JavaScript"],
@@ -29,6 +36,7 @@ export const PROJECTS = [
         },
     {
             id: "gaussian-nerf",
+            kind: "work",
             title: "3D reconstruction using Gaussian Splatting and NeRF",
             year: "2025",
             tags: ["AI","Computer Vision"],
@@ -38,6 +46,7 @@ export const PROJECTS = [
         },
     {
             id: "brand-stadium",
+            kind: "work",
             title: "Brand recognition in football matches",
             year: "2025",
             tags: ["AI","Computer Vision"],
@@ -47,6 +56,7 @@ export const PROJECTS = [
         },
     {
             id: "aroundtheworld",
+            kind: "work",
             title: "ARoundTheWorld: Collaborative AR for Education",
             year: "2024",
             tags: ["AR","Education","User Study"],
@@ -56,6 +66,7 @@ export const PROJECTS = [
         },
     {
             id: "clear-architecture",
+            kind: "work",
             title: "cleAR: Interoperable Architecture for Multi-User AR",
             year: "2023",
             tags: ["AR","Education","Architecture"],
@@ -65,6 +76,7 @@ export const PROJECTS = [
         },
     {
             id: "rag-document-qa",
+            kind: "work",
             title: "RAG Document Assistant for Financial Services",
             year: "2023",
             tags: ["RAG","LLM","NLP"],
@@ -74,6 +86,7 @@ export const PROJECTS = [
         },
     {
             id: "mlops-vertex-media",
+            kind: "work",
             title: "MLOps Platform on GCP for a Spanish Media Group",
             year: "2022 – 2023",
             tags: ["MLOps","Vertex AI","GCP"],
@@ -83,6 +96,7 @@ export const PROJECTS = [
         },
     {
             id: "traction",
+            kind: "work",
             title: "TRACTION: Opera Co-creation for Social Transformation",
             year: "2020 – 2022",
             tags: ["Web Application","Co-creation","Social Inclusion"],
@@ -92,6 +106,7 @@ export const PROJECTS = [
         },
     {
             id: "audience-engagement",
+            kind: "work",
             title: "Multi-modal Audience Engagement Measurement System",
             year: "2020",
             tags: ["Computer Vision","Multi-modal Sensing","Live Events"],
@@ -101,6 +116,7 @@ export const PROJECTS = [
         },
     {
             id: "ufc-fighter-tracking",
+            kind: "work",
             title: "UFC Fighter Tracking: Multi-Modal Sensing in the Octagon",
             year: "2017",
             tags: ["Computer Vision","Sensor Fusion","Sports Analytics"],
@@ -110,6 +126,7 @@ export const PROJECTS = [
         },
     {
             id: "mpi-brain-research",
+            kind: "work",
             title: "MPI for Brain Research: Software for Reptilian Neuroscience",
             year: "2015 – 2017",
             tags: ["Scientific Computing","Neuroscience","Data Analysis"],
@@ -119,6 +136,7 @@ export const PROJECTS = [
         },
     {
             id: "inevent",
+            kind: "work",
             title: "inEvent: Structuring and Linking Multimedia Archives of Lectures and Meetings",
             year: "2011 – 2014",
             tags: ["Computer Vision","Video Analysis","Multimedia"],
@@ -128,6 +146,7 @@ export const PROJECTS = [
         },
     {
             id: "avatech",
+            kind: "work",
             title: "AVATecH: Automated Annotation of Audio/Video Corpora for Humanities Research",
             year: "2009 – 2014",
             tags: ["Computer Vision","Audio Analysis","Digital Humanities"],

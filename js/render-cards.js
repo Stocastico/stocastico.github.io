@@ -7,11 +7,56 @@
    cleanly in Node. */
 import { escapeHtml } from './utils.js';
 
+/* ─── Project kind ─────────────────────────────────────────────
+   Every entry in data/projects.js declares a `kind`:
+
+     'work'     — professional or research work (Vicomtech, Fraunhofer, MPI,
+                  the PhD). This is what the homepage advertises.
+     'personal' — built for its own sake, on my own time.
+
+   The field is REQUIRED and deliberately has no default. A default would make
+   a forgotten `kind` invisible: the entry would silently become 'work' and
+   reappear on the front page, which is the exact failure this distinction
+   exists to prevent. assertProjectKinds() turns that into a loud build error
+   instead — see its note on why the browser doesn't get the same treatment. */
+export const PROJECT_KINDS = ['work', 'personal'];
+
+/* The set the homepage is allowed to draw from. Matching 'work' positively
+   (rather than excluding 'personal') makes the failure mode safe in the
+   browser, where throwing would blank the section: an entry with a missing or
+   misspelt kind drops off the homepage rather than sneaking onto it. The build
+   catches that case loudly before it can ship. */
+export function homepageProjects(projects) {
+  return (projects || []).filter((p) => p && p.kind === 'work');
+}
+
+/* Build-time validation. Throws on the first bad entry — callers are the
+   generators (scripts/generate-cards.mjs), never the browser. */
+export function assertProjectKinds(projects) {
+  for (const p of projects || []) {
+    if (!PROJECT_KINDS.includes(p && p.kind)) {
+      throw new Error(
+        `data/projects.js: entry "${(p && p.id) || '?'}" has kind ${JSON.stringify(p && p.kind)}; ` +
+        `expected one of ${PROJECT_KINDS.map((k) => `'${k}'`).join(' | ')}. ` +
+        'The field is required — see js/render-cards.js.',
+      );
+    }
+  }
+  return projects;
+}
+
 /* One project card. `i` only drives the staggered reveal delay. */
 export function projectCardHtml(project, i = 0) {
   const tagsHtml = (project.tags || [])
     .map((t) => '<span class="project-tag">' + escapeHtml(t) + '</span>')
     .join('');
+  /* Only personal projects are badged. Work is what the portfolio is for, so
+     marking all thirteen would be thirteen labels saying nothing; marking the
+     exception is what carries information. The badge sits on the year's mono
+     metadata line and reads out as part of the link text. */
+  const kindHtml = project.kind === 'personal'
+    ? '<span class="project-card__kind">Personal project</span>'
+    : '';
   /* `project.bg` is deliberately NOT used here. It stays the hero image of the
      project's own detail page (and its og:image), but as a card background it
      was never legible: faint enough not to fight the body copy meant faint
@@ -20,7 +65,10 @@ export function projectCardHtml(project, i = 0) {
      listing pages stop fetching a few hundred KB of imagery nobody could see. */
   return '<a href="' + escapeHtml(project.url || '#') + '" class="project-card" data-animate data-delay="' + (i * 80) + '">' +
     '<div class="project-card__body">' +
-      '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
+      '<div class="project-card__meta">' +
+        '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
+        kindHtml +
+      '</div>' +
       '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +
       '<div class="project-card__tags">' + tagsHtml + '</div>' +
       '<p class="project-card__desc">' + escapeHtml(project.description || '') + '</p>' +

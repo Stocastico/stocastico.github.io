@@ -72,6 +72,7 @@ test('project: parseFrontmatter ignores comment lines', () => {
 test('project: validateProjectFrontmatter passes with all required fields', () => {
   const fm = {
     id: 'my-project',
+    kind: 'work',
     title: 'My Project',
     year: '2024',
     tags: 'AR, CV',
@@ -82,18 +83,41 @@ test('project: validateProjectFrontmatter passes with all required fields', () =
 });
 
 test('project: validateProjectFrontmatter throws on missing id', () => {
-  const fm = { title: 'X', year: '2024', tags: 'A', bg: 'x.jpg', description: 'D' };
+  const fm = { kind: 'work', title: 'X', year: '2024', tags: 'A', bg: 'x.jpg', description: 'D' };
   assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /id/);
 });
 
 test('project: validateProjectFrontmatter throws on missing bg', () => {
-  const fm = { id: 'x', title: 'X', year: '2024', tags: 'A', description: 'D' };
+  const fm = { id: 'x', kind: 'work', title: 'X', year: '2024', tags: 'A', description: 'D' };
   assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /bg/);
 });
 
 test('project: validateProjectFrontmatter throws on missing description', () => {
-  const fm = { id: 'x', title: 'X', year: '2024', tags: 'A', bg: 'x.jpg' };
+  const fm = { id: 'x', kind: 'work', title: 'X', year: '2024', tags: 'A', bg: 'x.jpg' };
   assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /description/);
+});
+
+/* `kind` decides whether a project can reach the homepage, so a drafter who
+   forgets it must be stopped rather than defaulted. These two pin that: a
+   missing field and a plausible-but-wrong value both throw. */
+test('project: validateProjectFrontmatter throws on missing kind', () => {
+  const fm = { id: 'x', title: 'X', year: '2024', tags: 'A', bg: 'x.jpg', description: 'D' };
+  assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /kind/);
+});
+
+test('project: validateProjectFrontmatter throws on an unknown kind', () => {
+  const fm = { id: 'x', kind: 'side', title: 'X', year: '2024', tags: 'A', bg: 'x.jpg', description: 'D' };
+  assert.throws(() => validateProjectFrontmatter(fm, 'test.md'), /kind/);
+});
+
+test('project: updateProjectsJs writes the kind into the new entry', () => {
+  const src = 'const PROJECTS = [];\n';
+  const entry = {
+    id: 'weekend-thing', kind: 'personal', title: 'Weekend Thing', year: '2026',
+    tags: ['JS'], bg: 'img/projects/w.jpg', description: 'D', url: 'projects/weekend-thing.html',
+  };
+  const result = updateProjectsJs('data/projects.js', entry, src);
+  assert.match(result, /kind: "personal"/);
 });
 
 // ─── slugify ──────────────────────────────────────────────────────────────────
@@ -393,6 +417,7 @@ test('project: updateProjectsJs accepts ES module export form', () => {
 test('project: end-to-end: parse markdown and generate a standalone HTML page', () => {
   const md = `---
 id: e2e-test
+kind: work
 title: "End-to-End Test Project"
 year: "2024"
 tags: "AI, Testing"

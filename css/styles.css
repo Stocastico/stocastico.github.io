@@ -1985,6 +1985,16 @@ h3 {
   gap: 0.5rem;
 }
 
+/* The card's mono metadata line: year, plus the personal-project badge when
+   there is one. A row rather than two stacked spans so the badge reads as a
+   qualifier on the year, not as a second heading. */
+.project-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
 .project-card__year {
   font-family: var(--font-mono);
   font-size: 0.74rem;
@@ -1992,6 +2002,24 @@ h3 {
   color: var(--accent);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
+}
+
+/* Deliberately NOT accent-tinted like .project-tag: the tags say what a
+   project is about, and this says who it was for. Giving it the accent fill
+   would put it in the tag row's visual family and it would be read as another
+   topic. Outlined and muted instead — present, subordinate, unmistakably not
+   a tag. */
+.project-card__kind {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  padding: 0.15em 0.55em;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .project-card__title {

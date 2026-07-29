@@ -28,6 +28,7 @@ import {
   initBackToTop,
   NoiseGradient,
   renderProjects,
+  homepageProjects,
   PROJECTS_MAX_HOMEPAGE,
   initCommandPalette,
 } from '../js/main.js';
@@ -1959,6 +1960,7 @@ test('renderProjects injects project cards with title, year, and tags', () => {
   try {
     renderProjects([{
       id: 'test-project',
+      kind: 'work',
       title: 'Test Project',
       year: '2024',
       tags: ['AI', 'CV'],
@@ -1992,6 +1994,7 @@ test('renderProjects never puts the project bg image on the card', () => {
   try {
     renderProjects([{
       id: 'with-bg',
+      kind: 'work',
       title: 'Project With BG',
       year: '2024',
       tags: ['AR'],
@@ -2033,6 +2036,7 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   for (let i = 0; i < PROJECTS_MAX_HOMEPAGE + 2; i++) {
     many.push({
       id: `project-${i}`,
+      kind: 'work',
       title: `Project ${i}`,
       year: '2024',
       tags: ['Tag'],
@@ -2052,6 +2056,88 @@ test('renderProjects limits homepage to PROJECTS_MAX_HOMEPAGE projects', () => {
   } finally {
     global.document = prevDocument;
   }
+});
+
+/* ── homepage kind filter ─────────────────────────────────────────────────
+   generate-cards bakes the static homepage set; this is the client re-shuffle
+   that replaces it on load. Both must apply the same filter or a no-JS
+   visitor and a JS visitor see different portfolios — so both are tested. */
+
+function homepageGrid() {
+  const grid = { innerHTML: '', parentNode: { children: [], appendChild() {} } };
+  global.document = {
+    getElementById: (id) => (id === 'projects-grid' ? grid : null),
+    createElement: () => ({ className: '', setAttribute() {}, innerHTML: '' }),
+  };
+  return grid;
+}
+
+test('renderProjects keeps personal projects off the homepage, however the shuffle falls', () => {
+  const prevDocument = global.document;
+  /* One work project among many personal ones: with an unfiltered shuffle the
+     odds of drawing three work cards are nil, so a single run would already
+     fail — but run it repeatedly so the result cannot be luck. */
+  const projects = [{ id: 'w', kind: 'work', title: 'The Work One', year: '2026', tags: [], description: 'D', url: 'projects/w.html' }];
+  for (let i = 0; i < 8; i++) {
+    projects.push({ id: `p-${i}`, kind: 'personal', title: `Personal ${i}`, year: '2026', tags: [], description: 'D', url: `projects/p-${i}.html` });
+  }
+  try {
+    for (let run = 0; run < 40; run++) {
+      const grid = homepageGrid();
+      renderProjects(projects);
+      assert.match(grid.innerHTML, /The Work One/);
+      assert.doesNotMatch(grid.innerHTML, /Personal \d/, `run ${run} leaked a personal project`);
+    }
+  } finally {
+    global.document = prevDocument;
+  }
+});
+
+test('renderProjects shows the empty state when every project is personal', () => {
+  const prevDocument = global.document;
+  try {
+    const grid = homepageGrid();
+    renderProjects([{ id: 'p', kind: 'personal', title: 'Personal', year: '2026', tags: [], description: 'D', url: 'projects/p.html' }]);
+    assert.match(grid.innerHTML, /Coming soon/);
+  } finally {
+    global.document = prevDocument;
+  }
+});
+
+test('renderProjects still lists personal projects on projects.html (data-render="all")', () => {
+  const prevDocument = global.document;
+  const grid = {
+    innerHTML: '', parentNode: { children: [], appendChild() {} },
+    getAttribute: (a) => (a === 'data-render' ? 'all' : null),
+  };
+  global.document = {
+    getElementById: (id) => (id === 'projects-grid' ? grid : null),
+    createElement: () => ({ className: '', setAttribute() {}, innerHTML: '' }),
+  };
+  try {
+    renderProjects([
+      { id: 'w', kind: 'work', title: 'Work One', year: '2026', tags: [], description: 'D', url: 'projects/w.html' },
+      { id: 'p', kind: 'personal', title: 'Personal One', year: '2026', tags: [], description: 'D', url: 'projects/p.html' },
+    ]);
+    assert.match(grid.innerHTML, /Work One/);
+    assert.match(grid.innerHTML, /Personal One/);
+    /* …and the personal one is the only card carrying the badge. */
+    assert.equal((grid.innerHTML.match(/project-card__kind/g) || []).length, 1);
+  } finally {
+    global.document = prevDocument;
+  }
+});
+
+test('homepageProjects excludes an entry whose kind is missing or misspelt', () => {
+  /* Fail-safe direction: in the browser a bad kind must drop the entry off the
+     homepage, never sneak it on. The build catches the entry separately. */
+  const out = homepageProjects([
+    { id: 'ok', kind: 'work' },
+    { id: 'missing' },
+    { id: 'typo', kind: 'Work' },
+    { id: 'personal', kind: 'personal' },
+  ]);
+  assert.deepEqual(out.map((p) => p.id), ['ok']);
 });
 
 test('renderProjects skips if container element not found', () => {

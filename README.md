@@ -10,7 +10,7 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
   - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and, on desktop, a real LeNet-5 classifying MNIST digits (Canvas2D, no Three.js, no ML runtime; narrow/touch viewports get a particle field instead).
   - **About** — short bio and key stats.
   - **Skills (Expertise)** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
-  - **Projects** — up to three project cards from `data/projects.js`, plus a link to the full listing.
+  - **Projects** — up to three project cards from `data/projects.js` (professional work only — `kind: 'work'`), plus a link to the full listing.
   - **Publications** — list of selected papers, generated from `data/publications.js`.
   - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
@@ -67,7 +67,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   └── theme.js               Generated — active palette (hex/int/glvec) + helpers (do not edit manually)
 ├── data/
 │   ├── cv.yaml / cv.js        CV source (YAML) → generated ESM (run generate-cv)
-│   ├── projects.js            PROJECTS array — edit directly or via new-project
+│   ├── projects.js            PROJECTS array (each entry needs kind: work|personal) — edit directly or via new-project
 │   ├── publications.js        PUBLICATIONS array — edit to add/update papers
 │   ├── locations.yaml / .js   Globe pins/trips/regions source → generated ESM (run generate-locations)
 │   ├── countries.yaml / .js   Homepage-map lived/visited highlights → generated ESM (run generate-countries)
@@ -303,7 +303,7 @@ After rotating, run `npm run generate-theme` then `npm run generate-favicons` to
 
 ### `generate-cards` — server-render project + publication cards
 
-Reads `data/projects.js` and `data/publications.js` and bakes static project cards / publication items between `<!-- generated:project-cards -->` / `<!-- generated:publication-items -->` markers in `index.html`, `projects.html` and `publications.html`, plus a `CollectionPage` JSON-LD on `publications.html`. Markup comes from the shared builders in `js/render-cards.js`, so server-rendered and client-rendered markup can't drift. Run after editing either data file; the `generate-cards` test fails on drift in CI.
+Reads `data/projects.js` and `data/publications.js` and bakes static project cards / publication items between `<!-- generated:project-cards -->` / `<!-- generated:publication-items -->` markers in `index.html`, `projects.html` and `publications.html`, plus a `CollectionPage` JSON-LD on `publications.html`. Markup comes from the shared builders in `js/render-cards.js`, so server-rendered and client-rendered markup can't drift — as does `homepageProjects()`, the `kind: 'work'` filter the homepage set is drawn through, for the same reason. Entries with no valid `kind` fail the generator rather than defaulting. Run after editing either data file; the `generate-cards` test fails on drift in CI.
 
 ```bash
 npm run generate-cards
@@ -445,7 +445,7 @@ Quick summary:
 - **`data/unesco.yaml`** — travel-page UNESCO accordion (continent → country → site, https-only links). Edit then run `npm run generate-unesco`.
 - **`data/links.yaml`** — blogroll entries (name, https-only url, optional description, categories, tags). Edit then run `npm run generate-links`.
 - **`data/palettes.yaml`** — named colour palettes (Forest & Brass, Mocha & Apricot, Crimson & Rust) plus an `active` key. Edit then run `npm run generate-theme`.
-- **`data/projects.js`** — project card entries. Edit directly, or use `npm run new-project` to generate from Markdown.
+- **`data/projects.js`** — project card entries. Every entry declares a required `kind` (`'work'` | `'personal'`): personal projects get a badge on their card and are kept off the homepage. Edit directly, or use `npm run new-project` to generate from Markdown.
 
 ---
 
@@ -479,7 +479,7 @@ Quick summary:
 
    This will:
    - Create `projects/<id>.html` from the template (with OG/Twitter tags, canonical, theme-color and the PWA manifest link already included)
-   - Register the entry in `data/projects.js` so the card appears on the homepage (up to 4) and on `projects.html`
+   - Register the entry in `data/projects.js` so the card appears on `projects.html` — and, when `kind: work`, on the homepage (up to 3)
 
 3. Refresh the per-page generators so the new page carries a CSP meta tag and the analytics pixel (the `seo` / `html-quality` / `analytics` tests gate this in CI):
 

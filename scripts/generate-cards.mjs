@@ -21,7 +21,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { projectCardHtml, publicationsListLines } from '../js/render-cards.js';
+import {
+  projectCardHtml, publicationsListLines, homepageProjects, assertProjectKinds,
+} from '../js/render-cards.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
 
@@ -83,8 +85,12 @@ function publicationsJsonLd() {
 /* file → { markerName: () => string[] } */
 const TARGETS = {
   'index.html': {
+    /* Professional work only, and filtered BEFORE the cap — the homepage is a
+       shop window. renderProjects() in js/main.js re-shuffles this same set on
+       load; if only one of the two filtered, a no-JS visitor and a JS visitor
+       would see different portfolios. Both call homepageProjects(). */
     'generated:project-cards': () =>
-      PROJECTS.slice(0, HOMEPAGE_PROJECTS).map((p, i) => projectCardHtml(p, i)),
+      homepageProjects(PROJECTS).slice(0, HOMEPAGE_PROJECTS).map((p, i) => projectCardHtml(p, i)),
     'generated:publication-items': () =>
       publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
   },
@@ -101,6 +107,7 @@ const TARGETS = {
 /* Apply every target's blocks to a fresh read of its file; returns the new
    HTML keyed by file (does not write). Pure — safe to call from tests. */
 function renderAll() {
+  assertProjectKinds(PROJECTS);
   const out = {};
   for (const [rel, blocks] of Object.entries(TARGETS)) {
     let html = fs.readFileSync(path.join(ROOT, rel), 'utf8');
