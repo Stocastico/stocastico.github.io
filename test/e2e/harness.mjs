@@ -120,17 +120,22 @@ export function launchBrowserWithBfcache() {
 
 /* Cut the page off from the network. The only external request the site makes
    is the GoatCounter analytics pixel, and in a sandbox or on CI that request
-   does not fail fast — it hangs until it times out, which `networkidle` dutifully
-   waits for. That alone turned a sub-second page load into fifteen seconds.
-   Aborting it also makes the suite hermetic: no test outcome can depend on a
-   third party being reachable. */
+   does not fail fast — it hangs until it times out, which `networkidle`
+   dutifully waits for. That alone turned a sub-second page load into fifteen
+   seconds. Stubbing it also makes the suite hermetic: no test outcome can
+   depend on a third party being reachable. */
 export async function blockExternalRequests(page, origin) {
   await page.route('**/*', (route) => {
     const url = route.request().url();
     if (url.startsWith(origin) || url.startsWith('data:') || url.startsWith('blob:')) {
       return route.continue();
     }
-    return route.abort();
+    /* Fulfil rather than abort. An aborted request logs
+       "Failed to load resource: net::ERR_FAILED" to the console, which the
+       console-error test would then have to special-case — filtering out a
+       symptom the suite itself created, and widening that filter enough to
+       hide a real ERR_FAILED along with it. A 204 is silent. */
+    return route.fulfill({ status: 204, body: '' });
   });
 }
 
@@ -171,11 +176,12 @@ export function allPages(root = DIST) {
    Returns a live array plus a filter for the noise we cannot control. */
 export function collectPageErrors(page) {
   const errors = [];
+  /* Deliberately short. Every entry here is a place the suite has agreed not
+     to look, so each one needs a reason that is about the site rather than
+     about the test environment — network noise is stubbed at the router
+     instead (see blockExternalRequests), not filtered here. */
   const IGNORE = [
-    /frame-ancestors.*ignored when delivered via a <meta> element/i,  /* by design; CSP meta */
-    /ERR_CONNECTION_REFUSED|ERR_CONNECTION_RESET|ERR_NAME_NOT_RESOLVED/i, /* offline analytics pixel */
-    /goatcounter/i,
-    /Failed to load resource.*40[34]/i,
+    /frame-ancestors.*ignored when delivered via a <meta> element/i,  /* by design; CSP is a <meta> */
   ];
   const keep = (text) => !IGNORE.some((re) => re.test(text));
   page.on('console', (msg) => {
