@@ -143,6 +143,19 @@ export async function launchBrowser(opts = {}) {
 export const BFCACHE_IGNORE = ['--disable-back-forward-cache', '--disable-features=BackForwardCache'];
 export const BFCACHE_ARGS = [
   '--enable-features=BackForwardCache:same_site_by_default/true/skip_same_site_if_unload_exists/false',
+  /* Chromium gates the bfcache on available memory and declines it on machines
+     it judges too small. That is why CI logged "channel:'chromium' launched"
+     and still got no restore: the browser was right, the runner simply has less
+     headroom than a laptop — more so with two browsers running concurrently.
+     Disabling the memory controls removes the gate.
+
+     Caveat worth knowing: this is a second --disable-features on the command
+     line, and Chromium honours the last occurrence of a repeated switch, so it
+     supersedes Playwright's own list of ~14 stability features. That is
+     tolerable only because this browser is built for exactly one test — the
+     Back round trip — and never serves the rest of the suite. Do not reuse it
+     as a general-purpose browser without merging the two lists. */
+  '--disable-features=BackForwardCacheMemoryControls',
 ];
 
 export function launchBrowserWithBfcache() {
