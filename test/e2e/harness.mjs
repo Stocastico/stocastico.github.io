@@ -207,14 +207,23 @@ export async function scrollThrough(page) {
    `[data-animate]` fades in over a CSS transition, so sampling opacity too
    early catches elements mid-fade and reports them as hidden. Poll until
    nothing is in between, rather than guessing a sleep long enough. */
-export async function settleReveal(page, timeoutMs = 4000) {
+export async function settleReveal(page, timeoutMs = 5000) {
+  /* Wait for exactly the invariant the tests assert: everything at or above
+     the fold is painted. An earlier version waited for "nothing mid-fade",
+     which returns immediately for an element still at opacity 0 — that state
+     is indistinguishable from "stuck" by opacity alone, so the helper let
+     tests sample a reveal that was still in flight.
+
+     On timeout this resolves anyway: the assertion that follows names the
+     elements that never made it, which is far more useful than a timeout. */
   await page.waitForFunction(() => {
-    const els = [...document.querySelectorAll('[data-animate]')];
-    return !els.some((el) => {
-      const o = parseFloat(getComputedStyle(el).opacity);
-      return o > 0.01 && o < 0.9;      /* mid-transition */
+    const h = window.innerHeight;
+    return [...document.querySelectorAll('[data-animate]')].every((el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= h) return true;    /* below the fold, legitimately unrevealed */
+      return parseFloat(getComputedStyle(el).opacity) >= 0.9;
     });
-  }, null, { timeout: timeoutMs }).catch(() => { /* report the real state instead */ });
+  }, null, { timeout: timeoutMs }).catch(() => { /* let the assertion report it */ });
 }
 
 /* Resolve any CSS colour — including oklch(), which is what getComputedStyle
