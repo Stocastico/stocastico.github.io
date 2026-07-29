@@ -52,6 +52,25 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # The browser suite gates the deploy too. It is the only layer that can
+      # see a rendered page, and every bug that reached a visitor so far was
+      # invisible to the suite above: content left at opacity 0, a page torn
+      # down on a bfcache freeze, a map the same colour as its background.
+      # Both builds on purpose. `chromium` is the headless shell Playwright
+      # uses by default; `chromium --channel=chromium` is the full browser, and
+      # only that one implements the back/forward cache — the headless shell
+      # cannot run the lifecycle test at all and would skip it every time.
+      - name: Install Chromium
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --channel=chromium
+
+      - name: Build for the browser tests
+        run: npm run build
+
+      - name: Run browser tests
+        run: node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs
+
       # Regenerate sitemap.xml so <lastmod> reflects the latest commit dates.
       # The test suite already asserts the on-disk sitemap is correct; this
       # just refreshes lastmod for any pages touched in this push.

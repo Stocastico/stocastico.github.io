@@ -7,6 +7,7 @@ const test   = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  SURFACE_ALPHA,
   parseArgs, validate,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
   generateCssBlock, generateCssLightBlock, generateThemeJs,
@@ -163,8 +164,12 @@ test('generateCssBlock: emits markers, oklch vars, channel lists and pin vars', 
   /* Glow tokens stay hex8 (used directly in box-shadows). */
   assert.match(css, /--accent-glow: #c8a44d55;/);
   /* card / border surfaces are derived from the text channels */
-  assert.match(css, /--bg-card: rgb\(232 238 229 \/ 0\.04\);/);
-  assert.match(css, /--border-hov: rgb\(200 164 77 \/ 0\.45\);/);
+  /* Alphas come from SURFACE_ALPHA in the generator rather than being repeated
+     here — the values themselves are audited by test/contrast.test.mjs, and a
+     literal copy would only mean two places to edit. */
+  assert.match(css, new RegExp(`--bg-card: rgb\\(232 238 229 / ${SURFACE_ALPHA.card}\\);`));
+  assert.match(css, new RegExp(`--map-land: rgb\\(232 238 229 / ${SURFACE_ALPHA.mapLand}\\);`));
+  assert.match(css, new RegExp(`--border-hov: rgb\\(200 164 77 / ${SURFACE_ALPHA.borderHover}\\);`));
 });
 
 // ─── generateCssLightBlock ───────────────────────────────────────────────────

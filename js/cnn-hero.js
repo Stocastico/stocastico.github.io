@@ -651,7 +651,14 @@ export class CnnHero {
     if (document.hidden || !this._visible) { this.frameId = null; return; }
     this.frameId = requestAnimationFrame(() => this._animate());
     const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
-    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
+    /* Throttle to ~30 fps, but compare against a slack budget rather than the
+       exact frame time. On a 60 Hz display two vsyncs land at 33.33 ms, which
+       is the 1/30 threshold *exactly*: a few microseconds of scheduling jitter
+       decide whether a frame draws or is skipped to the next one at 50 ms. The
+       result was a loop that alternated 33 ms and 50 ms at random — visible as
+       a constant stutter, not as the smooth 30 fps intended. Three quarters of
+       the budget clears two vsyncs comfortably and still rejects one. */
+    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime * 0.75) return;
     this._lastDrawTime = now;
     this._pulse = now * 3;
     this._draw(this._phase(now));
