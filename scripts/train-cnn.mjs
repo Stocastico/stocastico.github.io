@@ -28,6 +28,7 @@ import {
   createModel, createState, createGrads, createBackState, zeroGrads,
   forward, backward, argmax, serializeModel, deserializeModel, PARAM_KEYS, rng,
 } from './lib/lenet.mjs';
+import { augment, DEFAULT_AUG } from './lib/augment.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -47,6 +48,9 @@ const flag = (name, fallback) => {
 const DRY_RUN = args.includes('--dry-run');
 const PICK_ONLY = args.includes('--pick-only');
 const EPOCHS = flag('epochs', 8);
+/* Augmentation is on by default — the whole point of this revision. --no-augment
+   reproduces the previous model for comparison. */
+const AUGMENT = !args.includes('--no-augment');
 const N_TRAIN = flag('train', 60000);
 const SEED = flag('seed', 1337);
 const LR0 = flag('lr', 0.05);
@@ -147,12 +151,39 @@ async function pickOnly() {
   process.stdout.write('  wrote data/cnn-samples.json\n');
 }
 
+/* The held-out real digits — 45 samples captured from the live widget, the only
+   set that ever disagreed with MNIST test accuracy. Reported every epoch and
+   never trained on: MNIST validation says 98.5% while a visitor sees 60%, so a
+   run that only watches `val` is watching the wrong number. */
+let REAL = null;
+function evaluateReal(model, state) {
+  if (REAL === null) {
+    const f = path.join(ROOT, 'test', 'fixtures', 'real-digits.json');
+    REAL = fs.existsSync(f)
+      ? JSON.parse(fs.readFileSync(f, 'utf8')).samples.map((s) => ({
+          meant: s.meant, px: Uint8Array.from(Buffer.from(s.pixels, 'base64')),
+        }))
+      : [];
+  }
+  if (!REAL.length) return { ok: 0, n: 0, pct: '  n/a' };
+  let ok = 0;
+  for (const s of REAL) {
+    forward(model, s.px, state);
+    if (argmax(state.probs) === s.meant) ok++;
+  }
+  return { ok, n: REAL.length, pct: ((ok / REAL.length) * 100).toFixed(1) };
+}
+
 async function main() {
   process.stdout.write('LeNet-5 / MNIST — plain-JS trainer\n');
   if (PICK_ONLY) return pickOnly();
   const train = await loadSplit(FILES.trainImages, FILES.trainLabels);
   const test = await loadSplit(FILES.testImages, FILES.testLabels);
   process.stdout.write(`  train ${train.count} · test ${test.count}\n`);
+  process.stdout.write(AUGMENT
+    ? `  augmentation ON — break ${DEFAULT_AUG.breakP} affine ${DEFAULT_AUG.affineP} ` +
+      `elastic ${DEFAULT_AUG.elasticP} thickness ${DEFAULT_AUG.thickP}\n`
+    : '  augmentation OFF\n');
 
   const nTrain = Math.min(N_TRAIN, train.count);
   const model = createModel(SEED);
@@ -184,7 +215,8 @@ async function main() {
       zeroGrads(grads);
       for (let k = 0; k < size; k++) {
         const i = order[b + k];
-        forward(model, train.pixels.subarray(i * 784, i * 784 + 784), state);
+        const src = train.pixels.subarray(i * 784, i * 784 + 784);
+        forward(model, AUGMENT ? augment(src, rand) : src, state);
         loss += backward(model, state, grads, back, train.labels[i]);
       }
       const scale = lr / size;
@@ -203,9 +235,11 @@ async function main() {
       }
     }
     const acc = evaluate(model, test, 2000);
+    const real = evaluateReal(model, state);
     process.stdout.write(
       `  epoch ${epoch + 1}/${EPOCHS} done · loss ${(loss / seen).toFixed(4)} · ` +
-      `val ${(acc * 100).toFixed(2)}% · ${((Date.now() - t0) / 1000).toFixed(0)}s\n`);
+      `val ${(acc * 100).toFixed(2)}% · real ${real.pct}% (${real.ok}/${real.n}) · ` +
+      `${((Date.now() - t0) / 1000).toFixed(0)}s\n`);
   }
 
   const accuracy = evaluate(model, test);
@@ -216,6 +250,7 @@ async function main() {
     dataset: 'MNIST',
     trainedOn: nTrain,
     epochs: EPOCHS,
+    augment: AUGMENT ? DEFAULT_AUG : null,
     seed: SEED,
     lr: LR0,
     lrDecay: DECAY,
