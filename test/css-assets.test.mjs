@@ -116,3 +116,63 @@ test('css: button interactive-state selectors are present', () => {
   const missing = selectors.filter(s => !css.includes(s));
   assert.deepEqual(missing, [], `Missing button state selectors:\n  ${missing.join('\n  ')}`);
 });
+
+/* ─── The reveal must not be re-broken from the CSS side ─────
+   `[data-animate]` is invisible until JS adds `.visible`, which makes two CSS
+   decisions load-bearing rather than cosmetic. Both were wrong at once, and
+   between them they left whole sections rendering as empty bands. */
+
+test('css: no content-visibility on sections holding [data-animate] content', () => {
+  /* Comments stripped first — the note explaining why this property was
+     removed names both the property and the sections, and would match. */
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  /* A skipped content-visibility subtree is not rendered, and
+     IntersectionObserver cannot see into one — so the reveal never fired for
+     anything inside #projects / #publications / #contact, and at 390px the
+     entire contact section stayed at opacity 0 permanently. */
+  const rules = css.match(/[^}]*content-visibility\s*:\s*auto[^}]*}/g) || [];
+  const offenders = rules.filter(r => /#projects|#publications|#contact/.test(r));
+  assert.equal(offenders.length, 0,
+    'content-visibility: auto on an animated section hides its content forever:\n' + offenders.join('\n'));
+});
+
+test('css: the [data-animate] hidden state is gated on scripting being enabled', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+
+  /* Only JS ever adds `.visible`. An unhidden `opacity: 0` therefore blanks
+     the page for anyone whose JS is off or whose module failed to load —
+     including the server-rendered cards that exist precisely for them. */
+  const hidingRules = [
+    /\[data-animate\]\s*{[^}]*opacity:\s*0/,
+    /\.research-card\[data-animate\]:not\(\.visible\)\s*{[^}]*opacity:\s*0/,
+  ];
+
+  /* Collect the @media (scripting: enabled) blocks and check each hiding rule
+     lives inside one. Brace-matched rather than regexed, since these blocks
+     nest. */
+  const guarded = [];
+  const marker = '@media (scripting: enabled)';
+  let from = 0;
+  for (;;) {
+    const start = css.indexOf(marker, from);
+    if (start === -1) break;
+    let i = css.indexOf('{', start);
+    let depth = 0;
+    let end = i;
+    for (; end < css.length; end++) {
+      if (css[end] === '{') depth++;
+      else if (css[end] === '}' && --depth === 0) break;
+    }
+    guarded.push(css.slice(i, end));
+    from = end;
+  }
+  assert.ok(guarded.length, 'expected at least one @media (scripting: enabled) block');
+
+  for (const rule of hidingRules) {
+    assert.ok(
+      guarded.some(block => rule.test(block)),
+      `a rule matching ${rule} must sit inside @media (scripting: enabled) — ` +
+      'otherwise a no-JS visitor gets a blank page');
+  }
+});

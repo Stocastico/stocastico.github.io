@@ -399,10 +399,15 @@
 @layer base {
 
 /* ─── 1b. Entrance for research cards ───────────────────── */
-/* Cards slide in from the right when they enter the viewport. */
-.research-card[data-animate]:not(.visible) {
-  opacity: 0;
-  transform: translateX(40px);
+/* Cards slide in from the right when they enter the viewport. Every
+   publication item carries .research-card, so this is the rule that hides the
+   whole of publications.html until JS reveals it — gated on `scripting` for
+   the same reason as the generic [data-animate] rule in section 16. */
+@media (scripting: enabled) {
+  .research-card[data-animate]:not(.visible) {
+    opacity: 0;
+    transform: translateX(40px);
+  }
 }
 
 .research-card[data-animate].visible {
@@ -2290,16 +2295,38 @@ h3 {
 }
 
 /* ─── 16. Scroll Reveal Animations ─────────────────────── */
-[data-animate] {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity var(--t-slow) var(--ease),
-    transform var(--t-slow) var(--ease);
+
+/* The hidden state is deliberately scoped to `scripting: enabled`. Only JS
+   ever adds `.visible`, so an unconditional `opacity: 0` here means a visitor
+   with JS off — or with the module blocked by an extension, a proxy, or a
+   failed fetch — gets a page whose text is all present in the DOM and none of
+   it painted. The cards are server-rendered precisely so that visitor sees
+   real content; hiding them in CSS would throw that away.
+
+   Browsers without the `scripting` media feature simply never hide the
+   content, which is the correct way to fail. */
+@media (scripting: enabled) {
+  [data-animate] {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity var(--t-slow) var(--ease),
+      transform var(--t-slow) var(--ease);
+  }
 }
 
 [data-animate].visible {
   opacity: 1;
   transform: none;
+}
+
+/* Reduced motion still reveals — it just skips the travel. initScrollReveal
+   shows everything up front in that case, so this only guards the interval
+   before the script runs. */
+@media (prefers-reduced-motion: reduce) {
+  [data-animate] {
+    transition: opacity var(--t-fast) var(--ease);
+    transform: none;
+  }
 }
 
 /* ─── 16c. Curriculum Vitae — unified timeline ────────────── */
@@ -2841,24 +2868,27 @@ h3 {
   color: var(--accent2);
 }
 
-/* ─── 17. Performance: content-visibility ───────────────────
-   Skips layout, style, and paint for off-screen sections —
-   up to 7× faster initial render on content-heavy pages.
+/* ─── 17. Performance: content-visibility — REMOVED ─────────
+   #projects, #publications and #contact used to carry
+   `content-visibility: auto` to skip off-screen layout/paint.
+   It was silently hiding content instead.
 
-   contain-intrinsic-block-size: auto <N>
-     The 'auto' keyword (Chrome 108+, Baseline 2025) remembers
-     the last measured height, eliminating scroll-bar jumps on
-     repeat visits.  The fallback (650 px) applies until the
-     section has been rendered at least once.
+   A skipped subtree is not rendered, and IntersectionObserver
+   cannot see into one — so the `[data-animate]` elements inside
+   never reported as intersecting, the reveal in
+   js/animations.js never ran, and because `[data-animate]`
+   starts at `opacity: 0` they stayed invisible permanently.
+   Measured at 390×844: scrolling to the bottom of the homepage
+   left all six animated elements in #contact — the header, the
+   lead paragraph and all four cards — at opacity 0, so the
+   section rendered as an empty band. Landing on #publications
+   or #contact from a nav link did the same to that section.
+
+   The reveal is now defensive enough to survive a missed
+   observer callback (see initScrollReveal), but this property
+   is what created the miss, and on a page this size it was
+   buying a few milliseconds. Correctness wins; it stays out.
 ──────────────────────────────────────────────────────────── */
-#research,
-#publications,
-#skills,
-#projects,
-#contact {
-  content-visibility: auto;
-  contain-intrinsic-block-size: auto 650px;
-}
 
 /* ─── Typographic system ─────────────────────────────────────
    Two faces, three roles. The split is by *kind of content*, not by size:

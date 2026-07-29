@@ -149,7 +149,10 @@ export class NeuralNetwork2D {
     if (document.hidden || !this._visible) { this.frameId = null; return; }
     this.frameId = requestAnimationFrame(() => this._animate());
     const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.001;
-    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime) return;
+    /* Slack budget, not the exact frame time — see the same guard in
+       js/cnn-hero.js: on a 60 Hz display 1/30 is precisely two vsyncs, so an
+       exact comparison lets jitter alternate 33 ms and 50 ms frames. */
+    if (this._lastDrawTime && (now - this._lastDrawTime) < this._minFrameTime * 0.75) return;
     this._lastDrawTime = now;
     this._draw();
     this._signalReady();

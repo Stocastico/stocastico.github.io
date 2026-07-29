@@ -698,14 +698,30 @@ export function renderLinks(container, data) {
 }
 
 /* Run destroy() on every disposable when the page is being torn down.
-   Wired to `pagehide` because it is the most reliable signal for both
-   classic unloads and bfcache evictions. visibilitychange would be too
-   aggressive — it fires on tab switches, where we want the canvases
-   to resume rather than disappear. */
+   Wired to `pagehide` because it is the most reliable signal for a real
+   unload. visibilitychange would be too aggressive — it fires on tab
+   switches, where we want the canvases to resume rather than disappear.
+
+   `event.persisted` is the part that matters, and skipping the check was a
+   bug. When the browser puts the page into the back/forward cache it fires
+   `pagehide` with persisted = true, and the document is then frozen *intact*:
+   Back restores it as it stood, with no reload, no DOMContentLoaded and no
+   re-init. Tearing down on that event meant Back returned a page whose hero
+   canvas, navbar, ⌘K palette, mobile menu, back-to-top and scroll reveal had
+   all been destroyed with nothing left to rebuild them — "open a link, come
+   back, and it doesn't work any more". Chrome has done this for same-site
+   navigations since 96, Safari far longer.
+
+   A frozen page is not a leak. Its rAF loops are paused by the browser and
+   resume on restore, its listeners are exactly what makes the restore work,
+   and if the entry is evicted instead of restored the whole document is
+   discarded wholesale. So on a persisted pagehide the correct action is
+   nothing at all. */
 export function initLifecycleCleanup(disposables) {
   if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
   let disposed = false;
-  const cleanup = () => {
+  const cleanup = (event) => {
+    if (event && event.persisted) return;
     if (disposed) return;
     disposed = true;
     for (const d of disposables) {

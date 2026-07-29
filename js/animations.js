@@ -9,23 +9,112 @@ import { prefersReducedMotion, rafThrottle } from './utils.js';
 /* ═══════════════════════════════════════════════════════════
    SCROLL-TRIGGERED REVEAL
    ═══════════════════════════════════════════════════════════ */
+/* `[data-animate]` starts at opacity 0, so this function is not decoration —
+   it is the only thing that ever makes that content visible. Anything it fails
+   to reveal stays invisible forever, silently, with the markup present and the
+   section rendering as an empty band. That failure mode is why the whole thing
+   is built defensively:
+
+     · An element already scrolled past when the observer starts (a deep link,
+       a nav anchor jump, a browser-restored scroll position) is never
+       *entering* the viewport, so no IntersectionObserver callback is ever
+       coming for it. The initial state has to be swept, not waited on.
+     · `threshold: 0.1` cannot be met by an element taller than the viewport
+       once the negative rootMargin shrinks the root further.
+     · The sections carried `content-visibility: auto`, whose skipped subtrees
+       the observer could not see into at all — on a 390px viewport that left
+       every animated element in #contact at opacity 0 permanently. The
+       property has been removed (see css/styles.css), but the sweep below is
+       what makes the reveal robust rather than merely un-broken.
+
+   So: the observer handles the pleasant case (stagger a section in as it
+   arrives), and a sweep guarantees the invariant — nothing at or above the
+   fold stays hidden. */
 export function initScrollReveal() {
-  const targets = document.querySelectorAll('[data-animate]');
+  const targets = Array.from(document.querySelectorAll('[data-animate]'));
   if (!targets.length) return;
 
+  const showNow = (el) => el.classList.add('visible');
+
+  /* `data-delay` is baked per index by generate-cards (i * 70), which is a
+     pleasant stagger for the three cards on the homepage and a pathology on
+     publications.html, where the 37th paper carries delay="2520". Scroll to
+     the bottom there and the last rows are blank for two and a half seconds
+     after they are already on screen — indistinguishable from content that
+     failed to load. The stagger only ever needs to read as "these arrived
+     together", so cap it. */
+  const MAX_DELAY = 320;
+  const delayOf = (el) => Math.min(parseInt(el.dataset.delay || '0', 10) || 0, MAX_DELAY);
+
+  /* No observer support, or the visitor asked for less motion: the entrance
+     is the expendable part, the content is not. Show everything at once. */
+  if (typeof IntersectionObserver !== 'function' || prefersReducedMotion()) {
+    targets.forEach(showNow);
+    return;
+  }
+
+  const pending = new Set(targets);
+
+  const reveal = (el, delay) => {
+    if (!pending.delete(el)) return;
+    observer.unobserve(el);
+    if (delay > 0) setTimeout(() => showNow(el), delay);
+    else showNow(el);
+  };
+
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      const el = entry.target;
-      const delay = parseInt(el.dataset.delay || '0', 10);
-      setTimeout(() => el.classList.add('visible'), delay);
-      observer.unobserve(el);
+      reveal(entry.target, delayOf(entry.target));
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+  }, { threshold: 0, rootMargin: '0px 0px -60px 0px' });
 
   targets.forEach(el => observer.observe(el));
 
-  return () => observer.disconnect();
+  /* The safety net. Reveal anything whose top has reached the viewport
+     bottom, regardless of what the observer did or did not report. Elements
+     already above the viewport get no delay — they are scrolled past, so
+     staggering them in would only be a flicker. */
+  const sweep = () => {
+    if (!pending.size) { detach(); return; }
+    const h = (typeof window !== 'undefined' && window.innerHeight) || 0;
+    for (const el of Array.from(pending)) {
+      /* An element with no geometry to read cannot be judged; leave it to the
+         observer rather than guessing it into view. */
+      if (typeof el.getBoundingClientRect !== 'function') continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= h) continue;
+      reveal(el, rect.bottom <= 0 ? 0 : delayOf(el));
+    }
+    if (!pending.size) detach();
+  };
+
+  const onSweep = rafThrottle(sweep);
+  const attached = [];
+  const listen = (target, type, fn, opts) => {
+    if (!target || typeof target.addEventListener !== 'function') return;
+    target.addEventListener(type, fn, opts);
+    attached.push([target, type, fn, opts]);
+  };
+  const detach = () => {
+    while (attached.length) {
+      const [t, type, fn, opts] = attached.pop();
+      t.removeEventListener(type, fn, opts);
+    }
+  };
+
+  const win = typeof window !== 'undefined' ? window : null;
+  listen(win, 'scroll', onSweep, { passive: true });
+  listen(win, 'resize', onSweep, { passive: true });
+  /* An in-page anchor jumps without scrolling, so no scroll event follows. */
+  listen(win, 'hashchange', onSweep);
+  /* Late-loading images and fonts reflow the page under already-observed
+     elements; `load` is the last point at which geometry settles. */
+  listen(win, 'load', onSweep);
+
+  sweep();
+
+  return () => { observer.disconnect(); detach(); };
 }
 
 /* ═══════════════════════════════════════════════════════════

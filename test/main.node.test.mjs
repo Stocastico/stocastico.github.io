@@ -354,6 +354,98 @@ test('initScrollReveal marks intersecting elements as visible', async () => {
   }
 });
 
+/* ─── Scroll reveal must never strand content ────────────────
+   `[data-animate]` is `opacity: 0` until this adds `.visible`, so an element
+   the IntersectionObserver never reports on is invisible permanently — the
+   markup is there, the section renders as an empty band, and nothing errors.
+   Two real cases produced that: sections carrying `content-visibility: auto`
+   (a skipped subtree the observer cannot see into) and elements already
+   scrolled past on arrival (a nav anchor jump or a restored scroll position
+   never "enters" the viewport). The sweep is what covers both. */
+
+/* An element at `top`, `height` tall, that the observer will never report. */
+function makeAnimTarget(top, height = 100, delay = '0') {
+  return {
+    dataset: { delay },
+    classList: makeClassList(),
+    getBoundingClientRect: () => ({ top, bottom: top + height, height }),
+  };
+}
+
+function withRevealEnv(elements, fn) {
+  const prev = {
+    document: global.document,
+    window: global.window,
+    IntersectionObserver: global.IntersectionObserver,
+  };
+  global.document = { querySelectorAll: (sel) => (sel === '[data-animate]' ? elements : []) };
+  global.window = {
+    innerHeight: 800,
+    addEventListener() {},
+    removeEventListener() {},
+    matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
+  };
+  global.IntersectionObserver = class {
+    constructor() {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  try { return fn(); } finally { Object.assign(global, prev); }
+}
+
+test('initScrollReveal: reveals elements the observer never reports (bfcache of the reveal bug)', async () => {
+  /* Above the viewport, inside it, and below it. */
+  const above  = makeAnimTarget(-500);
+  const inside = makeAnimTarget(200);
+  const below  = makeAnimTarget(1200);
+
+  withRevealEnv([above, inside, below], () => initScrollReveal());
+  await new Promise((r) => setTimeout(r, 10));
+
+  assert.equal(above.classList.contains('visible'), true,
+    'an element scrolled past on arrival must be revealed outright');
+  assert.equal(inside.classList.contains('visible'), true,
+    'an element already on screen must be revealed');
+  assert.equal(below.classList.contains('visible'), false,
+    'an element below the fold stays hidden until it is reached');
+});
+
+test('initScrollReveal: the per-index stagger is capped', async () => {
+  /* generate-cards bakes delay = i * 70, so the 37th paper on
+     publications.html carries 2520ms — two and a half seconds of blank rows
+     already on screen, which reads as content that failed to load. */
+  const late = makeAnimTarget(200, 100, '2520');
+  withRevealEnv([late], () => initScrollReveal());
+
+  await new Promise((r) => setTimeout(r, 400));
+  assert.equal(late.classList.contains('visible'), true,
+    'a large data-delay must be clamped, not honoured literally');
+});
+
+test('initScrollReveal: reduced motion reveals everything immediately', () => {
+  const el = makeAnimTarget(5000);   /* far below the fold */
+  const prevMatch = global.matchMedia;
+  const prev = { document: global.document, window: global.window, IO: global.IntersectionObserver };
+  global.document = { querySelectorAll: (sel) => (sel === '[data-animate]' ? [el] : []) };
+  global.window = {
+    innerHeight: 800,
+    addEventListener() {}, removeEventListener() {},
+    matchMedia: (q) => ({ matches: /prefers-reduced-motion/.test(q), addEventListener() {}, removeEventListener() {} }),
+  };
+  global.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+  try {
+    initScrollReveal();
+    assert.equal(el.classList.contains('visible'), true,
+      'reduced motion drops the entrance, never the content');
+  } finally {
+    global.document = prev.document;
+    global.window = prev.window;
+    global.IntersectionObserver = prev.IO;
+    global.matchMedia = prevMatch;
+  }
+});
+
 test('initCounters triggers animateCounter when counter intersects', () => {
   const counter = { dataset: { count: '42' }, textContent: '0' };
   const prevDocument = global.document;
@@ -2595,6 +2687,40 @@ test('initLifecycleCleanup: a destroy() that throws does not block the others', 
     const ph = captured.find(e => e.type === 'pagehide');
     ph.fn();
     assert.equal(bCalls, 1, 'a thrown destroy() must not stop the loop');
+  } finally {
+    global.window = prevWindow;
+  }
+});
+
+/* A `pagehide` with persisted === true means the browser is freezing the page
+   into the back/forward cache, not unloading it. Back restores that frozen
+   document as-is — no reload, no DOMContentLoaded, no re-init — so anything
+   destroyed here is gone for good. Destroying on it produced exactly the
+   reported symptom: open a link, press Back, and the hero canvas, navbar,
+   ⌘K palette and back-to-top are all dead. */
+test('initLifecycleCleanup: a bfcache freeze (persisted) destroys nothing', async () => {
+  const prevWindow = global.window;
+  const captured = [];
+  global.window = {
+    addEventListener(type, fn) { captured.push({ type, fn }); },
+    removeEventListener() {},
+  };
+  try {
+    const { initLifecycleCleanup } = await import('../js/main.js');
+    let calls = 0;
+    initLifecycleCleanup([{ destroy() { calls += 1; } }]);
+    const ph = captured.find(e => e.type === 'pagehide');
+
+    ph.fn({ persisted: true });
+    assert.equal(calls, 0, 'a persisted pagehide must not tear the page down');
+
+    /* Restored, frozen again, restored again — still untouched. */
+    ph.fn({ persisted: true });
+    assert.equal(calls, 0);
+
+    /* A real unload still cleans up. */
+    ph.fn({ persisted: false });
+    assert.equal(calls, 1, 'a non-persisted pagehide must still destroy');
   } finally {
     global.window = prevWindow;
   }
