@@ -15,9 +15,19 @@
    Run:  node scripts/train-cnn.mjs [--epochs 8] [--train 60000] [--seed 1337]
                                     [--lr 0.05] [--decay 0.68] [--batch 32]
                                     [--pick-only] [--dry-run]
+                                    [--real-train f1.json,f2.json]
+                                    [--real-oversample 50]
+                                    [--real-eval test/fixtures/real-digits.json]
 
    --pick-only reuses the committed weights and only re-chooses the ten
    showcase digits, skipping the training run.
+
+   --real-train mixes captured real digits (fixtures produced by
+   scripts/ingest-digit-capture.mjs) into MNIST, oversampled, to close the
+   domain gap between MNIST's scanned pen strokes and a mouse on a canvas.
+   --real-eval names the held-out fixture reported each epoch, and the script
+   refuses to train on it. Splitting those two by *capture session* is the
+   point: samples from one hand in one sitting are not independent.
    ============================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -38,7 +48,8 @@ const args = process.argv.slice(2);
 if (args.includes('--help') || args.includes('-h')) {
   process.stdout.write(
     'Usage: node scripts/train-cnn.mjs [--epochs N] [--train N] [--seed N] ' +
-    '[--lr F] [--decay F] [--batch N] [--pick-only] [--dry-run]\n');
+    '[--lr F] [--decay F] [--batch N] [--pick-only] [--dry-run]\n' +
+    '       [--real-train a.json,b.json] [--real-oversample N] [--real-eval f.json]\n');
   process.exit(0);
 }
 const flag = (name, fallback) => {
@@ -53,6 +64,15 @@ const EPOCHS = flag('epochs', 8);
 const AUGMENT = !args.includes('--no-augment');
 const N_TRAIN = flag('train', 60000);
 const SEED = flag('seed', 1337);
+/* Real captured digits mixed into the training set — see mixRealDigits(). Off
+   unless asked for, so the committed config stays reproducible from its seed. */
+const strFlag = (name, fallback) => {
+  const i = args.indexOf(`--${name}`);
+  return i === -1 ? fallback : args[i + 1];
+};
+const REAL_TRAIN = strFlag('real-train', '');
+const REAL_OVERSAMPLE = flag('real-oversample', 50);
+const REAL_EVAL = strFlag('real-eval', 'test/fixtures/real-digits.json');
 const LR0 = flag('lr', 0.05);
 const DECAY = flag('decay', 0.68);
 const BATCH = flag('batch', 32);
@@ -93,6 +113,60 @@ async function loadSplit(imagesFile, labelsFile) {
   const images = parseIdx(await fetchIdx(imagesFile));
   const labels = parseIdx(await fetchIdx(labelsFile));
   return { count: images.shape[0], pixels: images.data, labels: labels.data };
+}
+
+/* ── Mixing real captures into MNIST ──────────────────────────────────────
+   77 real digits against 60 000 MNIST is 0.13% of the set: the gradient from
+   them is noise and the model never sees the domain. Oversampling is what
+   makes them count — and it is safe here only because augment() distorts every
+   copy independently, so N repeats are N different images rather than the same
+   image N times. Without augmentation this would just memorise 77 pictures.
+
+   The eval fixture is refused as a training input. That check is the whole
+   value of the held-out set: same-session data on both sides would report a
+   number that means nothing, and it would look like success. */
+function loadRealFixture(rel) {
+  const abs = path.isAbsolute(rel) ? rel : path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) throw new Error(`real-digit fixture not found: ${rel}`);
+  const json = JSON.parse(fs.readFileSync(abs, 'utf8'));
+  return { abs, writer: json.writer || 'unknown', samples: json.samples };
+}
+
+function mixRealDigits(train) {
+  if (!REAL_TRAIN) return { train, note: null };
+  const evalAbs = path.resolve(ROOT, REAL_EVAL);
+  const sets = REAL_TRAIN.split(',').map((s) => s.trim()).filter(Boolean).map(loadRealFixture);
+  for (const s of sets) {
+    if (path.resolve(s.abs) === evalAbs) {
+      throw new Error(
+        `refusing to train on ${REAL_EVAL}: it is the evaluation set.\n` +
+        'Training and evaluating on the same captures reports a number that means nothing.');
+    }
+  }
+  const extra = sets.reduce((n, s) => n + s.samples.length, 0) * REAL_OVERSAMPLE;
+  const nBase = Math.min(N_TRAIN, train.count);
+  const pixels = new Uint8Array((nBase + extra) * 784);
+  const labels = new Uint8Array(nBase + extra);
+  pixels.set(train.pixels.subarray(0, nBase * 784), 0);
+  labels.set(train.labels.subarray(0, nBase), 0);
+  let at = nBase;
+  for (const set of sets) {
+    for (const s of set.samples) {
+      const px = Uint8Array.from(Buffer.from(s.pixels, 'base64'));
+      for (let r = 0; r < REAL_OVERSAMPLE; r++) {
+        pixels.set(px, at * 784);
+        labels[at] = s.meant;
+        at += 1;
+      }
+    }
+  }
+  const writers = [...new Set(sets.map((s) => s.writer))].join(', ');
+  return {
+    train: { count: at, pixels, labels },
+    note: `  mixing ${extra} real-digit copies (${sets.reduce((n, s) => n + s.samples.length, 0)} ` +
+          `captures × ${REAL_OVERSAMPLE}, writer: ${writers}) into ${nBase} MNIST — ` +
+          `${((extra / at) * 100).toFixed(1)}% of the training set\n`,
+  };
 }
 
 function evaluate(model, split, limit = split.count) {
@@ -158,7 +232,7 @@ async function pickOnly() {
 let REAL = null;
 function evaluateReal(model, state) {
   if (REAL === null) {
-    const f = path.join(ROOT, 'test', 'fixtures', 'real-digits.json');
+    const f = path.isAbsolute(REAL_EVAL) ? REAL_EVAL : path.join(ROOT, REAL_EVAL);
     REAL = fs.existsSync(f)
       ? JSON.parse(fs.readFileSync(f, 'utf8')).samples.map((s) => ({
           meant: s.meant, px: Uint8Array.from(Buffer.from(s.pixels, 'base64')),
@@ -177,7 +251,7 @@ function evaluateReal(model, state) {
 async function main() {
   process.stdout.write('LeNet-5 / MNIST — plain-JS trainer\n');
   if (PICK_ONLY) return pickOnly();
-  const train = await loadSplit(FILES.trainImages, FILES.trainLabels);
+  let train = await loadSplit(FILES.trainImages, FILES.trainLabels);
   const test = await loadSplit(FILES.testImages, FILES.testLabels);
   process.stdout.write(`  train ${train.count} · test ${test.count}\n`);
   process.stdout.write(AUGMENT
@@ -185,7 +259,11 @@ async function main() {
       `elastic ${DEFAULT_AUG.elasticP} thickness ${DEFAULT_AUG.thickP}\n`
     : '  augmentation OFF\n');
 
-  const nTrain = Math.min(N_TRAIN, train.count);
+  const mixed = mixRealDigits(train);
+  if (mixed.note) process.stdout.write(mixed.note);
+  train = mixed.train;
+
+  const nTrain = REAL_TRAIN ? train.count : Math.min(N_TRAIN, train.count);
   const model = createModel(SEED);
   const grads = createGrads();
   const velocity = {};
