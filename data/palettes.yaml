@@ -14,6 +14,25 @@
 #
 # Colour formats: all values are #rrggbb hex. The generator derives the
 # rgba()/0xRRGGBB/[r,g,b] forms each layer needs.
+#
+# ── On the *Text tokens ──────────────────────────────────────────────────────
+# `accentText` / `accent2Text` exist because `accent` / `accent2` are brand
+# colours used for gradients, borders, pins and glows, where WCAG's 3:1
+# non-text floor applies — but the site also colours 10-13px metadata with them
+# (years, tags, eyebrows, hosts), where the floor is 4.5:1. Darkening `accent`
+# itself to satisfy the metadata would mute all 96 of its uses to fix 32.
+#
+# Every text token is validated by test/contrast.test.mjs against FOUR surfaces:
+# bg, bgAlt, and the derived card / card-hover. Measuring only against `bg` was
+# the bug — a card is `text` at 12% over `bg`, so it is lighter than the page in
+# dark mode, and a colour that just clears the bar on the page falls below it on
+# a card. Every one of these values was solved in OKLCH (hue and chroma held,
+# lightness moved) to clear 4.5:1 on the tightest of the four.
+#
+# Note textMuted and textFaint now sit close together. That is the honest
+# consequence of holding both to AA at metadata sizes: there is not room for
+# three separately-legible text tiers. The hierarchy comes from size, weight
+# and case, not from fading the colour out.
 # ─────────────────────────────────────────────────────────────────────────────
 
 active: apricot
@@ -27,13 +46,16 @@ palettes:
     bgAlt: '#1a2721'
     # ── Text tiers ──
     text: '#e8eee5'
-    textMuted: '#8a948b'
-    textFaint: '#7a837c'
+    textMuted: '#c0cac1'
+    textFaint: '#b7c1b9'
     # ── Accents ──
     accent: '#c8a44d'
     accentHi: '#dcb968'
     accent2: '#6db088'
     accent2Hi: '#9bd4b0'
+    # accent shades safe as SMALL TEXT on a card — see the note at the top
+    accentText: '#dcb968'
+    accent2Text: '#9bd4b0'
     onAccent: '#1a1408'
     # ── Hero name gradient ──
     heroGradFrom: '#e6d4a4'
@@ -82,13 +104,16 @@ palettes:
       bg: '#f6f8f3'
       bgAlt: '#eaf0e6'
       text: '#18241b'
-      textMuted: '#56635a'
-      textFaint: '#78857c'
+      textMuted: '#3c4940'
+      textFaint: '#435047'
       accent: '#8a7320'
       accentHi: '#a48b32'
       accent2: '#2f7d57'
       accent2Hi: '#3f9269'
-      onAccent: '#fbfdf8'
+      # accent shades safe as SMALL TEXT on a card — see the note at the top
+      accentText: '#685401'
+      accent2Text: '#09623e'
+      onAccent: '#fcfef9'
       heroGradFrom: '#8a7320'
       heroGradTo: '#2f7d57'
       mapBg: '#e8efe3'
@@ -131,13 +156,16 @@ palettes:
     bgAlt: '#2a2321'
     # ── Text tiers ──
     text: '#f4ebe1'
-    textMuted: '#a39588'
-    textFaint: '#877b6b'
+    textMuted: '#d3c5b8'
+    textFaint: '#c9bcab'
     # ── Accents ──
     accent: '#f4a261'
     accentHi: '#f7b67f'
     accent2: '#e76f51'
     accent2Hi: '#f08b70'
+    # accent shades safe as SMALL TEXT on a card — see the note at the top
+    accentText: '#f7b67f'
+    accent2Text: '#fd9b81'
     onAccent: '#2a1a0d'
     # ── Hero name gradient ──
     heroGradFrom: '#f6d2a8'
@@ -186,12 +214,15 @@ palettes:
       bg: '#fbf7f3'
       bgAlt: '#f3ebe2'
       text: '#261a12'
-      textMuted: '#6e5c4c'
-      textFaint: '#93826f'
+      textMuted: '#544233'
+      textFaint: '#594938'
       accent: '#a85a1c'
       accentHi: '#cf7a32'
       accent2: '#c0492f'
       accent2Hi: '#d8654a'
+      # accent shades safe as SMALL TEXT on a card — see the note at the top
+      accentText: '#854204'
+      accent2Text: '#9e290c'
       onAccent: '#fdf5ef'
       heroGradFrom: '#b25f26'
       heroGradTo: '#c0492f'
@@ -235,13 +266,16 @@ palettes:
     bgAlt: '#302121'
     # ── Text tiers ──
     text: '#f0e6e3'
-    textMuted: '#a3908c'
-    textFaint: '#8a7b78'
+    textMuted: '#d5c2bc'
+    textFaint: '#cab9b6'
     # ── Accents ──
     accent: '#d64550'
     accentHi: '#e86a64'
     accent2: '#c2632e'
     accent2Hi: '#d98a52'
+    # accent shades safe as SMALL TEXT on a card — see the note at the top
+    accentText: '#ff978f'
+    accent2Text: '#f2a169'
     onAccent: '#1a0404'
     # ── Hero name gradient ──
     heroGradFrom: '#f2c9b0'
@@ -290,12 +324,15 @@ palettes:
       bg: '#faf6f3'
       bgAlt: '#f2e8e4'
       text: '#241715'
-      textMuted: '#6e5852'
-      textFaint: '#94817b'
+      textMuted: '#55403a'
+      textFaint: '#584741'
       accent: '#b81f2a'
       accentHi: '#cf3540'
       accent2: '#a04a1c'
       accent2Hi: '#bd5f2a'
+      # accent shades safe as SMALL TEXT on a card — see the note at the top
+      accentText: '#a9031d'
+      accent2Text: '#8d3901'
       onAccent: '#fdf3f1'
       heroGradFrom: '#c2632e'
       heroGradTo: '#b81f2a'

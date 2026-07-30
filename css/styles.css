@@ -62,12 +62,14 @@
   --accent2-rgb: 221 119 93;
   --accent2-hi: oklch(73.784% 0.1114 35.582);
   --accent2-glow: #dd775d44;
+  --accent-text: oklch(82.458% 0.1036 60.881);
+  --accent2-text: oklch(78.426% 0.1237 35.663);
   --on-accent: oklch(23.498% 0.0341 59.168);
 
   --text: oklch(94.439% 0.0165 70.53);
   --text-rgb: 244 235 225;
-  --text-muted: oklch(67.835% 0.0251 65.291);
-  --text-faint: oklch(58.918% 0.0279 75.081);
+  --text-muted: oklch(83.136% 0.0238 65.403);
+  --text-faint: oklch(80.134% 0.0277 74.702);
 
   --hero-grad-from: oklch(88.411% 0.0682 71.072);
   --hero-grad-to: oklch(67.833% 0.1559 35.185);
@@ -185,12 +187,14 @@
     --accent2-rgb: 183 82 60;
     --accent2-hi: oklch(64.099% 0.1304 34.213);
     --accent2-glow: #b7523c44;
+    --accent-text: oklch(45.569% 0.112 54.086);
+    --accent2-text: oklch(46.411% 0.1575 34.083);
     --on-accent: oklch(97.471% 0.0118 59.569);
 
     --text: oklch(23.032% 0.0242 54.873);
     --text-rgb: 38 26 18;
-    --text-muted: oklch(48.794% 0.034 63.535);
-    --text-faint: oklch(61.676% 0.0346 70.225);
+    --text-muted: oklch(39.394% 0.0347 61.357);
+    --text-faint: oklch(41.702% 0.0345 68.356);
 
     --hero-grad-from: oklch(57.339% 0.1276 51.353);
     --hero-grad-to: oklch(56.252% 0.1584 33.915);
@@ -230,12 +234,14 @@
   --accent2-rgb: 117 174 139;
   --accent2-hi: oklch(82.072% 0.0671 156.828);
   --accent2-glow: #75ae8b44;
+  --accent-text: oklch(79.956% 0.1081 86.555);
+  --accent2-text: oklch(82.079% 0.0776 156.536);
   --on-accent: oklch(19.499% 0.0239 83.972);
 
   --text: oklch(94.207% 0.0135 134.898);
   --text-rgb: 232 238 229;
-  --text-muted: oklch(65.569% 0.0175 148.292);
-  --text-faint: oklch(60.032% 0.0149 152.423);
+  --text-muted: oklch(82.869% 0.0165 148.369);
+  --text-faint: oklch(80.081% 0.0156 151.71);
 
   --hero-grad-from: oklch(87.298% 0.0658 89.912);
   --hero-grad-to: oklch(70.112% 0.0907 156.89);
@@ -266,12 +272,14 @@
   --accent2-rgb: 60 123 90;
   --accent2-hi: oklch(59.808% 0.0894 158.93);
   --accent2-glow: #3c7b5a44;
-  --on-accent: oklch(99.116% 0.0069 124.445);
+  --accent-text: oklch(45.308% 0.0923 92.772);
+  --accent2-text: oklch(43.892% 0.0974 159.047);
+  --on-accent: oklch(99.414% 0.0069 124.444);
 
   --text: oklch(24.577% 0.0239 152.081);
   --text-rgb: 24 36 27;
-  --text-muted: oklch(48.57% 0.0214 155.305);
-  --text-faint: oklch(60.327% 0.0203 155.519);
+  --text-muted: oklch(39.088% 0.0225 155.019);
+  --text-faint: oklch(41.691% 0.0222 155.113);
 
   --hero-grad-from: oklch(56.224% 0.1024 92.824);
   --hero-grad-to: oklch(53.076% 0.0978 159.006);
@@ -303,12 +311,14 @@
   --accent2-rgb: 186 105 62;
   --accent2-hi: oklch(70.485% 0.1039 54.847);
   --accent2-glow: #ba693e44;
+  --accent-text: oklch(78.296% 0.1262 25.032);
+  --accent2-text: oklch(77.762% 0.1204 54.633);
   --on-accent: oklch(15.169% 0.0422 23.599);
 
   --text: oklch(93.198% 0.0117 37.419);
   --text-rgb: 240 230 227;
-  --text-muted: oklch(66.907% 0.0236 31.822);
-  --text-faint: oklch(59.567% 0.0191 31.135);
+  --text-muted: oklch(82.818% 0.0232 38.32);
+  --text-faint: oklch(79.913% 0.0199 29.572);
 
   --hero-grad-from: oklch(86.493% 0.0576 53.097);
   --hero-grad-to: oklch(60.332% 0.1382 47.1);
@@ -339,12 +349,14 @@
   --accent2-rgb: 153 79 43;
   --accent2-hi: oklch(58.99% 0.1179 47.51);
   --accent2-glow: #994f2b44;
+  --accent-text: oklch(46.425% 0.1864 24.182);
+  --accent2-text: oklch(45.377% 0.1277 45.655);
   --on-accent: oklch(97.138% 0.0111 31.066);
 
   --text: oklch(22.078% 0.0216 28.75);
   --text-rgb: 36 23 21;
-  --text-muted: oklch(48.078% 0.0307 35.735);
-  --text-faint: oklch(61.881% 0.0251 38.286);
+  --text-muted: oklch(39.246% 0.0312 36.525);
+  --text-faint: oklch(41.374% 0.0254 40.367);
 
   --hero-grad-from: oklch(60.332% 0.1382 47.1);
   --hero-grad-to: oklch(50.683% 0.1864 24.135);
@@ -475,7 +487,7 @@ a {
 }
 
 .inline-link {
-  color: var(--accent2);
+  color: var(--accent2-text);
   text-decoration: underline;
   text-underline-offset: 0.2em;
   transition: opacity var(--t-fast);
@@ -924,7 +936,7 @@ h3 {
 
 .hero-cnn-link a:hover,
 .hero-cnn-link a:focus-visible {
-  color: var(--accent);
+  color: var(--accent-text);
   border-bottom-color: rgb(var(--accent-rgb) / 0.4);
 }
 
@@ -1038,7 +1050,7 @@ h3 {
 
 .btn-ghost:hover {
   background: var(--bg-card-hov);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   color: var(--accent);
 }
 
@@ -1085,7 +1097,7 @@ h3 {
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
   margin-bottom: 0.6rem;
 }
 
@@ -1252,13 +1264,13 @@ h3 {
 }
 
 .places-more a {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   border-bottom: 1px solid var(--border-hov);
 }
 
 .places-more a:hover {
-  color: var(--accent-hi);
+  color: var(--accent-text);
 }
 
 /* ─── Travel page ───────────────────────────────────────────────────────── */
@@ -1356,7 +1368,7 @@ h3 {
 
 .unesco-continent > summary:hover,
 .unesco-country > summary:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .unesco-countries {
@@ -1406,12 +1418,12 @@ h3 {
      Padding counts toward target size, so the type size is untouched. */
   display: inline-block;
   padding: 0.2rem 0;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
 }
 
 .unesco-site:hover {
-  color: var(--accent-hi);
+  color: var(--accent-text);
   text-decoration: underline;
 }
 
@@ -1479,7 +1491,12 @@ h3 {
 }
 
 .link-chip.is-active {
-  color: var(--bg);
+  /* --on-accent, not --bg. They are similar colours, but only --on-accent is
+     validated against the accents (test/contrast.test.mjs), and --bg was not:
+     on the accent gradient it measured 4.31:1 in forest/light and 4.29:1 in
+     crimson/dark — the one element on the page whose text sits on a filled
+     accent, failing AA in two of six variants. */
+  color: var(--on-accent);
   background: linear-gradient(to right, var(--accent), var(--accent2));
   border-color: transparent;
 }
@@ -1723,7 +1740,7 @@ h3 {
 }
 
 .stat-suffix {
-  color: var(--accent2);
+  color: var(--accent2-text);
   font-weight: 700;
 }
 
@@ -1785,7 +1802,7 @@ h3 {
 }
 
 .social-btn:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   color: var(--accent);
   background: rgb(var(--accent-rgb) / 0.08);
 }
@@ -1881,7 +1898,7 @@ h3 {
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   padding-top: 0;
@@ -1904,7 +1921,7 @@ h3 {
 
 .pub-venue {
   font-style: italic;
-  color: var(--accent2);
+  color: var(--accent2-text);
 }
 
 .publications-cta {
@@ -2005,7 +2022,7 @@ h3 {
   font-family: var(--font-mono);
   font-size: 0.74rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
 }
@@ -2057,7 +2074,7 @@ h3 {
   padding: 0.2em 0.6em;
   border-radius: 3px;
   background: rgb(var(--accent-rgb) / 0.12);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .project-card__desc {
@@ -2134,7 +2151,7 @@ h3 {
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-text);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   margin: 0;
@@ -2163,7 +2180,7 @@ h3 {
   font-weight: 600;
   border-radius: 999px;
   border: 1px solid var(--border);
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
@@ -2321,7 +2338,7 @@ h3 {
 }
 
 .site-footer a:hover {
-  color: var(--accent2);
+  color: var(--accent2-text);
 }
 
 /* Profile links above the copyright line — a one-click path to socials from
@@ -2593,11 +2610,11 @@ h3 {
 }
 
 .tl-row--career .tl-year {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .tl-row--education .tl-year {
-  color: var(--accent2);
+  color: var(--accent2-text);
 }
 
 .tl-title {
@@ -2656,7 +2673,7 @@ h3 {
   padding: 0.2em 0.65em;
   border-radius: 999px;
   background: rgb(var(--accent-rgb) / 0.11);
-  color: var(--accent);
+  color: var(--accent-text);
   border: 1px solid rgb(var(--accent-rgb) / 0.22);
   letter-spacing: var(--tracking-normal);
 }
@@ -2708,7 +2725,7 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
   margin: 0 0 1.25rem;
 }
 
@@ -2789,7 +2806,7 @@ h3 {
 .lang-prof {
   font-size: 0.72rem;
   font-weight: 500;
-  color: var(--accent2);
+  color: var(--accent2-text);
   letter-spacing: 0.01em;
 }
 
@@ -2916,14 +2933,14 @@ h3 {
   /* Vertical padding to clear the 24px target minimum — see .unesco-site. */
   padding: 0.25rem 0;
   font-size: 0.82rem;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   margin-bottom: 1.5rem;
   transition: color var(--t-fast);
 }
 
 .cv-back-link:hover {
-  color: var(--accent2);
+  color: var(--accent2-text);
 }
 
 /* ─── 17. Performance: content-visibility — REMOVED ─────────
@@ -3406,7 +3423,7 @@ h3 {
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-widest);
-  color: var(--accent2);
+  color: var(--accent2-text);
   margin-bottom: 0.9rem;
 }
 
@@ -3452,13 +3469,13 @@ h3 {
 }
 
 .post a {
-  color: var(--accent2);
+  color: var(--accent2-text);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .post a:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .post code {
@@ -3722,7 +3739,7 @@ h3 {
 
 .mnist-bar.is-winner .mnist-bar__label,
 .mnist-bar.is-winner .mnist-bar__value {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .mnist-bar__track {
