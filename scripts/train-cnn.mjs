@@ -49,7 +49,8 @@ if (args.includes('--help') || args.includes('-h')) {
   process.stdout.write(
     'Usage: node scripts/train-cnn.mjs [--epochs N] [--train N] [--seed N] ' +
     '[--lr F] [--decay F] [--batch N] [--pick-only] [--dry-run]\n' +
-    '       [--real-train a.json,b.json] [--real-oversample N] [--real-eval f.json]\n');
+    '       [--real-train a.json,b.json] [--real-oversample N] [--real-eval f.json]\n' +
+    '       [--checkpoint f.json] [--resume f.json]\n');
   process.exit(0);
 }
 const flag = (name, fallback) => {
@@ -76,6 +77,16 @@ const REAL_EVAL = strFlag('real-eval', 'test/fixtures/real-digits.json');
 const LR0 = flag('lr', 0.05);
 const DECAY = flag('decay', 0.68);
 const BATCH = flag('batch', 32);
+/* Checkpoint / resume. A full run is ~35s per epoch, which puts eighteen epochs
+   past the ten-minute-per-command ceiling of the sandbox this was trained in, so
+   a run has to be splittable. The checkpoint carries the momentum buffers as
+   well as the weights: SGD with momentum 0.9 keeps most of a step's magnitude in
+   `velocity`, and resuming from weights alone restarts from a dead stop — the
+   epoch after the seam trains visibly worse than the one before it. Epoch order
+   and augmentation are reseeded per epoch from (SEED, epoch), so a run split
+   across N invocations produces the same model as one that ran straight through. */
+const CHECKPOINT = strFlag('checkpoint', '');
+const RESUME = strFlag('resume', '');
 
 /* MNIST mirror maintained by the CVDF (same bytes as the original LeCun
    distribution, which has been rate-limiting direct downloads for years). */
@@ -134,7 +145,7 @@ function loadRealFixture(rel) {
 
 function mixRealDigits(train) {
   if (!REAL_TRAIN) return { train, note: null };
-  const evalAbs = path.resolve(ROOT, REAL_EVAL);
+  const evalAbs = REAL_EVAL === 'none' ? null : path.resolve(ROOT, REAL_EVAL);
   const sets = REAL_TRAIN.split(',').map((s) => s.trim()).filter(Boolean).map(loadRealFixture);
   for (const s of sets) {
     if (path.resolve(s.abs) === evalAbs) {
@@ -232,12 +243,23 @@ async function pickOnly() {
 let REAL = null;
 function evaluateReal(model, state) {
   if (REAL === null) {
-    const f = path.isAbsolute(REAL_EVAL) ? REAL_EVAL : path.join(ROOT, REAL_EVAL);
-    REAL = fs.existsSync(f)
-      ? JSON.parse(fs.readFileSync(f, 'utf8')).samples.map((s) => ({
-          meant: s.meant, px: Uint8Array.from(Buffer.from(s.pixels, 'base64')),
-        }))
-      : [];
+    if (REAL_EVAL === 'none') {
+      REAL = [];
+    } else {
+      const f = path.isAbsolute(REAL_EVAL) ? REAL_EVAL : path.join(ROOT, REAL_EVAL);
+      /* A mistyped path used to fall through to an empty set and print `n/a` for
+         every epoch — indistinguishable from a run that was asked not to
+         evaluate, and it silently removes the only check on the thing this
+         revision exists for. Opting out is spelled `--real-eval none`. */
+      if (!fs.existsSync(f)) {
+        throw new Error(
+          `real-eval fixture not found: ${REAL_EVAL}\n` +
+          'Pass --real-eval none to train without a held-out capture set.');
+      }
+      REAL = JSON.parse(fs.readFileSync(f, 'utf8')).samples.map((s) => ({
+        meant: s.meant, px: Uint8Array.from(Buffer.from(s.pixels, 'base64')),
+      }));
+    }
   }
   if (!REAL.length) return { ok: 0, n: 0, pct: '  n/a' };
   let ok = 0;
@@ -271,14 +293,30 @@ async function main() {
   const state = createState();
   const back = createBackState();
 
-  const rand = rng(SEED ^ 0x9e3779b9);
   const order = new Int32Array(nTrain);
   for (let i = 0; i < nTrain; i++) order[i] = i;
 
   const MOMENTUM = 0.9;
   const t0 = Date.now();
 
-  for (let epoch = 0; epoch < EPOCHS; epoch++) {
+  let startEpoch = 0;
+  if (RESUME) {
+    const ck = JSON.parse(fs.readFileSync(path.resolve(ROOT, RESUME), 'utf8'));
+    for (const k of PARAM_KEYS) {
+      model[k].set(ck.model[k]);
+      velocity[k].set(ck.velocity[k]);
+    }
+    startEpoch = ck.epoch;
+    process.stdout.write(
+      `  resumed from ${RESUME} — ${startEpoch} epoch(s) already done\n`);
+  }
+
+  for (let epoch = startEpoch; epoch < EPOCHS; epoch++) {
+    /* Reseeded from (SEED, epoch) rather than once per run: a run split at an
+       epoch boundary then draws the same order and the same distortions as one
+       that never stopped. A single run-long stream could not be picked back up
+       without also serialising the PRNG's internal state. */
+    const rand = rng((SEED ^ 0x9e3779b9) + epoch * 0x85ebca6b);
     /* Fisher-Yates with the seeded PRNG so a rerun reproduces the same model. */
     for (let i = nTrain - 1; i > 0; i--) {
       const j = Math.floor(rand() * (i + 1));
@@ -318,6 +356,15 @@ async function main() {
       `  epoch ${epoch + 1}/${EPOCHS} done · loss ${(loss / seen).toFixed(4)} · ` +
       `val ${(acc * 100).toFixed(2)}% · real ${real.pct}% (${real.ok}/${real.n}) · ` +
       `${((Date.now() - t0) / 1000).toFixed(0)}s\n`);
+
+    if (CHECKPOINT) {
+      const ck = { epoch: epoch + 1, model: {}, velocity: {} };
+      for (const k of PARAM_KEYS) {
+        ck.model[k] = Array.from(model[k]);
+        ck.velocity[k] = Array.from(velocity[k]);
+      }
+      fs.writeFileSync(path.resolve(ROOT, CHECKPOINT), JSON.stringify(ck));
+    }
   }
 
   const accuracy = evaluate(model, test);
