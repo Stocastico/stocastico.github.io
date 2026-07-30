@@ -87,7 +87,7 @@ const REQUIRED_KEYS = [
   'name',
   'bg', 'bgAlt',
   'text', 'textMuted', 'textFaint',
-  'accent', 'accentHi', 'accent2', 'accent2Hi', 'onAccent',
+  'accent', 'accentHi', 'accent2', 'accent2Hi', 'accentText', 'accent2Text', 'onAccent',
   'heroGradFrom', 'heroGradTo',
   'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
 ];
@@ -315,6 +315,12 @@ function cssVarLines(p, indent) {
     `${I}--accent2-rgb: ${ch(p.accent2)};`,
     `${I}--accent2-hi: ${ok(p.accent2Hi)};`,
     `${I}--accent2-glow: ${p.accent2}44;`,
+    /* Accent shades that clear WCAG AA as small text on a card. The brand
+       accents above are held to the 3:1 non-text floor and are used for
+       gradients, borders, pins and glows; these are for the 10-13px metadata
+       the site also tints with the accent. See data/palettes.yaml. */
+    `${I}--accent-text: ${ok(p.accentText)};`,
+    `${I}--accent2-text: ${ok(p.accent2Text)};`,
     `${I}--on-accent: ${ok(p.onAccent)};`,
     ``,
     `${I}--text: ${ok(p.text)};`,
@@ -425,7 +431,7 @@ function themeObjectBody(p, id, name) {
   const q = (v) => `'${v}'`;
   const flat = [
     'bg', 'bgAlt', 'text', 'textMuted', 'textFaint',
-    'accent', 'accentHi', 'accent2', 'accent2Hi', 'onAccent',
+    'accent', 'accentHi', 'accent2', 'accent2Hi', 'accentText', 'accent2Text', 'onAccent',
     'heroGradFrom', 'heroGradTo', 'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
   ];
   const flatLines = flat.map(k => `  ${k}: ${q(p[k])},`).join('\n');

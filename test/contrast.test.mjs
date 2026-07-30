@@ -125,13 +125,165 @@ test('contrast: body and muted text meet WCAG AA (4.5:1) on the page background'
   }
 });
 
-test('contrast: faint text clears the large-text floor (3:1)', () => {
-  /* textFaint is used for eyebrows, years, stat labels — uppercase mono at
-     small sizes. It is genuinely secondary, so it gets the 3:1 large/incidental
-     floor rather than 4.5, but it must not vanish. */
+/* ─── Text on the surfaces it is actually painted on ────────────────────────
+   The tests above measure against `bg` and `bgAlt`. Almost none of this site's
+   small text sits on either — it sits on cards, and `--bg-card` is `text` at 12%
+   over `bg`, which in dark mode is *lighter* than the page. So a colour that
+   just clears the bar against the page falls below it on a card, and measuring
+   only against the page could not see that:
+
+     apricot/dark textFaint    4.52:1 on bg   →   3.36:1 on a card
+     apricot/light textFaint   3.48:1 on bg   →   2.74:1 on a card
+
+   The second column is what a reader gets. A browser audit over all 21 pages
+   × 4 palettes × 2 themes found 72–446 failing elements per configuration, and
+   every recurring one was small metadata on a card: .link-card-host,
+   .contact-label, .tl-location, .unesco-count, .project-tag, .tl-tag,
+   .pub-venue.
+
+   `textFaint` used to be exempted to 3:1 here, justified as "large/incidental".
+   It is not: it renders at 10.9–13.1px (.link-card-host 0.74rem,
+   .tl-location 0.7rem, .contact-label 0.7rem). WCAG's 3:1 large-text exemption
+   needs ≥24px, or ≥18.66px bold. None of those qualify, so the exemption was
+   simply wrong and is gone.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* The surfaces each token actually lands on.
+
+   Two corrections live here, both learned by measuring the rendered page and
+   both invisible to a simpler model:
+
+   1. **Translucent surfaces stack.** `.unesco-count` is a `--bg-card-hov` chip
+      inside a `--bg-card` <details>, i.e. 0.17·text over (0.12·text over bg).
+      In apricot/dark the browser paints that at rgb(82,77,72) where a lone card
+      is rgb(49,44,41) — so even "text on a card" was the wrong surface for it.
+   2. **Tag chips add an accent tint.** `.tl-tag` and `.project-tag` sit on
+      `rgb(var(--accent-rgb) / 0.11)` over a card, which lightens the backdrop in
+      dark mode and darkens it in light.
+
+   The mapping is per token rather than the cartesian product, deliberately.
+   Requiring `textMuted` to survive a tag tint it never touches cost real chroma
+   in the accents for nothing — the constraint has to match where the colour is
+   actually painted, which is the whole lesson of this file. */
+const TINT_ALPHA = 0.11; /* .tl-tag / .project-tag chip fill */
+
+function textSurfaces(p, token) {
+  const s = surfaces(p);
+  const bgAlt = channels(p.bgAlt);
+  const base = [
+    ['bg', s.bg],
+    ['bgAlt', bgAlt],
+    ['card', s.card],
+    ['card-hover', s.cardHover],
+    /* Cards sit on the alternate band too, and a card over bgAlt is lighter than
+       a card over bg in dark mode. crimson/dark .pub-venue lands on the
+       browser-measured rgb(71,57,57) for exactly this reason — composing cards
+       only over `bg` still missed it. */
+    ['card over bgAlt', over(channels(p.text), SURFACE_ALPHA.card, bgAlt)],
+    ['card-hover over bgAlt', over(channels(p.text), SURFACE_ALPHA.cardHover, bgAlt)],
+  ];
+  /* The accent *text* tokens land on tag chips, and measurably nowhere deeper:
+     walking every text node on all 21 pages and compositing its real ancestor
+     backgrounds, the worst backdrop behind --accent-text is rgb(72,59,50) in
+     apricot/dark (.project-tag), which is the tint over a card. The nested
+     card-hover stack below reaches rgb(82,77,72) and no accent-coloured text
+     ever sits on it. Adding it "to be safe" cost the crimson accent 35 % of its
+     chroma to satisfy a surface that does not exist, which is the same mistake
+     as measuring against the page instead of the card — just in the other
+     direction. Constrain to what is painted, no more and no less. */
+  if (token === 'accentText') {
+    return base.concat([['accent tint over card', over(channels(p.accent), TINT_ALPHA, s.card)]]);
+  }
+  if (token === 'accent2Text') {
+    return base.concat([['accent2 tint over card', over(channels(p.accent2), TINT_ALPHA, s.card)]]);
+  }
+  /* The plain text tiers do reach the nested stack: .unesco-count is a
+     --bg-card-hov chip inside a --bg-card <details>, measured at rgb(82,77,72). */
+  return base.concat([
+    ['card-hover over card', over(channels(p.text), SURFACE_ALPHA.cardHover, s.card)],
+  ]);
+}
+
+test('contrast: every text tier meets WCAG AA on every surface it lands on', () => {
   for (const { name, p } of variants()) {
-    const got = contrast(channels(p.textFaint), channels(p.bg));
-    assert.ok(got >= 3, `${name} — ${report('textFaint on bg', got, 3)}`);
+    for (const token of ['text', 'textMuted', 'textFaint']) {
+      for (const [label, surface] of textSurfaces(p, token)) {
+        const got = contrast(channels(p[token]), surface);
+        assert.ok(got >= 4.5,
+          `${name} — ${report(`${token} on ${label}`, got, 4.5)}`);
+      }
+    }
+  }
+});
+
+test('contrast: the accent text shades meet WCAG AA on every surface', () => {
+  /* accentText / accent2Text exist because `accent` and `accent2` are brand
+     colours held to the 3:1 non-text floor (gradients, borders, pins, glows —
+     64 of their 96 uses), while the site also tints 10–13px metadata with them,
+     where the floor is 4.5:1. Darkening `accent` itself to satisfy the metadata
+     would mute every one of those other uses to fix the text. */
+  for (const { name, p } of variants()) {
+    for (const token of ['accentText', 'accent2Text']) {
+      for (const [label, surface] of textSurfaces(p, token)) {
+        const got = contrast(channels(p[token]), surface);
+        assert.ok(got >= 4.5,
+          `${name} — ${report(`${token} on ${label}`, got, 4.5)}`);
+      }
+    }
+  }
+});
+
+test('contrast: the three text tiers stay in order', () => {
+  /* Holding all three tiers to AA at metadata sizes squeezes them together —
+     solved independently, textMuted and textFaint land on the *same* hex in
+     forest/light. Two identical tokens read as a copy-paste slip and quietly
+     destroy the tier, so the ordering is asserted rather than hoped for. The
+     remaining hierarchy comes from size, weight and case, not from fading the
+     colour out; there is not room for three separately-legible text tiers. */
+  for (const { name, p } of variants()) {
+    const card = surfaces(p).card;
+    const body = contrast(channels(p.text), card);
+    const muted = contrast(channels(p.textMuted), card);
+    const faint = contrast(channels(p.textFaint), card);
+    assert.ok(body > muted + 0.2,
+      `${name} — text (${body.toFixed(2)}:1) must read more clearly than ` +
+      `textMuted (${muted.toFixed(2)}:1) on a card`);
+    assert.ok(muted > faint + 0.2,
+      `${name} — textMuted (${muted.toFixed(2)}:1) must read more clearly than ` +
+      `textFaint (${faint.toFixed(2)}:1) on a card; they have collapsed into one tier`);
+  }
+});
+
+test('contrast: the small-text CSS uses the accent *text* tokens, not the brand accents', () => {
+  /* The tokens above are only worth anything if the rules that failed the audit
+     actually consume them. Guards against a new small-text rule reaching for
+     var(--accent) — which passes the palette tests and fails on the page. */
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const SMALL_TEXT_RULES = [
+    ['.project-tag', '--accent-text'],
+    ['.tl-tag', '--accent-text'],
+    ['.section-tag', '--accent-text'],
+    ['.skill-panel-title', '--accent-text'],
+    ['.project-card__year', '--accent-text'],
+    ['.unesco-site', '--accent-text'],
+    ['.cv-back-link', '--accent-text'],
+    ['.pub-year', '--accent-text'],
+    ['.pub-venue', '--accent2-text'],
+    ['.stat-suffix', '--accent2-text'],
+    ['.inline-link', '--accent2-text'],
+    ['.lang-prof', '--accent2-text'],
+  ];
+  for (const [selector, token] of SMALL_TEXT_RULES) {
+    /* Match the rule whose selector list *begins* with this exact class, and
+       require the next char to be space, comma or brace — otherwise
+       `.unesco-site` matches `.unesco-sites` and the assertion checks the wrong
+       rule (which is exactly what happened while writing this). */
+    const re = new RegExp(`^\\${selector}(?=[\\s,{])[^{]*\\{([^}]*)\\}`, 'm');
+    const m = css.match(re);
+    assert.ok(m, `expected a ${selector} rule in css/styles.css`);
+    assert.match(m[1], new RegExp(`color:\\s*var\\(${token}\\)`),
+      `${selector} must take its colour from var(${token}) — small text on a card ` +
+      'cannot use the brand accent, which is only held to the 3:1 non-text floor');
   }
 });
 
@@ -159,11 +311,32 @@ test('contrast: accents are legible as text and as graphics (3:1)', () => {
 
 test('contrast: label text on an accent-filled button meets AA', () => {
   /* onAccent is the foreground painted onto accent — a filled button. If this
-     fails the primary call to action is the unreadable element on the page. */
+     fails the primary call to action is the unreadable element on the page.
+
+     Sampled across the whole accent → accent2 ramp, not just `accent`, because
+     the fills that actually ship are gradients (.link-chip.is-active, .btn). The
+     midpoint can be the worst point and checking one end can miss it.
+
+     This test is also why .link-chip.is-active had to stop using var(--bg) for
+     its label: --bg is not validated against anything accent-shaped, and on the
+     gradient it measured 4.31:1 in forest/light and 4.29:1 in crimson/dark. */
   for (const { name, p } of variants()) {
-    const got = contrast(channels(p.onAccent), channels(p.accent));
-    assert.ok(got >= 4.5, `${name} — ${report('onAccent on accent', got, 4.5)}`);
+    const a = channels(p.accent), b = channels(p.accent2);
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const stop = [0, 1, 2].map((i) => a[i] * (1 - t) + b[i] * t);
+      const got = contrast(channels(p.onAccent), stop);
+      assert.ok(got >= 4.5,
+        `${name} — ${report(`onAccent at ${t * 100}% along the accent gradient`, got, 4.5)}`);
+    }
   }
+});
+
+test('contrast: the accent-filled chip labels itself with --on-accent', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+  const rule = css.match(/^\.link-chip\.is-active\s*\{([^}]*)\}/m);
+  assert.ok(rule, 'expected a .link-chip.is-active rule');
+  assert.match(rule[1], /color:\s*var\(--on-accent\)/,
+    'text on an accent fill must use --on-accent, the only token measured against the accents');
 });
 
 /* ─── Surfaces: the design floor ─────────────────────────────────────────── */
