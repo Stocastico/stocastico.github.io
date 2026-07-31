@@ -63,7 +63,14 @@ export function projectCardHtml(project, i = 0) {
      enough to be invisible, and several of the images are diagrams whose own
      text showed through behind the description. Dropping it also means the
      listing pages stop fetching a few hundred KB of imagery nobody could see. */
-  return '<a href="' + escapeHtml(project.url || '#') + '" class="project-card" data-animate data-delay="' + (i * 80) + '">' +
+  /* Optional `lang`: the language of the page the card LINKS TO, not of the
+     card. So it becomes hreflang and nothing else — putting lang="es" on the
+     anchor would make a screen reader pronounce this English title in Spanish.
+     Only the one entry that leaves the English site carries it. */
+  const hreflangAttr = project.lang
+    ? ' hreflang="' + escapeHtml(project.lang) + '"'
+    : '';
+  return '<a href="' + escapeHtml(project.url || '#') + '"' + hreflangAttr + ' class="project-card" data-animate data-delay="' + (i * 80) + '">' +
     '<div class="project-card__body">' +
       '<div class="project-card__meta">' +
         '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +

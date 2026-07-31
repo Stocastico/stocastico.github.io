@@ -73,6 +73,29 @@ test('generate-cards: projects.html badges the personal projects and only those'
     'projects.html badge count should equal the number of personal projects');
 });
 
+/* Off-site entries. One project (the Donostia dataviz) links out of the Vite
+   build to a page served from the same domain by another repo, in another
+   language. Two things have to hold for that to be honest: the anchor declares
+   the language it is sending you to, and the sitemap does not claim a page this
+   build never produces. Both are cheap to get wrong silently. */
+test('generate-cards: an entry with `lang` renders hreflang on its card', () => {
+  const tagged = PROJECTS.filter((p) => p.lang);
+  assert.ok(tagged.length >= 1, 'expected at least one off-site entry to guard against');
+  const html = read('projects.html');
+  for (const p of tagged) {
+    assert.match(html, new RegExp(`href="${p.url}" hreflang="${p.lang}"`),
+      `projects.html card for "${p.id}" must carry hreflang="${p.lang}"`);
+  }
+});
+
+test('sitemap: no entry claims a page outside this build', () => {
+  const sitemap = read('public/sitemap.xml');
+  for (const p of PROJECTS.filter((x) => x.url && !x.url.startsWith('projects/'))) {
+    assert.ok(!sitemap.includes(p.url),
+      `sitemap.xml lists "${p.url}", which this Vite build does not produce`);
+  }
+});
+
 test('generate-cards: the generator refuses a project with no kind', () => {
   assert.throws(
     () => assertProjectKinds([{ id: 'forgot-it', title: 'X' }]),
