@@ -12,7 +12,14 @@
      bg:          'img/projects/my-bg.jpg',    // detail-page hero + og:image
      description: 'Short 2–3 sentence summary shown on the homepage card.',
      url:         'projects.html#my-project', // link to detail section
+     lang:        'es',                       // OPTIONAL — only for a url that
+                                              // leaves the English site; becomes
+                                              // hreflang on the card anchor
    }
+
+   `bg` is only read by a `projects/*.html` detail page (hero + og:image), so an
+   entry whose url points elsewhere omits it rather than shipping an image
+   nothing renders.
 
    `kind` has no default on purpose. 'work' is professional or research work;
    'personal' is a side project, which gets a badge on its card and is kept off
@@ -24,6 +31,22 @@
    ============================================================ */
 
 export const PROJECTS = [
+    {
+            id: "donostia-dataviz",
+            kind: "personal",
+            title: "Is tourism raising the rent? Donostia, in open data",
+            year: "2026",
+            tags: ["Data Journalism","Open Data","Python"],
+            description: "Seven data stories about how San Sebastián is changing — housing, barrios, people, climate, and the gap between the tourist city and the lived one. Built from six open sources with a reproducible pipeline; the question that started it turned out to have an uncomfortable answer. Written in Spanish.",
+            /* No detail page: the piece introduces itself — title, subtitle,
+               sources and methodology are all on its own first screen — so a
+               write-up here would only delay the reader by a click. It lives in
+               its own repo, served from this same domain by GitHub Pages, which
+               is why a root-relative path reaches it. `lang` puts hreflang on
+               the card, and generate-sitemap skips any url outside projects/. */
+            url: "/donostia-dataviz/",
+            lang: "es",
+        },
     {
             id: "mnist-lenet",
             kind: "personal",

@@ -18,10 +18,26 @@
 import assert from 'node:assert/strict';
 import test, { after, before, describe } from 'node:test';
 
+import { PROJECTS } from '../../data/projects.js';
 import {
   BFCACHE_ARGS, BFCACHE_IGNORE, VIEWPORTS, bfcacheWorks, blockExternalRequests, launchBrowser,
   launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
 } from './harness.mjs';
+
+/* Same-origin paths this build deliberately does not produce. A project entry
+   whose `url` leaves `projects/` points at a page served from the same domain
+   by a *different* repo — the Donostia dataviz is a GitHub Pages project site,
+   and this repo's CNAME puts the user site on the apex domain, so /<repo>/ is
+   already a real path in production. Against the dist/ served here it is a 404,
+   and the crawl below has to know the difference or it fails on a link that
+   works. Derived from data/projects.js rather than hardcoded, so it cannot
+   drift from what the cards actually link to; test/generate-cards.test.mjs
+   separately pins that these same urls stay out of the sitemap. */
+const OFF_BUILD_PATHS = new Set(
+  PROJECTS
+    .filter((p) => p.url && !/^(https?:|mailto:|#)/.test(p.url) && !p.url.startsWith('projects/'))
+    .map((p) => new URL(p.url, 'http://off-build.invalid/').pathname),
+);
 
 let server, browser, bfBrowser, bfcacheAvailable = false, bfWhy = '';
 
@@ -77,8 +93,9 @@ describe('navigation', () => {
           .map((a) => a.getAttribute('href'))
           .filter((h) => h && !/^(https?:|mailto:|tel:|#)/.test(h)));
         for (const href of new Set(hrefs)) {
-          const url = new URL(href, server.base + path).toString();
-          const res = await page.request.get(url);
+          const url = new URL(href, server.base + path);
+          if (OFF_BUILD_PATHS.has(url.pathname)) continue;
+          const res = await page.request.get(url.toString());
           if (!res.ok()) broken.push(`${path} → ${href} (${res.status()})`);
         }
       }
