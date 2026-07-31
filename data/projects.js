@@ -25,6 +25,16 @@
 
 export const PROJECTS = [
     {
+            id: "donostia-dataviz",
+            kind: "personal",
+            title: "Is tourism raising the rent? Donostia, in open data",
+            year: "2026",
+            tags: ["Data Journalism","Open Data","Python"],
+            bg: "img/projects/donostia-dataviz.svg",
+            description: "Seven data stories about how San Sebastián is changing — housing, barrios, people, climate, and the gap between the tourist city and the lived one. Built from six open sources with a reproducible pipeline; the question that started it turned out to have an uncomfortable answer.",
+            url: "projects/donostia-dataviz.html",
+        },
+    {
             id: "mnist-lenet",
             kind: "personal",
             title: "Draw a digit, watch a LeNet-5 read it",
