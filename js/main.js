@@ -67,6 +67,13 @@ import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, su
    (scripts/generate-cards.mjs) so SSR and client markup never drift. */
 import { projectCardHtml, publicationsListLines, homepageProjects } from './render-cards.js';
 
+/* Page-section markup (CV timeline + skills, UNESCO accordion, links grid) —
+   shared with the same generator, for the same reason. These three pages used
+   to ship as empty shells; see the header of js/render-page.js. */
+import {
+  cvTimelineLines, cvSkillsLines, unescoAccordionLines, linksGridLines, linksCountLabel,
+} from './render-page.js';
+
 /* Theme colours — single source of truth (data/palettes.yaml → js/theme.js).
    Only the favicon renderer below reads THEME/rgba now; the noise shader
    imports its own colours inside js/noise-gradient.js. */
@@ -251,146 +258,16 @@ function setFooterYear() {
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
    Tests pass mocked career/education arrays as arguments.
-   One card per job/degree — all details visible, no flipping.
+
+   The markup itself lives in js/render-page.js, which generate-cards also
+   imports — cv.html now ships the timeline server-rendered, and re-rendering
+   it here from the same builder is what keeps the two from drifting.
    ═══════════════════════════════════════════════════════════ */
 function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) {
   if (typeof document === 'undefined') return;
   const timeline = document.getElementById('cv-timeline');
   if (!timeline) return;
-
-  /* ── Build card HTML ────────────────────────────────── */
-  function cardHtml(entry, type) {
-    const isCareer = type === 'career';
-    const title  = isCareer ? entry.role   : entry.degree;
-    const sub    = isCareer ? entry.company : entry.institution;
-    const locHtml  = entry.location
-      ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
-      : '';
-    const descHtml = entry.description
-      ? `<p class="tl-desc">${escapeHtml(entry.description)}</p>`
-      : '';
-    const tagsArr  = entry.tags || [];
-    const tagsHtml = tagsArr.length
-      ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
-      : '';
-
-    return `
-      <div class="tl-card-single">
-        <div class="tl-card-header">
-          <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-          ${locHtml}
-        </div>
-        <h3 class="tl-title">${escapeHtml(title || '')}</h3>
-        <p class="tl-sub">${escapeHtml(sub || '')}</p>
-        ${descHtml}${tagsHtml}
-      </div>`;
-  }
-
-  /* ── Extract start year for sorting ────────────────── */
-  function startYear(yearStr) {
-    var m = String(yearStr).match(/\d{4}/);
-    return m ? parseInt(m[0], 10) : 0;
-  }
-
-  /* ── Separate concurrent from normal education entries ── */
-  var concurrentEduEntries = [];
-  var normalEduEntries     = [];
-  (education || []).forEach(function(e) {
-    if (Array.isArray(e.concurrent_with) && e.concurrent_with.length > 0) {
-      concurrentEduEntries.push(e);
-    } else {
-      normalEduEntries.push(e);
-    }
-  });
-
-  /* ── Build set of career companies involved in concurrent blocks ── */
-  var concurrentCareerSet = {};
-  concurrentEduEntries.forEach(function(edu) {
-    edu.concurrent_with.forEach(function(company) {
-      concurrentCareerSet[company] = true;
-    });
-  });
-
-  /* ── Partition career entries ── */
-  var concurrentCareerEntries = [];
-  var normalCareerEntries     = [];
-  (career || []).forEach(function(e) {
-    if (concurrentCareerSet[e.company]) {
-      concurrentCareerEntries.push(e);
-    } else {
-      normalCareerEntries.push(e);
-    }
-  });
-
-  /* ── Build sortable row descriptors ── */
-  var rows = [];
-
-  /* Normal career rows */
-  normalCareerEntries.forEach(function(entry) {
-    rows.push({
-      sort: startYear(entry.year),
-      html: '<div class="tl-row tl-row--career" data-animate>'
-          + '<div class="tl-left">' + cardHtml(entry, 'career') + '</div>'
-          + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-          + '<div class="tl-right"><div class="tl-empty"></div></div>'
-          + '</div>',
-    });
-  });
-
-  /* Normal (unpaired) education rows */
-  normalEduEntries.forEach(function(entry) {
-    rows.push({
-      sort: startYear(entry.year),
-      html: '<div class="tl-row tl-row--education" data-animate>'
-          + '<div class="tl-left"><div class="tl-empty"></div></div>'
-          + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-          + '<div class="tl-right">' + cardHtml(entry, 'education') + '</div>'
-          + '</div>',
-    });
-  });
-
-  /* Concurrent blocks: education entry with concurrent_with spans matching career rows */
-  concurrentEduEntries.forEach(function(eduEntry) {
-    var companies   = eduEntry.concurrent_with;
-    var careerPairs = concurrentCareerEntries
-      .filter(function(c) { return companies.indexOf(c.company) !== -1; })
-      .sort(function(a, b) { return startYear(b.year) - startYear(a.year); });
-
-    var n = careerPairs.length;
-
-    /* Column 1 is the spine, column 2 the concurrent career cards (one per
-       grid row), column 3 the education card beside them. Placement is inline
-       because the row index depends on how many careers the entry overlaps,
-       which CSS cannot express — see .tl-concurrent-block in css/styles.css. */
-    var leftCells = careerPairs.map(function(c, i) {
-      var row = i + 1;
-      return '<div class="tl-left tl-row--career" style="grid-column:2;grid-row:' + row + '">'
-           +   cardHtml(c, 'career')
-           + '</div>'
-           + '<div class="tl-spine" style="grid-column:1;grid-row:' + row + '">'
-           +   '<div class="tl-dot" aria-hidden="true"></div>'
-           + '</div>';
-    }).join('');
-
-    /* Education card spans every career row it overlaps */
-    var rightCell = '<div class="tl-right tl-row--education" style="grid-column:3;grid-row:1/' + (n + 1) + '">'
-                  + cardHtml(eduEntry, 'education')
-                  + '</div>';
-
-    var sortYear = n > 0 ? startYear(careerPairs[0].year) : startYear(eduEntry.year);
-
-    rows.push({
-      sort: sortYear,
-      html: '<div class="tl-concurrent-block" data-animate>'
-          + leftCells
-          + rightCell
-          + '</div>',
-    });
-  });
-
-  /* ── Sort all rows newest-first and render ── */
-  rows.sort(function(a, b) { return b.sort - a.sort; });
-  timeline.innerHTML = rows.map(function(r) { return r.html; }).join('');
+  timeline.innerHTML = cvTimelineLines(career, education).join('\n');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -401,52 +278,7 @@ function renderSkills(skills = DEFAULT_CV_SKILLS) {
   if (typeof document === 'undefined') return;
   const container = document.getElementById('cv-skills');
   if (!container) return;
-
-  const { technical = [], leadership = [], languages = [] } = skills;
-
-  /* Progress-bar panel for technical / leadership */
-  function barPanel(items, label) {
-    if (!items.length) return '';
-    return `
-      <div class="skill-panel" data-animate>
-        <h3 class="skill-panel-title">${escapeHtml(label)}</h3>
-        <ul class="skill-bars">
-          ${items.map(s => `
-            <li class="skill-bar-item">
-              <span class="skill-bar-name">${escapeHtml(s.name)}</span>
-              <div class="skill-bar-track">
-                <div class="skill-bar-fill" style="--pct:${parseInt(s.level, 10)}%"></div>
-              </div>
-            </li>`).join('')}
-        </ul>
-      </div>`;
-  }
-
-  /* Language proficiency pill panel */
-  function langPanel(items) {
-    if (!items.length) return '';
-    return `
-      <div class="skill-panel" data-animate>
-        <h3 class="skill-panel-title">Languages</h3>
-        <ul class="lang-list">
-          ${items.map(l => `
-            <li class="lang-item">
-              <span class="lang-name">${escapeHtml(l.name)}</span>
-              <span class="lang-prof">${escapeHtml(l.proficiency)}</span>
-            </li>`).join('')}
-        </ul>
-      </div>`;
-  }
-
-  const panels = [
-    barPanel(technical,  'Technical'),
-    barPanel(leadership, 'Leadership'),
-    langPanel(languages),
-  ].filter(Boolean).join('');
-
-  container.innerHTML = panels
-    ? `<div class="skill-panels">${panels}</div>`
-    : '';
+  container.innerHTML = cvSkillsLines(skills).join('\n');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -550,49 +382,12 @@ export function renderGlobeA11yList(container, locations) {
   container.innerHTML = sections.join('');
 }
 
-/* Renders the UNESCO World Heritage accordion on the travel page: a two-level
-   native-disclosure tree (continent → country) whose leaves are links to each
-   site's official whc.unesco.org page. Built from <details>/<summary> so it is
-   keyboard-operable and degrades gracefully with no extra JS. Site URLs are
-   already restricted to https:// by the generator (scripts/generate-unesco.js),
-   and every field is HTML-escaped here as defence in depth. */
+/* Renders the UNESCO World Heritage accordion on the travel page. Gated on
+   #unesco-accordion; markup and its rationale live in js/render-page.js, which
+   generate-cards uses to bake the same tree into travel.html. */
 export function renderUnescoAccordion(container, data) {
   if (!container) return;
-  const continents = (data && Array.isArray(data.continents)) ? data.continents : [];
-
-  if (!continents.length) {
-    container.innerHTML =
-      '<p class="unesco-empty">The list of visited sites is on its way &mdash; check back soon.</p>';
-    return;
-  }
-
-  const countSites = (countries) =>
-    countries.reduce((n, k) => n + (k.sites ? k.sites.length : 0), 0);
-
-  const html = continents.map((cont) => {
-    const countries = (cont.countries || []).map((country) => {
-      const sites = (country.sites || []).map((site) => {
-        const year = site.year
-          ? ` <span class="unesco-year">(${escapeHtml(String(site.year))})</span>`
-          : '';
-        return `<li><a class="unesco-site" href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(site.name)}</a>${year}</li>`;
-      }).join('');
-      return (
-        `<details class="unesco-country"><summary>` +
-        `<span class="unesco-name">${escapeHtml(country.name)}</span>` +
-        `<span class="unesco-count">${(country.sites || []).length}</span></summary>` +
-        `<ul class="unesco-sites">${sites}</ul></details>`
-      );
-    }).join('');
-    return (
-      `<details class="unesco-continent"><summary>` +
-      `<span class="unesco-name">${escapeHtml(cont.name)}</span>` +
-      `<span class="unesco-count">${countSites(cont.countries || [])}</span></summary>` +
-      `<div class="unesco-countries">${countries}</div></details>`
-    );
-  }).join('');
-
-  container.innerHTML = html;
+  container.innerHTML = unescoAccordionLines(data).join('\n');
 }
 
 /* True when a link (its list of category slugs) should be shown under the
@@ -603,12 +398,8 @@ export function linkMatchesFilter(categories, filter) {
   return Array.isArray(categories) && categories.indexOf(filter) !== -1;
 }
 
-/* Human-readable "Showing …" summary for the live count region. */
-function linksCountLabel(shown, total, filterLabel) {
-  const noun = total === 1 ? 'site' : 'sites';
-  if (!filterLabel) return `Showing all ${total} ${noun}`;
-  return `Showing ${shown} ${shown === 1 ? 'site' : 'sites'} in ${filterLabel}`;
-}
+/* linksCountLabel() lives in js/render-page.js — the server-rendered count and
+   the one this file rewrites on every filter click must read identically. */
 
 /* Wire up the category filter chips: clicking a chip shows only the cards in
    that category (or all). Single-select, accessible (aria-pressed + a polite
@@ -645,66 +436,13 @@ function wireLinksFilter(container) {
   });
 }
 
-/* Renders the curated blogroll on the links page: a category filter bar plus a
-   single, de-duplicated grid of external link cards. Each site appears once and
-   is tagged with every category it belongs to, so filtering by category never
-   duplicates an entry. The generator (scripts/generate-links.js) already
-   restricts URLs to https:// and de-duplicates by URL; every field is
-   HTML-escaped here as defence in depth. Gated on #links-grid (links page). */
+/* Renders the curated blogroll on the links page and wires its filter chips.
+   Gated on #links-grid; markup lives in js/render-page.js, which generate-cards
+   uses to bake the same grid into links.html. The re-render is what lets the
+   chips assume a DOM they built themselves. */
 export function renderLinks(container, data) {
   if (!container) return;
-  const categories = (data && Array.isArray(data.categories)) ? data.categories : [];
-  const links = (data && Array.isArray(data.links)) ? data.links : [];
-
-  if (!links.length) {
-    container.innerHTML =
-      '<p class="links-empty">The reading list is on its way &mdash; check back soon.</p>';
-    return;
-  }
-
-  const labelOf = new Map(categories.map((c) => [c.slug, c.label]));
-  const countOf = new Map(categories.map((c) => [c.slug, 0]));
-  for (const link of links) {
-    for (const slug of (link.categories || [])) {
-      if (countOf.has(slug)) countOf.set(slug, countOf.get(slug) + 1);
-    }
-  }
-
-  const chips = [
-    `<button class="link-chip is-active" type="button" data-filter="all" data-label="All" aria-pressed="true">` +
-    `All <span class="link-chip-count">${links.length}</span></button>`,
-  ].concat(categories.map((cat) => (
-    `<button class="link-chip" type="button" data-filter="${escapeHtml(cat.slug)}" data-label="${escapeHtml(cat.label)}" aria-pressed="false">` +
-    `${escapeHtml(cat.label)} <span class="link-chip-count">${countOf.get(cat.slug) || 0}</span></button>`
-  ))).join('');
-
-  const cards = links.map((link) => {
-    const cats = Array.isArray(link.categories) ? link.categories : [];
-    const desc = link.description
-      ? `<p class="link-card-desc">${escapeHtml(link.description)}</p>`
-      : '';
-    let host = '';
-    try { host = new URL(link.url).hostname.replace(/^www\./, ''); } catch (_) { host = ''; }
-    const hostLabel = host ? `<span class="link-card-host">${escapeHtml(host)}</span>` : '';
-    const badges = cats.map((slug) => (
-      `<span class="link-card-cat">${escapeHtml(labelOf.get(slug) || slug)}</span>`
-    )).join('');
-    const badgeRow = badges ? `<span class="link-card-cats">${badges}</span>` : '';
-    return (
-      `<li class="link-card-item" data-categories="${escapeHtml(cats.join(' '))}">` +
-      `<a class="link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">` +
-      `<span class="link-card-head"><span class="link-card-name">${escapeHtml(link.name)}</span>` +
-      `<svg class="link-card-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">` +
-      `<path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` +
-      `</span>${desc}<span class="link-card-foot">${badgeRow}${hostLabel}</span></a></li>`
-    );
-  }).join('');
-
-  container.innerHTML =
-    `<div class="links-toolbar" role="group" aria-label="Filter links by category">${chips}</div>` +
-    `<p class="links-count" role="status" aria-live="polite">${linksCountLabel(links.length, links.length, '')}</p>` +
-    `<ul class="links-list">${cards}</ul>`;
-
+  container.innerHTML = linksGridLines(data).join('\n');
   wireLinksFilter(container);
 }
 
