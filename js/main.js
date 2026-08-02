@@ -682,30 +682,50 @@ if (typeof document !== 'undefined') {
      chunk's activation data. On reduced-motion the canvas is hidden entirely. */
   const buildNeural = () => {
     if (!neuralCanvas || prefersReducedMotion()) return;
-    const loading = supportsCnnHero()
+    const isCnn = supportsCnnHero();
+    /* Dropping to the particle field (a narrow window, a coarse pointer) means
+       there is no LeNet on screen any more, so the aside describing one has to
+       go with it. */
+    if (!isCnn) { heroCnnPainted = false; syncHeroCnnLink(); }
+    const loading = isCnn
       ? import('./cnn-hero.js').then((m) => m.CnnHero)
       : import('./neural-net.js').then((m) => m.NeuralNetwork2D);
     loading.then((Background) => {
       /* Fade the canvas in once the first frame has painted (see the
          #neural-canvas opacity transition in css/styles.css), so the
          network materialises gently instead of popping in fully-formed. */
-      const reveal = () => neuralCanvas.classList.add('is-visible');
+      const reveal = () => {
+        neuralCanvas.classList.add('is-visible');
+        /* Same moment the network becomes visible, and the only moment the
+           aside's claim becomes true — see syncHeroCnnLink below. */
+        if (isCnn) { heroCnnPainted = true; syncHeroCnnLink(); }
+      };
       neuralInstance = new Background(neuralCanvas, reveal);
       _disposables.push(neuralInstance);
     });
   };
 
-  /* The hero's "draw it a digit" aside points at projects/mnist-lenet.html, and
-     it only makes sense while the LeNet scene is the background actually
-     painting: a narrow or touch viewport gets the abstract particle field
-     instead, and reduced-motion gets no canvas at all. Gate it on the same
-     predicate buildNeural() branches on — but evaluated independently, so the
-     link does not have to wait for an import that is deferred until the first
-     scroll or mousemove. */
+  /* The hero's aside says "The network behind this text is a real LeNet-5 —
+     draw it a digit". That is a claim about something the visitor can see, so
+     it may only be on screen while the thing is.
+
+     It used to be gated on supportsCnnHero() alone, evaluated immediately, so
+     that it would not have to wait for a deferred import. But buildNeural() is
+     deliberately held back until the first mousemove / scroll / touchstart, to
+     keep the hero off the critical path — which meant that on arrival the
+     sentence sat under an empty black rectangle, asserting a network that had
+     not been drawn. Brief for anyone using a mouse; permanent for every
+     headless renderer, social-preview fetcher and print.
+
+     So eligibility and existence are now separate conditions: supportsCnnHero()
+     and reduced-motion still decide whether it *can* appear, and heroCnnPainted
+     — set from the same callback that fades the canvas in — decides whether it
+     does. */
+  let heroCnnPainted = false;
   const heroCnnLink = document.querySelector('.hero-cnn-link');
   const syncHeroCnnLink = () => {
     if (!heroCnnLink) return;
-    heroCnnLink.hidden = prefersReducedMotion() || !supportsCnnHero();
+    heroCnnLink.hidden = !heroCnnPainted || prefersReducedMotion() || !supportsCnnHero();
   };
   syncHeroCnnLink();
 
