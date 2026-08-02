@@ -239,9 +239,7 @@ export function collectPageErrors(page) {
      to look, so each one needs a reason that is about the site rather than
      about the test environment — network noise is stubbed at the router
      instead (see blockExternalRequests), not filtered here. */
-  const IGNORE = [
-    /frame-ancestors.*ignored when delivered via a <meta> element/i,  /* by design; CSP is a <meta> */
-  ];
+  const IGNORE = [];
   const keep = (text) => !IGNORE.some((re) => re.test(text));
   page.on('console', (msg) => {
     if (msg.type() === 'error' && keep(msg.text())) errors.push(`console: ${msg.text()}`);

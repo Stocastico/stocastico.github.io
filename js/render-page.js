@@ -160,16 +160,23 @@ export function cvTimelineLines(career, education) {
    CV — SKILLS PANELS
    ═══════════════════════════════════════════════════════════ */
 
+/* The track is a role="meter": without it the level exists only in the
+   fill's inline --pct style, so a screen reader hears the skill name and
+   nothing else. */
 function barPanel(items, label) {
   if (!items.length) return '';
   return '<div class="skill-panel" data-animate>'
     + `<h3 class="skill-panel-title">${escapeHtml(label)}</h3>`
     + '<ul class="skill-bars">'
-    + items.map((s) => '<li class="skill-bar-item">'
-      + `<span class="skill-bar-name">${escapeHtml(s.name)}</span>`
-      + '<div class="skill-bar-track">'
-      + `<div class="skill-bar-fill" style="--pct:${parseInt(s.level, 10)}%"></div>`
-      + '</div></li>').join('')
+    + items.map((s) => {
+      const pct = parseInt(s.level, 10);
+      return '<li class="skill-bar-item">'
+        + `<span class="skill-bar-name">${escapeHtml(s.name)}</span>`
+        + `<div class="skill-bar-track" role="meter" aria-label="${escapeHtml(s.name)}"`
+        + ` aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-valuetext="${pct}%">`
+        + `<div class="skill-bar-fill" style="--pct:${pct}%"></div>`
+        + '</div></li>';
+    }).join('')
     + '</ul></div>';
 }
 

@@ -245,7 +245,11 @@ for (const rel of allRoutes) {
        reach the Nominatim geocoder (no other third parties allowed). */
     assert.match(csp, /default-src\s+'self'/, `${rel} CSP missing default-src 'self'`);
     assert.match(csp, /base-uri\s+'self'/, `${rel} CSP missing base-uri 'self'`);
-    assert.match(csp, /frame-ancestors\s+'self'/, `${rel} CSP missing frame-ancestors`);
+    /* frame-ancestors is ignored (per spec) when CSP is delivered via a
+       <meta> element, and GitHub Pages cannot send headers — its presence
+       would only document protection the site doesn't have. */
+    assert.doesNotMatch(csp, /frame-ancestors/,
+      `${rel} CSP lists frame-ancestors, which a <meta> CSP cannot enforce`);
     assert.match(csp, /connect-src[^;]*nominatim\.openstreetmap\.org/,
       `${rel} CSP must allow nominatim.openstreetmap.org for the geocoder`);
   });

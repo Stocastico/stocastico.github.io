@@ -13,7 +13,7 @@
      js/animations.js     — scroll reveals, card tilt, parallax
      js/noise-gradient.js — hero background WebGL shader
      js/globe.js          — 3D globe (Three.js)
-     js/neural-net.js     — neural-network hero (Three.js)
+     js/neural-net.js     — neural-network hero (Canvas2D, no Three.js)
      js/europe-map.js     — 2D Canvas Europe map
 
    Content lives in separate, easy-to-edit files:
@@ -261,7 +261,8 @@ function renderProjects(projects) {
      static HTML, so crawlers and no-JS visitors get it too. */
 }
 
-/* Footer year */
+/* Footer year. The HTML bakes the year current at authoring time so a no-JS
+   visitor never sees an empty "©  Stefano Masneri"; this only refreshes it. */
 function setFooterYear() {
   const el = document.getElementById('footer-year');
   if (el) el.textContent = new Date().getFullYear();

@@ -82,6 +82,11 @@ jobs:
       - name: Regenerate sitemap
         run: npm run generate-sitemap
 
+      # Same policy as the sitemap: entry <updated> dates come from git
+      # history, so refresh them against the commits in this push.
+      - name: Regenerate Atom feed
+        run: npm run generate-feed
+
       # Re-render BreadcrumbList + Article JSON-LD on every project page.
       # Idempotent — only updates the marker block in the <head>.
       - name: Regenerate project JSON-LD

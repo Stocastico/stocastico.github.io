@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Qf7cFZULgfpIr46+SqoEE/HTn/KJ7ik0aTF2mRDa+s0=' 'sha256-ryQm5UQVSOxXQEgoOBY9TjnYlt+XNkWgA3Wxq0vpd+U=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Qf7cFZULgfpIr46+SqoEE/HTn/KJ7ik0aTF2mRDa+s0=' 'sha256-ryQm5UQVSOxXQEgoOBY9TjnYlt+XNkWgA3Wxq0vpd+U=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
@@ -94,6 +94,7 @@
   <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="alternate" type="application/atom+xml" title="Stefano Masneri — projects &amp; now" href="/feed.xml" />
 
   <link rel="stylesheet" href="css/styles.css" />
   <!-- Scroll-reveal elements start at opacity:0 and are revealed by JS.
@@ -233,7 +234,7 @@
           </p>
           <p>
             I left Italy in 2009, spent 9 years in Germany, and moved to Spain after that. Along the way I picked up four foreign languages and a good number of programming ones too. I also obtained a <strong>PhD from the University of the Basque Country</strong>, where I
-            researched collaborative, <a href="docs/defense.pdf" class="inline-link" target="_blank" rel="noopener">multi-user augmented reality experiences for education</a>.
+            researched collaborative, <a href="docs/defense.pdf" class="inline-link" target="_blank" rel="noopener">multi-user augmented reality experiences for education</a> (PDF, 4&nbsp;MB).
           </p>
           <p>
             Outside of work, I spend my free time with friends and family, playing basketball, reading,
@@ -473,7 +474,7 @@
         <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>
         <a href="https://github.com/Stocastico" target="_blank" rel="noopener">GitHub</a>
       </nav>
-      <p>© <span id="footer-year"></span> Stefano Masneri &nbsp;·&nbsp; Written by me, coded with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebastián</p>
+      <p>© <span id="footer-year">2026</span> Stefano Masneri &nbsp;·&nbsp; Written by me, coded with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> and plenty of ☕ in San Sebastián</p>
     </div>
   </footer>
 
@@ -517,9 +518,10 @@
     </svg>
   </button>
 
-  <!-- ES module entry point. Vite bundles js/main.js, which imports Three.js
-       (npm package), all data/*.js modules, and js/europe-map.js. Module
-       scripts are implicitly deferred — execution waits until DOM is parsed. -->
+  <!-- ES module entry point. Vite bundles js/main.js; data modules, Three.js
+       and every single-page module load via dynamic import() behind DOM-id
+       gates, so this page only downloads what it renders. Module scripts are
+       implicitly deferred — execution waits until DOM is parsed. -->
   <script type="module" src="/js/main.js"></script>
 <!-- generated:analytics -->
   <img src="https://stocastico.goatcounter.com/count?p=/&amp;t=Stefano%20Masneri%20%7C%20Machine%20Learning%2C%20Computer%20Vision%20%26%20AR" alt="" width="1" height="1" referrerpolicy="no-referrer-when-downgrade" style="position:absolute;left:-9999px;width:1px;height:1px" />
