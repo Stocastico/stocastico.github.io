@@ -176,3 +176,117 @@ test('css: the [data-animate] hidden state is gated on scripting being enabled',
       'otherwise a no-JS visitor gets a blank page');
   }
 });
+
+test('css: the print stylesheet reveals [data-animate]', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+
+  /* Printing scrolls nothing, so none of the events initScrollReveal() sweeps
+     on ever fire: scroll, resize, hashchange, load. Land on a page, press
+     Ctrl+P, and everything below the fold printed as blank space — 21 of 21
+     animated elements on the homepage, 9 of 12 on the CV. The layout and the
+     page count were right, so the only symptom was missing ink, which is easy
+     to read as a rendering quirk rather than a bug.
+
+     Brace-matched rather than regexed: the print block contains nested rules
+     and a palette override, so a lazy /@media print{[^}]*}/ stops early. */
+  const start = css.indexOf('@media print');
+  assert.ok(start !== -1, 'no @media print block');
+  let depth = 0;
+  let end = css.indexOf('{', start);
+  for (; end < css.length; end++) {
+    if (css[end] === '{') depth++;
+    else if (css[end] === '}' && --depth === 0) break;
+  }
+  const block = css.slice(start, end);
+
+  const rule = block.match(/\[data-animate\]\s*{[^}]*}/);
+  assert.ok(rule, '@media print does not reveal [data-animate] — printing loses every unrevealed element');
+  assert.match(rule[0], /opacity:\s*1\s*!important/,
+    'the print reveal must beat the @media (scripting: enabled) opacity: 0');
+});
+
+/* ─── Inline diagrams must stay theme-driven ──────────────────
+   The architecture diagrams were <img src="…svg"> for a long time, and an
+   external SVG is its own document: it cannot read this page's custom
+   properties, so every colour had to be baked in. Three of them were, in three
+   different palettes, all of them superseded — near-black panels in a cream
+   page in light mode, cold blue-black on warm brown in dark. Inlining is what
+   lets them read var(--*); a hex literal creeping back in silently undoes
+   that, and only in the theme nobody happened to screenshot. */
+test('inline project diagrams carry no hardcoded colours', () => {
+  const dir = path.join(ROOT, 'projects');
+  const offenders = [];
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
+    const html = fs.readFileSync(path.join(dir, file), 'utf8');
+    for (const svg of html.match(/<svg class="diagram"[\s\S]*?<\/svg>/g) || []) {
+      /* #rrggbb / #rgb in a colour position. Fragment refs (url(#ah),
+         href="#x") are not colours and must not be flagged. */
+      for (const m of svg.match(/(?:fill|stroke|stop-color|color)="#[0-9a-fA-F]{3,8}"/g) || []) {
+        offenders.push(`${file}: ${m}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, [],
+    'inline diagrams must use var(--*) so they follow the palette and the light/dark toggle:\n'
+    + offenders.join('\n'));
+});
+
+test('every page with an inline diagram actually inlines it', () => {
+  /* The point of inlining is lost the moment one goes back to <img src>. */
+  const dir = path.join(ROOT, 'projects');
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
+    const html = fs.readFileSync(path.join(dir, file), 'utf8');
+    const imgSvg = html.match(/<img[^>]+src="[^"]*\/(rag-ingestion|rag-query|brand-stadium-pipeline)\.svg"/g) || [];
+    assert.deepEqual(imgSvg, [],
+      `${file} references a diagram as <img>; inline it so var(--*) resolves`);
+  }
+});
+
+test('assets: no unreferenced images in img/', () => {
+  /* 546 KB of images had accumulated that nothing on the site pointed at —
+     inevent.png (363 KB), mpi-brain-thumb.webp (110 KB) and four orphaned
+     thumbs — and the build copied img/ wholesale, so all of it shipped. They
+     are invisible by nature: an unused file breaks nothing and shows up in no
+     page. Only a check like this one notices.
+
+     Two deliberate exemptions. img/og/ holds one social card per palette and
+     only the active one is referenced; the others become referenced the moment
+     `active:` changes in data/palettes.yaml. drafts/ is not deployed, so a
+     reference from there does not count as one. */
+  const IMG = path.join(ROOT, 'img');
+  const exts = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif']);
+
+  const images = [];
+  const walkImages = (dir, rel = '') => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const next = path.join(dir, ent.name);
+      const nextRel = rel ? `${rel}/${ent.name}` : ent.name;
+      if (ent.isDirectory()) walkImages(next, nextRel);
+      else if (exts.has(path.extname(ent.name).toLowerCase())) images.push(nextRel);
+    }
+  };
+  walkImages(IMG);
+
+  /* Every text source that could name an image. Deliberately not *.md — the
+     review notes and drafts name files they do not ship. */
+  const sources = [];
+  const SKIP = new Set(['node_modules', 'dist', '.git', '.cache', 'screenshots', 'drafts', 'img']);
+  const walkSources = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (SKIP.has(ent.name)) continue;
+      const next = path.join(dir, ent.name);
+      if (ent.isDirectory()) walkSources(next);
+      else if (/\.(html|css|js|mjs|cjs|json|yaml|yml|webmanifest|xml)$/.test(ent.name)) sources.push(next);
+    }
+  };
+  walkSources(ROOT);
+  const haystack = sources.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+
+  const orphans = images.filter((rel) => {
+    if (rel.startsWith('og/')) return false;
+    return !haystack.includes(path.basename(rel));
+  });
+
+  assert.deepEqual(orphans, [],
+    'these images are referenced nowhere and would still be deployed:\n  ' + orphans.join('\n  '));
+});

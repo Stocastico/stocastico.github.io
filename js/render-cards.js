@@ -46,7 +46,18 @@ export function assertProjectKinds(projects) {
 }
 
 /* One project card. `i` only drives the staggered reveal delay. */
-export function projectCardHtml(project, i = 0) {
+/* `level` sets the card title's heading rank, and it has to vary by page.
+   These titles were a <span>, which left projects.html with exactly one
+   heading — <h1> Portfolio — for fourteen projects, and the homepage with an
+   h1, five h2s and no h3 at all. Heading navigation is how a screen-reader
+   user skims a page, and here it did nothing. The cards are <a>-wrapped, so a
+   heading inside the anchor is valid and changes nothing visually.
+
+   The rank cannot be a constant: on index.html the cards sit under an
+   <h2> section title and want h3, while projects.html goes straight from
+   <h1> Portfolio to the grid and wants h2. Hardcoding either one skips a level
+   somewhere, which is its own failure. */
+export function projectCardHtml(project, i = 0, { level = 3 } = {}) {
   const tagsHtml = (project.tags || [])
     .map((t) => '<span class="project-tag">' + escapeHtml(t) + '</span>')
     .join('');
@@ -76,7 +87,7 @@ export function projectCardHtml(project, i = 0) {
         '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
         kindHtml +
       '</div>' +
-      '<span class="project-card__title">' + escapeHtml(project.title) + '</span>' +
+      '<h' + level + ' class="project-card__title">' + escapeHtml(project.title) + '</h' + level + '>' +
       '<div class="project-card__tags">' + tagsHtml + '</div>' +
       '<p class="project-card__desc">' + escapeHtml(project.description || '') + '</p>' +
     '</div>' +
@@ -88,7 +99,7 @@ export function projectCardHtml(project, i = 0) {
 export function publicationItemHtml(pub, i = 0, { hideYear = false } = {}) {
   const inner =
     (hideYear ? '' : '<div class="pub-year">' + escapeHtml(pub.year) + '</div>') +
-    '<div class="pub-title">' + escapeHtml(pub.title) + '</div>' +
+    '<h3 class="pub-title">' + escapeHtml(pub.title) + '</h3>' +
     '<div class="pub-meta">' +
       escapeHtml(pub.authors) + ' &nbsp;·&nbsp; ' +
       '<span class="pub-venue">' + escapeHtml(pub.venue) + '</span>' +

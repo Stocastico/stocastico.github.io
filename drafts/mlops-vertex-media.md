@@ -4,7 +4,7 @@ title:       "MLOps Platform on GCP for a Spanish Media Group"
 year:        "2022 – 2023"
 tags:        "MLOps, Vertex AI, GCP"
 bg:          "img/projects/mlops-bg.webp"
-description: "End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle."
+description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection."
 ---
 
 This was my first project as **technical manager** at **[NTT DATA](https://www.nttdata.com/global/en/)**, working with one of the largest media groups in Spain. The client already had a respectable portfolio of machine-learning models in production: a churn predictor for their subscription business, an article recommender for the news portal, and a handful of smaller models around content tagging and engagement. Each of them, though, had been built in isolation, by different teams, at different times, with different tools. Training a model meant a data scientist running a notebook on their laptop and copying the resulting pickle file to a server somewhere. It was difficult to reliably reproduce a model from six months earlier, or to know when a model's performance had drifted in production. There was no shared way to version a dataset, promote a model, or roll one back.

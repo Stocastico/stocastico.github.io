@@ -1,74 +1,72 @@
-<svg width="800" height="410" viewBox="0 0 800 410" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">
+<svg width="800" height="410" viewBox="0 0 800 410" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
   <defs>
     <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#6c63ff"/>
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)"/>
     </marker>
     <marker id="ahc" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff"/>
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent2)"/>
     </marker>
   </defs>
 
-  <rect width="800" height="410" fill="#080c14"/>
-
-  <text x="400" y="30" text-anchor="middle" fill="#8893a4" font-size="10.5" font-weight="500" letter-spacing="0.12em">QUERY &amp; ANSWER PIPELINE  ·  REAL-TIME INFERENCE</text>
+  <text x="400" y="30" text-anchor="middle" fill="var(--text-muted)" font-size="9.24" font-weight="500" letter-spacing="0.12em">QUERY &amp; ANSWER PIPELINE  ·  REAL-TIME INFERENCE</text>
 
   <!-- ── TOP ROW: SEMANTIC RETRIEVAL ── -->
 
   <!-- Box 1: User Question -->
-  <rect x="88" y="50" width="110" height="65" rx="10" fill="#0c1020" stroke="rgba(232,237,248,0.35)" stroke-width="1.5"/>
-  <text x="143" y="78" text-anchor="middle" fill="#e8edf8" font-size="11.5" font-weight="600">User Question</text>
-  <text x="143" y="97" text-anchor="middle" fill="#8893a4" font-size="9.5">Natural language</text>
+  <rect x="88" y="50" width="110" height="65" rx="10" fill="var(--bg-card)" stroke="rgb(var(--text-rgb) / 0.35)" stroke-width="1.5"/>
+  <text x="143" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">User Question</text>
+  <text x="143" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Natural language</text>
 
-  <line x1="198" y1="82" x2="235" y2="82" stroke="#6c63ff" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="198" y1="82" x2="235" y2="82" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
 
   <!-- Box 2: Embedding Model -->
-  <rect x="238" y="50" width="130" height="65" rx="10" fill="#0c1020" stroke="#00d4ff" stroke-width="1.5"/>
-  <text x="303" y="78" text-anchor="middle" fill="#e8edf8" font-size="11.5" font-weight="600">Embedding Model</text>
-  <text x="303" y="97" text-anchor="middle" fill="#8893a4" font-size="9.5">Encode query vector</text>
+  <rect x="238" y="50" width="130" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="303" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">Embedding Model</text>
+  <text x="303" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Encode query vector</text>
 
-  <line x1="368" y1="82" x2="405" y2="82" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#ahc)"/>
+  <line x1="368" y1="82" x2="405" y2="82" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#ahc)"/>
 
   <!-- Box 3: Vector DB -->
-  <rect x="408" y="50" width="120" height="65" rx="10" fill="#0c1020" stroke="#00d4ff" stroke-width="1.5"/>
-  <text x="468" y="78" text-anchor="middle" fill="#e8edf8" font-size="11.5" font-weight="600">Vector DB</text>
-  <text x="468" y="97" text-anchor="middle" fill="#8893a4" font-size="9.5">Cosine similarity</text>
+  <rect x="408" y="50" width="120" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="468" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">Vector DB</text>
+  <text x="468" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Cosine similarity</text>
 
-  <line x1="528" y1="82" x2="565" y2="82" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#ahc)"/>
+  <line x1="528" y1="82" x2="565" y2="82" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#ahc)"/>
 
   <!-- Box 4: Top-K Chunks -->
-  <rect x="568" y="50" width="145" height="65" rx="10" fill="#0c1020" stroke="#00d4ff" stroke-width="1.5"/>
-  <text x="640" y="78" text-anchor="middle" fill="#e8edf8" font-size="11.5" font-weight="600">Top-K Chunks</text>
-  <text x="640" y="97" text-anchor="middle" fill="#8893a4" font-size="9.5">Retrieved with metadata</text>
+  <rect x="568" y="50" width="145" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="640" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">Top-K Chunks</text>
+  <text x="640" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Retrieved with metadata</text>
 
   <!-- Metadata callout below Top-K -->
-  <line x1="640" y1="115" x2="640" y2="140" stroke="rgba(0,212,255,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
-  <rect x="562" y="141" width="156" height="44" rx="8" fill="rgba(0,212,255,0.06)" stroke="rgba(0,212,255,0.25)" stroke-width="1"/>
-  <text x="640" y="160" text-anchor="middle" fill="#00d4ff" font-size="9.5" font-weight="600">doc name · page number</text>
-  <text x="640" y="176" text-anchor="middle" fill="#8893a4" font-size="9">chunk text (used as context)</text>
+  <line x1="640" y1="115" x2="640" y2="140" stroke="rgb(var(--accent2-rgb) / 0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+  <rect x="562" y="141" width="156" height="44" rx="8" fill="rgb(var(--accent2-rgb) / 0.06)" stroke="rgb(var(--accent2-rgb) / 0.25)" stroke-width="1"/>
+  <text x="640" y="160" text-anchor="middle" fill="var(--accent2)" font-size="8.36" font-weight="600">doc name · page number</text>
+  <text x="640" y="176" text-anchor="middle" fill="var(--text-muted)" font-size="7.92">chunk text (used as context)</text>
 
   <!-- ── CONNECTORS DOWN TO LLM ── -->
 
   <!-- User Question → LLM: straight down, then right -->
-  <path d="M143,115 L143,310 L246,310" fill="none" stroke="rgba(108,99,255,0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ah)"/>
-  <text x="150" y="222" fill="#8893a4" font-size="9" font-style="italic">original question</text>
+  <path d="M143,115 L143,310 L246,310" fill="none" stroke="rgb(var(--accent-rgb) / 0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ah)"/>
+  <text x="150" y="222" fill="var(--text-muted)" font-size="7.92" font-style="italic">original question</text>
 
   <!-- Top-K → LLM: right, then down, then left -->
-  <path d="M713,82 L758,82 L758,310 L420,310" fill="none" stroke="rgba(0,212,255,0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ahc)"/>
-  <text x="763" y="222" fill="#8893a4" font-size="9" font-style="italic">retrieved context</text>
+  <path d="M713,82 L758,82 L758,310 L420,310" fill="none" stroke="rgb(var(--accent2-rgb) / 0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ahc)"/>
+  <text x="763" y="222" fill="var(--text-muted)" font-size="7.92" font-style="italic">retrieved context</text>
 
   <!-- ── BOTTOM ROW: GENERATION ── -->
 
   <!-- Box 5: LLM -->
-  <rect x="248" y="288" width="170" height="65" rx="10" fill="#0c1020" stroke="#6c63ff" stroke-width="2"/>
-  <text x="333" y="317" text-anchor="middle" fill="#e8edf8" font-size="13" font-weight="700">LLM</text>
-  <text x="333" y="336" text-anchor="middle" fill="#8893a4" font-size="9.5">Generates grounded answer</text>
+  <rect x="248" y="288" width="170" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="333" y="317" text-anchor="middle" fill="var(--text)" font-size="11.44" font-weight="700">LLM</text>
+  <text x="333" y="336" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Generates grounded answer</text>
 
-  <line x1="418" y1="320" x2="455" y2="320" stroke="#6c63ff" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="418" y1="320" x2="455" y2="320" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
 
   <!-- Box 6: Answer + Citations -->
-  <rect x="458" y="288" width="210" height="65" rx="10" fill="#0c1020" stroke="#6c63ff" stroke-width="1.5"/>
-  <text x="563" y="317" text-anchor="middle" fill="#e8edf8" font-size="11.5" font-weight="600">Answer + Citations</text>
-  <text x="563" y="336" text-anchor="middle" fill="#8893a4" font-size="9.5">Document name · page number</text>
+  <rect x="458" y="288" width="210" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="563" y="317" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">Answer + Citations</text>
+  <text x="563" y="336" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Document name · page number</text>
 
-  <text x="400" y="385" text-anchor="middle" fill="#8893a4" font-size="10" font-style="italic">Every answer is grounded in retrieved source documents — with exact document and page references</text>
+  <text x="400" y="385" text-anchor="middle" fill="var(--text-muted)" font-size="8.8" font-style="italic">Every answer is grounded in retrieved source documents — with exact document and page references</text>
 </svg>

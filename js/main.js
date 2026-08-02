@@ -45,20 +45,24 @@
    module that serves a single page belongs behind a dynamic import at its
    init site, not up here. */
 
-/* ─── Data files ──────────────────────────────────────────
-   PROJECTS / PUBLICATIONS / CV_* are imported by name; render
-   functions take them as parameters (defaulting to these
-   imports) so tests can inject mocks without touching globals.
+/* Nothing is imported here. Every data module is loaded with a dynamic
+   import() at the DOM gate that needs it, further down.
 
-   LOCATIONS still rides on globalThis because Globe3D and
-   EuropeMap2D read it as a bare global from constructor bodies;
-   migrating those is a separate refactor. */
-import '../data/locations.js';
-import { PUBLICATIONS as DEFAULT_PUBLICATIONS } from '../data/publications.js';
-import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
-import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
-import { UNESCO as DEFAULT_UNESCO } from '../data/unesco.js';
-import { LINKS as DEFAULT_LINKS } from '../data/links.js';
+   These six used to be static imports, which put all of them in the single
+   shared main-*.js chunk: 21.3 KB gzip of the 31.3 KB bundle — 68% of the
+   shared JavaScript — downloaded by all 21 pages. A visitor landing on
+   now.html (three paragraphs about a baby and Dostoevsky) fetched the complete
+   UNESCO world-heritage tree, the 49-entry blogroll, every travel pin, the
+   full CV, all 37 publications and all 14 projects.
+
+   This is the same mistake CLAUDE.md already records for europe-map.js —
+   "shipped 10 KB to the twenty pages with no #europe-canvas" — learned for
+   code and never applied to data. Every renderer already gated on a DOM id, so
+   the fix is only moving the import inside the gate that was there all along.
+
+   Consequence for the renderers below: their data parameters have no
+   defaults. A default would have to name the module at the top of the file,
+   which is exactly what puts it back in the eager graph. */
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
 import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, supportsCnnHero, CNN_HERO_QUERY } from './utils.js';
@@ -66,6 +70,13 @@ import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, su
 /* Card / list-item markup — shared with the static generator
    (scripts/generate-cards.mjs) so SSR and client markup never drift. */
 import { projectCardHtml, publicationsListLines, homepageProjects } from './render-cards.js';
+
+/* Page-section markup (CV timeline + skills, UNESCO accordion, links grid) —
+   shared with the same generator, for the same reason. These three pages used
+   to ship as empty shells; see the header of js/render-page.js. */
+import {
+  cvTimelineLines, cvSkillsLines, unescoAccordionLines, linksGridLines, linksCountLabel,
+} from './render-page.js';
 
 /* Theme colours — single source of truth (data/palettes.yaml → js/theme.js).
    Only the favicon renderer below reads THEME/rgba now; the noise shader
@@ -87,6 +98,7 @@ import {
   initCardTilt,
   initScroll3D,
   initSkillBars,
+  revealNewContent,
 } from './animations.js';
 
 /* UI behaviours: navbar, command palette, side dots, mobile menu, counters,
@@ -180,7 +192,7 @@ function initEmailObfuscation() {
 
 /* Publication items — data source: PUBLICATIONS (data/publications.js).
    Tests pass a mock array as the first argument. */
-function renderPublications(publications = DEFAULT_PUBLICATIONS) {
+function renderPublications(publications) {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
@@ -201,11 +213,11 @@ function renderPublications(publications = DEFAULT_PUBLICATIONS) {
 var PROJECTS_MAX_HOMEPAGE = 3;
 
 /* Thin wrapper around the shared builder (kept for the public test surface). */
-function renderProjectCard(project, i) {
-  return projectCardHtml(project, i);
+function renderProjectCard(project, i, opts) {
+  return projectCardHtml(project, i, opts);
 }
 
-function renderProjects(projects = DEFAULT_PROJECTS) {
+function renderProjects(projects) {
   var grid = document.getElementById('projects-grid');
   if (!grid) return;
 
@@ -235,7 +247,14 @@ function renderProjects(projects = DEFAULT_PROJECTS) {
     grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
     return;
   }
-  grid.innerHTML = shown.map(renderProjectCard).join('');
+  /* Heading rank follows the page, matching what generate-cards baked in:
+     projects.html goes <h1> Portfolio → cards, so they are h2; the homepage
+     puts them under an <h2> section title, so they are h3. Passing the wrong
+     one here would make the re-render disagree with the served HTML. */
+  var level = showAll ? 2 : 3;
+  grid.innerHTML = shown.map(function (p, i) {
+    return renderProjectCard(p, i, { level: level });
+  }).join('');
 
   /* No "View all projects" footer button: the section's intro prose already
      links the full list, and unlike a JS-injected footer that link is in the
@@ -251,202 +270,27 @@ function setFooterYear() {
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — TIMELINE RENDERING
    Tests pass mocked career/education arrays as arguments.
-   One card per job/degree — all details visible, no flipping.
+
+   The markup itself lives in js/render-page.js, which generate-cards also
+   imports — cv.html now ships the timeline server-rendered, and re-rendering
+   it here from the same builder is what keeps the two from drifting.
    ═══════════════════════════════════════════════════════════ */
-function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) {
+function renderCV(career, education) {
   if (typeof document === 'undefined') return;
   const timeline = document.getElementById('cv-timeline');
   if (!timeline) return;
-
-  /* ── Build card HTML ────────────────────────────────── */
-  function cardHtml(entry, type) {
-    const isCareer = type === 'career';
-    const title  = isCareer ? entry.role   : entry.degree;
-    const sub    = isCareer ? entry.company : entry.institution;
-    const locHtml  = entry.location
-      ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
-      : '';
-    const descHtml = entry.description
-      ? `<p class="tl-desc">${escapeHtml(entry.description)}</p>`
-      : '';
-    const tagsArr  = entry.tags || [];
-    const tagsHtml = tagsArr.length
-      ? `<div class="tl-tags">${tagsArr.map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
-      : '';
-
-    return `
-      <div class="tl-card-single">
-        <div class="tl-card-header">
-          <span class="tl-year">${escapeHtml(String(entry.year))}</span>
-          ${locHtml}
-        </div>
-        <h3 class="tl-title">${escapeHtml(title || '')}</h3>
-        <p class="tl-sub">${escapeHtml(sub || '')}</p>
-        ${descHtml}${tagsHtml}
-      </div>`;
-  }
-
-  /* ── Extract start year for sorting ────────────────── */
-  function startYear(yearStr) {
-    var m = String(yearStr).match(/\d{4}/);
-    return m ? parseInt(m[0], 10) : 0;
-  }
-
-  /* ── Separate concurrent from normal education entries ── */
-  var concurrentEduEntries = [];
-  var normalEduEntries     = [];
-  (education || []).forEach(function(e) {
-    if (Array.isArray(e.concurrent_with) && e.concurrent_with.length > 0) {
-      concurrentEduEntries.push(e);
-    } else {
-      normalEduEntries.push(e);
-    }
-  });
-
-  /* ── Build set of career companies involved in concurrent blocks ── */
-  var concurrentCareerSet = {};
-  concurrentEduEntries.forEach(function(edu) {
-    edu.concurrent_with.forEach(function(company) {
-      concurrentCareerSet[company] = true;
-    });
-  });
-
-  /* ── Partition career entries ── */
-  var concurrentCareerEntries = [];
-  var normalCareerEntries     = [];
-  (career || []).forEach(function(e) {
-    if (concurrentCareerSet[e.company]) {
-      concurrentCareerEntries.push(e);
-    } else {
-      normalCareerEntries.push(e);
-    }
-  });
-
-  /* ── Build sortable row descriptors ── */
-  var rows = [];
-
-  /* Normal career rows */
-  normalCareerEntries.forEach(function(entry) {
-    rows.push({
-      sort: startYear(entry.year),
-      html: '<div class="tl-row tl-row--career" data-animate>'
-          + '<div class="tl-left">' + cardHtml(entry, 'career') + '</div>'
-          + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-          + '<div class="tl-right"><div class="tl-empty"></div></div>'
-          + '</div>',
-    });
-  });
-
-  /* Normal (unpaired) education rows */
-  normalEduEntries.forEach(function(entry) {
-    rows.push({
-      sort: startYear(entry.year),
-      html: '<div class="tl-row tl-row--education" data-animate>'
-          + '<div class="tl-left"><div class="tl-empty"></div></div>'
-          + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-          + '<div class="tl-right">' + cardHtml(entry, 'education') + '</div>'
-          + '</div>',
-    });
-  });
-
-  /* Concurrent blocks: education entry with concurrent_with spans matching career rows */
-  concurrentEduEntries.forEach(function(eduEntry) {
-    var companies   = eduEntry.concurrent_with;
-    var careerPairs = concurrentCareerEntries
-      .filter(function(c) { return companies.indexOf(c.company) !== -1; })
-      .sort(function(a, b) { return startYear(b.year) - startYear(a.year); });
-
-    var n = careerPairs.length;
-
-    /* Column 1 is the spine, column 2 the concurrent career cards (one per
-       grid row), column 3 the education card beside them. Placement is inline
-       because the row index depends on how many careers the entry overlaps,
-       which CSS cannot express — see .tl-concurrent-block in css/styles.css. */
-    var leftCells = careerPairs.map(function(c, i) {
-      var row = i + 1;
-      return '<div class="tl-left tl-row--career" style="grid-column:2;grid-row:' + row + '">'
-           +   cardHtml(c, 'career')
-           + '</div>'
-           + '<div class="tl-spine" style="grid-column:1;grid-row:' + row + '">'
-           +   '<div class="tl-dot" aria-hidden="true"></div>'
-           + '</div>';
-    }).join('');
-
-    /* Education card spans every career row it overlaps */
-    var rightCell = '<div class="tl-right tl-row--education" style="grid-column:3;grid-row:1/' + (n + 1) + '">'
-                  + cardHtml(eduEntry, 'education')
-                  + '</div>';
-
-    var sortYear = n > 0 ? startYear(careerPairs[0].year) : startYear(eduEntry.year);
-
-    rows.push({
-      sort: sortYear,
-      html: '<div class="tl-concurrent-block" data-animate>'
-          + leftCells
-          + rightCell
-          + '</div>',
-    });
-  });
-
-  /* ── Sort all rows newest-first and render ── */
-  rows.sort(function(a, b) { return b.sort - a.sort; });
-  timeline.innerHTML = rows.map(function(r) { return r.html; }).join('');
+  timeline.innerHTML = cvTimelineLines(career, education).join('\n');
 }
 
 /* ═══════════════════════════════════════════════════════════
    CURRICULUM VITAE — SKILLS PANELS
    Tests pass a mocked CV_SKILLS object as the first argument.
    ═══════════════════════════════════════════════════════════ */
-function renderSkills(skills = DEFAULT_CV_SKILLS) {
+function renderSkills(skills) {
   if (typeof document === 'undefined') return;
   const container = document.getElementById('cv-skills');
   if (!container) return;
-
-  const { technical = [], leadership = [], languages = [] } = skills;
-
-  /* Progress-bar panel for technical / leadership */
-  function barPanel(items, label) {
-    if (!items.length) return '';
-    return `
-      <div class="skill-panel" data-animate>
-        <h3 class="skill-panel-title">${escapeHtml(label)}</h3>
-        <ul class="skill-bars">
-          ${items.map(s => `
-            <li class="skill-bar-item">
-              <span class="skill-bar-name">${escapeHtml(s.name)}</span>
-              <div class="skill-bar-track">
-                <div class="skill-bar-fill" style="--pct:${parseInt(s.level, 10)}%"></div>
-              </div>
-            </li>`).join('')}
-        </ul>
-      </div>`;
-  }
-
-  /* Language proficiency pill panel */
-  function langPanel(items) {
-    if (!items.length) return '';
-    return `
-      <div class="skill-panel" data-animate>
-        <h3 class="skill-panel-title">Languages</h3>
-        <ul class="lang-list">
-          ${items.map(l => `
-            <li class="lang-item">
-              <span class="lang-name">${escapeHtml(l.name)}</span>
-              <span class="lang-prof">${escapeHtml(l.proficiency)}</span>
-            </li>`).join('')}
-        </ul>
-      </div>`;
-  }
-
-  const panels = [
-    barPanel(technical,  'Technical'),
-    barPanel(leadership, 'Leadership'),
-    langPanel(languages),
-  ].filter(Boolean).join('');
-
-  container.innerHTML = panels
-    ? `<div class="skill-panels">${panels}</div>`
-    : '';
+  container.innerHTML = cvSkillsLines(skills).join('\n');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -550,49 +394,12 @@ export function renderGlobeA11yList(container, locations) {
   container.innerHTML = sections.join('');
 }
 
-/* Renders the UNESCO World Heritage accordion on the travel page: a two-level
-   native-disclosure tree (continent → country) whose leaves are links to each
-   site's official whc.unesco.org page. Built from <details>/<summary> so it is
-   keyboard-operable and degrades gracefully with no extra JS. Site URLs are
-   already restricted to https:// by the generator (scripts/generate-unesco.js),
-   and every field is HTML-escaped here as defence in depth. */
+/* Renders the UNESCO World Heritage accordion on the travel page. Gated on
+   #unesco-accordion; markup and its rationale live in js/render-page.js, which
+   generate-cards uses to bake the same tree into travel.html. */
 export function renderUnescoAccordion(container, data) {
   if (!container) return;
-  const continents = (data && Array.isArray(data.continents)) ? data.continents : [];
-
-  if (!continents.length) {
-    container.innerHTML =
-      '<p class="unesco-empty">The list of visited sites is on its way &mdash; check back soon.</p>';
-    return;
-  }
-
-  const countSites = (countries) =>
-    countries.reduce((n, k) => n + (k.sites ? k.sites.length : 0), 0);
-
-  const html = continents.map((cont) => {
-    const countries = (cont.countries || []).map((country) => {
-      const sites = (country.sites || []).map((site) => {
-        const year = site.year
-          ? ` <span class="unesco-year">(${escapeHtml(String(site.year))})</span>`
-          : '';
-        return `<li><a class="unesco-site" href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(site.name)}</a>${year}</li>`;
-      }).join('');
-      return (
-        `<details class="unesco-country"><summary>` +
-        `<span class="unesco-name">${escapeHtml(country.name)}</span>` +
-        `<span class="unesco-count">${(country.sites || []).length}</span></summary>` +
-        `<ul class="unesco-sites">${sites}</ul></details>`
-      );
-    }).join('');
-    return (
-      `<details class="unesco-continent"><summary>` +
-      `<span class="unesco-name">${escapeHtml(cont.name)}</span>` +
-      `<span class="unesco-count">${countSites(cont.countries || [])}</span></summary>` +
-      `<div class="unesco-countries">${countries}</div></details>`
-    );
-  }).join('');
-
-  container.innerHTML = html;
+  container.innerHTML = unescoAccordionLines(data).join('\n');
 }
 
 /* True when a link (its list of category slugs) should be shown under the
@@ -603,12 +410,8 @@ export function linkMatchesFilter(categories, filter) {
   return Array.isArray(categories) && categories.indexOf(filter) !== -1;
 }
 
-/* Human-readable "Showing …" summary for the live count region. */
-function linksCountLabel(shown, total, filterLabel) {
-  const noun = total === 1 ? 'site' : 'sites';
-  if (!filterLabel) return `Showing all ${total} ${noun}`;
-  return `Showing ${shown} ${shown === 1 ? 'site' : 'sites'} in ${filterLabel}`;
-}
+/* linksCountLabel() lives in js/render-page.js — the server-rendered count and
+   the one this file rewrites on every filter click must read identically. */
 
 /* Wire up the category filter chips: clicking a chip shows only the cards in
    that category (or all). Single-select, accessible (aria-pressed + a polite
@@ -645,66 +448,13 @@ function wireLinksFilter(container) {
   });
 }
 
-/* Renders the curated blogroll on the links page: a category filter bar plus a
-   single, de-duplicated grid of external link cards. Each site appears once and
-   is tagged with every category it belongs to, so filtering by category never
-   duplicates an entry. The generator (scripts/generate-links.js) already
-   restricts URLs to https:// and de-duplicates by URL; every field is
-   HTML-escaped here as defence in depth. Gated on #links-grid (links page). */
+/* Renders the curated blogroll on the links page and wires its filter chips.
+   Gated on #links-grid; markup lives in js/render-page.js, which generate-cards
+   uses to bake the same grid into links.html. The re-render is what lets the
+   chips assume a DOM they built themselves. */
 export function renderLinks(container, data) {
   if (!container) return;
-  const categories = (data && Array.isArray(data.categories)) ? data.categories : [];
-  const links = (data && Array.isArray(data.links)) ? data.links : [];
-
-  if (!links.length) {
-    container.innerHTML =
-      '<p class="links-empty">The reading list is on its way &mdash; check back soon.</p>';
-    return;
-  }
-
-  const labelOf = new Map(categories.map((c) => [c.slug, c.label]));
-  const countOf = new Map(categories.map((c) => [c.slug, 0]));
-  for (const link of links) {
-    for (const slug of (link.categories || [])) {
-      if (countOf.has(slug)) countOf.set(slug, countOf.get(slug) + 1);
-    }
-  }
-
-  const chips = [
-    `<button class="link-chip is-active" type="button" data-filter="all" data-label="All" aria-pressed="true">` +
-    `All <span class="link-chip-count">${links.length}</span></button>`,
-  ].concat(categories.map((cat) => (
-    `<button class="link-chip" type="button" data-filter="${escapeHtml(cat.slug)}" data-label="${escapeHtml(cat.label)}" aria-pressed="false">` +
-    `${escapeHtml(cat.label)} <span class="link-chip-count">${countOf.get(cat.slug) || 0}</span></button>`
-  ))).join('');
-
-  const cards = links.map((link) => {
-    const cats = Array.isArray(link.categories) ? link.categories : [];
-    const desc = link.description
-      ? `<p class="link-card-desc">${escapeHtml(link.description)}</p>`
-      : '';
-    let host = '';
-    try { host = new URL(link.url).hostname.replace(/^www\./, ''); } catch (_) { host = ''; }
-    const hostLabel = host ? `<span class="link-card-host">${escapeHtml(host)}</span>` : '';
-    const badges = cats.map((slug) => (
-      `<span class="link-card-cat">${escapeHtml(labelOf.get(slug) || slug)}</span>`
-    )).join('');
-    const badgeRow = badges ? `<span class="link-card-cats">${badges}</span>` : '';
-    return (
-      `<li class="link-card-item" data-categories="${escapeHtml(cats.join(' '))}">` +
-      `<a class="link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">` +
-      `<span class="link-card-head"><span class="link-card-name">${escapeHtml(link.name)}</span>` +
-      `<svg class="link-card-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">` +
-      `<path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` +
-      `</span>${desc}<span class="link-card-foot">${badgeRow}${hostLabel}</span></a></li>`
-    );
-  }).join('');
-
-  container.innerHTML =
-    `<div class="links-toolbar" role="group" aria-label="Filter links by category">${chips}</div>` +
-    `<p class="links-count" role="status" aria-live="polite">${linksCountLabel(links.length, links.length, '')}</p>` +
-    `<ul class="links-list">${cards}</ul>`;
-
+  container.innerHTML = linksGridLines(data).join('\n');
   wireLinksFilter(container);
 }
 
@@ -819,11 +569,35 @@ if (typeof document !== 'undefined') {
 
   document.addEventListener('DOMContentLoaded', () => {
 
-  /* Render dynamic content (static sections are already in HTML) */
-  renderPublications();
-  renderProjects();
-  renderCV();      /* timeline entries from data/cv.js */
-  renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
+  /* Render dynamic content. Every section below is already server-rendered
+     into the HTML by generate-cards, so these re-renders are enhancement, not
+     load-bearing — which is what lets them wait for a dynamic import(). The
+     element check comes first so a page without the section never fetches the
+     data at all. */
+  const pubList = document.getElementById('publications-list');
+  if (pubList) {
+    import('../data/publications.js').then(({ PUBLICATIONS }) => {
+      renderPublications(PUBLICATIONS);
+      revealNewContent(pubList);
+    });
+  }
+  const projGrid = document.getElementById('projects-grid');
+  if (projGrid) {
+    import('../data/projects.js').then(({ PROJECTS }) => {
+      renderProjects(PROJECTS);
+      revealNewContent(projGrid);
+    });
+  }
+  const cvTimeline = document.getElementById('cv-timeline');
+  const cvSkills = document.getElementById('cv-skills');
+  if (cvTimeline || cvSkills) {
+    import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
+      renderCV(CV_CAREER, CV_EDUCATION);
+      renderSkills(CV_SKILLS);
+      revealNewContent(cvTimeline);
+      revealNewContent(cvSkills);
+    });
+  }
   setFooterYear();
 
   /* Each disposable below is recorded so a single pagehide handler at the end
@@ -908,30 +682,50 @@ if (typeof document !== 'undefined') {
      chunk's activation data. On reduced-motion the canvas is hidden entirely. */
   const buildNeural = () => {
     if (!neuralCanvas || prefersReducedMotion()) return;
-    const loading = supportsCnnHero()
+    const isCnn = supportsCnnHero();
+    /* Dropping to the particle field (a narrow window, a coarse pointer) means
+       there is no LeNet on screen any more, so the aside describing one has to
+       go with it. */
+    if (!isCnn) { heroCnnPainted = false; syncHeroCnnLink(); }
+    const loading = isCnn
       ? import('./cnn-hero.js').then((m) => m.CnnHero)
       : import('./neural-net.js').then((m) => m.NeuralNetwork2D);
     loading.then((Background) => {
       /* Fade the canvas in once the first frame has painted (see the
          #neural-canvas opacity transition in css/styles.css), so the
          network materialises gently instead of popping in fully-formed. */
-      const reveal = () => neuralCanvas.classList.add('is-visible');
+      const reveal = () => {
+        neuralCanvas.classList.add('is-visible');
+        /* Same moment the network becomes visible, and the only moment the
+           aside's claim becomes true — see syncHeroCnnLink below. */
+        if (isCnn) { heroCnnPainted = true; syncHeroCnnLink(); }
+      };
       neuralInstance = new Background(neuralCanvas, reveal);
       _disposables.push(neuralInstance);
     });
   };
 
-  /* The hero's "draw it a digit" aside points at projects/mnist-lenet.html, and
-     it only makes sense while the LeNet scene is the background actually
-     painting: a narrow or touch viewport gets the abstract particle field
-     instead, and reduced-motion gets no canvas at all. Gate it on the same
-     predicate buildNeural() branches on — but evaluated independently, so the
-     link does not have to wait for an import that is deferred until the first
-     scroll or mousemove. */
+  /* The hero's aside says "The network behind this text is a real LeNet-5 —
+     draw it a digit". That is a claim about something the visitor can see, so
+     it may only be on screen while the thing is.
+
+     It used to be gated on supportsCnnHero() alone, evaluated immediately, so
+     that it would not have to wait for a deferred import. But buildNeural() is
+     deliberately held back until the first mousemove / scroll / touchstart, to
+     keep the hero off the critical path — which meant that on arrival the
+     sentence sat under an empty black rectangle, asserting a network that had
+     not been drawn. Brief for anyone using a mouse; permanent for every
+     headless renderer, social-preview fetcher and print.
+
+     So eligibility and existence are now separate conditions: supportsCnnHero()
+     and reduced-motion still decide whether it *can* appear, and heroCnnPainted
+     — set from the same callback that fades the canvas in — decides whether it
+     does. */
+  let heroCnnPainted = false;
   const heroCnnLink = document.querySelector('.hero-cnn-link');
   const syncHeroCnnLink = () => {
     if (!heroCnnLink) return;
-    heroCnnLink.hidden = prefersReducedMotion() || !supportsCnnHero();
+    heroCnnLink.hidden = !heroCnnPainted || prefersReducedMotion() || !supportsCnnHero();
   };
   syncHeroCnnLink();
 
@@ -947,10 +741,34 @@ if (typeof document !== 'undefined') {
     buildNeural();
   };
 
+  /* The hero background starts on its own.
+
+     It used to wait for a mousemove, scroll or touchstart, which kept it off
+     the critical path but made "is there a network behind the name?" depend on
+     whether the visitor happened to move. Anyone reading without touching the
+     mouse saw an empty rectangle; so did every keyboard user, every headless
+     renderer, every social-preview fetcher and every print. The hero is the
+     one idea on this page worth showing, and gating it on an input event was
+     asking for a gesture in exchange for the thing the page is about.
+
+     Idle time, not load time. requestIdleCallback runs once the browser has
+     nothing more pressing, so the fetch and first paint still sit behind
+     layout, the fonts and the static content — the original goal — without
+     needing a person to trigger them. The interaction listeners stay as an
+     accelerator: someone who moves the mouse immediately gets it immediately
+     rather than at the next idle slot.
+
+     The timeout is the part that matters for the silent cases. A busy main
+     thread can defer an idle callback indefinitely, and browsers withhold it
+     entirely on a page that never becomes interactive — exactly the headless
+     case — so the 1500 ms deadline is what guarantees a paint. Browsers
+     without requestIdleCallback (Safari shipped it late) get the same
+     deadline via setTimeout. */
   if (neuralCanvas) {
     if (prefersReducedMotion()) {
       neuralCanvas.style.display = 'none';
     } else {
+      const IDLE_DEADLINE = 1500;
       const startNeural = () => {
         if (neuralStarted) return;
         neuralStarted = true;
@@ -960,6 +778,12 @@ if (typeof document !== 'undefined') {
       };
       ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
         window.addEventListener(evt, startNeural, { passive: true, once: true }));
+
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(startNeural, { timeout: IDLE_DEADLINE });
+      } else {
+        setTimeout(startNeural, IDLE_DEADLINE);
+      }
     }
   }
 
@@ -1025,7 +849,14 @@ if (typeof document !== 'undefined') {
     const token = ++globeBuildToken;
     /* Dynamically imported (Three.js) and only when the globe nears the
        viewport — so Three.js downloads lazily, on scroll, not on load. */
-    return import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) =>
+    /* data/locations.js comes down here rather than at the top of the file:
+       28 KB of pins that only travel.html has a canvas for. Importing it also
+       sets globalThis.LOCATIONS, which is how EuropeMap2D and Globe3D read it
+       from their constructor bodies. */
+    return Promise.all([
+      import('./globe.js'),
+      import('../data/locations.js'),
+    ]).then(([{ geocodeLocations, Globe3D, GlobeFallback2D }, { LOCATIONS }]) =>
       geocodeLocations(LOCATIONS).then(() => {
         /* A newer build superseded this one (e.g. another theme switch landed
            while geocoding was in flight). Bail before constructing so we never
@@ -1049,7 +880,7 @@ if (typeof document !== 'undefined') {
       if (typeof console !== 'undefined') console.warn('Globe build skipped:', err);
     });
   };
-  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+  if (globeCanvas) {
     _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
@@ -1065,7 +896,12 @@ if (typeof document !== 'undefined') {
   let europeBuildToken = 0;
   const buildEurope = () => {
     const token = ++europeBuildToken;
-    return import('./europe-map.js').then(({ EuropeMap2D }) => {
+    /* locations.js alongside the map for the same reason as the globe — and it
+       must resolve before the constructor runs, which reads globalThis. */
+    return Promise.all([
+      import('./europe-map.js'),
+      import('../data/locations.js'),
+    ]).then(([{ EuropeMap2D }]) => {
       /* A newer build superseded this one (a theme switch landed while the
          import was in flight) — same guard the globe uses. */
       if (token !== europeBuildToken) return;
@@ -1075,7 +911,7 @@ if (typeof document !== 'undefined') {
       if (typeof console !== 'undefined') console.warn('Europe map build skipped:', err);
     });
   };
-  if (europeCanvas && typeof LOCATIONS !== 'undefined') {
+  if (europeCanvas) {
     _lazyOnViewport(europeCanvas, buildEurope);
   }
 
@@ -1101,13 +937,24 @@ if (typeof document !== 'undefined') {
   window.addEventListener('themechange', onMapThemeChange);
   _pushTeardown(() => window.removeEventListener('themechange', onMapThemeChange));
 
-  /* UNESCO World Heritage accordion (travel page only) */
+  /* UNESCO World Heritage accordion (travel page only) — 20 KB of tree that
+     the other 20 pages have no use for. */
   const unescoAccordion = document.getElementById('unesco-accordion');
-  if (unescoAccordion) renderUnescoAccordion(unescoAccordion, DEFAULT_UNESCO);
+  if (unescoAccordion) {
+    import('../data/unesco.js').then(({ UNESCO }) => {
+      renderUnescoAccordion(unescoAccordion, UNESCO);
+      revealNewContent(unescoAccordion);
+    });
+  }
 
   /* Curated blogroll (links page only) */
   const linksGrid = document.getElementById('links-grid');
-  if (linksGrid) renderLinks(linksGrid, DEFAULT_LINKS);
+  if (linksGrid) {
+    import('../data/links.js').then(({ LINKS }) => {
+      renderLinks(linksGrid, LINKS);
+      revealNewContent(linksGrid);
+    });
+  }
 
   /* Interactive MNIST lab (projects/mnist-lenet.html only).
      Dynamically imported behind the element check, so the int8 weights

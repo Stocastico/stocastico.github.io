@@ -570,6 +570,40 @@ h2,
 h3 {
   line-height: 1.15;
   font-weight: 700;
+  /* Even the line lengths rather than filling each line greedily. Headings
+     here wrap constantly — card titles are full sentences in a 280px column,
+     section titles run to clamp(2.25rem, 4.5vw, 3.75rem) — and the default
+     algorithm reliably leaves one orphaned word on the last line. Browsers cap
+     `balance` at a handful of lines and fall back silently beyond that, which
+     is the right failure: it is an improvement where it applies and a no-op
+     where it does not. */
+  text-wrap: balance;
+}
+
+/* .hero-name opts out. Its two lines come from an explicit <br>, so balancing
+   a two-line proper noun is a no-op at best and a re-flow of the one piece of
+   type on the site whose composition was hand-tuned at worst. `wrap`, not
+   `nowrap`: at 390px "Stefano" set at 3.5rem is already close to the measure,
+   and nowrap would answer a tight fit with horizontal overflow instead of a
+   wrap. Opting out of balance should not opt out of wrapping. */
+.hero-name {
+  text-wrap: wrap;
+}
+
+/* Prose gets `pretty`, not `balance`: it protects against orphans and bad
+   final-line rags without trying to equalise every line of a paragraph, which
+   is what `balance` would do and is wrong for running text. The body face is a
+   serif at 1.05rem over a 60ch measure, where a single trailing word is very
+   visible. */
+p,
+.section-subtitle,
+.post-lead,
+.project-card__desc,
+.link-card-desc,
+.tl-desc,
+.pub-meta,
+figcaption {
+  text-wrap: pretty;
 }
 
 /* ─── 4. Layout Helpers ─────────────────────────────────── */
@@ -1501,14 +1535,21 @@ h3 {
   border-color: transparent;
 }
 
+/* De-emphasised by size and by tabular figures, NOT by opacity.
+
+   `opacity: 0.7` over the chip's already-muted --text-muted composited to
+   below 4.5:1 in every light palette — axe flagged it on three chips at once.
+   It is the exact blind spot of the hand-written contrast harness, which pairs
+   colour tokens against surfaces: --text-muted on --bg-card is a pairing it
+   checks and passes, and an opacity applied afterwards is not a colour it
+   knows about. Anything that fades text with opacity is invisible to that test
+   by construction.
+
+   The count inherits the chip's colour instead, in both the resting and active
+   states, where --on-accent is already validated against the accent fill. */
 .link-chip-count {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  opacity: 0.7;
-}
-
-.link-chip.is-active .link-chip-count {
-  opacity: 0.85;
 }
 
 .links-count {
@@ -1905,10 +1946,12 @@ h3 {
 }
 
 .pub-title {
+  /* An <h3>, so the UA's own margins and 1.17em size have to go — the rank is
+     there for screen-reader navigation, not to change how the card looks. */
+  margin: 0 0 0.45rem;
   font-size: 0.98rem;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 0.45rem;
   line-height: 1.45;
 }
 
@@ -1971,8 +2014,47 @@ h3 {
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* Cards size to their own content instead of stretching to the tallest in
+     the row. A grid row is as tall as its tallest item, and the descriptions
+     vary a lot: on projects.html the Gaussian-splatting card runs to eleven
+     lines and left the MNIST card beside it with ~170px of empty card below
+     its text. Clamping the descriptions was the alternative, but truncating
+     the one thing that explains a project to save a gap is the wrong trade —
+     let the cards differ in height instead. */
+  align-items: start;
   gap: var(--gap);
   margin-bottom: 2rem;
+}
+
+/* Pack the rows when the browser can do it properly.
+
+   `align-items: start` stopped cards stretching, but a grid row is still as
+   tall as its tallest item, so a short card leaves a gap beneath it before the
+   next row begins — measured at 600px across the four full rows of
+   projects.html.
+
+   CSS multi-column removes that gap and was tried and rejected. It packs
+   tightly (grid 2065px -> 1803px) but fills **column-major**, so the top of a
+   reverse-chronological portfolio came out reading 2026, 2023, 2017 across.
+   The ordering is the point of the page; a 13% height saving does not buy it.
+
+   Masonry fills in **document order**, placing each item into the column with
+   the most room — so item 1 stays top-left and the chronology survives. That
+   is the difference that matters here, and it is why this waits for masonry
+   rather than settling for columns. Neither syntax ships anywhere yet (the
+   working group is still choosing between them), so both are listed: whichever
+   arrives first takes effect on its own, and until then this block does
+   nothing at all. */
+@supports (grid-template-rows: masonry) {
+  .projects-grid {
+    grid-template-rows: masonry;
+  }
+}
+
+@supports (item-flow: row masonry) {
+  .projects-grid {
+    item-flow: row masonry;
+  }
 }
 
 .project-card {
@@ -2046,6 +2128,10 @@ h3 {
 }
 
 .project-card__title {
+  /* An <h2> on projects.html and an <h3> on the homepage — see the note in
+     js/render-cards.js. Reset the UA heading styles; the rank carries meaning
+     for assistive tech and must carry none visually. */
+  margin: 0;
   /* Prose, not the display mono — deliberately, and unlike .link-card-name.
      These titles are full sentences ("TRACTION: Opera Co-creation for Social
      Transformation") and run to three lines inside a narrow card; a
@@ -2112,6 +2198,35 @@ h3 {
   background-position: center;
   isolation: isolate;
   overflow: hidden;
+}
+
+/* Eleven project heroes are photographs. Two were architecture diagrams used as
+   wallpaper, and a diagram does not survive that treatment: behind the 65–95%
+   scrim below, the RAG hero came out as grey wash with cyan label text bleeding
+   through and colliding with the nav — legible enough to read as a mistake,
+   not legible enough to be information.
+
+   So they are used as a *stencil* instead of as pixels. Their opaque
+   background rect is gone, the artwork is painted with var(--accent) through
+   mask-image, and what is left is a faint accent-toned texture that follows the
+   palette and the light/dark toggle for free. The real diagram lives inline in
+   the article, at full size, where it can actually be read. */
+.project-hero--diagram {
+  background-image: none;
+}
+
+.project-hero--diagram::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--accent);
+  opacity: 0.14;
+  mask-image: var(--project-hero-img);
+  mask-size: cover;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .project-hero__overlay {
@@ -2405,10 +2520,13 @@ h3 {
 /* ─── 16c. Curriculum Vitae — unified timeline ────────────── */
 
 /* ── Header actions (PDF button + legend) ─────────────── */
+/* Left, not centre. The eyebrow and the <h1> directly above are left-aligned —
+   every .section-header on the site is — so centring this row put a visible
+   kink in the one vertical edge the page otherwise holds. */
 .cv-header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1.5rem;
   margin-top: 1rem;
   flex-wrap: wrap;
@@ -3555,6 +3673,31 @@ h3 {
   font-style: italic;
 }
 
+/* ─── Inline architecture diagrams ──────────────────────────
+   These are authored SVGs, and they used to ship as <img src="…svg">. An
+   external SVG is its own document: it cannot see this page's custom
+   properties, so its colours had to be baked in — and they were, three times
+   over, in three different palettes that had all since been replaced. The RAG
+   pair carried an indigo/cyan scheme on #080c14, brand-stadium a crimson one.
+   In light mode they were near-black rectangles dropped into a cream page; in
+   dark mode they were *cold* blue-black on a warm brown one, in accents the
+   site's ramp never uses. Either way they read as screenshots pasted in from
+   somewhere else.
+
+   Inlined into the page, `fill="var(--accent)"` resolves like any other
+   declaration, so the artwork follows the palette AND the light/dark toggle
+   with no regeneration step — the same reason the homepage world map is inline
+   rather than a file. That is also why there is no generator here: once the
+   colours are variables there is nothing left to generate.
+
+   They also asked for Inter and Segoe UI, neither of which this site loads. */
+.post figure .diagram {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+}
+
 /* ─── Interactive MNIST lab (projects/mnist-lenet.html) ──────
    Lives inside .post, which is capped at 760px for line length. The lab is a
    diagram, not prose, so it breaks out to a wider measure — the same argument
@@ -4247,6 +4390,26 @@ h3 {
   body {
     background: white;
     color: black;
+  }
+
+  /* Everything the scroll reveal has not reached yet is still at opacity 0,
+     and printing does not scroll. initScrollReveal() re-runs its sweep on
+     scroll / resize / hashchange / load; a print job fires none of them, so
+     landing on a page and pressing Ctrl+P printed whatever was above the fold
+     and blank space for the rest — 21 of 21 animated elements on the homepage,
+     9 of 12 on the CV. The layout was right and the page count was right; only
+     the ink was missing, which is why it went unnoticed next to the gradient
+     bug below.
+
+     A JS fix (reveal-all on a timer, or on beforeprint) is the wrong shape:
+     opacity is a paint concern, print is a media, and a timer still loses the
+     race against someone printing immediately. Reduced motion already reveals
+     everything up front for the same reason — the entrance is the expendable
+     part, the content is not. */
+  [data-animate] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 
   /* Gradient-filled headings paint from a background, and backgrounds are not

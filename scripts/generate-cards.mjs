@@ -24,8 +24,14 @@ import { fileURLToPath } from 'node:url';
 import {
   projectCardHtml, publicationsListLines, homepageProjects, assertProjectKinds,
 } from '../js/render-cards.js';
+import {
+  cvTimelineLines, cvSkillsLines, unescoAccordionLines, linksGridLines,
+} from '../js/render-page.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
+import { CV_CAREER, CV_EDUCATION, CV_SKILLS } from '../data/cv.js';
+import { UNESCO } from '../data/unesco.js';
+import { LINKS } from '../data/links.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -95,12 +101,29 @@ const TARGETS = {
       publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
   },
   'projects.html': {
-    'generated:project-cards': () => PROJECTS.map((p, i) => projectCardHtml(p, i)),
+    /* level 2, not 3: this page's only other heading is the <h1>, so h3 here
+       would skip a rank. index.html above keeps the default 3 because its
+       cards sit under an <h2> section title. */
+    'generated:project-cards': () => PROJECTS.map((p, i) => projectCardHtml(p, i, { level: 2 })),
   },
   'publications.html': {
     'generated:publication-items': () =>
       publicationsListLines(PUBLICATIONS, { grouped: true }),
     'generated:publications-jsonld': () => publicationsJsonLd(),
+  },
+  /* The three pages below used to ship as empty <div>s — see the header of
+     js/render-page.js for what that cost. Same machinery, same builders, same
+     drift test; the only reason they were not here from the start is that
+     nobody re-read the rule after writing it. */
+  'cv.html': {
+    'generated:cv-timeline': () => cvTimelineLines(CV_CAREER, CV_EDUCATION),
+    'generated:cv-skills': () => cvSkillsLines(CV_SKILLS),
+  },
+  'travel.html': {
+    'generated:unesco-accordion': () => unescoAccordionLines(UNESCO),
+  },
+  'links.html': {
+    'generated:links-grid': () => linksGridLines(LINKS),
   },
 };
 

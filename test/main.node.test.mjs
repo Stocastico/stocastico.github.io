@@ -3070,3 +3070,34 @@ test('initCommandPalette returns a teardown that removes the global ⌘K keydown
     global.document = prevDoc;
   }
 });
+
+test('main.js loads no data module statically', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
+
+  /* A static `import … from '../data/x.js'` lands in the single shared
+     main-*.js chunk, which every one of the 21 pages downloads. All six data
+     modules were imported that way: 21.3 KB gzip of a 31.3 KB bundle — 68% of
+     the shared JavaScript — so a visitor reading three paragraphs on now.html
+     also fetched the UNESCO tree, the blogroll, every travel pin, the CV, 37
+     publications and 14 projects.
+
+     This is the rule CLAUDE.md already states for europe-map.js, which shipped
+     10 KB to the twenty pages with no #europe-canvas. Same rule, same file,
+     applied to data instead of code. Each renderer already gated on a DOM id,
+     so the import belongs inside that gate.
+
+     Comments are stripped first: the note explaining all this names the
+     modules it is about. */
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  const statik = code.match(/^\s*import\s+(?:[\s\S]*?from\s+)?['"]\.\.\/data\/[^'"]+['"]/gm) || [];
+  assert.deepEqual(statik.map((m) => m.trim()), [],
+    'data modules must be dynamically imported at their DOM gate, not statically at the top');
+
+  /* And the dynamic ones are actually there — otherwise deleting every import
+     would satisfy the assertion above. */
+  for (const mod of ['publications', 'projects', 'cv', 'unesco', 'links', 'locations']) {
+    assert.match(code, new RegExp(`import\\(['"]\\.\\./data/${mod}\\.js['"]\\)`),
+      `data/${mod}.js should be loaded with a dynamic import()`);
+  }
+});

@@ -15,6 +15,10 @@ import { renderAll, TARGETS } from '../scripts/generate-cards.mjs';
 import { PROJECT_KINDS, homepageProjects, assertProjectKinds } from '../js/render-cards.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
+import { CV_CAREER, CV_EDUCATION, CV_SKILLS } from '../data/cv.js';
+import { UNESCO } from '../data/unesco.js';
+import { LINKS } from '../data/links.js';
+import { escapeHtml } from '../js/utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -133,5 +137,74 @@ test('generate-cards: publications.html lists every paper statically', () => {
   assert.ok(PUBLICATIONS.length >= 30, 'expected the full (30+) publication list');
   for (const pub of PUBLICATIONS) {
     assert.ok(html.includes(pub.title), `publications.html missing paper: ${pub.title}`);
+  }
+});
+
+/* ── the three pages that used to ship empty ──────────────────────────────
+   cv.html, links.html and travel.html rendered their content only in the
+   browser, so the built HTML carried a navbar, a footer, meta tags and
+   nothing else. That is invisible in every way that matters day to day —
+   the pages look perfect to anyone running JS — which is exactly why it
+   survived so long, and why the check has to read the committed markup
+   rather than call the builder and compare it to itself. */
+
+test('cv.html ships the full career and education history statically', () => {
+  const html = read('cv.html');
+  assert.ok(CV_CAREER.length >= 3, 'expected a career history to guard');
+  for (const job of CV_CAREER) {
+    assert.ok(html.includes(escapeHtml(job.company)), `cv.html missing employer: ${job.company}`);
+    assert.ok(html.includes(escapeHtml(job.role)), `cv.html missing role: ${job.role}`);
+  }
+  for (const deg of CV_EDUCATION) {
+    assert.ok(html.includes(escapeHtml(deg.institution)), `cv.html missing institution: ${deg.institution}`);
+  }
+});
+
+test('cv.html ships the skills panels statically', () => {
+  const html = read('cv.html');
+  for (const skill of (CV_SKILLS.technical || [])) {
+    assert.ok(html.includes(escapeHtml(skill.name)), `cv.html missing technical skill: ${skill.name}`);
+  }
+  for (const lang of (CV_SKILLS.languages || [])) {
+    assert.ok(html.includes(escapeHtml(lang.name)), `cv.html missing language: ${lang.name}`);
+  }
+});
+
+test('links.html ships every link statically', () => {
+  const html = read('links.html');
+  assert.ok(LINKS.links.length >= 20, 'expected the full blogroll');
+  for (const link of LINKS.links) {
+    assert.ok(html.includes(escapeHtml(link.url)), `links.html missing link: ${link.url}`);
+  }
+});
+
+test('travel.html ships every UNESCO site statically', () => {
+  const html = read('travel.html');
+  let sites = 0;
+  for (const cont of UNESCO.continents) {
+    for (const country of (cont.countries || [])) {
+      for (const site of (country.sites || [])) {
+        sites += 1;
+        assert.ok(html.includes(escapeHtml(site.url)), `travel.html missing UNESCO site: ${site.name}`);
+      }
+    }
+  }
+  assert.ok(sites >= 10, `expected a populated UNESCO list, found ${sites}`);
+});
+
+/* The failure this guards is a container that renders but stays empty — the
+   markers present, the block between them blank. Byte count is a blunt but
+   honest proxy: an empty shell cannot reach these sizes. */
+test('no page ships an empty generated block', () => {
+  for (const [rel, blocks] of Object.entries(TARGETS)) {
+    const html = read(rel);
+    for (const name of Object.keys(blocks)) {
+      const start = html.indexOf(`<!-- ${name} -->`);
+      const end = html.indexOf(`<!-- /${name} -->`);
+      assert.ok(start !== -1 && end > start, `${rel}: ${name} markers missing`);
+      const body = html.slice(start + name.length + 8, end).trim();
+      assert.ok(body.length > 200,
+        `${rel}: ${name} is empty or near-empty (${body.length} chars) — run \`npm run generate-cards\``);
+    }
   }
 });

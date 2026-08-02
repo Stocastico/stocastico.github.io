@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
-import { resolve, extname, dirname } from 'node:path';
-import { readdirSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { readdirSync, mkdirSync, copyFileSync, existsSync, readFileSync } from 'node:fs';
 
 const projectsDir = resolve(__dirname, 'projects');
 const projectPages = Object.fromEntries(
@@ -58,31 +58,76 @@ function copyDataJson() {
   };
 }
 
-/* Copy img/ into dist/img/ verbatim. The page <img>/CSS references are hashed
-   into dist/assets/ by Rollup, but the og:image / twitter:image meta tags use
-   absolute URLs (https://<site>/img/projects/...) that Vite never rewrites —
-   so without this the social-card images would 404 in production. */
-function copyOgImages() {
-  const exts = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif']);
+/* Copy into dist/img/ exactly the images that are referenced by an absolute
+   URL, and nothing else.
+
+   Why any copy is needed: page <img> and CSS references are hashed into
+   dist/assets/ by Rollup, but og:image / twitter:image use absolute URLs
+   (https://<site>/img/projects/...) that Vite never rewrites, so those files
+   would 404 in production.
+
+   Why it is not `walk everything`, which is what it used to do: Rollup's
+   hashed copy and this verbatim copy then both shipped. Measured by content
+   hash, 28 files were byte-identical duplicates totalling 1,378 KB, on top of
+   546 KB of images nothing referenced at all. That is the same lesson
+   RUNTIME_DATA_JSON above records — an explicit set, not a directory sweep.
+
+   The set is *derived* rather than hardcoded, by scanning the built HTML for
+   absolute /img/ URLs. A hand-written list would be one more thing to update
+   when a project page is added, and the failure mode is a 404 on someone
+   else's link preview — exactly the kind of thing nobody notices.
+
+   img/og/ is added wholesale regardless: generate-theme points og:image at the
+   *active* palette's card, so the other palettes' cards are unreferenced right
+   now but become the referenced one the moment `active:` changes in
+   data/palettes.yaml. Dropping them would turn a palette switch into a broken
+   social card. */
+function copyReferencedImages() {
   return {
-    name: 'copy-og-images',
+    name: 'copy-referenced-images',
     apply: 'build',
     closeBundle() {
       const srcRoot = resolve(__dirname, 'img');
       const outRoot = resolve(__dirname, 'dist', 'img');
+      const distRoot = resolve(__dirname, 'dist');
       if (!existsSync(srcRoot)) return;
-      const walk = (relDir) => {
-        for (const ent of readdirSync(resolve(srcRoot, relDir), { withFileTypes: true })) {
-          const rel = relDir ? `${relDir}/${ent.name}` : ent.name;
-          if (ent.isDirectory()) { walk(rel); continue; }
-          if (exts.has(extname(ent.name).toLowerCase())) {
-            const dest = resolve(outRoot, rel);
-            mkdirSync(dirname(dest), { recursive: true });
-            copyFileSync(resolve(srcRoot, rel), dest);
-          }
+
+      const wanted = new Set();
+
+      /* Every palette's social card — see the note above. */
+      const ogDir = resolve(srcRoot, 'og');
+      if (existsSync(ogDir)) {
+        for (const f of readdirSync(ogDir)) wanted.add(`og/${f}`);
+      }
+
+      /* Anything the shipped HTML names with an absolute or root-relative
+         /img/ URL. Those are the references Vite leaves alone. */
+      const htmlFiles = [];
+      const collectHtml = (dir) => {
+        for (const ent of readdirSync(dir, { withFileTypes: true })) {
+          const p = resolve(dir, ent.name);
+          if (ent.isDirectory()) collectHtml(p);
+          else if (ent.name.endsWith('.html')) htmlFiles.push(p);
         }
       };
-      walk('');
+      collectHtml(distRoot);
+      for (const file of htmlFiles) {
+        const html = readFileSync(file, 'utf8');
+        for (const m of html.matchAll(/["'(](?:https?:\/\/[^"'()]*?)?\/img\/([^"'()\s]+)/g)) {
+          wanted.add(m[1]);
+        }
+      }
+
+      let copied = 0;
+      for (const rel of wanted) {
+        const from = resolve(srcRoot, rel);
+        if (!existsSync(from)) continue;
+        const dest = resolve(outRoot, rel);
+        mkdirSync(dirname(dest), { recursive: true });
+        copyFileSync(from, dest);
+        copied += 1;
+      }
+      this.info?.(`copied ${copied} referenced image(s) to dist/img/`);
     },
   };
 }
@@ -96,7 +141,7 @@ function copyOgImages() {
 export default defineConfig({
   base: '/',
   appType: 'mpa',
-  plugins: [copyDocsPdfs(), copyDataJson(), copyOgImages()],
+  plugins: [copyDocsPdfs(), copyDataJson(), copyReferencedImages()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
