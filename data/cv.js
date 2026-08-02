@@ -90,58 +90,58 @@ export const CV_EDUCATION = [
 export const CV_SKILLS = {
   technical:  [
     {
-      name:  'GenAI & LLMs (Agentic AI · Fine-tuning · RAG · LangChain · Vector DBs)',
-      level: 95,
+      name: 'GenAI & LLMs (Agentic AI · Fine-tuning · RAG · LangChain · Vector DBs)',
+      tier: 'Expert',
     },
     {
-      name:  'LLM Evaluation & Observability (Evals · Guardrails · Tracing)',
-      level: 88,
+      name: 'LLM Evaluation & Observability (Evals · Guardrails · Tracing)',
+      tier: 'Advanced',
     },
     {
-      name:  'Python · PyTorch · TensorFlow · Hugging Face',
-      level: 98,
+      name: 'Python · PyTorch · TensorFlow · Hugging Face',
+      tier: 'Expert',
     },
     {
-      name:  'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)',
-      level: 97,
+      name: 'Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)',
+      tier: 'Expert',
     },
     {
-      name:  'MLOps · Docker · Kubernetes · CI/CD · GCP · Azure',
-      level: 85,
+      name: 'MLOps · Docker · Kubernetes · CI/CD · GCP · Azure',
+      tier: 'Advanced',
     },
     {
-      name:  'Augmented Reality (ARCore · ARKit · WebXR)',
-      level: 90,
+      name: 'Augmented Reality (ARCore · ARKit · WebXR)',
+      tier: 'Advanced',
     },
     {
-      name:  'C++ · C · OpenCV · CUDA · Matlab',
-      level: 90,
+      name: 'C++ · C · OpenCV · CUDA · Matlab',
+      tier: 'Advanced',
     },
   ],
   leadership: [
     {
-      name:  'Hiring & People Development',
-      level: 95,
+      name: 'Hiring & People Development',
+      tier: 'Expert',
     },
     {
-      name:  'Delivery Track Record (10+ AI/ML projects, Agile/Scrum)',
-      level: 90,
+      name: 'Delivery Track Record (10+ AI/ML projects, Agile/Scrum)',
+      tier: 'Advanced',
     },
     {
-      name:  'Technical Mentoring & Training (20+ sessions)',
-      level: 96,
+      name: 'Technical Mentoring & Training (20+ sessions)',
+      tier: 'Expert',
     },
     {
-      name:  'Stakeholder & Partner Coordination',
-      level: 97,
+      name: 'Stakeholder & Partner Coordination',
+      tier: 'Expert',
     },
     {
-      name:  'Strategic AI Roadmap & Vision (OKRs · Research → Production)',
-      level: 85,
+      name: 'Strategic AI Roadmap & Vision (OKRs · Research → Production)',
+      tier: 'Advanced',
     },
     {
-      name:  'Cross-functional Collaboration (Engineering · Research · Product)',
-      level: 95,
+      name: 'Cross-functional Collaboration (Engineering · Research · Product)',
+      tier: 'Expert',
     },
   ],
   languages:  [

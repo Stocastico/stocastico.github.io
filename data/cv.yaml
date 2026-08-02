@@ -128,33 +128,33 @@ education:
 skills:
   technical:
     - name: "GenAI & LLMs (Agentic AI · Fine-tuning · RAG · LangChain · Vector DBs)"
-      level: 95
+      tier: Expert
     - name: "LLM Evaluation & Observability (Evals · Guardrails · Tracing)"
-      level: 88
+      tier: Advanced
     - name: "Python · PyTorch · TensorFlow · Hugging Face"
-      level: 98
+      tier: Expert
     - name: "Computer Vision & 3D Reconstruction (NeRF · Gaussian Splats · SLAM)"
-      level: 97
+      tier: Expert
     - name: "MLOps · Docker · Kubernetes · CI/CD · GCP · Azure"
-      level: 85
+      tier: Advanced
     - name: "Augmented Reality (ARCore · ARKit · WebXR)"
-      level: 90
+      tier: Advanced
     - name: "C++ · C · OpenCV · CUDA · Matlab"
-      level: 90
+      tier: Advanced
 
   leadership:
     - name: Hiring & People Development
-      level: 95
+      tier: Expert
     - name: "Delivery Track Record (10+ AI/ML projects, Agile/Scrum)"
-      level: 90
+      tier: Advanced
     - name: "Technical Mentoring & Training (20+ sessions)"
-      level: 96
+      tier: Expert
     - name: Stakeholder & Partner Coordination
-      level: 97
+      tier: Expert
     - name: "Strategic AI Roadmap & Vision (OKRs · Research → Production)"
-      level: 85
+      tier: Advanced
     - name: "Cross-functional Collaboration (Engineering · Research · Product)"
-      level: 95
+      tier: Expert
 
   languages:
     - name: Italian

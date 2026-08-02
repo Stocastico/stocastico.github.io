@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Tests for renderCV, renderSkills, initSkillBars,
+   Tests for renderCV, renderSkills,
    and initAnimatedFavicon.
    TDD: these tests are written before (or alongside) the implementation.
    Run:  npm run test:cv
@@ -10,7 +10,6 @@ import assert from 'node:assert/strict';
 import {
   renderCV,
   renderSkills,
-  initSkillBars,
   initAnimatedFavicon,
 } from '../js/main.js';
 
@@ -259,7 +258,7 @@ test('renderSkills: returns without throwing when #cv-skills absent', () => {
 test('renderSkills: renders technical skill names', () => {
   const { els, restore } = setupDom(['cv-skills']);
   renderSkills({
-    technical:  [{ name: 'Python', level: 90 }],
+    technical:  [{ name: 'Python', tier: 'Expert' }],
     leadership: [],
     languages:  [],
   });
@@ -267,14 +266,17 @@ test('renderSkills: renders technical skill names', () => {
   restore();
 });
 
-test('renderSkills: renders technical skill level as inline --pct percentage', () => {
+test('renderSkills: renders the tier label, not a percentage', () => {
   const { els, restore } = setupDom(['cv-skills']);
   renderSkills({
-    technical:  [{ name: 'Python', level: 87 }],
+    technical:  [{ name: 'Python', tier: 'Advanced' }],
     leadership: [],
     languages:  [],
   });
-  assert.ok(els['cv-skills'].innerHTML.includes('87%'), '--pct value present');
+  const html = els['cv-skills'].innerHTML;
+  assert.ok(html.includes('skill-tier'), 'tier element present');
+  assert.ok(html.includes('Advanced'), 'tier label present');
+  assert.ok(!html.includes('%'), 'no percentage anywhere in the skills markup');
   restore();
 });
 
@@ -282,7 +284,7 @@ test('renderSkills: renders leadership skill names', () => {
   const { els, restore } = setupDom(['cv-skills']);
   renderSkills({
     technical:  [],
-    leadership: [{ name: 'Team Roadmapping', level: 85 }],
+    leadership: [{ name: 'Team Roadmapping', tier: 'Expert' }],
     languages:  [],
   });
   assert.ok(els['cv-skills'].innerHTML.includes('Team Roadmapping'), 'leadership skill present');
@@ -305,7 +307,7 @@ test('renderSkills: renders language names and proficiency', () => {
 test('renderSkills: escapes HTML in skill names to prevent XSS', () => {
   const { els, restore } = setupDom(['cv-skills']);
   renderSkills({
-    technical:  [{ name: '<script>xss()</script>', level: 50 }],
+    technical:  [{ name: '<script>xss()</script>', tier: 'Expert' }],
     leadership: [],
     languages:  [],
   });
@@ -328,25 +330,6 @@ test('renderSkills: omits panel when array is empty', () => {
   const { els, restore } = setupDom(['cv-skills']);
   renderSkills({ technical: [], leadership: [], languages: [] });
   assert.ok(!els['cv-skills'].innerHTML.includes('skill-panel'), 'no panels for empty data');
-  restore();
-});
-
-/* ── initSkillBars ───────────────────────────────────────────────────────── */
-
-test('initSkillBars: exported as a function', () => {
-  assert.strictEqual(typeof initSkillBars, 'function');
-});
-
-test('initSkillBars: returns without throwing when document is undefined', () => {
-  const prev = global.document;
-  global.document = undefined;
-  assert.doesNotThrow(() => initSkillBars());
-  global.document = prev;
-});
-
-test('initSkillBars: returns without throwing when no bars in DOM', () => {
-  const { restore } = setupDom([]);
-  assert.doesNotThrow(() => initSkillBars());
   restore();
 });
 

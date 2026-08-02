@@ -120,16 +120,16 @@ education:
 
 ---
 
-### `skills` — grouped skill bars
+### `skills` — grouped skill tiers
 
 ```yaml
 skills:
   technical:
-    - name:  "Python · PyTorch · TensorFlow"
-      level: 90
+    - name: "Python · PyTorch · TensorFlow"
+      tier: Expert
   leadership:
-    - name:  Technical team management & mentoring
-      level: 90
+    - name: Technical team management & mentoring
+      tier: Advanced
   languages:
     - name:        Italian
       proficiency: Native
@@ -140,7 +140,7 @@ skills:
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
 | `name` | string | Yes | Skill label (displayed as-is) |
-| `level` | integer | Yes | Proficiency percentage, **0–100** |
+| `tier` | string | Yes | One of `Expert`, `Advanced`, `Proficient` (a closed set — a percentage on a skill is fake precision) |
 
 #### `languages` items
 
@@ -191,12 +191,12 @@ education:
 
 skills:
   technical:
-    - name:  "Python · PyTorch · TensorFlow"
-      level: 92
-    - name:  "Computer Vision & Deep Learning"
-      level: 88
-    - name:  "MLOps · Docker · CI/CD"
-      level: 75
+    - name: "Python · PyTorch · TensorFlow"
+      tier: Expert
+    - name: "Computer Vision & Deep Learning"
+      tier: Advanced
+    - name: "MLOps · Docker · CI/CD"
+      tier: Proficient
 
   leadership:
     - name:  Team management & mentoring

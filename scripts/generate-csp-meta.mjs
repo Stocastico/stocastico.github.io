@@ -55,7 +55,10 @@ export function cspFor(html) {
     "connect-src 'self' https://nominatim.openstreetmap.org",
     "media-src 'self'",
     "worker-src 'self'",
-    "frame-ancestors 'self'",
+    /* No frame-ancestors: the CSP spec ignores it (with sandbox and
+       report-uri) when delivered via a <meta> element, and GitHub Pages
+       cannot send real headers — listing it here would only document
+       protection the site doesn't have. */
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",

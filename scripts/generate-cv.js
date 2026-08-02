@@ -36,10 +36,10 @@
      skills:
        technical:
          - name: Python · PyTorch
-           level: 95                   # 0–100
+           tier: Expert                # Expert | Advanced | Proficient
        leadership:
          - name: Team leadership
-           level: 90
+           tier: Advanced
        languages:
          - name: English
            proficiency: C2 — Proficient
@@ -98,6 +98,10 @@ Examples:
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
+/* Allowed proficiency tiers for technical/leadership skills, strongest
+   first. Languages keep their own free-form CEFR strings. */
+const SKILL_TIERS = ['Expert', 'Advanced', 'Proficient'];
+
 /**
  * Validate a parsed CV object.
  * Returns an array of human-readable error strings (empty = valid).
@@ -109,10 +113,6 @@ function validateCv(data) {
   function expectString(val, path) {
     expect(typeof val === 'string' && val.trim() !== '',
       `${path} must be a non-empty string`);
-  }
-  function expectNumber(val, path) {
-    expect(typeof val === 'number' && Number.isFinite(val),
-      `${path} must be a number`);
   }
 
   /* ── career ── */
@@ -157,8 +157,11 @@ function validateCv(data) {
           sk[group].forEach((item, idx) => {
             const p = `skills.${group}[${idx}]`;
             expectString(item.name, `${p}.name`);
-            expectNumber(item.level, `${p}.level`);
-            expect(item.level >= 0 && item.level <= 100, `${p}.level must be 0–100`);
+            expectString(item.tier, `${p}.tier`);
+            /* A closed set on purpose: tiers replaced the old 0–100 numbers
+               because a percentage on a skill is fake precision. */
+            expect(SKILL_TIERS.includes(item.tier),
+              `${p}.tier must be one of: ${SKILL_TIERS.join(', ')}`);
           });
         }
       }
@@ -245,10 +248,10 @@ function generateCvJs(data) {
      Items are rendered at baseIndent=4 so they sit cleanly inside the
      CV_SKILLS object.  The closing bracket is at indent=2 to match the
      property name.                                                        */
-  function skillBars(items) {
+  function skillList(items) {
     if (!items || !items.length) return '[]';
     const body = items
-      .map(s => jsAlignedObject(s, ['name', 'level'], 4))
+      .map(s => jsAlignedObject(s, ['name', 'tier'], 4))
       .join(',\n');
     return `[\n${body},\n  ]`;
   }
@@ -260,8 +263,8 @@ function generateCvJs(data) {
     return `[\n${body},\n  ]`;
   }
 
-  const tech  = skillBars(skills.technical);
-  const lead  = skillBars(skills.leadership);
+  const tech  = skillList(skills.technical);
+  const lead  = skillList(skills.leadership);
   const langs = langList(skills.languages);
 
   return `/* ${'-'.repeat(76)}
@@ -351,4 +354,4 @@ if (require.main === module) {
 }
 
 /* Export for testing */
-module.exports = { parseArgs, validateCv, generateCvJs };
+module.exports = { parseArgs, validateCv, generateCvJs, SKILL_TIERS };
