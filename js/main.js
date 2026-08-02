@@ -45,20 +45,24 @@
    module that serves a single page belongs behind a dynamic import at its
    init site, not up here. */
 
-/* ─── Data files ──────────────────────────────────────────
-   PROJECTS / PUBLICATIONS / CV_* are imported by name; render
-   functions take them as parameters (defaulting to these
-   imports) so tests can inject mocks without touching globals.
+/* Nothing is imported here. Every data module is loaded with a dynamic
+   import() at the DOM gate that needs it, further down.
 
-   LOCATIONS still rides on globalThis because Globe3D and
-   EuropeMap2D read it as a bare global from constructor bodies;
-   migrating those is a separate refactor. */
-import '../data/locations.js';
-import { PUBLICATIONS as DEFAULT_PUBLICATIONS } from '../data/publications.js';
-import { PROJECTS as DEFAULT_PROJECTS } from '../data/projects.js';
-import { CV_CAREER as DEFAULT_CV_CAREER, CV_EDUCATION as DEFAULT_CV_EDUCATION, CV_SKILLS as DEFAULT_CV_SKILLS } from '../data/cv.js';
-import { UNESCO as DEFAULT_UNESCO } from '../data/unesco.js';
-import { LINKS as DEFAULT_LINKS } from '../data/links.js';
+   These six used to be static imports, which put all of them in the single
+   shared main-*.js chunk: 21.3 KB gzip of the 31.3 KB bundle — 68% of the
+   shared JavaScript — downloaded by all 21 pages. A visitor landing on
+   now.html (three paragraphs about a baby and Dostoevsky) fetched the complete
+   UNESCO world-heritage tree, the 49-entry blogroll, every travel pin, the
+   full CV, all 37 publications and all 14 projects.
+
+   This is the same mistake CLAUDE.md already records for europe-map.js —
+   "shipped 10 KB to the twenty pages with no #europe-canvas" — learned for
+   code and never applied to data. Every renderer already gated on a DOM id, so
+   the fix is only moving the import inside the gate that was there all along.
+
+   Consequence for the renderers below: their data parameters have no
+   defaults. A default would have to name the module at the top of the file,
+   which is exactly what puts it back in the eager graph. */
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
 import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, supportsCnnHero, CNN_HERO_QUERY } from './utils.js';
@@ -187,7 +191,7 @@ function initEmailObfuscation() {
 
 /* Publication items — data source: PUBLICATIONS (data/publications.js).
    Tests pass a mock array as the first argument. */
-function renderPublications(publications = DEFAULT_PUBLICATIONS) {
+function renderPublications(publications) {
   const list = document.getElementById('publications-list');
   if (!list) return;
 
@@ -212,7 +216,7 @@ function renderProjectCard(project, i) {
   return projectCardHtml(project, i);
 }
 
-function renderProjects(projects = DEFAULT_PROJECTS) {
+function renderProjects(projects) {
   var grid = document.getElementById('projects-grid');
   if (!grid) return;
 
@@ -263,7 +267,7 @@ function setFooterYear() {
    imports — cv.html now ships the timeline server-rendered, and re-rendering
    it here from the same builder is what keeps the two from drifting.
    ═══════════════════════════════════════════════════════════ */
-function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) {
+function renderCV(career, education) {
   if (typeof document === 'undefined') return;
   const timeline = document.getElementById('cv-timeline');
   if (!timeline) return;
@@ -274,7 +278,7 @@ function renderCV(career = DEFAULT_CV_CAREER, education = DEFAULT_CV_EDUCATION) 
    CURRICULUM VITAE — SKILLS PANELS
    Tests pass a mocked CV_SKILLS object as the first argument.
    ═══════════════════════════════════════════════════════════ */
-function renderSkills(skills = DEFAULT_CV_SKILLS) {
+function renderSkills(skills) {
   if (typeof document === 'undefined') return;
   const container = document.getElementById('cv-skills');
   if (!container) return;
@@ -557,11 +561,23 @@ if (typeof document !== 'undefined') {
 
   document.addEventListener('DOMContentLoaded', () => {
 
-  /* Render dynamic content (static sections are already in HTML) */
-  renderPublications();
-  renderProjects();
-  renderCV();      /* timeline entries from data/cv.js */
-  renderSkills();  /* skill panels from CV_SKILLS in data/cv.js */
+  /* Render dynamic content. Every section below is already server-rendered
+     into the HTML by generate-cards, so these re-renders are enhancement, not
+     load-bearing — which is what lets them wait for a dynamic import(). The
+     element check comes first so a page without the section never fetches the
+     data at all. */
+  if (document.getElementById('publications-list')) {
+    import('../data/publications.js').then(({ PUBLICATIONS }) => renderPublications(PUBLICATIONS));
+  }
+  if (document.getElementById('projects-grid')) {
+    import('../data/projects.js').then(({ PROJECTS }) => renderProjects(PROJECTS));
+  }
+  if (document.getElementById('cv-timeline') || document.getElementById('cv-skills')) {
+    import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
+      renderCV(CV_CAREER, CV_EDUCATION);
+      renderSkills(CV_SKILLS);
+    });
+  }
   setFooterYear();
 
   /* Each disposable below is recorded so a single pagehide handler at the end
@@ -763,7 +779,14 @@ if (typeof document !== 'undefined') {
     const token = ++globeBuildToken;
     /* Dynamically imported (Three.js) and only when the globe nears the
        viewport — so Three.js downloads lazily, on scroll, not on load. */
-    return import('./globe.js').then(({ geocodeLocations, Globe3D, GlobeFallback2D }) =>
+    /* data/locations.js comes down here rather than at the top of the file:
+       28 KB of pins that only travel.html has a canvas for. Importing it also
+       sets globalThis.LOCATIONS, which is how EuropeMap2D and Globe3D read it
+       from their constructor bodies. */
+    return Promise.all([
+      import('./globe.js'),
+      import('../data/locations.js'),
+    ]).then(([{ geocodeLocations, Globe3D, GlobeFallback2D }, { LOCATIONS }]) =>
       geocodeLocations(LOCATIONS).then(() => {
         /* A newer build superseded this one (e.g. another theme switch landed
            while geocoding was in flight). Bail before constructing so we never
@@ -787,7 +810,7 @@ if (typeof document !== 'undefined') {
       if (typeof console !== 'undefined') console.warn('Globe build skipped:', err);
     });
   };
-  if (globeCanvas && typeof LOCATIONS !== 'undefined') {
+  if (globeCanvas) {
     _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
@@ -803,7 +826,12 @@ if (typeof document !== 'undefined') {
   let europeBuildToken = 0;
   const buildEurope = () => {
     const token = ++europeBuildToken;
-    return import('./europe-map.js').then(({ EuropeMap2D }) => {
+    /* locations.js alongside the map for the same reason as the globe — and it
+       must resolve before the constructor runs, which reads globalThis. */
+    return Promise.all([
+      import('./europe-map.js'),
+      import('../data/locations.js'),
+    ]).then(([{ EuropeMap2D }]) => {
       /* A newer build superseded this one (a theme switch landed while the
          import was in flight) — same guard the globe uses. */
       if (token !== europeBuildToken) return;
@@ -813,7 +841,7 @@ if (typeof document !== 'undefined') {
       if (typeof console !== 'undefined') console.warn('Europe map build skipped:', err);
     });
   };
-  if (europeCanvas && typeof LOCATIONS !== 'undefined') {
+  if (europeCanvas) {
     _lazyOnViewport(europeCanvas, buildEurope);
   }
 
@@ -839,13 +867,18 @@ if (typeof document !== 'undefined') {
   window.addEventListener('themechange', onMapThemeChange);
   _pushTeardown(() => window.removeEventListener('themechange', onMapThemeChange));
 
-  /* UNESCO World Heritage accordion (travel page only) */
+  /* UNESCO World Heritage accordion (travel page only) — 20 KB of tree that
+     the other 20 pages have no use for. */
   const unescoAccordion = document.getElementById('unesco-accordion');
-  if (unescoAccordion) renderUnescoAccordion(unescoAccordion, DEFAULT_UNESCO);
+  if (unescoAccordion) {
+    import('../data/unesco.js').then(({ UNESCO }) => renderUnescoAccordion(unescoAccordion, UNESCO));
+  }
 
   /* Curated blogroll (links page only) */
   const linksGrid = document.getElementById('links-grid');
-  if (linksGrid) renderLinks(linksGrid, DEFAULT_LINKS);
+  if (linksGrid) {
+    import('../data/links.js').then(({ LINKS }) => renderLinks(linksGrid, LINKS));
+  }
 
   /* Interactive MNIST lab (projects/mnist-lenet.html only).
      Dynamically imported behind the element check, so the int8 weights
