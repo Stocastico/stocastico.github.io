@@ -5,7 +5,7 @@ year:        "2017"
 tags:        "Computer Vision, Sensor Fusion, Sports Analytics"
 bg:       "img/projects/ufc-octagon-thumb.webp"
 bg:          "img/projects/ufc-octagon-bg.webp"
-description: "End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017."
+description: "Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017."
 link_video:  "https://www.youtube.com/watch?v=vataVq9gY_o"
 ---
 

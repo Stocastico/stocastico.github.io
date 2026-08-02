@@ -64,7 +64,7 @@ export const PROJECTS = [
             year: "2025",
             tags: ["AI","Computer Vision"],
             bg: "img/projects/gaussian-splat.webp",
-            description: "Research into NeRFs and 3D Gaussian Splatting as a pipeline for capturing real-world locations as photorealistic assets for LED-volume virtual production. Evaluated camera setups, algorithms (nerfacto, splatfacto, MCMC), and Unreal Engine integration — benchmarked against RealityCapture and Postshot. The work produced a desktop application that runs COLMAP pose estimation followed by user-chosen reconstruction either locally or on Azure, with a browser-based Gaussian splat viewer.",
+            description: "Capturing real locations as photorealistic assets for LED-volume virtual production. Benchmarked nerfacto, splatfacto and MCMC against RealityCapture and Postshot, and shipped a desktop app that runs COLMAP pose estimation and reconstructs either locally or on Azure.",
             url: "projects/gaussian-nerf.html",
         },
     {
@@ -74,7 +74,7 @@ export const PROJECTS = [
             year: "2025",
             tags: ["AI","Computer Vision"],
             bg: "img/projects/annotated-stadium.webp",
-            description: "A computer-vision system that measures how much screen time each brand gets in football broadcasts. A YOLO detector finds the perimeter boards and LED signage; a DenseNet201 classifier sorts each into one of 52 brands — coping with small, motion-blurred crops, a 40× class imbalance, and LED ads that rotate weekly. Runs in production on Azure, validated against human annotators.",
+            description: "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands — despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure.",
             url: "projects/brand-stadium.html",
         },
     {
@@ -114,7 +114,7 @@ export const PROJECTS = [
             year: "2022 – 2023",
             tags: ["MLOps","Vertex AI","GCP"],
             bg: "img/projects/mlops-bg.webp",
-            description: "End-to-end MLOps platform built on Google Cloud for one of the largest media companies in Spain. Took a portfolio of disconnected ML models: churn prediction, article recommendation and several others, and rebuilt them as Vertex AI pipelines with versioning, monitoring, drift detection and CI/CD across the whole lifecycle.",
+            description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection.",
             url: "projects/mlops-vertex-media.html",
         },
     {
@@ -144,7 +144,7 @@ export const PROJECTS = [
             year: "2017",
             tags: ["Computer Vision","Sensor Fusion","Sports Analytics"],
             bg: "img/projects/ufc-octagon-bg.webp",
-            description: "End-to-end real-time analytics for live UFC events: stereo computer vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue, and statistics streamed to fans worldwide. Built at AGT International in 2017 and demoed live by our CEO during Werner Vogels' keynote at AWS re:Invent 2017.",
+            description: "Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017.",
             url: "projects/ufc-fighter-tracking.html",
         },
     {
@@ -164,7 +164,7 @@ export const PROJECTS = [
             year: "2011 – 2014",
             tags: ["Computer Vision","Video Analysis","Multimedia"],
             bg: "img/projects/inevent-bg.webp",
-            description: "An EU FP7 project on indexing, searching and linking large archives of lectures, meetings and video-conferences as interconnected hyper-events. At Fraunhofer HHI I led the video-analysis side of the work — automatic segmentation, slide-transition detection and face-based features for multi-modal speaker linking — published at VISAPP 2014, Interspeech 2014, and the ACM MM 2013 Grand Challenge.",
+            description: "An EU FP7 project treating archives of lectures and meetings as interconnected hyper-events. At Fraunhofer HHI I led the video analysis: segmentation, slide-transition detection, and face features for speaker linking. Published at VISAPP, Interspeech and the ACM MM Grand Challenge.",
             url: "projects/inevent.html",
         },
     {
