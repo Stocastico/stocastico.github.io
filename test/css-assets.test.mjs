@@ -241,3 +241,52 @@ test('every page with an inline diagram actually inlines it', () => {
       `${file} references a diagram as <img>; inline it so var(--*) resolves`);
   }
 });
+
+test('assets: no unreferenced images in img/', () => {
+  /* 546 KB of images had accumulated that nothing on the site pointed at —
+     inevent.png (363 KB), mpi-brain-thumb.webp (110 KB) and four orphaned
+     thumbs — and the build copied img/ wholesale, so all of it shipped. They
+     are invisible by nature: an unused file breaks nothing and shows up in no
+     page. Only a check like this one notices.
+
+     Two deliberate exemptions. img/og/ holds one social card per palette and
+     only the active one is referenced; the others become referenced the moment
+     `active:` changes in data/palettes.yaml. drafts/ is not deployed, so a
+     reference from there does not count as one. */
+  const IMG = path.join(ROOT, 'img');
+  const exts = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif']);
+
+  const images = [];
+  const walkImages = (dir, rel = '') => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const next = path.join(dir, ent.name);
+      const nextRel = rel ? `${rel}/${ent.name}` : ent.name;
+      if (ent.isDirectory()) walkImages(next, nextRel);
+      else if (exts.has(path.extname(ent.name).toLowerCase())) images.push(nextRel);
+    }
+  };
+  walkImages(IMG);
+
+  /* Every text source that could name an image. Deliberately not *.md — the
+     review notes and drafts name files they do not ship. */
+  const sources = [];
+  const SKIP = new Set(['node_modules', 'dist', '.git', '.cache', 'screenshots', 'drafts', 'img']);
+  const walkSources = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (SKIP.has(ent.name)) continue;
+      const next = path.join(dir, ent.name);
+      if (ent.isDirectory()) walkSources(next);
+      else if (/\.(html|css|js|mjs|cjs|json|yaml|yml|webmanifest|xml)$/.test(ent.name)) sources.push(next);
+    }
+  };
+  walkSources(ROOT);
+  const haystack = sources.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+
+  const orphans = images.filter((rel) => {
+    if (rel.startsWith('og/')) return false;
+    return !haystack.includes(path.basename(rel));
+  });
+
+  assert.deepEqual(orphans, [],
+    'these images are referenced nowhere and would still be deployed:\n  ' + orphans.join('\n  '));
+});
