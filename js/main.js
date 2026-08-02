@@ -212,8 +212,8 @@ function renderPublications(publications) {
 var PROJECTS_MAX_HOMEPAGE = 3;
 
 /* Thin wrapper around the shared builder (kept for the public test surface). */
-function renderProjectCard(project, i) {
-  return projectCardHtml(project, i);
+function renderProjectCard(project, i, opts) {
+  return projectCardHtml(project, i, opts);
 }
 
 function renderProjects(projects) {
@@ -246,7 +246,14 @@ function renderProjects(projects) {
     grid.innerHTML = '<div class="projects-coming-soon" data-animate>Coming soon — projects will appear here.</div>';
     return;
   }
-  grid.innerHTML = shown.map(renderProjectCard).join('');
+  /* Heading rank follows the page, matching what generate-cards baked in:
+     projects.html goes <h1> Portfolio → cards, so they are h2; the homepage
+     puts them under an <h2> section title, so they are h3. Passing the wrong
+     one here would make the re-render disagree with the served HTML. */
+  var level = showAll ? 2 : 3;
+  grid.innerHTML = shown.map(function (p, i) {
+    return renderProjectCard(p, i, { level: level });
+  }).join('');
 
   /* No "View all projects" footer button: the section's intro prose already
      links the full list, and unlike a JS-injected footer that link is in the

@@ -101,7 +101,10 @@ const TARGETS = {
       publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
   },
   'projects.html': {
-    'generated:project-cards': () => PROJECTS.map((p, i) => projectCardHtml(p, i)),
+    /* level 2, not 3: this page's only other heading is the <h1>, so h3 here
+       would skip a rank. index.html above keeps the default 3 because its
+       cards sit under an <h2> section title. */
+    'generated:project-cards': () => PROJECTS.map((p, i) => projectCardHtml(p, i, { level: 2 })),
   },
   'publications.html': {
     'generated:publication-items': () =>

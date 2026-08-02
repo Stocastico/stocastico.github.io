@@ -1501,14 +1501,21 @@ h3 {
   border-color: transparent;
 }
 
+/* De-emphasised by size and by tabular figures, NOT by opacity.
+
+   `opacity: 0.7` over the chip's already-muted --text-muted composited to
+   below 4.5:1 in every light palette — axe flagged it on three chips at once.
+   It is the exact blind spot of the hand-written contrast harness, which pairs
+   colour tokens against surfaces: --text-muted on --bg-card is a pairing it
+   checks and passes, and an opacity applied afterwards is not a colour it
+   knows about. Anything that fades text with opacity is invisible to that test
+   by construction.
+
+   The count inherits the chip's colour instead, in both the resting and active
+   states, where --on-accent is already validated against the accent fill. */
 .link-chip-count {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  opacity: 0.7;
-}
-
-.link-chip.is-active .link-chip-count {
-  opacity: 0.85;
 }
 
 .links-count {
@@ -1905,10 +1912,12 @@ h3 {
 }
 
 .pub-title {
+  /* An <h3>, so the UA's own margins and 1.17em size have to go — the rank is
+     there for screen-reader navigation, not to change how the card looks. */
+  margin: 0 0 0.45rem;
   font-size: 0.98rem;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 0.45rem;
   line-height: 1.45;
 }
 
@@ -2046,6 +2055,10 @@ h3 {
 }
 
 .project-card__title {
+  /* An <h2> on projects.html and an <h3> on the homepage — see the note in
+     js/render-cards.js. Reset the UA heading styles; the rank carries meaning
+     for assistive tech and must carry none visually. */
+  margin: 0;
   /* Prose, not the display mono — deliberately, and unlike .link-card-name.
      These titles are full sentences ("TRACTION: Opera Co-creation for Social
      Transformation") and run to three lines inside a narrow card; a

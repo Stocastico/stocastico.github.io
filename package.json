@@ -1,7 +1,7 @@
 {
   "name": "stocastico-github-io",
   "version": "1.0.0",
-  "description": "Personal website of Stefano Masneri \u2014 AI Engineer",
+  "description": "Personal website of Stefano Masneri — AI Engineer",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -59,17 +59,19 @@
     "set-domain": "node scripts/set-domain.mjs",
     "update-locations:ps": "powershell -ExecutionPolicy Bypass -File scripts/update-locations.ps1",
     "test:contrast": "node --test test/contrast.test.mjs",
-    "test:e2e": "npm run build && node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs",
+    "test:e2e": "npm run build && node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs test/e2e/a11y.e2e.mjs",
     "test:e2e:content": "npm run build && node --test test/e2e/content.e2e.mjs",
     "test:e2e:pages": "npm run build && node --test test/e2e/pages.e2e.mjs",
     "test:e2e:interaction": "npm run build && node --test test/e2e/interaction.e2e.mjs",
-    "test:e2e:mnist": "npm run build && node --test test/e2e/mnist.e2e.mjs"
+    "test:e2e:mnist": "npm run build && node --test test/e2e/mnist.e2e.mjs",
+    "test:e2e:a11y": "npm run build && node --test test/e2e/a11y.e2e.mjs"
   },
   "engines": {
     "node": ">=18"
   },
   "license": "MIT",
   "devDependencies": {
+    "axe-core": "^4.12.1",
     "playwright": "^1.58.2",
     "sharp": "^0.34.5",
     "vite": "^8.0.10"
