@@ -34,6 +34,7 @@ npm run test:generate-theme # generate-theme.js tests only
 npm run test:cnn            # CNN hero activation-pipeline tests only
 npm run test:lenet-weights  # int8 weight-quantisation tests only
 npm run test:mnist          # MNIST preprocessing tests only
+npm run test:now            # /now page freshness (fails when the date drifts past 90 days)
 
 npm run generate-cv         # data/cv.yaml → data/cv.js
 npm run generate-locations  # data/locations.yaml → data/locations.js
