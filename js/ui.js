@@ -148,6 +148,42 @@ function syncToggleButton(btn, theme) {
   btn.setAttribute('title', `Switch to ${next} theme`);
 }
 
+/* Speak a short confirmation without showing anything.
+
+   The appearance controls changed state silently. The light/dark toggle
+   rewrites its own aria-label, and a name change on the focused element is
+   announced inconsistently across screen-reader/browser pairs; the palette
+   dots flip aria-pressed, which is announced, but "pressed" alone does not say
+   which palette won. Meanwhile the same palette switch made from the ⌘K list
+   fires a visible toast — so one action had two entry points and only one of
+   them told you it had worked.
+
+   A visually-hidden live region rather than the toast: for a sighted user
+   clicking the toggle, the page changing colour *is* the confirmation, and a
+   toast on every click would be noise. The ⌘K path keeps its toast because
+   there the user is in a menu and has no other feedback that the menu acted. */
+function announce(message) {
+  if (typeof document === 'undefined' || !document.body) return;
+  let el = document.getElementById('a11y-status');
+  if (!el) {
+    el = document.createElement('p');
+    el.id = 'a11y-status';
+    el.className = 'visually-hidden';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    document.body.appendChild(el);
+  }
+  /* Clear first: setting the same text twice in a row is not a change, and a
+     live region only announces changes — so picking the same palette twice
+     would go unspoken. */
+  el.textContent = '';
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => { el.textContent = message; });
+  } else {
+    el.textContent = message;
+  }
+}
+
 function broadcastThemeChange(theme) {
   if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
   const Evt = typeof CustomEvent === 'function' ? CustomEvent : null;
@@ -187,13 +223,16 @@ export function initTheme() {
       syncThemeColorMeta(next);
       syncToggleButton(btn, next);
       broadcastThemeChange(next);
+      announce(next === 'light' ? 'Light theme' : 'Dark theme');
     });
   }
 
   dots.forEach((dot) => {
     bag.on(dot, 'click', () => {
-      applyPalette(dot.getAttribute('data-palette'));
+      const id = dot.getAttribute('data-palette');
+      applyPalette(id);
       syncDots();
+      announce(`Palette: ${(PALETTES[id] && PALETTES[id].name) || id}`);
     });
   });
 
