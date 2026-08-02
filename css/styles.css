@@ -2848,55 +2848,12 @@ figcaption {
 }
 
 /* Horizontal progress bars */
-.skill-bars {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.skill-bar-name {
-  display: block;
-  font-size: 0.79rem;
-  font-weight: 500;
-  color: var(--text);
-  margin-bottom: 0.3rem;
-}
-
-.skill-bar-track {
-  height: 5px;
-  background: var(--border);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.skill-bar-fill {
-  height: 100%;
-  width: 0;
-  /* starts at 0 */
-  border-radius: 999px;
-  background: linear-gradient(to right, var(--accent), var(--accent2));
-  transition: width 900ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: width;
-}
-
-/* Trigger fill animation when .animated class is added by initSkillBars() */
-.skill-bar-fill.animated {
-  width: var(--pct);
-}
-
-/* Instant fill when user prefers reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .skill-bar-fill {
-    transition: none;
-    width: var(--pct) !important;
-  }
-}
-
-/* Language pills */
-.lang-list {
+/* Skill + language pills — one row layout shared by all three panels.
+   Technical/Leadership show a tier word (Expert / Advanced) where a
+   percentage bar used to sit; the Languages panel says CEFR levels the
+   same way, which is why the two rule sets are deliberately joint. */
+.lang-list,
+.skill-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -2905,10 +2862,12 @@ figcaption {
   gap: 0.6rem;
 }
 
-.lang-item {
+.lang-item,
+.skill-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.55rem 0.9rem;
   background: var(--bg);
   border-radius: var(--r-md);
@@ -2921,11 +2880,21 @@ figcaption {
   color: var(--text);
 }
 
-.lang-prof {
+/* Skill names are long compound lines ("GenAI & LLMs (Agentic AI · …)"),
+   so they sit a step smaller and lighter than the one-word language names. */
+.skill-item-name {
+  font-size: 0.79rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.lang-prof,
+.skill-tier {
   font-size: 0.72rem;
   font-weight: 500;
   color: var(--accent2-text);
   letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 /* ── Responsive: single-column timeline on small screens ── */

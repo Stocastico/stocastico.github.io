@@ -10,7 +10,7 @@ const vm     = require('node:vm');
 const fs     = require('node:fs');
 
 const { parseYaml, parseScalar, stripYamlComments } = require('../scripts/lib/yaml');
-const { validateCv, generateCvJs, parseArgs }        = require('../scripts/generate-cv');
+const { validateCv, generateCvJs, parseArgs, SKILL_TIERS } = require('../scripts/generate-cv');
 
 // ─── stripYamlComments ───────────────────────────────────────────────────────
 
@@ -284,22 +284,32 @@ test('validateCv: error when education is not an array', () => {
   assert.ok(errors.some(e => e.includes('education')));
 });
 
-test('validateCv: error when skill level is out of range', () => {
+test('validateCv: error when skill tier is outside the allowed set', () => {
   const data = {
     ...minimalValid,
-    skills: { technical: [{ name: 'Python', level: 150 }] },
+    skills: { technical: [{ name: 'Python', tier: 'Guru' }] },
   };
   const errors = validateCv(data);
-  assert.ok(errors.some(e => e.includes('level')));
+  assert.ok(errors.some(e => e.includes('tier')));
 });
 
-test('validateCv: error when skill level is not a number', () => {
+test('validateCv: error when skill tier is missing', () => {
   const data = {
     ...minimalValid,
-    skills: { technical: [{ name: 'Python', level: 'high' }] },
+    skills: { technical: [{ name: 'Python' }] },
   };
   const errors = validateCv(data);
-  assert.ok(errors.some(e => e.includes('level')));
+  assert.ok(errors.some(e => e.includes('tier')));
+});
+
+test('validateCv: every SKILL_TIERS value is accepted', () => {
+  for (const tier of SKILL_TIERS) {
+    const data = {
+      ...minimalValid,
+      skills: { technical: [{ name: 'Python', tier }] },
+    };
+    assert.deepEqual(validateCv(data), []);
+  }
 });
 
 test('validateCv: accepts CV with no skills block', () => {
@@ -338,8 +348,8 @@ test('generateCvJs: output is valid JS that defines the three globals', () => {
     career: [{ year: '2020', role: 'Engineer', company: 'Acme', tags: ['Python'] }],
     education: [{ year: '2014', degree: 'BSc', institution: 'Uni' }],
     skills: {
-      technical:  [{ name: 'Python', level: 95 }],
-      leadership: [{ name: 'Leadership', level: 80 }],
+      technical:  [{ name: 'Python', tier: 'Expert' }],
+      leadership: [{ name: 'Leadership', tier: 'Advanced' }],
       languages:  [{ name: 'English', proficiency: 'C2' }],
     },
   }));
@@ -351,7 +361,7 @@ test('generateCvJs: output is valid JS that defines the three globals', () => {
   assert.ok(Array.isArray(CV_EDUCATION));
   assert.equal(CV_EDUCATION[0].degree, 'BSc');
   assert.ok(typeof CV_SKILLS === 'object');
-  assert.equal(CV_SKILLS.technical[0].level,          95);
+  assert.equal(CV_SKILLS.technical[0].tier,      'Expert');
   assert.equal(CV_SKILLS.languages[0].proficiency, 'C2');
 });
 

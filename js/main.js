@@ -92,12 +92,11 @@ import { NoiseGradient } from './noise-gradient.js';
    GlobeFallback2D/geocodeLocations) are dynamically imported at their init
    sites below — see the Three.js loading-strategy note at the top. */
 
-/* DOM animations: scroll reveal, card tilt, parallax, skill bars (extracted) */
+/* DOM animations: scroll reveal, card tilt, parallax (extracted) */
 import {
   initScrollReveal,
   initCardTilt,
   initScroll3D,
-  initSkillBars,
   revealNewContent,
 } from './animations.js';
 
@@ -540,7 +539,6 @@ export {
   setFooterYear,
   initTheme,
   initCardTilt,
-  initSkillBars,
   initAnimatedFavicon,
   initScroll3D,
   initNavbar,
@@ -639,9 +637,6 @@ if (typeof document !== 'undefined') {
   whenIdle(() => {
     _pushTeardown(initCardTilt());
   });
-
-  /* CV skill bars */
-  _pushTeardown(initSkillBars());
 
   /* Animated favicon — starts after fonts load (async, non-blocking) */
   initAnimatedFavicon();

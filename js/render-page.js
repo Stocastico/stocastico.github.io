@@ -160,23 +160,19 @@ export function cvTimelineLines(career, education) {
    CV — SKILLS PANELS
    ═══════════════════════════════════════════════════════════ */
 
-/* The track is a role="meter": without it the level exists only in the
-   fill's inline --pct style, so a screen reader hears the skill name and
-   nothing else. */
-function barPanel(items, label) {
+/* Tier labels (Expert / Advanced / …), not percentage bars: a number on a
+   skill is fake precision, and as plain text the level reaches screen
+   readers for free. Same row layout as the Languages panel's CEFR labels,
+   so the three panels read as one system. */
+function tierPanel(items, label) {
   if (!items.length) return '';
   return '<div class="skill-panel" data-animate>'
     + `<h3 class="skill-panel-title">${escapeHtml(label)}</h3>`
-    + '<ul class="skill-bars">'
-    + items.map((s) => {
-      const pct = parseInt(s.level, 10);
-      return '<li class="skill-bar-item">'
-        + `<span class="skill-bar-name">${escapeHtml(s.name)}</span>`
-        + `<div class="skill-bar-track" role="meter" aria-label="${escapeHtml(s.name)}"`
-        + ` aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-valuetext="${pct}%">`
-        + `<div class="skill-bar-fill" style="--pct:${pct}%"></div>`
-        + '</div></li>';
-    }).join('')
+    + '<ul class="skill-list">'
+    + items.map((s) => '<li class="skill-item">'
+      + `<span class="skill-item-name">${escapeHtml(s.name)}</span>`
+      + `<span class="skill-tier">${escapeHtml(s.tier)}</span>`
+      + '</li>').join('')
     + '</ul></div>';
 }
 
@@ -195,8 +191,8 @@ function langPanel(items) {
 export function cvSkillsLines(skills) {
   const { technical = [], leadership = [], languages = [] } = (skills || {});
   const panels = [
-    barPanel(technical, 'Technical'),
-    barPanel(leadership, 'Leadership'),
+    tierPanel(technical, 'Technical'),
+    tierPanel(leadership, 'Leadership'),
     langPanel(languages),
   ].filter(Boolean);
   if (!panels.length) return [];

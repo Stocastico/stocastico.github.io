@@ -322,36 +322,3 @@ export function initScroll3D() {
   };
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SKILL BAR FILL ANIMATION
-   Triggers the CSS width transition on .skill-bar-fill when
-   the bar enters the viewport (IntersectionObserver).
-   ═══════════════════════════════════════════════════════════ */
-export function initSkillBars() {
-  if (typeof document === 'undefined') return;
-  const bars = Array.from(document.querySelectorAll('.skill-bar-fill'));
-  if (!bars.length) return;
-
-  if (prefersReducedMotion()) {
-    /* Show instantly for reduced-motion users */
-    bars.forEach(b => b.classList.add('animated'));
-    return;
-  }
-
-  if (typeof IntersectionObserver === 'undefined') {
-    bars.forEach(b => b.classList.add('animated'));
-    return;
-  }
-
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (!e.isIntersecting) return;
-      e.target.classList.add('animated');
-      io.unobserve(e.target);
-    });
-  }, { threshold: 0.3 });
-
-  bars.forEach(bar => io.observe(bar));
-
-  return () => io.disconnect();
-}

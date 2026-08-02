@@ -21,7 +21,6 @@ import {
   renderSkills,
   initTheme,
   initCardTilt,
-  initSkillBars,
   initAnimatedFavicon,
   initScroll3D,
   initBackToTop,
@@ -1042,13 +1041,13 @@ test('renderSkills renders technical bars and language pills', () => {
   };
   try {
     renderSkills({
-      technical: [{ name: 'Python', level: 90 }],
-      leadership: [{ name: 'Mentoring', level: 75 }],
+      technical: [{ name: 'Python', tier: 'Expert' }],
+      leadership: [{ name: 'Mentoring', tier: 'Advanced' }],
       languages: [{ name: 'English', proficiency: 'Native' }],
     });
     assert.match(container.innerHTML, /Python/);
-    assert.match(container.innerHTML, /skill-bar-fill/);
-    assert.match(container.innerHTML, /--pct:90%/);
+    assert.match(container.innerHTML, /skill-tier/);
+    assert.match(container.innerHTML, /Expert/);
     assert.match(container.innerHTML, /Mentoring/);
     assert.match(container.innerHTML, /English/);
     assert.match(container.innerHTML, /Native/);
@@ -1130,54 +1129,6 @@ test('initBackToTop does nothing when button is missing', () => {
   } finally {
     global.document = prevDoc;
     global.window = prevWin;
-  }
-});
-
-/* ─── initSkillBars tests ─────────────────────────────────── */
-
-test('initSkillBars adds animated class to bars when IntersectionObserver fires', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevIO = global.IntersectionObserver;
-  let observedCb = null;
-  const bar1 = { classList: makeClassList() };
-  const bar2 = { classList: makeClassList() };
-  global.document = {
-    querySelectorAll(sel) {
-      if (sel === '.skill-bar-fill') return [bar1, bar2];
-      return [];
-    },
-  };
-  global.window = {
-    matchMedia() { return { matches: false }; },
-  };
-  global.IntersectionObserver = class {
-    constructor(cb) { observedCb = cb; }
-    observe() {}
-    unobserve() {}
-  };
-  try {
-    initSkillBars();
-    /* Simulate intersection */
-    observedCb([{ isIntersecting: true, target: bar1 }]);
-    assert.ok(bar1.classList.contains('animated'));
-    assert.ok(!bar2.classList.contains('animated'), 'bar2 not yet intersected');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.IntersectionObserver = prevIO;
-  }
-});
-
-test('initSkillBars adds animated class immediately when no bars exist', () => {
-  const prevDoc = global.document;
-  global.document = {
-    querySelectorAll() { return []; },
-  };
-  try {
-    initSkillBars(); /* early return, no throw */
-  } finally {
-    global.document = prevDoc;
   }
 });
 
