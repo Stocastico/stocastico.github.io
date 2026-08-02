@@ -2026,6 +2026,37 @@ figcaption {
   margin-bottom: 2rem;
 }
 
+/* Pack the rows when the browser can do it properly.
+
+   `align-items: start` stopped cards stretching, but a grid row is still as
+   tall as its tallest item, so a short card leaves a gap beneath it before the
+   next row begins — measured at 600px across the four full rows of
+   projects.html.
+
+   CSS multi-column removes that gap and was tried and rejected. It packs
+   tightly (grid 2065px -> 1803px) but fills **column-major**, so the top of a
+   reverse-chronological portfolio came out reading 2026, 2023, 2017 across.
+   The ordering is the point of the page; a 13% height saving does not buy it.
+
+   Masonry fills in **document order**, placing each item into the column with
+   the most room — so item 1 stays top-left and the chronology survives. That
+   is the difference that matters here, and it is why this waits for masonry
+   rather than settling for columns. Neither syntax ships anywhere yet (the
+   working group is still choosing between them), so both are listed: whichever
+   arrives first takes effect on its own, and until then this block does
+   nothing at all. */
+@supports (grid-template-rows: masonry) {
+  .projects-grid {
+    grid-template-rows: masonry;
+  }
+}
+
+@supports (item-flow: row masonry) {
+  .projects-grid {
+    item-flow: row masonry;
+  }
+}
+
 .project-card {
   position: relative;
   display: flex;
