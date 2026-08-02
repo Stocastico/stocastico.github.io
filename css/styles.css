@@ -570,6 +570,40 @@ h2,
 h3 {
   line-height: 1.15;
   font-weight: 700;
+  /* Even the line lengths rather than filling each line greedily. Headings
+     here wrap constantly — card titles are full sentences in a 280px column,
+     section titles run to clamp(2.25rem, 4.5vw, 3.75rem) — and the default
+     algorithm reliably leaves one orphaned word on the last line. Browsers cap
+     `balance` at a handful of lines and fall back silently beyond that, which
+     is the right failure: it is an improvement where it applies and a no-op
+     where it does not. */
+  text-wrap: balance;
+}
+
+/* .hero-name opts out. Its two lines come from an explicit <br>, so balancing
+   a two-line proper noun is a no-op at best and a re-flow of the one piece of
+   type on the site whose composition was hand-tuned at worst. `wrap`, not
+   `nowrap`: at 390px "Stefano" set at 3.5rem is already close to the measure,
+   and nowrap would answer a tight fit with horizontal overflow instead of a
+   wrap. Opting out of balance should not opt out of wrapping. */
+.hero-name {
+  text-wrap: wrap;
+}
+
+/* Prose gets `pretty`, not `balance`: it protects against orphans and bad
+   final-line rags without trying to equalise every line of a paragraph, which
+   is what `balance` would do and is wrong for running text. The body face is a
+   serif at 1.05rem over a 60ch measure, where a single trailing word is very
+   visible. */
+p,
+.section-subtitle,
+.post-lead,
+.project-card__desc,
+.link-card-desc,
+.tl-desc,
+.pub-meta,
+figcaption {
+  text-wrap: pretty;
 }
 
 /* ─── 4. Layout Helpers ─────────────────────────────────── */
