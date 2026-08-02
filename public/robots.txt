@@ -7,5 +7,10 @@
 User-agent: *
 Allow: /
 
+# ── For AI assistants and answer engines ──────────────────────────────────────
+# /llms.txt is a plain-text index of what is on this site: every page with its
+# description, every project, and the publication list. Generated from the same
+# data the pages are, so it does not drift.
+
 # ── Sitemap ────────────────────────────────────────────────────────────────────
 Sitemap: https://stefanomasneri.com/sitemap.xml
