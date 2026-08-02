@@ -69,8 +69,8 @@ module loading, the CSP `<meta>` and relative URLs behave as in production.
 | File | Covers |
 |---|---|
 | `test/e2e/pages.e2e.mjs` | Every page loads clean: no console errors, no uncaught exceptions, no 404s, unique titles, one `<h1>`, a `<main>` landmark. No horizontal overflow at 375/390/768px. No text clipped out of its box. |
-| `test/e2e/content.e2e.mjs` | **The reveal invariant**: nothing on screen may be invisible. Checked after scrolling, after landing directly on an anchor, and after clicking every in-page nav link — at three widths. Plus the degraded paths: JS disabled, reduced motion. |
-| `test/e2e/interaction.e2e.mjs` | Links resolve, anchors have targets, mobile menu opens, ⌘K opens and closes, dark is the default regardless of OS, the light choice survives a reload, every palette dot repaints and persists. **And the bfcache round trip** — a real history navigation with the back/forward cache switched on. |
+| `test/e2e/content.e2e.mjs` | **The reveal invariant**: nothing on screen may be invisible. Checked after scrolling, after landing directly on an anchor, and after clicking every in-page nav link — at three widths. Plus the degraded paths: JS disabled, reduced motion — and the print path, where the About stat counters must still show real numbers on an unscrolled page. |
+| `test/e2e/interaction.e2e.mjs` | Links resolve, anchors have targets, mobile menu opens, ⌘K opens and closes **on every page in `dist/`, not just the homepage**, dark is the default regardless of OS, the light choice survives a reload, every palette dot repaints and persists. **And the bfcache round trip** — a real history navigation with the back/forward cache switched on. |
 | `test/e2e/mnist.e2e.mjs` | The lab classifies real pointer strokes; predictions are stable across digit size and across a theme switch; clearing resets; and no other page downloads the 44 KB weights chunk. |
 
 The page list in `pages.e2e.mjs` is **read from `dist/`**, not hard-coded — a

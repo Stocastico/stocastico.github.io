@@ -13,7 +13,6 @@
   <meta name="description"
     content="Stefano Masneri, Senior AI Engineer specialising in Machine Learning, Computer Vision, and Augmented Reality. Based in San Sebastián, Spain." />
   <meta name="author" content="Stefano Masneri" />
-  <meta name="keywords" content="Stefano Masneri, AI Engineer, Machine Learning, Computer Vision, Augmented Reality, Deep Learning, XR, ViT, Speaker Diarisation, San Sebastián" />
   <meta name="robots" content="index, follow" />
   <title>Stefano Masneri | Machine Learning, Computer Vision &amp; AR</title>
   <link rel="canonical" href="https://stefanomasneri.com/" />
@@ -276,9 +275,12 @@
       </div>
 
       <!-- Quick stats — real values are baked into the HTML so search crawlers
-           (and users with JS disabled) see the numbers. The JS counter resets
-           each value to 0 on viewport entry and animates back up to the
-           data-count target. Sits below the photo/bio row so the three cards
+           (and users with JS disabled) see the numbers. The JS counter keeps
+           them intact until the row actually enters the viewport (so printing
+           an unscrolled page still shows real values), then resets to 0 and
+           animates up to the data-count target — or sets the value outright
+           under prefers-reduced-motion.
+           Sits below the photo/bio row so the three cards
            get the full container width instead of stacking in a ~120px
            column. -->
       <div class="stats-row" data-animate data-delay="150">
@@ -492,7 +494,8 @@
   </script>
 
   <!-- Command palette — opened with ⌘K / Ctrl+K -->
-  <div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette"
+    data-email-user="c3RlZmFuby5tYXNuZXJp" data-email-domain="bGl2ZS5jb20=" hidden>
     <div class="cmd-box">
       <div class="cmd-search-row">
         <svg class="cmd-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">

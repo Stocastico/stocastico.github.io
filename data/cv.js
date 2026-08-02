@@ -13,7 +13,7 @@ export const CV_CAREER = [
     role:        'Senior AI Engineer',
     company:     'Mediapro',
     location:    'San Sebastián, ES',
-    description: 'Designed and deployed GenAI solutions for audiovisual production, including automatic detection of commercial in live sport events. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.',
+    description: 'Designed and deployed GenAI solutions for audiovisual production, including automatic detection of commercials in live sports events. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.',
     tags:        ['GenAI', 'LLMs', 'NeRF', 'Gaussian Splatting', 'Computer Vision', 'Python'],
   },
   {

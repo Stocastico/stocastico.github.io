@@ -183,4 +183,26 @@ describe('content: the sections that carry the substance are populated', () => {
       assert.equal(visible, total, `${total - visible} papers never became visible`);
     } finally { await page.close(); }
   });
+
+  /* The stats used to be zeroed at DOMContentLoaded so the count-up had a
+     starting point, and only restored when the observer fired at 60%
+     visibility. Printing scrolls nothing, so Ctrl+P on a freshly-landed page
+     printed "0 Countries / 0+ Publications / 0+ Years Exp." — the same shape as
+     the reveal-on-print bug the CSS already guards, but on textContent, which
+     no stylesheet can restore. Asserted without scrolling, which is the whole
+     point: scrolling first would fire the observer and hide the bug. */
+  test('the About stats never show zero, even unscrolled (print path)', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.emulateMedia({ media: 'print' });
+      await page.waitForTimeout(300);
+      const values = await page.$$eval('.stat-number[data-count]', (els) =>
+        els.map((e) => ({ shown: e.textContent.trim(), want: e.dataset.count })));
+      assert.ok(values.length >= 3, `expected 3 stats, got ${values.length}`);
+      for (const { shown, want } of values) {
+        assert.equal(shown, want, `a stat printed as "${shown}" instead of "${want}"`);
+      }
+    } finally { await page.close(); }
+  });
 });

@@ -9,14 +9,13 @@ A single-page portfolio that doubles as a small showcase of real-time WebGL effe
 - **`index.html`** — the main page, with the following sections:
   - **Hero** — palette-gradient name over a domain-warped GLSL noise gradient and, on desktop, a real LeNet-5 classifying MNIST digits (Canvas2D, no Three.js, no ML runtime; narrow/touch viewports get a particle field instead).
   - **About** — short bio and key stats.
-  - **Skills (Expertise)** — Apple-style sticky-scroll section where each skill category pins to the viewport in turn.
   - **Projects** — up to three project cards from `data/projects.js` (professional work only — `kind: 'work'`), plus a link to the full listing.
   - **Publications** — list of selected papers, generated from `data/publications.js`.
   - **Places** — a static inline-SVG world map highlighting lived / visited countries (a teaser that links to the travel page).
   - **Contact** — 2 × 2 grid of contact cards; the email address is base64-encoded and revealed on click.
 - **`projects.html`** — full project listing, with one detail page per project under `projects/`.
 - **`publications.html`** — the full (30+) publication list, rendered from `data/publications.js`.
-- **`cv.html`** — two-column CV (work experience / education) plus a skills tag cloud, generated from `data/cv.yaml`.
+- **`cv.html`** — unified career/education timeline plus skill panels with proficiency tiers, generated from `data/cv.yaml`.
 - **`travel.html`** — interactive 3-D globe (Three.js) + 2-D Canvas map of Europe + a UNESCO World Heritage accordion. The globe and map visualise the same set of "lived / work / travel" pins, animated trip routes, and highlighted regions.
 - **`links.html`** — a curated, category-filterable blogroll generated from `data/links.yaml`.
 - **`now.html`** — a [now-now-now.com](https://nownownow.com/about)-style page describing current focus (work, reading, hobbies). Linked from the About section and the command palette; built on the shared `.post` prose layout.
@@ -62,7 +61,7 @@ Site-wide UX touches include a ⌘K / Ctrl-K command palette, a reading-progress
 │   ├── cnn-hero.js            CnnHero (Canvas2D LeNet-5 forward pass — desktop hero background)
 │   ├── noise-gradient.js      NoiseGradient (raw WebGL/GLSL hero background — renders a few frames then stops)
 │   ├── globe.js               Globe3D + GlobeFallback2D + geocodeLocations
-│   ├── animations.js          Scroll reveal, card tilt, card flip, parallax, skill bars
+│   ├── animations.js          Scroll reveal, card tilt, card flip, parallax
 │   ├── europe-map.js          Interactive 2D Canvas map of Europe (lazy chunk — travel page only)
 │   └── theme.js               Generated — active palette (hex/int/glvec) + helpers (do not edit manually)
 ├── data/
@@ -439,7 +438,7 @@ Full YAML format reference is in **[docs/DATA-FORMATS.md](docs/DATA-FORMATS.md)*
 
 Quick summary:
 
-- **`data/cv.yaml`** — career, education, and skills (each skill has a `level` 0–100 driving its CV bar). Edit then run `npm run generate-cv`.
+- **`data/cv.yaml`** — career, education, and skills (each skill carries a proficiency tier shown on the CV skill panels). Edit then run `npm run generate-cv`.
 - **`data/locations.yaml`** — globe pins (`lived` / `work` / `travel`), animated trip routes, and highlighted regions. Edit then run `npm run generate-locations`.
 - **`data/countries.yaml`** — homepage world-map highlights (`lived` / `visited`); derived from `locations.yaml` on first run, then hand-editable. Edit then run `npm run generate-countries` and `npm run generate-world-map`.
 - **`data/unesco.yaml`** — travel-page UNESCO accordion (continent → country → site, https-only links). Edit then run `npm run generate-unesco`.
@@ -595,16 +594,16 @@ caught in CI.
 
 ### Navigation
 
-The navbar contains: **About**, **Expertise** (the Skills section), **Projects**, **Travel**, **Links**, and **Contact**. The CV and the **Now** page are accessible via the command palette (or by navigating directly to `cv.html` / `now.html`); the Now page is also linked from the About section. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
+The navbar contains: **About**, **CV**, **Projects**, **Travel**, **Links**, **Now**, and **Contact**. Every destination is also reachable from the ⌘K command palette, which ships on every page. On scroll, the navbar gains a frosted-glass background. The active section is tracked and highlighted automatically. A hamburger menu replaces the links on small viewports.
 
 ### Pages
 
 | Page | Description |
 | ------ | ------------- |
-| `index.html` | Single-page application — Hero, About, Expertise (Skills), Projects, Publications, Places, Contact sections |
+| `index.html` | Single-page application — Hero, About, Projects, Publications, Places, Contact sections |
 | `projects.html` | Dedicated projects listing page — all project cards from `data/projects.js` |
 | `publications.html` | Full publication list — all papers from `data/publications.js` |
-| `cv.html` | Dedicated CV page with a two-column layout: Work experience on the left, Education on the right. Skills are rendered as a tag cloud below. |
+| `cv.html` | Dedicated CV page: a unified timeline with career on the left and education on the right, plus skill panels (technical / leadership / languages) with proficiency tiers below. |
 | `travel.html` | 3-D globe + 2-D Europe map + UNESCO World Heritage accordion |
 | `links.html` | Curated, category-filterable blogroll from `data/links.yaml` |
 | `now.html` | "Now" page — current focus (work, reading, hobbies); linked from About + command palette |
@@ -616,7 +615,6 @@ The navbar contains: **About**, **Expertise** (the Skills section), **Projects**
 | --------- | ------------- |
 | Hero | Left-aligned layout with a palette-gradient name, animated tagline, hero CTAs |
 | About | Photo + stats and bio text in a split layout |
-| Skills (Expertise) | Sticky-scroll section (Apple-style) — each skill category pins to the viewport as you scroll through it |
 | Projects | Up to 3 project cards rendered from `data/projects.js`, plus a link to `projects.html` |
 | Publications | List of selected papers, rendered from `data/publications.js` |
 | Places | Static inline-SVG world map of lived / visited countries; links to the travel page |
@@ -650,7 +648,7 @@ Total cost: ~2.6 KB gzip — the non-active palettes as `[data-palette]` scoped 
 
 A Canvas2D particle system (`NeuralNetwork2D`) of glowing nodes connected by dynamic line segments. Particles drift with random velocities and are attracted toward the mouse cursor; lines are drawn between nearby pairs and fade with distance, creating the "glowing wire" look. On low-power devices the node count drops and the frame rate is capped. The hero background is decorative, so it is rendered in plain Canvas2D rather than WebGL — which keeps the module **Three-free** and means the homepage never downloads Three.js at all (Three only ships in the globe chunk on the travel page).
 
-The module is **code-split and lazily imported on the first user interaction** (`mousemove` / `scroll` / `touchstart`), so it stays off the initial critical path; the noise gradient fills the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
+The module is **code-split and lazily imported on idle time** (`requestIdleCallback` with a 1.5 s deadline; a `mousemove` / `scroll` / `touchstart` accelerates it), so it stays off the initial critical path while still painting for visitors who never touch anything; the noise gradient fills the hero until it loads. Hidden entirely under `prefers-reduced-motion`.
 
 ### Interactive 3-D globe (travel page)
 
@@ -679,7 +677,6 @@ As the user scrolls, elements respond with transforms calculated from their posi
 - **Hero parallax**: the hero content translates at ~28 % of scroll speed, giving depth separation from the canvas background.
 - **Section entrance animations**: elements with `data-animate` fade and slide in as they enter the viewport.
 - **Publication cards**: enter with a horizontal `translateX` slide as they scroll into view.
-- **Skills sticky scroll**: each skill category pins to the viewport while active, then scrolls away as the next one takes over.
 
 All transforms are throttled to `requestAnimationFrame` and are disabled for `prefers-reduced-motion`.
 
@@ -705,11 +702,11 @@ A thin bar at the very top of the page fills from left to right as the user scro
 
 ### Command palette (⌘K / Ctrl+K)
 
-Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) from anywhere on the page to open a spotlight-style command palette. Available actions:
+Press **⌘K** (macOS) or **Ctrl+K** (Windows / Linux) on any page of the site to open a spotlight-style command palette. Available actions:
 
 | Command | Action |
 | --------- | -------- |
-| About / Expertise / Publications / Places / Contact | Scroll to that section on the homepage |
+| About / Publications / Places / Contact | Scroll to that section on the homepage (navigates there first from any other page) |
 | Projects / All publications / CV / Links / Now | Navigate to `projects.html` / `publications.html` / `cv.html` / `links.html` / `now.html` |
 | Open CV PDF | Open the CV PDF |
 | Copy email address | Copy email address to clipboard |
