@@ -741,10 +741,34 @@ if (typeof document !== 'undefined') {
     buildNeural();
   };
 
+  /* The hero background starts on its own.
+
+     It used to wait for a mousemove, scroll or touchstart, which kept it off
+     the critical path but made "is there a network behind the name?" depend on
+     whether the visitor happened to move. Anyone reading without touching the
+     mouse saw an empty rectangle; so did every keyboard user, every headless
+     renderer, every social-preview fetcher and every print. The hero is the
+     one idea on this page worth showing, and gating it on an input event was
+     asking for a gesture in exchange for the thing the page is about.
+
+     Idle time, not load time. requestIdleCallback runs once the browser has
+     nothing more pressing, so the fetch and first paint still sit behind
+     layout, the fonts and the static content — the original goal — without
+     needing a person to trigger them. The interaction listeners stay as an
+     accelerator: someone who moves the mouse immediately gets it immediately
+     rather than at the next idle slot.
+
+     The timeout is the part that matters for the silent cases. A busy main
+     thread can defer an idle callback indefinitely, and browsers withhold it
+     entirely on a page that never becomes interactive — exactly the headless
+     case — so the 1500 ms deadline is what guarantees a paint. Browsers
+     without requestIdleCallback (Safari shipped it late) get the same
+     deadline via setTimeout. */
   if (neuralCanvas) {
     if (prefersReducedMotion()) {
       neuralCanvas.style.display = 'none';
     } else {
+      const IDLE_DEADLINE = 1500;
       const startNeural = () => {
         if (neuralStarted) return;
         neuralStarted = true;
@@ -754,6 +778,12 @@ if (typeof document !== 'undefined') {
       };
       ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
         window.addEventListener(evt, startNeural, { passive: true, once: true }));
+
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(startNeural, { timeout: IDLE_DEADLINE });
+      } else {
+        setTimeout(startNeural, IDLE_DEADLINE);
+      }
     }
   }
 
