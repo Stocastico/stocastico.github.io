@@ -573,29 +573,33 @@ if (typeof document !== 'undefined') {
      load-bearing — which is what lets them wait for a dynamic import(). The
      element check comes first so a page without the section never fetches the
      data at all. */
+  /* Renders that replace server-rendered nodes are collected here so
+     enhancements that bind listeners to those nodes (card tilt) can wait for
+     the final DOM — binding before a re-render leaves the fresh nodes inert. */
+  const _renderSettled = [];
   const pubList = document.getElementById('publications-list');
   if (pubList) {
-    import('../data/publications.js').then(({ PUBLICATIONS }) => {
+    _renderSettled.push(import('../data/publications.js').then(({ PUBLICATIONS }) => {
       renderPublications(PUBLICATIONS);
       revealNewContent(pubList);
-    });
+    }));
   }
   const projGrid = document.getElementById('projects-grid');
   if (projGrid) {
-    import('../data/projects.js').then(({ PROJECTS }) => {
+    _renderSettled.push(import('../data/projects.js').then(({ PROJECTS }) => {
       renderProjects(PROJECTS);
       revealNewContent(projGrid);
-    });
+    }));
   }
   const cvTimeline = document.getElementById('cv-timeline');
   const cvSkills = document.getElementById('cv-skills');
   if (cvTimeline || cvSkills) {
-    import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
+    _renderSettled.push(import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
       renderCV(CV_CAREER, CV_EDUCATION);
       renderSkills(CV_SKILLS);
       revealNewContent(cvTimeline);
       revealNewContent(cvSkills);
-    });
+    }));
   }
   setFooterYear();
 
@@ -630,12 +634,19 @@ if (typeof document !== 'undefined') {
   /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
      not compete with content rendering on the main thread. requestIdleCallback
      fires within milliseconds on a quiet page; the 2 s timeout guarantees it
-     still initialises on heavily loaded devices.                              */
+     still initialises on heavily loaded devices.
+     It also waits for _renderSettled: the renderers above replace the
+     server-rendered cards, and on a slow network the idle deadline used to
+     beat the data chunks — tilt then bound to nodes about to be discarded and
+     the fresh cards never got it. allSettled (not all) so one failed chunk
+     doesn't cost the static cards their tilt too.                             */
   const whenIdle = typeof requestIdleCallback !== 'undefined'
     ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
     : (fn) => setTimeout(fn, 0);
-  whenIdle(() => {
-    _pushTeardown(initCardTilt());
+  Promise.allSettled(_renderSettled).then(() => {
+    whenIdle(() => {
+      _pushTeardown(initCardTilt());
+    });
   });
 
   /* Animated favicon — starts after fonts load (async, non-blocking) */

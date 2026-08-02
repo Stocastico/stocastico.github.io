@@ -45,19 +45,27 @@ function listenerBag() {
 export function initCounters() {
   const counters = document.querySelectorAll('.stat-number[data-count]');
   if (!counters.length) return;
+  if (typeof IntersectionObserver === 'undefined') return;
 
   /* The HTML ships with the real value already in textContent so search
-     crawlers see it.  Once JS takes over, reset to 0 so the count-up
-     animation has somewhere to start from. */
-  counters.forEach((el) => { el.textContent = '0'; });
-
+     crawlers see it. The value must NOT be zeroed before the observer fires:
+     printing scrolls nothing, so a page-load reset would print "0 Countries"
+     for anyone hitting Ctrl+P before scrolling to the stats — the same
+     "content mutated behind an observer with no fallback" trap the scroll
+     reveal already guards against. So the reset-to-0 happens inside the
+     callback, immediately before the count-up that restores it. */
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
       const el = entry.target;
-      const end = parseInt(el.dataset.count, 10);
-      animateCounter(el, end);
       observer.unobserve(el);
+      const end = parseInt(el.dataset.count, 10);
+      if (prefersReducedMotion()) {
+        el.textContent = String(end);
+        return;
+      }
+      el.textContent = '0';
+      animateCounter(el, end);
     });
   }, { threshold: 0.6 });
 
@@ -407,16 +415,21 @@ export function initCommandPalette() {
 
   const bag = listenerBag();
 
-  /* ── Command definitions ───────────────────────────────── */
+  /* ── Command definitions ───────────────────────────────────
+     The palette ships on every page (the overlay markup is in each page's
+     static HTML), so every destination is root-absolute — a relative
+     'projects.html' would resolve to /projects/projects.html from a project
+     detail page. Entries without an href scroll to an on-page section when it
+     exists and fall back to the homepage anchor when it doesn't. */
   const SECTIONS = [
     { id: 'about',        label: 'About',        hint: 'Hello there!' },
-    { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: 'projects.html' },
+    { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: '/projects.html' },
     { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
-    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: 'publications.html' },
-    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: 'cv.html' },
+    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: '/publications.html' },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: '/cv.html' },
     { id: 'places',       label: 'Places',        hint: 'Where I’ve been' },
-    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: 'links.html' },
-    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: 'now.html' },
+    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: '/links.html' },
+    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html' },
     { id: 'contact',      label: 'Contact',       hint: "Let’s talk" },
   ];
 
@@ -425,23 +438,24 @@ export function initCommandPalette() {
       label: 'Open CV PDF',
       hint: 'Download / view',
       icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v12M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
-      action() { window.open('docs/cv.pdf', '_blank'); },
+      action() { window.open('/docs/cv.pdf', '_blank'); },
     },
     {
       label: 'Copy email address',
       hint: 'To clipboard',
       icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
       action() {
-        /* Prefer the revealed mailto: href, but fall back to decoding the
-           obfuscated contact card so "Copy email" works even before the user
-           has hovered/clicked the card to reveal it. */
+        /* Prefer the revealed mailto: href, then fall back to decoding the
+           obfuscated data attributes — on the contact card (homepage) or on
+           the palette overlay itself (every other page carries the same
+           base64 pair there, since those pages have no contact section). */
         let email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
         if (!email) {
-          const card = document.querySelector('.contact-email-obfuscated');
-          if (card && typeof atob === 'function') {
+          const source = document.querySelector('.contact-email-obfuscated') || overlay;
+          if (source && typeof atob === 'function') {
             try {
-              const user = atob(card.getAttribute('data-email-user') || '');
-              const domain = atob(card.getAttribute('data-email-domain') || '');
+              const user = atob(source.getAttribute('data-email-user') || '');
+              const domain = atob(source.getAttribute('data-email-domain') || '');
               if (user && domain) email = `${user}@${domain}`;
             } catch (_) { /* malformed data attrs — leave email empty */ }
           }
@@ -501,10 +515,11 @@ export function initCommandPalette() {
       action() {
         if (s.href) {
           window.location.href = s.href;
-        } else {
-          const el = document.getElementById(s.id);
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
+          return;
         }
+        const el = document.getElementById(s.id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        else window.location.href = `/#${s.id}`;
       },
       group: 'Navigate',
     })),
@@ -798,9 +813,14 @@ export function initMobileMenu() {
   bag.on(document, 'keydown', (e) => {
     if (e.key === 'Escape' && toggle.classList.contains('open')) setMenuState(false);
 
-    /* Focus trapping when mobile menu is open */
+    /* Focus trapping when mobile menu is open. The theme controls (palette
+       dots + light/dark toggle) sit between the burger and the links in DOM
+       order and stay visible on mobile, so they belong inside the trap —
+       enumerating only [toggle, links] made the wrap points skip them. The
+       ⌘K chip is display:none below 681px and needs no entry. */
     if (e.key === 'Tab' && toggle.classList.contains('open')) {
-      const focusable = [toggle, ...links.querySelectorAll('a')];
+      const themeButtons = document.querySelectorAll('.theme-controls button');
+      const focusable = [toggle, ...themeButtons, ...links.querySelectorAll('a')];
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (e.shiftKey) {

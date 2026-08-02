@@ -23,7 +23,7 @@ title:       "Brand recognition in football matches"
 year:        "2025"
 tags:        "AI, Computer Vision"
 bg:          "img/projects/annotated-stadium.webp"
-description: "A computer vision solution that detects brands (both static and virtual) appearing on football games to compute how much time they appear on TV."
+description: "A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV."
 ---
 
 ## Measuring Brand Exposure in Football Footage with Computer Vision

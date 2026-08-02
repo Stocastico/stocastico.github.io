@@ -20,8 +20,8 @@ import test, { after, before, describe } from 'node:test';
 
 import { PROJECTS } from '../../data/projects.js';
 import {
-  BFCACHE_ARGS, BFCACHE_IGNORE, VIEWPORTS, bfcacheWorks, blockExternalRequests, launchBrowser,
-  launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
+  BFCACHE_ARGS, BFCACHE_IGNORE, VIEWPORTS, allPages, bfcacheWorks, blockExternalRequests,
+  launchBrowser, launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
 } from './harness.mjs';
 
 /* Same-origin paths this build deliberately does not produce. A project entry
@@ -147,6 +147,35 @@ describe('navigation', () => {
       await page.waitForTimeout(300);
       assert.ok(await overlay.getAttribute('hidden') !== null, 'Escape did not close the palette');
     } finally { await page.close(); }
+  });
+
+  /* The palette used to be homepage-only: every other page shipped the nav and
+     the key handler but no #cmd-overlay, so initCommandPalette() returned early
+     and Ctrl+K silently did nothing. A shortcut advertised in the navbar chip
+     that dies on the first navigation is worse than no shortcut, and nothing in
+     the static suite could see it — the markup was simply absent, which reads
+     as intentional to a file-level check. Page list comes from dist/, so a new
+     page joins this automatically. */
+  test('the command palette works on every page, not just the homepage', async () => {
+    const pages = allPages();
+    assert.ok(pages.length > 5, `only ${pages.length} pages found`);
+    for (const path of pages) {
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + path, { waitUntil: 'networkidle' });
+        const overlay = await page.$('#cmd-overlay');
+        assert.ok(overlay, `${path}: no command palette overlay`);
+
+        await page.keyboard.press('Control+k');
+        await page.waitForTimeout(250);
+        assert.equal(await overlay.getAttribute('hidden'), null,
+          `${path}: Ctrl+K did not open the palette`);
+
+        /* Opened is not enough — the list has to be populated and reachable. */
+        const items = await page.$$eval('#cmd-list .cmd-item:not([hidden])', (els) => els.length);
+        assert.ok(items > 3, `${path}: palette opened with only ${items} items`);
+      } finally { await page.close(); }
+    }
   });
 });
 
