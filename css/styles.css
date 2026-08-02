@@ -4249,6 +4249,26 @@ h3 {
     color: black;
   }
 
+  /* Everything the scroll reveal has not reached yet is still at opacity 0,
+     and printing does not scroll. initScrollReveal() re-runs its sweep on
+     scroll / resize / hashchange / load; a print job fires none of them, so
+     landing on a page and pressing Ctrl+P printed whatever was above the fold
+     and blank space for the rest — 21 of 21 animated elements on the homepage,
+     9 of 12 on the CV. The layout was right and the page count was right; only
+     the ink was missing, which is why it went unnoticed next to the gradient
+     bug below.
+
+     A JS fix (reveal-all on a timer, or on beforeprint) is the wrong shape:
+     opacity is a paint concern, print is a media, and a timer still loses the
+     race against someone printing immediately. Reduced motion already reveals
+     everything up front for the same reason — the entrance is the expendable
+     part, the content is not. */
+  [data-animate] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
   /* Gradient-filled headings paint from a background, and backgrounds are not
      printed — so these came out as ghosts. The worst case was the CV, where
      every job title disappeared. */

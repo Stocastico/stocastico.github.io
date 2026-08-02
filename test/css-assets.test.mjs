@@ -176,3 +176,31 @@ test('css: the [data-animate] hidden state is gated on scripting being enabled',
       'otherwise a no-JS visitor gets a blank page');
   }
 });
+
+test('css: the print stylesheet reveals [data-animate]', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+
+  /* Printing scrolls nothing, so none of the events initScrollReveal() sweeps
+     on ever fire: scroll, resize, hashchange, load. Land on a page, press
+     Ctrl+P, and everything below the fold printed as blank space — 21 of 21
+     animated elements on the homepage, 9 of 12 on the CV. The layout and the
+     page count were right, so the only symptom was missing ink, which is easy
+     to read as a rendering quirk rather than a bug.
+
+     Brace-matched rather than regexed: the print block contains nested rules
+     and a palette override, so a lazy /@media print{[^}]*}/ stops early. */
+  const start = css.indexOf('@media print');
+  assert.ok(start !== -1, 'no @media print block');
+  let depth = 0;
+  let end = css.indexOf('{', start);
+  for (; end < css.length; end++) {
+    if (css[end] === '{') depth++;
+    else if (css[end] === '}' && --depth === 0) break;
+  }
+  const block = css.slice(start, end);
+
+  const rule = block.match(/\[data-animate\]\s*{[^}]*}/);
+  assert.ok(rule, '@media print does not reveal [data-animate] — printing loses every unrevealed element');
+  assert.match(rule[0], /opacity:\s*1\s*!important/,
+    'the print reveal must beat the @media (scripting: enabled) opacity: 0');
+});
