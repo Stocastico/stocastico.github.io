@@ -1980,6 +1980,14 @@ h3 {
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* Cards size to their own content instead of stretching to the tallest in
+     the row. A grid row is as tall as its tallest item, and the descriptions
+     vary a lot: on projects.html the Gaussian-splatting card runs to eleven
+     lines and left the MNIST card beside it with ~170px of empty card below
+     its text. Clamping the descriptions was the alternative, but truncating
+     the one thing that explains a project to save a gap is the wrong trade —
+     let the cards differ in height instead. */
+  align-items: start;
   gap: var(--gap);
   margin-bottom: 2rem;
 }
@@ -2447,10 +2455,13 @@ h3 {
 /* ─── 16c. Curriculum Vitae — unified timeline ────────────── */
 
 /* ── Header actions (PDF button + legend) ─────────────── */
+/* Left, not centre. The eyebrow and the <h1> directly above are left-aligned —
+   every .section-header on the site is — so centring this row put a visible
+   kink in the one vertical edge the page otherwise holds. */
 .cv-header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1.5rem;
   margin-top: 1rem;
   flex-wrap: wrap;
