@@ -30,6 +30,10 @@ import { prefersReducedMotion, rafThrottle } from './utils.js';
    So: the observer handles the pleasant case (stagger a section in as it
    arrives), and a sweep guarantees the invariant — nothing at or above the
    fold stays hidden. */
+/* Set by initScrollReveal() so content injected *after* it ran can still be
+   revealed — see revealNewContent() below. */
+let _reveal = null;
+
 export function initScrollReveal() {
   const targets = Array.from(document.querySelectorAll('[data-animate]'));
   if (!targets.length) return;
@@ -50,6 +54,7 @@ export function initScrollReveal() {
      is the expendable part, the content is not. Show everything at once. */
   if (typeof IntersectionObserver !== 'function' || prefersReducedMotion()) {
     targets.forEach(showNow);
+    _reveal = null;   /* revealNewContent() will show new nodes outright */
     return;
   }
 
@@ -112,9 +117,57 @@ export function initScrollReveal() {
      elements; `load` is the last point at which geometry settles. */
   listen(win, 'load', onSweep);
 
+  /* Listeners are removed once nothing is pending; if new content arrives
+     later there is something to sweep for again. */
+  const attachSweepListeners = () => {
+    if (attached.length) return;
+    listen(win, 'scroll', onSweep, { passive: true });
+    listen(win, 'resize', onSweep, { passive: true });
+    listen(win, 'hashchange', onSweep);
+    listen(win, 'load', onSweep);
+  };
+
+  _reveal = (els) => {
+    let added = false;
+    for (const el of els) {
+      if (el.classList && el.classList.contains('visible')) continue;
+      pending.add(el);
+      observer.observe(el);
+      added = true;
+    }
+    if (!added) return;
+    attachSweepListeners();
+    sweep();
+  };
+
   sweep();
 
-  return () => { observer.disconnect(); detach(); };
+  return () => { observer.disconnect(); detach(); _reveal = null; };
+}
+
+/* Reveal (or schedule the reveal of) `[data-animate]` elements added to the
+   page after initScrollReveal() already collected its targets.
+
+   This is not hypothetical. Moving the data modules behind dynamic imports
+   made every renderer asynchronous, so renderProjects() and friends now
+   replace their container's innerHTML *after* the reveal has run. The nodes
+   they create carry data-animate — which CSS puts at opacity 0 — and nothing
+   was observing them, so all fourteen project cards and all thirty-seven
+   publications rendered as an empty band, permanently and silently. The
+   browser suite caught it; nothing in the static suite could have.
+
+   With no active reveal (reduced motion, no IntersectionObserver, or teardown
+   already run) the elements are shown outright. That is the same trade the
+   rest of this module makes: the entrance is expendable, the content is not. */
+export function revealNewContent(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return;
+  const els = Array.from(root.querySelectorAll('[data-animate]'));
+  if (!els.length) return;
+  if (typeof _reveal !== 'function') {
+    els.forEach((el) => el.classList && el.classList.add('visible'));
+    return;
+  }
+  _reveal(els);
 }
 
 /* ═══════════════════════════════════════════════════════════

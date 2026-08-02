@@ -98,6 +98,7 @@ import {
   initCardTilt,
   initScroll3D,
   initSkillBars,
+  revealNewContent,
 } from './animations.js';
 
 /* UI behaviours: navbar, command palette, side dots, mobile menu, counters,
@@ -573,16 +574,28 @@ if (typeof document !== 'undefined') {
      load-bearing — which is what lets them wait for a dynamic import(). The
      element check comes first so a page without the section never fetches the
      data at all. */
-  if (document.getElementById('publications-list')) {
-    import('../data/publications.js').then(({ PUBLICATIONS }) => renderPublications(PUBLICATIONS));
+  const pubList = document.getElementById('publications-list');
+  if (pubList) {
+    import('../data/publications.js').then(({ PUBLICATIONS }) => {
+      renderPublications(PUBLICATIONS);
+      revealNewContent(pubList);
+    });
   }
-  if (document.getElementById('projects-grid')) {
-    import('../data/projects.js').then(({ PROJECTS }) => renderProjects(PROJECTS));
+  const projGrid = document.getElementById('projects-grid');
+  if (projGrid) {
+    import('../data/projects.js').then(({ PROJECTS }) => {
+      renderProjects(PROJECTS);
+      revealNewContent(projGrid);
+    });
   }
-  if (document.getElementById('cv-timeline') || document.getElementById('cv-skills')) {
+  const cvTimeline = document.getElementById('cv-timeline');
+  const cvSkills = document.getElementById('cv-skills');
+  if (cvTimeline || cvSkills) {
     import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
       renderCV(CV_CAREER, CV_EDUCATION);
       renderSkills(CV_SKILLS);
+      revealNewContent(cvTimeline);
+      revealNewContent(cvSkills);
     });
   }
   setFooterYear();
@@ -878,13 +891,19 @@ if (typeof document !== 'undefined') {
      the other 20 pages have no use for. */
   const unescoAccordion = document.getElementById('unesco-accordion');
   if (unescoAccordion) {
-    import('../data/unesco.js').then(({ UNESCO }) => renderUnescoAccordion(unescoAccordion, UNESCO));
+    import('../data/unesco.js').then(({ UNESCO }) => {
+      renderUnescoAccordion(unescoAccordion, UNESCO);
+      revealNewContent(unescoAccordion);
+    });
   }
 
   /* Curated blogroll (links page only) */
   const linksGrid = document.getElementById('links-grid');
   if (linksGrid) {
-    import('../data/links.js').then(({ LINKS }) => renderLinks(linksGrid, LINKS));
+    import('../data/links.js').then(({ LINKS }) => {
+      renderLinks(linksGrid, LINKS);
+      revealNewContent(linksGrid);
+    });
   }
 
   /* Interactive MNIST lab (projects/mnist-lenet.html only).
