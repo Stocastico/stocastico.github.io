@@ -1,27 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" role="img" aria-label="Two-stage computer vision pipeline measuring brand exposure in football footage">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace" role="img" aria-label="Two-stage computer vision pipeline measuring brand exposure in football footage">
   <defs>
     <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#d64550"/>
-      <stop offset="1" stop-color="#c2632e"/>
+      <stop offset="0" stop-color="var(--accent2)"/>
+      <stop offset="1" stop-color="var(--accent)"/>
     </linearGradient>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#d98a52"/>
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent-text)"/>
     </marker>
     <style>
-      .card   { fill: #1a0f0e; stroke: #d64550; stroke-opacity: .35; stroke-width: 1.5; }
-      .branch { fill: #140807; stroke: #c2632e; stroke-opacity: .45; stroke-width: 1.5; }
-      .title  { fill: #f0e6e3; font-size: 22px; font-weight: 600; }
-      .sub    { fill: #a3908c; font-size: 14px; }
-      .tag    { fill: #d98a52; font-size: 12px; font-weight: 600; letter-spacing: .08em; }
-      .flow   { stroke: #d98a52; stroke-width: 2; fill: none; }
+      .card   { fill: var(--bg-card); stroke: var(--accent2); stroke-opacity: .35; stroke-width: 1.5; }
+      .branch { fill: var(--bg-card); stroke: var(--accent); stroke-opacity: .45; stroke-width: 1.5; }
+      .title  { fill: var(--text); font-size: 22px; font-weight: 600; }
+      .sub    { fill: var(--text-muted); font-size: 14px; }
+      .tag    { fill: var(--accent-text); font-size: 12px; font-weight: 600; letter-spacing: .08em; }
+      .flow   { stroke: var(--accent-text); stroke-width: 2; fill: none; }
     </style>
   </defs>
 
   <!-- backdrop -->
-  <rect x="0" y="0" width="1200" height="600" fill="#120a0a"/>
+  <rect x="0" y="0" width="1200" height="600" fill="var(--bg-alt)"/>
 
   <!-- header -->
-  <text x="48" y="58" fill="url(#accentGrad)" font-size="30" font-weight="700">Measuring Brand Exposure in Football Footage</text>
+  <text x="48" y="58" fill="url(#accentGrad)" font-size="26.4" font-weight="700">Measuring Brand Exposure in Football Footage</text>
   <text x="48" y="88" class="sub">Two-stage computer vision pipeline · ~13k crops/game, small · blurry · long-tailed (40× imbalance)</text>
 
   <!-- ===== main pipeline row (y center 210) ===== -->
@@ -69,7 +69,7 @@
   <text x="1035" y="440" text-anchor="middle" class="sub">re-fit weekly</text>
 
   <!-- ===== production / validation footer ===== -->
-  <rect x="48" y="498" width="1104" height="70" rx="14" fill="#1a0f0e" stroke="#c2632e" stroke-opacity="0.3" stroke-width="1.5"/>
+  <rect x="48" y="498" width="1104" height="70" rx="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-opacity="0.3" stroke-width="1.5"/>
   <text x="72" y="528" class="tag">RUNS ON AZURE</text>
   <text x="72" y="552" class="sub">PyTorch Lightning · MLflow tracking · Roboflow dataset · T4 GPU</text>
   <text x="1128" y="528" text-anchor="end" class="tag">PRODUCTION</text>

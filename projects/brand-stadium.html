@@ -166,7 +166,84 @@ We've been building a computer vision system that detects and classifies adverti
 The pipeline is a two-stage stack. A <strong><a href="https://docs.ultralytics.com/" target="_blank" rel="noopener noreferrer">YOLO</a> detector</strong> finds the advertising holders in each frame, and a <strong>DenseNet201 classifier</strong> then assigns each detected crop to one of 52 brand classes. The whole thing runs on <a href="https://lightning.ai/" target="_blank" rel="noopener noreferrer">PyTorch Lightning</a>, with <a href="https://mlflow.org/" target="_blank" rel="noopener noreferrer">MLflow</a> handling experiment tracking and <a href="https://roboflow.com/" target="_blank" rel="noopener noreferrer">Roboflow</a> managing the dataset. Training happens on a single T4 GPU.
 </p>
 <figure>
-  <img src="../img/projects/brand-stadium-pipeline.svg" alt="Two-stage pipeline: a YOLO detector locates advertising holders in each broadcast frame, a DenseNet201 classifier assigns each crop to one of 52 brands, and brand exposure time is measured — with static ads trained once and dynamic LED-board ads re-fit weekly, all orchestrated on Azure." loading="lazy" width="800" height="450" />
+  <svg class="diagram" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>Two-stage pipeline: a YOLO detector locates advertising holders in each broadcast frame, a DenseNet201 classifier assigns each crop to one of 52 brands, and brand exposure time is measured — with static ads trained once and dynamic LED-board ads re-fit weekly, all orchestrated on Azure.</title>
+  <defs>
+    <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="var(--accent2)"/>
+      <stop offset="1" stop-color="var(--accent)"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent-text)"/>
+    </marker>
+    <style>
+      .card   { fill: var(--bg-card); stroke: var(--accent2); stroke-opacity: .35; stroke-width: 1.5; }
+      .branch { fill: var(--bg-card); stroke: var(--accent); stroke-opacity: .45; stroke-width: 1.5; }
+      .title  { fill: var(--text); font-size: 22px; font-weight: 600; }
+      .sub    { fill: var(--text-muted); font-size: 14px; }
+      .tag    { fill: var(--accent-text); font-size: 12px; font-weight: 600; letter-spacing: .08em; }
+      .flow   { stroke: var(--accent-text); stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <!-- backdrop -->
+  <rect x="0" y="0" width="1200" height="600" fill="var(--bg-alt)"/>
+
+  <!-- header -->
+  <text x="48" y="58" fill="url(#accentGrad)" font-size="26.4" font-weight="700">Measuring Brand Exposure in Football Footage</text>
+  <text x="48" y="88" class="sub">Two-stage computer vision pipeline · ~13k crops/game, small · blurry · long-tailed (40× imbalance)</text>
+
+  <!-- ===== main pipeline row (y center 210) ===== -->
+
+  <!-- 1. footage -->
+  <rect x="48" y="160" width="234" height="100" rx="14" class="card"/>
+  <text x="165" y="200" text-anchor="middle" class="title">Broadcast frame</text>
+  <text x="165" y="228" text-anchor="middle" class="sub">moving camera, live match</text>
+
+  <!-- 2. YOLO -->
+  <rect x="338" y="160" width="234" height="100" rx="14" class="card"/>
+  <text x="455" y="194" text-anchor="middle" class="tag">STAGE 1 · DETECT</text>
+  <text x="455" y="220" text-anchor="middle" class="title">YOLO detector</text>
+  <text x="455" y="244" text-anchor="middle" class="sub">locate ad holders / boards</text>
+
+  <!-- 3. DenseNet -->
+  <rect x="628" y="160" width="234" height="100" rx="14" class="card"/>
+  <text x="745" y="194" text-anchor="middle" class="tag">STAGE 2 · CLASSIFY</text>
+  <text x="745" y="220" text-anchor="middle" class="title">DenseNet201</text>
+  <text x="745" y="244" text-anchor="middle" class="sub">crop → one of 52 brands</text>
+
+  <!-- 4. exposure -->
+  <rect x="918" y="160" width="234" height="100" rx="14" class="card"/>
+  <text x="1035" y="200" text-anchor="middle" class="title">Brand exposure</text>
+  <text x="1035" y="228" text-anchor="middle" class="sub">seconds on screen / brand</text>
+
+  <!-- pipeline arrows -->
+  <line x1="282" y1="210" x2="336" y2="210" class="flow" marker-end="url(#arrow)"/>
+  <line x1="572" y1="210" x2="626" y2="210" class="flow" marker-end="url(#arrow)"/>
+  <line x1="862" y1="210" x2="916" y2="210" class="flow" marker-end="url(#arrow)"/>
+
+  <!-- ===== static / dynamic branch off DenseNet ===== -->
+  <path d="M745 260 L745 320 L1035 320" class="flow"/>
+  <line x1="745" y1="320" x2="745" y2="358" class="flow" marker-end="url(#arrow)"/>
+  <line x1="1035" y1="320" x2="1035" y2="358" class="flow" marker-end="url(#arrow)"/>
+
+  <rect x="628" y="360" width="234" height="92" rx="14" class="branch"/>
+  <text x="745" y="396" text-anchor="middle" class="title">Static ads</text>
+  <text x="745" y="422" text-anchor="middle" class="sub">fixed boards →</text>
+  <text x="745" y="440" text-anchor="middle" class="sub">train once, frozen</text>
+
+  <rect x="918" y="360" width="234" height="92" rx="14" class="branch"/>
+  <text x="1035" y="396" text-anchor="middle" class="title">Dynamic ads</text>
+  <text x="1035" y="422" text-anchor="middle" class="sub">LED boards rotate →</text>
+  <text x="1035" y="440" text-anchor="middle" class="sub">re-fit weekly</text>
+
+  <!-- ===== production / validation footer ===== -->
+  <rect x="48" y="498" width="1104" height="70" rx="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="72" y="528" class="tag">RUNS ON AZURE</text>
+  <text x="72" y="552" class="sub">PyTorch Lightning · MLflow tracking · Roboflow dataset · T4 GPU</text>
+  <text x="1128" y="528" text-anchor="end" class="tag">PRODUCTION</text>
+  <text x="1128" y="552" text-anchor="end" class="sub">web-app match upload · training + inference pipelines · validated vs human annotators</text>
+</svg>
 </figure>
 <p>
 The data is the real challenge here. We're working with ~13k crops per game that are small, noisy, and frequently motion-blurred — exactly the kind of footage you'd expect from a moving broadcast camera tracking play. On top of that, the class distribution is brutally imbalanced: roughly <strong>40× between the most and least represented classes</strong>. Some brands appear constantly, others only flash by a handful of times.

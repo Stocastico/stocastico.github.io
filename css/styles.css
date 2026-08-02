@@ -2114,6 +2114,35 @@ h3 {
   overflow: hidden;
 }
 
+/* Eleven project heroes are photographs. Two were architecture diagrams used as
+   wallpaper, and a diagram does not survive that treatment: behind the 65–95%
+   scrim below, the RAG hero came out as grey wash with cyan label text bleeding
+   through and colliding with the nav — legible enough to read as a mistake,
+   not legible enough to be information.
+
+   So they are used as a *stencil* instead of as pixels. Their opaque
+   background rect is gone, the artwork is painted with var(--accent) through
+   mask-image, and what is left is a faint accent-toned texture that follows the
+   palette and the light/dark toggle for free. The real diagram lives inline in
+   the article, at full size, where it can actually be read. */
+.project-hero--diagram {
+  background-image: none;
+}
+
+.project-hero--diagram::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--accent);
+  opacity: 0.14;
+  mask-image: var(--project-hero-img);
+  mask-size: cover;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  pointer-events: none;
+}
+
 .project-hero__overlay {
   position: absolute;
   inset: 0;
@@ -3553,6 +3582,31 @@ h3 {
   font-size: 0.82rem;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* ─── Inline architecture diagrams ──────────────────────────
+   These are authored SVGs, and they used to ship as <img src="…svg">. An
+   external SVG is its own document: it cannot see this page's custom
+   properties, so its colours had to be baked in — and they were, three times
+   over, in three different palettes that had all since been replaced. The RAG
+   pair carried an indigo/cyan scheme on #080c14, brand-stadium a crimson one.
+   In light mode they were near-black rectangles dropped into a cream page; in
+   dark mode they were *cold* blue-black on a warm brown one, in accents the
+   site's ramp never uses. Either way they read as screenshots pasted in from
+   somewhere else.
+
+   Inlined into the page, `fill="var(--accent)"` resolves like any other
+   declaration, so the artwork follows the palette AND the light/dark toggle
+   with no regeneration step — the same reason the homepage world map is inline
+   rather than a file. That is also why there is no generator here: once the
+   colours are variables there is nothing left to generate.
+
+   They also asked for Inter and Segoe UI, neither of which this site loads. */
+.post figure .diagram {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
 }
 
 /* ─── Interactive MNIST lab (projects/mnist-lenet.html) ──────

@@ -204,3 +204,40 @@ test('css: the print stylesheet reveals [data-animate]', () => {
   assert.match(rule[0], /opacity:\s*1\s*!important/,
     'the print reveal must beat the @media (scripting: enabled) opacity: 0');
 });
+
+/* ─── Inline diagrams must stay theme-driven ──────────────────
+   The architecture diagrams were <img src="…svg"> for a long time, and an
+   external SVG is its own document: it cannot read this page's custom
+   properties, so every colour had to be baked in. Three of them were, in three
+   different palettes, all of them superseded — near-black panels in a cream
+   page in light mode, cold blue-black on warm brown in dark. Inlining is what
+   lets them read var(--*); a hex literal creeping back in silently undoes
+   that, and only in the theme nobody happened to screenshot. */
+test('inline project diagrams carry no hardcoded colours', () => {
+  const dir = path.join(ROOT, 'projects');
+  const offenders = [];
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
+    const html = fs.readFileSync(path.join(dir, file), 'utf8');
+    for (const svg of html.match(/<svg class="diagram"[\s\S]*?<\/svg>/g) || []) {
+      /* #rrggbb / #rgb in a colour position. Fragment refs (url(#ah),
+         href="#x") are not colours and must not be flagged. */
+      for (const m of svg.match(/(?:fill|stroke|stop-color|color)="#[0-9a-fA-F]{3,8}"/g) || []) {
+        offenders.push(`${file}: ${m}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, [],
+    'inline diagrams must use var(--*) so they follow the palette and the light/dark toggle:\n'
+    + offenders.join('\n'));
+});
+
+test('every page with an inline diagram actually inlines it', () => {
+  /* The point of inlining is lost the moment one goes back to <img src>. */
+  const dir = path.join(ROOT, 'projects');
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
+    const html = fs.readFileSync(path.join(dir, file), 'utf8');
+    const imgSvg = html.match(/<img[^>]+src="[^"]*\/(rag-ingestion|rag-query|brand-stadium-pipeline)\.svg"/g) || [];
+    assert.deepEqual(imgSvg, [],
+      `${file} references a diagram as <img>; inline it so var(--*) resolves`);
+  }
+});
