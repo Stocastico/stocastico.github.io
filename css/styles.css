@@ -593,8 +593,7 @@ h3 {
 /* Prose gets `pretty`, not `balance`: it protects against orphans and bad
    final-line rags without trying to equalise every line of a paragraph, which
    is what `balance` would do and is wrong for running text. The body face is a
-   serif at 1.05rem over a 60ch measure, where a single trailing word is very
-   visible. */
+   serif over a 60ch measure, where a single trailing word is very visible. */
 p,
 .section-subtitle,
 .post-lead,
@@ -1146,10 +1145,26 @@ figcaption {
   background-clip: text;
 }
 
+/* The paragraph under a section title. Five classes across the site play this
+   exact role — .section-subtitle, .publications-intro, .links-intro,
+   .travel-intro and .globe-intro — because each section grew its own as it was
+   written, and they had drifted to three different sizes: 16.8px here and on
+   .contact-lead, 15px for the three that set colour and max-width but no
+   font-size (so they fell through to the body), and 14.4px for .globe-intro,
+   which took 0.9rem from the .globe-* family. Reading down the homepage the
+   intro went 16.8 → 15 → 14.4 and then back to 16.8 at Contact.
+
+   None of them sets a size now: they all inherit the body's
+   clamp(15px, 1.05vw, 17px), which is the size three of the five already
+   happened to be. An intro is running prose and reads as prose; the eyebrow
+   and the section title above it carry the hierarchy. .about-lead keeps its
+   1.1rem — it is the page's opening paragraph and full-contrast --text rather
+   than --text-muted, so it is a different thing wearing a similar shape.
+
+   Anything added here later gets its size from the body too. Setting one is
+   how the drift started. */
 .section-subtitle {
   color: var(--text-muted);
-  font-size: 1.05rem;
-  line-height: 1.65;
   max-width: 60ch;
   margin: 1rem 0 0;
 }
@@ -2328,9 +2343,11 @@ figcaption {
   margin-inline: auto;
 }
 
+/* Size comes from the body, like every other section intro — see the note on
+   .section-subtitle. The centring stays: this one sits over a centred contact
+   grid, not under a left-aligned section header. */
 .contact-lead {
   text-align: center;
-  font-size: 1.05rem;
   color: var(--text-muted);
   margin-bottom: 2.5rem;
   max-width: 60ch;
@@ -3265,10 +3282,16 @@ figcaption {
   margin-bottom: 0;
 }
 
+/* Despite the .globe-* prefix this is not a caption — both places that use it
+   (the homepage Places teaser and the travel page's UNESCO section) put it
+   under a .section-tag eyebrow and a .globe-title, which is the same
+   eyebrow/title/intro structure as .section-header. So it is a section intro
+   and takes the body size like the rest; see the note on .section-subtitle.
+   .globe-title is smaller than .section-title, which is what actually
+   distinguishes these sections — the intro prose underneath doesn't need to
+   shrink to say so. */
 .globe-intro {
-  font-size: 0.9rem;
   color: var(--text-muted);
-  line-height: 1.6;
   margin-bottom: 1rem;
 }
 
