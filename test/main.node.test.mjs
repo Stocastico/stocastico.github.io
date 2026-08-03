@@ -2747,8 +2747,14 @@ test('quality: no console.log / console.info / console.debug in js/', () => {
 
 function makeCmdPaletteDom() {
   const items = [];
+  /* #cmd-overlay is a <dialog> in the pages. This stub deliberately omits
+     showModal(), which sends initCommandPalette() down its non-modal fallback
+     path — the one that toggles `.open` by hand. Modal behaviour proper (top
+     layer, background inert, Escape, focus restore) is the browser's now and
+     is asserted in test/e2e/interaction.e2e.mjs, where a real dialog exists to
+     assert it against. */
   const overlay = {
-    hidden: true,
+    open: false,
     listeners: {},
     addEventListener(type, fn) { this.listeners[type] = fn; },
   };
@@ -2854,21 +2860,23 @@ test('initCommandPalette: filtering reuses <li> nodes instead of recreating them
   }
 });
 
-test('initCommandPalette: opening makes background siblings inert and closing restores them', () => {
+/* The palette used to hand-roll its modal behaviour: it walked
+   document.body.children setting .inert + aria-hidden on each sibling, kept a
+   snapshot to restore on close, guarded against a double-open stranding that
+   snapshot, trapped Tab in a keydown handler, and closed itself on Escape.
+   All five are showModal()'s job now, so there is nothing left here to assert
+   about them — the browser is not this suite's to test. What is still worth
+   pinning is that the shortcut drives the dialog's own open/close state, and
+   that the scroll lock is taken and released with it. */
+test('initCommandPalette: the ⌘K shortcut toggles the dialog and the scroll lock', () => {
   const prevDoc = global.document;
   const prevRAF = global.requestAnimationFrame;
   global.requestAnimationFrame = (fn) => { if (fn) fn(); return 1; };
 
-  const { overlay, input, listEl, doc } = makeCmdPaletteDom();
-  const mkEl = (tag) => ({
-    tagName: tag, inert: false, attrs: {},
-    setAttribute(k, v) { this.attrs[k] = v; },
-    removeAttribute(k) { delete this.attrs[k]; },
-  });
-  const nav = mkEl('NAV'), main = mkEl('MAIN'), footer = mkEl('FOOTER'), script = mkEl('SCRIPT');
+  const { overlay, doc } = makeCmdPaletteDom();
 
   const docListeners = {};
-  doc.body = { style: {}, children: [nav, main, overlay, footer, script] };
+  doc.body = { style: {}, children: [overlay] };
   doc.addEventListener = (type, fn) => { docListeners[type] = fn; };
   global.document = doc;
 
@@ -2876,24 +2884,18 @@ test('initCommandPalette: opening makes background siblings inert and closing re
     initCommandPalette();
     assert.equal(typeof docListeners.keydown, 'function',
       'precondition: a document keydown handler should be registered for the shortcut');
+    assert.equal(overlay.open, false, 'the palette starts closed');
 
-    /* Open with Ctrl/⌘+K */
     docListeners.keydown({ metaKey: true, ctrlKey: false, key: 'k', preventDefault() {} });
-    assert.equal(overlay.hidden, false, 'shortcut should open the palette');
-    assert.equal(nav.inert, true, 'nav should be inert while open');
-    assert.equal(main.inert, true, 'main should be inert while open');
-    assert.equal(footer.inert, true, 'footer should be inert while open');
-    assert.equal(nav.attrs['aria-hidden'], 'true', 'inert siblings should be aria-hidden');
-    assert.notStrictEqual(overlay.inert, true, 'the overlay itself must stay interactive');
-    assert.notStrictEqual(script.inert, true, 'script tags should be skipped');
+    assert.equal(overlay.open, true, 'shortcut should open the palette');
+    assert.equal(doc.body.style.overflow, 'hidden',
+      'opening should lock scrolling behind the dialog');
 
-    /* Close with Escape */
-    input.listeners.keydown({ key: 'Escape', preventDefault() {} });
-    assert.equal(overlay.hidden, true, 'Escape should close the palette');
-    assert.equal(nav.inert, false, 'nav inert should be cleared on close');
-    assert.equal(main.inert, false, 'main inert should be cleared on close');
-    assert.equal(footer.inert, false, 'footer inert should be cleared on close');
-    assert.equal(nav.attrs['aria-hidden'], undefined, 'aria-hidden should be removed on close');
+    /* Same shortcut again closes it — the handler branches on .open, which is
+       the attribute the browser itself maintains, rather than on `hidden`. */
+    docListeners.keydown({ metaKey: true, ctrlKey: false, key: 'k', preventDefault() {} });
+    assert.equal(overlay.open, false, 'shortcut should close the palette again');
+    assert.equal(doc.body.style.overflow, '', 'closing should release the scroll lock');
   } finally {
     global.document = prevDoc;
     global.requestAnimationFrame = prevRAF;

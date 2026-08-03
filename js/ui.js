@@ -530,8 +530,9 @@ export function initCommandPalette() {
   /* allItems index → filtered set; activeIdx is an index into allItems. */
   let visibleSet = new Set(allItems.map((_, i) => i));
   let activeIdx = allItems.length > 0 ? 0 : -1;
-  /* Element to restore focus to when the palette closes (whatever the
-     user was on before they triggered ⌘K / hint / kbd shortcut). */
+  /* Element to restore focus to when the palette closes. Only used on the
+     non-modal fallback path below — a dialog closed with .close() restores
+     focus to its opener itself. */
   let _previouslyFocused = null;
 
   /* ── Mount items + group labels ONCE ─────────────────────
@@ -658,78 +659,81 @@ export function initCommandPalette() {
       e.preventDefault();
       const item = activeIdx >= 0 ? allItems[activeIdx] : null;
       if (item) execute(item);
-    } else if (e.key === 'Escape') {
-      close();
-    } else if (e.key === 'Tab') {
-      /* The input is the only focusable element inside the overlay; keep
-         focus there so Tab/Shift+Tab can't escape the modal (focus trap). */
-      e.preventDefault();
     }
+    /* Escape and Tab are deliberately absent. #cmd-overlay is a <dialog>
+       opened with showModal(), so the browser closes it on Escape and keeps
+       Tab inside it — the hand-rolled versions of both are gone. */
   });
 
-  /* Elements made inert while the palette is open, so they can be restored. */
-  let _inertedEls = [];
+  /* ── Open / close ───────────────────────────────────────────────────────
+     showModal() does four jobs this used to do by hand, and does them better:
 
-  /* aria-modal alone is advisory; make it a real modal by marking every
-     sibling of the overlay inert (removes them from tab order + the AT tree)
-     while the palette is open, then restoring them on close. */
-  function setBackgroundInert(on) {
-    const body = document.body;
-    if (!body || !body.children) return;
-    if (on) {
-      /* Guard against a double-open overwriting the snapshot — that would
-         strand the first batch permanently inert (they'd never be restored). */
-      if (_inertedEls.length) return;
-      _inertedEls = [];
-      for (const el of Array.from(body.children)) {
-        if (el === overlay) continue;
-        const tag = (el.tagName || '').toUpperCase();
-        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEMPLATE' || tag === 'LINK' || tag === 'META') continue;
-        el.inert = true;
-        if (typeof el.setAttribute === 'function') el.setAttribute('aria-hidden', 'true');
-        _inertedEls.push(el);
-      }
-    } else {
-      for (const el of _inertedEls) {
-        el.inert = false;
-        if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-hidden');
-      }
-      _inertedEls = [];
-    }
-  }
+       · promotes the dialog to the **top layer**, so it paints above every
+         stacked context without a z-index guess;
+       · makes everything behind it **inert** — the old code walked
+         document.body.children setting .inert and aria-hidden, then had to
+         restore exactly that set, with a guard against a double-open
+         stranding the first batch permanently inert;
+       · closes on **Escape**;
+       · **returns focus** to whatever opened it.
 
-  /* ── Open / close ───────────────────────────────────────── */
+     What it does not do is stop the page behind from scrolling, so the scroll
+     lock stays — released from the dialog's own `close` event rather than
+     from close() below, because Escape closes the dialog without going
+     through our code at all.
+
+     The non-modal fallback is for the DOM stubs in test/main.node.test.mjs.
+     Every browser that can run this site's ES modules has had <dialog> for
+     years; nothing in production takes that branch. */
+  const supportsModal = typeof overlay.showModal === 'function';
+
+  const releaseScrollLock = () => {
+    if (document.body && document.body.style) document.body.style.overflow = '';
+  };
+  bag.on(overlay, 'close', releaseScrollLock);
+
   function open() {
-    /* Remember the trigger element so we can restore focus on close. */
-    _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
+    if (overlay.open) return;
     input.value = '';
     applyFilter('');
-    overlay.hidden = false;
-    setBackgroundInert(true);
+    if (supportsModal) {
+      overlay.showModal();
+    } else {
+      /* Stub path: no top layer, no native focus restore — do it by hand. */
+      _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
+      overlay.open = true;
+    }
+    /* showModal() already focuses the first focusable descendant, which is
+       this input. Setting it explicitly costs nothing and keeps the stub path
+       behaving the same. */
     requestAnimationFrame(() => input.focus());
-    document.body.style.overflow = 'hidden';
+    if (document.body && document.body.style) document.body.style.overflow = 'hidden';
   }
 
   function close() {
-    overlay.hidden = true;
-    setBackgroundInert(false);
-    document.body.style.overflow = '';
-    /* Restore focus to whatever opened the palette so keyboard users
-       don't lose their place in the page. */
-    if (_previouslyFocused && typeof _previouslyFocused.focus === 'function') {
-      try { _previouslyFocused.focus(); } catch (_) { /* element may have unmounted */ }
+    if (!overlay.open) return;
+    if (supportsModal) {
+      overlay.close(); /* fires 'close' → releaseScrollLock() */
+    } else {
+      overlay.open = false;
+      releaseScrollLock();
+      if (_previouslyFocused && typeof _previouslyFocused.focus === 'function') {
+        try { _previouslyFocused.focus(); } catch (_) { /* element may have unmounted */ }
+      }
+      _previouslyFocused = null;
     }
-    _previouslyFocused = null;
   }
 
-  /* Close on overlay click */
+  /* Click outside the box. On a modal dialog the backdrop is a pseudo-element,
+     so a click on it targets the dialog itself — which is why this still reads
+     as `e.target === overlay`. */
   bag.on(overlay, 'click', (e) => { if (e.target === overlay) close(); });
 
   /* Nav hint chip opens the palette through the same open() path as ⌘K, so it
-     gets the focus trap, background inert, and scroll-lock too (clicking the
-     chip used to bypass all three). */
+     gets the modal treatment and the scroll-lock too (clicking the chip used
+     to bypass both). */
   const trigger = document.getElementById('cmd-trigger');
-  if (trigger) bag.on(trigger, 'click', () => { if (overlay.hidden) open(); });
+  if (trigger) bag.on(trigger, 'click', () => open());
 
   /* Global keyboard shortcut — ⌘K or Ctrl+K */
   bag.on(document, 'keydown', (e) => {
@@ -737,7 +741,7 @@ export function initCommandPalette() {
        and the shortcut silently did nothing. */
     if ((e.metaKey || e.ctrlKey) && typeof e.key === 'string' && e.key.toLowerCase() === 'k') {
       e.preventDefault();
-      overlay.hidden ? open() : close();
+      overlay.open ? close() : open();
     }
   });
 

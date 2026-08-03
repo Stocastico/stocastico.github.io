@@ -137,15 +137,110 @@ describe('navigation', () => {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       const overlay = await page.$('#cmd-overlay');
       assert.ok(overlay, 'no command palette overlay');
-      assert.ok(await overlay.getAttribute('hidden') !== null, 'palette starts open');
+      assert.equal(await overlay.evaluate((el) => el.tagName), 'DIALOG',
+        'the palette should be a <dialog>, not a div pretending to be one');
+      assert.equal(await overlay.evaluate((el) => el.open), false, 'palette starts open');
 
       await page.keyboard.press('Control+k');
       await page.waitForTimeout(300);
-      assert.equal(await overlay.getAttribute('hidden'), null, 'Ctrl+K did not open the palette');
+      assert.equal(await overlay.evaluate((el) => el.open), true,
+        'Ctrl+K did not open the palette');
 
+      /* Nothing in js/ui.js handles Escape any more — this asserts the
+         browser's own dialog behaviour is actually reaching us, i.e. that the
+         dialog really was opened with showModal() and not just shown. */
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
-      assert.ok(await overlay.getAttribute('hidden') !== null, 'Escape did not close the palette');
+      assert.equal(await overlay.evaluate((el) => el.open), false,
+        'Escape did not close the palette');
+    } finally { await page.close(); }
+  });
+
+  /* The four behaviours showModal() replaced. Each was hand-written before and
+     is now the browser's, which is exactly why they need asserting once: a
+     dialog shown with .show() (or by setting the open attribute) looks
+     identical on screen and has none of them. */
+  test('the open palette is a real modal: inert background, trapped focus, restored focus', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+
+      /* Open from a known element so the focus-restore target is unambiguous. */
+      await page.focus('#cmd-trigger');
+      await page.click('#cmd-trigger');
+      await page.waitForTimeout(300);
+
+      assert.equal(await page.evaluate(() => document.getElementById('cmd-overlay').open), true,
+        'the trigger chip did not open the palette');
+
+      /* Focus landed inside the dialog. */
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'cmd-input',
+        'opening should focus the search input');
+
+      /* Background is inert. Asserted by focusability, not by calling
+         link.click(): `inert` blocks *user* interaction, so a scripted click
+         still dispatches and navigates — which says nothing either way. What
+         inert does guarantee is that the element drops out of the tab order
+         and cannot be focused at all. */
+      const focusEscaped = await page.evaluate(() => {
+        const link = document.querySelector('#nav-links a[href$="cv.html"]');
+        if (!link) return 'no-link';
+        link.focus();
+        return document.activeElement === link;
+      });
+      assert.equal(focusEscaped, false,
+        'a background link was still focusable — the dialog is not modal');
+
+      /* And it is in the top layer: with the dialog covering the viewport,
+         hit-testing over the navbar reaches the dialog, not the nav. */
+      const atNav = await page.evaluate(() => {
+        const link = document.querySelector('#nav-links a[href$="cv.html"]');
+        const r = link.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return hit ? hit.closest('#cmd-overlay') !== null : false;
+      });
+      assert.equal(atNav, true,
+        'a point over the navbar did not hit the dialog — it is not in the top layer');
+
+      /* Focus never reaches the page behind. Two things make the naive
+         "activeElement stays on #cmd-input" version of this wrong, and both
+         are correct browser behaviour rather than leaks:
+
+           · #cmd-list scrolls, and Chrome makes scrollable containers
+             keyboard-focusable so they can be scrolled without a mouse, so
+             Tab legitimately lands there;
+           · tabbing past the last control in a modal dialog hands focus to
+             the browser's own UI before wrapping back, and while it is there
+             document.activeElement reports <body>.
+
+         So the invariant is the one that actually matters: whatever Tab
+         reaches is either inside the dialog or nothing at all — never a nav
+         link, never the skip link, never a card. Several presses, because a
+         trap that leaks usually leaks on the wrap rather than the first step. */
+      for (let i = 0; i < 6; i++) {
+        await page.keyboard.press('Tab');
+        const where = await page.evaluate(() => {
+          const el = document.activeElement;
+          if (!el) return { ok: true, id: 'none' };
+          const id = el.id || el.tagName;
+          const parked = el === document.body || el === document.documentElement;
+          return { ok: parked || !!(el.closest && el.closest('#cmd-overlay')), id };
+        });
+        assert.equal(where.ok, true,
+          `Tab #${i + 1} reached ${where.id} behind the modal dialog`);
+      }
+
+      /* Closing hands focus back to whatever opened it. */
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'cmd-trigger',
+        'closing should restore focus to the element that opened the palette');
+
+      /* And the scroll lock is released — that part is still ours, taken in
+         open() and released from the dialog's close event, which is the only
+         thing that fires when Escape closes it behind our back. */
+      assert.equal(await page.evaluate(() => document.body.style.overflow), '',
+        'closing should release the scroll lock');
     } finally { await page.close(); }
   });
 
@@ -315,7 +410,7 @@ describe('lifecycle: the page survives Back', () => {
   const paletteOpens = async (page) => {
     await page.keyboard.press('Control+k');
     await page.waitForTimeout(250);
-    const open = await page.evaluate(() => !document.getElementById('cmd-overlay').hidden);
+    const open = await page.evaluate(() => document.getElementById('cmd-overlay').open);
     if (open) { await page.keyboard.press('Escape'); await page.waitForTimeout(200); }
     return open;
   };

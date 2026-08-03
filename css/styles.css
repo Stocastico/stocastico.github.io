@@ -3978,22 +3978,53 @@ figcaption {
 }
 
 /* ─── Command Palette ────────────────────────────────────── */
+/* A <dialog> opened with showModal(). Three things follow from that and are
+   worth stating, because they are all things this rule used to do by hand.
+
+   (1) No `z-index`. A modal dialog is promoted to the **top layer**, which
+       paints above every stacked context on the page no matter what. The old
+       `z-index: 10000` was a guess that happened to be big enough.
+   (2) No `[hidden]` companion. The browser owns the `open` attribute and the
+       UA sheet hides a closed dialog; there is no author `display` here for it
+       to lose to. That is precisely the failure the .cmd-item rule further
+       down documents, removed at the root rather than patched again.
+   (3) The dimmer is `::backdrop`, not this element's own background. The
+       dialog itself is now just the centring box, so it must be reset from the
+       UA's centred-with-margin/border/padding defaults. */
 .cmd-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: auto;
+  max-width: 100vw;
+  max-height: 100dvh;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  padding: clamp(4rem, 12vh, 8rem) 0 0;
+  background: transparent;
+  overflow: hidden;
+  color: inherit;
+}
+
+/* `display` is what the UA toggles on a dialog, so the flex centring has to be
+   scoped to the open state — an unconditional `display: flex` would defeat
+   `:not([open])` exactly the way .cmd-item's did with [hidden]. */
+.cmd-overlay[open] {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: clamp(4rem, 12vh, 8rem);
-  background: rgb(var(--bg-rgb) / 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   animation: cmd-fade-in 0.15s var(--ease);
 }
 
-.cmd-overlay[hidden] {
-  display: none;
+/* `::backdrop` inherits from its originating element in current browsers, so
+   the palette variables resolve here. Where it does not, the declaration is
+   invalid at computed-value time and the backdrop is simply undimmed — the
+   .cmd-box has its own opaque background, so the palette stays readable. */
+.cmd-overlay::backdrop {
+  background: rgb(var(--bg-rgb) / 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 @keyframes cmd-fade-in {

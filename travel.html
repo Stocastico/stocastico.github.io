@@ -228,9 +228,18 @@
 
   <!-- Command palette — opened with ⌘K / Ctrl+K. The data-email-* pair mirrors
        the homepage contact card so "Copy email" works on pages without a
-       contact section (base64, same obfuscation-at-rest as the card). -->
-  <div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette"
-    data-email-user="c3RlZmFuby5tYXNuZXJp" data-email-domain="bGl2ZS5jb20=" hidden>
+       contact section (base64, same obfuscation-at-rest as the card).
+
+       A real <dialog>, opened with showModal(). That one call replaces the
+       four things this used to hand-roll: the top layer (so no z-index race),
+       background inert, Escape-to-close, and returning focus to whatever
+       opened it. role="dialog" and aria-modal are implicit and must NOT be
+       written out — an explicit aria-modal on a modal dialog is redundant at
+       best. Visibility is the `open` attribute the browser manages, not
+       `hidden`, which is what made the old markup able to disagree with the
+       CSS. -->
+  <dialog class="cmd-overlay" id="cmd-overlay" aria-label="Command palette"
+    data-email-user="c3RlZmFuby5tYXNuZXJp" data-email-domain="bGl2ZS5jb20=">
     <div class="cmd-box">
       <div class="cmd-search-row">
         <svg class="cmd-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -247,7 +256,7 @@
       </div>
       <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="Commands"></ul>
     </div>
-  </div>
+  </dialog>
 
   <script type="module" src="/js/main.js"></script>
   <!-- generated:speculation-rules -->
