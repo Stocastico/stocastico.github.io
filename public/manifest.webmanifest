@@ -6,7 +6,7 @@
   "lang": "en",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
+  "display": "minimal-ui",
   "background_color": "#161110",
   "theme_color": "#161110",
   "icons": [

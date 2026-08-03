@@ -10,7 +10,7 @@ Personal website of **Stefano Masneri** (Senior AI Engineer), hosted on GitHub P
 - **Vite** — dev server + production bundler (multi-page input)
 - **Three.js** (npm, bundled by Vite) — 3D globe (travel page only). Both hero backgrounds are Canvas2D, so the homepage ships no Three.js
 - **Raw WebGL/GLSL** — noise-gradient hero background
-- **Node.js >= 18** — scripts and tests (built-in test runner, zero test dependencies)
+- **Node.js ^20.19 || >=22.12** — the range Vite 8 requires; scripts and tests use the built-in test runner, zero test dependencies. CI runs 24.
 - **Playwright** — E2E UI tests (dev dependency)
 
 ## Key Commands

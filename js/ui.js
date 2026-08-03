@@ -391,16 +391,43 @@ export function initCommandPalette() {
      'projects.html' would resolve to /projects/projects.html from a project
      detail page. Entries without an href scroll to an on-page section when it
      exists and fall back to the homepage anchor when it doesn't. */
+  /* One icon per destination, not one icon for all nine.
+
+     Every Navigate row used to render the same hamburger, which made the icon
+     column pure decoration — nine identical glyphs down the left edge of the
+     list carry no information and cost a scan. These are the ordinary
+     shorthands (a pin for places, a clock for now, an envelope for contact),
+     so the column becomes something you can aim at instead of read past. */
+  const glyph = (paths) =>
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"`
+    + ` stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+  const ICONS = {
+    about:    glyph('<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>'),
+    projects: glyph('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>'),
+    paper:    glyph('<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>'
+                    + '<path d="M14 3v5h4"/><path d="M8 13h7M8 17h4"/>'),
+    papers:   glyph('<path d="M9 3h6l4 4v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>'
+                    + '<path d="M15 3v5h4"/><path d="M5 7v12a2 2 0 0 0 2 2h9"/>'),
+    cv:       glyph('<rect x="3" y="7" width="18" height="13" rx="2"/>'
+                    + '<path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/>'),
+    places:   glyph('<path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+    links:    glyph('<path d="M10 13a4 4 0 0 0 5.7.4l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/>'
+                    + '<path d="M14 11a4 4 0 0 0-5.7-.4l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/>'),
+    now:      glyph('<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>'),
+    contact:  glyph('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7.5l8.5 6 8.5-6"/>'),
+  };
+
   const SECTIONS = [
-    { id: 'about',        label: 'About',        hint: 'Hello there!' },
-    { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: '/projects.html' },
-    { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
-    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: '/publications.html' },
-    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: '/cv.html' },
-    { id: 'places',       label: 'Places',        hint: 'Where I’ve been' },
-    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: '/links.html' },
-    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html' },
-    { id: 'contact',      label: 'Contact',       hint: "Let’s talk" },
+    { id: 'about',        label: 'About',        hint: 'Hello there!', icon: ICONS.about },
+    { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: '/projects.html', icon: ICONS.projects },
+    { id: 'publications', label: 'Publications',  hint: 'Selected papers', icon: ICONS.paper },
+    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: '/publications.html', icon: ICONS.papers },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: '/cv.html', icon: ICONS.cv },
+    { id: 'places',       label: 'Places',        hint: 'Where I’ve been', icon: ICONS.places },
+    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: '/links.html', icon: ICONS.links },
+    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html', icon: ICONS.now },
+    { id: 'contact',      label: 'Contact',       hint: "Let’s talk", icon: ICONS.contact },
   ];
 
   const ACTIONS = [
@@ -449,7 +476,9 @@ export function initCommandPalette() {
     },
   ];
 
-  const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+  /* Fallback for a SECTIONS entry added without an icon — a generic list
+     glyph rather than nothing, so the column never goes ragged. */
+  const navIcon = glyph('<path d="M4 6h16M4 12h16M4 18h16"/>');
 
   /* ── Palettes ───────────────────────────────────────────────
      The whole site's colour scheme is generated from one YAML key, and until
@@ -481,7 +510,7 @@ export function initCommandPalette() {
     ...SECTIONS.map(s => ({
       label: s.label,
       hint: s.hint,
-      icon: navIcon,
+      icon: s.icon || navIcon,
       action() {
         if (s.href) {
           window.location.href = s.href;

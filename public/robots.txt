@@ -1,5 +1,5 @@
 # robots.txt — stefanomasneri.com
-# Last updated: 2026-06-04
+# Last updated: 2026-08-03
 
 # All crawlers welcome — including AI search/answer engines — so the site stays
 # discoverable through AI assistants and AI-powered search, not just classic
@@ -11,6 +11,12 @@ Allow: /
 # /llms.txt is a plain-text index of what is on this site: every page with its
 # description, every project, and the publication list. Generated from the same
 # data the pages are, so it does not drift.
+#
+# There is no registered robots.txt directive for it, so the line below is an
+# Allow (a no-op against the blanket Allow above) whose real job is to put the
+# absolute URL somewhere a crawler already fetches. A comment alone would not.
+Allow: /llms.txt
+# llms.txt: https://stefanomasneri.com/llms.txt
 
 # ── Sitemap ────────────────────────────────────────────────────────────────────
 Sitemap: https://stefanomasneri.com/sitemap.xml
