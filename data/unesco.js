@@ -123,6 +123,10 @@ export const UNESCO = {
               "url": "https://whc.unesco.org/en/list/770"
             },
             {
+              "name": "Routes of Santiago de Compostela in France",
+              "url": "https://whc.unesco.org/en/list/868"
+            },
+            {
               "name": "Jurisdiction of Saint-Emilion",
               "url": "https://whc.unesco.org/en/list/933"
             },

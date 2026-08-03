@@ -206,3 +206,103 @@ describe('content: the sections that carry the substance are populated', () => {
     } finally { await page.close(); }
   });
 });
+
+/* ─── Scroll-driven animations ────────────────────────────────────────────
+   The reading-progress bar and the hero parallax used to be JavaScript: a
+   scroll listener, a rAF, and — for the bar — a document height memoised
+   behind a resize listener, a load listener and a ResizeObserver, because
+   reading scrollHeight per scroll event forces a synchronous layout. Both are
+   CSS scroll-progress timelines now.
+
+   That move is only safe if the effects actually still happen, and nothing in
+   the static suite can tell: `animation-timeline: scroll(root block)` is a
+   string in a stylesheet until a browser resolves it against a real scroll
+   position. These assert the resolved values. */
+describe('scroll-driven animations replace the old scroll handlers', () => {
+  /* html has `scroll-behavior: smooth`, so window.scrollTo() animates and a
+     fixed timeout lands mid-flight — which reads as the effect being wrong by
+     a few percent rather than as a measurement taken too early. Wait for
+     scrollY to stop moving before reading anything off the timeline. */
+  const scrollTo = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo(0, to), y);
+    let last = -1;
+    for (let i = 0; i < 40; i++) {
+      await page.waitForTimeout(50);
+      const now = await page.evaluate(() => Math.round(window.scrollY));
+      if (now === last) return now;
+      last = now;
+    }
+    return last;
+  };
+  test('the reading-progress bar tracks scroll and reaches 100% at the bottom', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+
+      const scaleX = () => page.evaluate(() => {
+        const el = document.getElementById('reading-progress');
+        return +new DOMMatrix(getComputedStyle(el).transform).a.toFixed(3);
+      });
+
+      assert.equal(await scaleX(), 0, 'the bar should be empty at the top');
+
+      await scrollTo(page, 600);
+      const mid = await scaleX();
+      assert.ok(mid > 0 && mid < 1, `the bar read ${mid} part-way down the page`);
+
+      /* Repeated, because the page grows as the scroll reveal fires and the
+         lazy renders land. Self-correcting is the point: the JS version cached
+         the document height and needed a ResizeObserver on <body> to notice
+         exactly this, and showed 100% early whenever that cache went stale. */
+      for (let i = 0; i < 4; i++) {
+        const target = await page.evaluate(() => document.documentElement.scrollHeight);
+        await scrollTo(page, target);
+      }
+      assert.equal(await scaleX(), 1, 'the bar should be full at the bottom of the page');
+    } finally { await page.close(); }
+  });
+
+  /* 0.28 is the ratio the JS used; the CSS reproduces it as a 28dvh keyframe
+     over a 100dvh range, so it should agree to within a rounding error. */
+  test('the hero copy parallaxes at the same rate the JS used', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+
+      const translateY = () => page.evaluate(() => {
+        const t = getComputedStyle(document.querySelector('.hero-content')).translate;
+        const parts = String(t).split(/\s+/);
+        return parts.length > 1 ? parseFloat(parts[1]) : 0;
+      });
+
+      assert.equal(await translateY(), 0, 'the hero copy should start unmoved');
+
+      const at = await scrollTo(page, 300);
+      const y = await translateY();
+      const expected = at * 0.28;
+      assert.ok(Math.abs(y - expected) < 1,
+        `hero translated ${y}px at ${at}px of scroll, expected about ${expected}px`);
+    } finally { await page.close(); }
+  });
+
+  /* Both effects are decoration, so reduced motion drops them entirely. This
+     is a media query in the stylesheet now rather than a prefersReducedMotion()
+     branch at the top of two init functions. */
+  test('reduced motion leaves both of them alone', async () => {
+    const page = await newPage(browser, server, {
+      viewport: VIEWPORTS.desktop, reducedMotion: 'reduce',
+    });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await scrollTo(page, 600);
+
+      const state = await page.evaluate(() => ({
+        bar: +new DOMMatrix(
+          getComputedStyle(document.getElementById('reading-progress')).transform).a.toFixed(3),
+        hero: getComputedStyle(document.querySelector('.hero-content')).translate,
+      }));
+      assert.equal(state.bar, 0, 'the progress bar animated under reduced motion');
+      assert.equal(state.hero, 'none', 'the hero parallaxed under reduced motion');
+    } finally { await page.close(); }
+  });
+});

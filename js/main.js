@@ -96,7 +96,6 @@ import { NoiseGradient } from './noise-gradient.js';
 import {
   initScrollReveal,
   initCardTilt,
-  initScroll3D,
   revealNewContent,
 } from './animations.js';
 
@@ -540,7 +539,6 @@ export {
   initTheme,
   initCardTilt,
   initAnimatedFavicon,
-  initScroll3D,
   initNavbar,
   initMobileMenu,
   initBackToTop,
@@ -628,8 +626,9 @@ if (typeof document !== 'undefined') {
   _pushTeardown(initScrollReveal());
   _pushTeardown(initCounters());
 
-  /* Scroll-driven effects: start immediately (lightweight, needed at any scroll pos) */
-  _pushTeardown(initScroll3D());
+  /* The hero parallax and the reading-progress bar used to be initialised
+     here. Both are scroll-progress timelines in css/styles.css now — off the
+     main thread, and with nothing to tear down on pagehide. */
 
   /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
      not compete with content rendering on the main thread. requestIdleCallback

@@ -88,10 +88,13 @@ function build() {
   const lines = [];
   lines.push('# Stefano Masneri');
   lines.push('');
-  lines.push('> Senior AI Engineer in San Sebastián, Spain. Machine learning, computer '
-    + 'vision and 3D reconstruction, mostly applied to video and augmented reality. '
-    + 'This is a personal site: CV, project write-ups, peer-reviewed publications, and '
-    + 'a few things built for their own sake.');
+  /* Kept in step with the homepage's own <title> and description — an index
+     that describes the site differently from the site is worse than none. */
+  lines.push('> Senior AI Engineer at Mediapro, in San Sebastián, Spain. Builds AI that '
+    + 'understands video and AI that generates it: computer vision, generative AI and '
+    + '3D reconstruction, with a research background in augmented reality. This is a '
+    + 'personal site: CV, project write-ups, peer-reviewed publications, and a few '
+    + 'things built for their own sake.');
   lines.push('');
   lines.push('All content is written by Stefano Masneri unless a page says otherwise. '
     + 'Every page is server-rendered static HTML — nothing here needs JavaScript to read.');

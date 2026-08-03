@@ -397,9 +397,17 @@
 /* ─── Cross-document view transitions ─────────────────────────
    Opt the whole multi-page site into the View Transitions API so same-origin
    navigations (home ↔ projects ↔ project detail ↔ cv ↔ travel ↔ links) animate
-   as a smooth cross-fade in supporting browsers. Pages already prerender on
-   hover via the Speculation Rules API, so the transition lands instantly.
-   Unsupported browsers ignore this rule entirely — navigation just cuts. */
+   as a smooth cross-fade in supporting browsers. Unsupported browsers ignore
+   this rule entirely — navigation just cuts.
+
+   Speculation rules (scripts/generate-speculation-rules.mjs) warm the
+   destination on hover, so the transition usually has something to cross-fade
+   *to* immediately. Note what that buys, per destination: project detail pages
+   are prerendered, so they are ready to paint; everything else is prefetched,
+   which lands the HTML but not its subresources. The claim this comment used
+   to make — that every hop above prerenders on hover — was true of exactly one
+   of them, and only from the homepage, because the rules block was hand-written
+   on index.html alone. */
 @view-transition {
   navigation: auto;
 }
@@ -593,8 +601,7 @@ h3 {
 /* Prose gets `pretty`, not `balance`: it protects against orphans and bad
    final-line rags without trying to equalise every line of a paragraph, which
    is what `balance` would do and is wrong for running text. The body face is a
-   serif at 1.05rem over a 60ch measure, where a single trailing word is very
-   visible. */
+   serif over a 60ch measure, where a single trailing word is very visible. */
 p,
 .section-subtitle,
 .post-lead,
@@ -746,6 +753,20 @@ figcaption {
 }
 
 /* ─── Reading Progress Bar ───────────────────────────── */
+/* Driven by a scroll-progress timeline, not by JavaScript.
+
+   This used to be a rAF-throttled scroll handler that read window.scrollY,
+   divided it by a cached document height, and wrote a scaleX — and the cache
+   was the interesting part: reading scrollHeight per scroll event forces a
+   synchronous layout, so it was memoised behind a resize listener, a load
+   listener and a ResizeObserver on <body> to catch late images and injected
+   content. All of that existed to answer a question the compositor already
+   knows the answer to. `scroll(root block)` is that same ratio, maintained off
+   the main thread, and it cannot go stale.
+
+   `transform: scaleX(0)` stays as the base: where scroll-driven animations are
+   unsupported the bar simply never grows, which is the right way for a
+   progress *decoration* to fail — it conveys nothing the scrollbar doesn't. */
 .reading-progress {
   position: fixed;
   top: 0;
@@ -757,9 +778,20 @@ figcaption {
   /* GPU-composited scale animation — no layout, no paint */
   transform: scaleX(0);
   transform-origin: left center;
-  transition: transform 0.12s linear;
   will-change: transform;
   pointer-events: none;
+}
+
+@keyframes reading-progress-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reading-progress {
+    animation: reading-progress-fill linear both;
+    animation-timeline: scroll(root block);
+  }
 }
 
 /* Mobile hamburger */
@@ -849,6 +881,40 @@ figcaption {
   max-width: 620px;
   padding: 1rem clamp(1.5rem, 5vw, 4rem);
   animation: heroFadeUp 1.2s var(--ease) both;
+}
+
+/* Hero parallax — the copy drifts down at 0.28× the scroll rate while the hero
+   is still on screen. Was initScroll3D() in js/animations.js: a scroll
+   listener, a rAF, a read of window.scrollY and offsetHeight, and a `ready`
+   flag that waited 1.4 s (or an animationend) before taking over, because it
+   wrote `transform` — the same property heroFadeUp above animates — and
+   starting early meant the two fought over it.
+
+   The `ready` gate has no equivalent here and needs none: this animates the
+   `translate` property, which composes with heroFadeUp's `transform` instead
+   of overwriting it. The two can run at once, from the first frame.
+
+   Range: 0 → 100dvh, the hero's own height, so progress 1 lands exactly as it
+   scrolls away and `both` holds it there. (#hero has min-height: 600px, so on
+   a viewport shorter than that the ratio drifts slightly off 0.28 — a few
+   pixels on a landscape phone, where the parallax is barely perceptible.)
+
+   Scoped to no-preference: with reduced motion the copy just sits still. Where
+   scroll timelines are unsupported the same, which is the correct failure for
+   an effect whose entire content is "this moved a bit". */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-content {
+    animation:
+      heroFadeUp 1.2s var(--ease) both,
+      hero-parallax linear both;
+    /* Longhands must follow the shorthand — `animation` resets both of them. */
+    animation-timeline: auto, scroll(root block);
+    animation-range: normal, 0 100dvh;
+  }
+}
+
+@keyframes hero-parallax {
+  to { translate: 0 28dvh; }
 }
 
 @keyframes heroFadeUp {
@@ -1146,10 +1212,26 @@ figcaption {
   background-clip: text;
 }
 
+/* The paragraph under a section title. Five classes across the site play this
+   exact role — .section-subtitle, .publications-intro, .links-intro,
+   .travel-intro and .globe-intro — because each section grew its own as it was
+   written, and they had drifted to three different sizes: 16.8px here and on
+   .contact-lead, 15px for the three that set colour and max-width but no
+   font-size (so they fell through to the body), and 14.4px for .globe-intro,
+   which took 0.9rem from the .globe-* family. Reading down the homepage the
+   intro went 16.8 → 15 → 14.4 and then back to 16.8 at Contact.
+
+   None of them sets a size now: they all inherit the body's
+   clamp(15px, 1.05vw, 17px), which is the size three of the five already
+   happened to be. An intro is running prose and reads as prose; the eyebrow
+   and the section title above it carry the hierarchy. .about-lead keeps its
+   1.1rem — it is the page's opening paragraph and full-contrast --text rather
+   than --text-muted, so it is a different thing wearing a similar shape.
+
+   Anything added here later gets its size from the body too. Setting one is
+   how the drift started. */
 .section-subtitle {
   color: var(--text-muted);
-  font-size: 1.05rem;
-  line-height: 1.65;
   max-width: 60ch;
   margin: 1rem 0 0;
 }
@@ -1184,11 +1266,6 @@ figcaption {
 .about-maps .globe-header {
   text-align: center;
   margin-bottom: 1.5rem;
-}
-
-.about-maps .globe-intro {
-  max-width: 52ch;
-  margin-inline: auto;
 }
 
 .maps-row {
@@ -2328,9 +2405,11 @@ figcaption {
   margin-inline: auto;
 }
 
+/* Size comes from the body, like every other section intro — see the note on
+   .section-subtitle. The centring stays: this one sits over a centred contact
+   grid, not under a left-aligned section header. */
 .contact-lead {
   text-align: center;
-  font-size: 1.05rem;
   color: var(--text-muted);
   margin-bottom: 2.5rem;
   max-width: 60ch;
@@ -3265,10 +3344,16 @@ figcaption {
   margin-bottom: 0;
 }
 
+/* Despite the .globe-* prefix this is not a caption — both places that use it
+   (the homepage Places teaser and the travel page's UNESCO section) put it
+   under a .section-tag eyebrow and a .globe-title, which is the same
+   eyebrow/title/intro structure as .section-header. So it is a section intro
+   and takes the body size like the rest; see the note on .section-subtitle.
+   .globe-title is smaller than .section-title, which is what actually
+   distinguishes these sections — the intro prose underneath doesn't need to
+   shrink to say so. */
 .globe-intro {
-  font-size: 0.9rem;
   color: var(--text-muted);
-  line-height: 1.6;
   margin-bottom: 1rem;
 }
 
@@ -3947,22 +4032,53 @@ figcaption {
 }
 
 /* ─── Command Palette ────────────────────────────────────── */
+/* A <dialog> opened with showModal(). Three things follow from that and are
+   worth stating, because they are all things this rule used to do by hand.
+
+   (1) No `z-index`. A modal dialog is promoted to the **top layer**, which
+       paints above every stacked context on the page no matter what. The old
+       `z-index: 10000` was a guess that happened to be big enough.
+   (2) No `[hidden]` companion. The browser owns the `open` attribute and the
+       UA sheet hides a closed dialog; there is no author `display` here for it
+       to lose to. That is precisely the failure the .cmd-item rule further
+       down documents, removed at the root rather than patched again.
+   (3) The dimmer is `::backdrop`, not this element's own background. The
+       dialog itself is now just the centring box, so it must be reset from the
+       UA's centred-with-margin/border/padding defaults. */
 .cmd-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: auto;
+  max-width: 100vw;
+  max-height: 100dvh;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  padding: clamp(4rem, 12vh, 8rem) 0 0;
+  background: transparent;
+  overflow: hidden;
+  color: inherit;
+}
+
+/* `display` is what the UA toggles on a dialog, so the flex centring has to be
+   scoped to the open state — an unconditional `display: flex` would defeat
+   `:not([open])` exactly the way .cmd-item's did with [hidden]. */
+.cmd-overlay[open] {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: clamp(4rem, 12vh, 8rem);
-  background: rgb(var(--bg-rgb) / 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   animation: cmd-fade-in 0.15s var(--ease);
 }
 
-.cmd-overlay[hidden] {
-  display: none;
+/* `::backdrop` inherits from its originating element in current browsers, so
+   the palette variables resolve here. Where it does not, the declaration is
+   invalid at computed-value time and the backdrop is simply undimmed — the
+   .cmd-box has its own opaque background, so the palette stays readable. */
+.cmd-overlay::backdrop {
+  background: rgb(var(--bg-rgb) / 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 @keyframes cmd-fade-in {
@@ -4072,6 +4188,29 @@ figcaption {
   &[aria-selected="true"] {
     background: rgb(var(--accent-rgb) / 0.18);
   }
+}
+
+/* The `display: flex` above is an author declaration, and *every* author
+   declaration beats the UA stylesheet's `[hidden] { display: none }` — origin
+   is resolved before specificity, so no amount of selector weight on the UA
+   side wins. Without this rule the palette's search filter did nothing you
+   could see: applyFilter() sets `hidden` on every non-matching row (correctly,
+   and `aria-selected`/`aria-activedescendant` follow), but the rows kept
+   painting. Typing "travel" left all sixteen commands on screen, only the
+   group labels vanished — those carry no `display` of their own, so `[hidden]`
+   still reaches them, which made the list look like it had lost its headings
+   rather than failed to filter. The "No results" row is a `.cmd-item` too, so
+   it sat at the bottom of the list permanently, on every page.
+
+   The static suite cannot see this — the attribute is set exactly as intended
+   — and the e2e check asserted `.cmd-item:not([hidden])`, which reads the same
+   attribute rather than what the browser drew. The two rules below
+   (.hero-cnn-link, .cmd-overlay) are this same trap, already worked around;
+   this is the third element JS hides with `hidden` and the one that was
+   missed. Anything given a `display` here that JS toggles `hidden` on needs
+   its own `[hidden]` companion. */
+.cmd-item[hidden] {
+  display: none;
 }
 
 .cmd-item-icon {

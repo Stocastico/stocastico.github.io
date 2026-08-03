@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-YLmgim5eiE9sViYvFDJVTGE1bNNvAvNBMbh7RVQlNi8=' 'sha256-m+NSH5+qjncI6fKzzI31LnnbW52E3kVfTBw/xqzVlz0=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-YLmgim5eiE9sViYvFDJVTGE1bNNvAvNBMbh7RVQlNi8=' 'sha256-m+NSH5+qjncI6fKzzI31LnnbW52E3kVfTBw/xqzVlz0=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
@@ -297,9 +297,18 @@ A few things we'd approach differently with what we know now:
 
   <!-- Command palette — opened with ⌘K / Ctrl+K. The data-email-* pair mirrors
        the homepage contact card so "Copy email" works on pages without a
-       contact section (base64, same obfuscation-at-rest as the card). -->
-  <div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true" aria-label="Command palette"
-    data-email-user="c3RlZmFuby5tYXNuZXJp" data-email-domain="bGl2ZS5jb20=" hidden>
+       contact section (base64, same obfuscation-at-rest as the card).
+
+       A real <dialog>, opened with showModal(). That one call replaces the
+       four things this used to hand-roll: the top layer (so no z-index race),
+       background inert, Escape-to-close, and returning focus to whatever
+       opened it. role="dialog" and aria-modal are implicit and must NOT be
+       written out — an explicit aria-modal on a modal dialog is redundant at
+       best. Visibility is the `open` attribute the browser manages, not
+       `hidden`, which is what made the old markup able to disagree with the
+       CSS. -->
+  <dialog class="cmd-overlay" id="cmd-overlay" aria-label="Command palette"
+    data-email-user="c3RlZmFuby5tYXNuZXJp" data-email-domain="bGl2ZS5jb20=">
     <div class="cmd-box">
       <div class="cmd-search-row">
         <svg class="cmd-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -316,9 +325,45 @@ A few things we'd approach differently with what we know now:
       </div>
       <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="Commands"></ul>
     </div>
-  </div>
+  </dialog>
 
   <script type="module" src="/js/main.js"></script>
+  <!-- generated:speculation-rules -->
+  <script type="speculationrules">
+    {
+      "prerender": [
+        {
+          "where": {
+            "href_matches": "/projects/*"
+          },
+          "eagerness": "moderate"
+        }
+      ],
+      "prefetch": [
+        {
+          "where": {
+            "and": [
+              {
+                "href_matches": "/*.html"
+              },
+              {
+                "not": {
+                  "href_matches": "/projects/*"
+                }
+              },
+              {
+                "not": {
+                  "href_matches": "/404.html"
+                }
+              }
+            ]
+          },
+          "eagerness": "moderate"
+        }
+      ]
+    }
+  </script>
+  <!-- /generated:speculation-rules -->
 <!-- generated:analytics -->
   <img src="https://stocastico.goatcounter.com/count?p=/projects/brand-stadium.html&amp;t=Brand%20recognition%20in%20football%20matches%20%E2%80%94%20Stefano%20Masneri" alt="" width="1" height="1" referrerpolicy="no-referrer-when-downgrade" style="position:absolute;left:-9999px;width:1px;height:1px" />
   <!-- /generated:analytics -->

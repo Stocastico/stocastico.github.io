@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════════════════════
    UI BEHAVIOURS — navigation, command palette, scroll chrome.
 
-   Pure DOM API — no Three.js, no WebGL. Covers the navbar +
-   reading progress, back-to-top, side dots, mobile menu, stat
-   counters, hero tagline reveal, research carousel, the ⌘K
-   command palette, and the toast it pops.
+   Pure DOM API — no Three.js, no WebGL. Covers the navbar,
+   back-to-top, side dots, mobile menu, stat counters, hero
+   tagline reveal, research carousel, the ⌘K command palette,
+   and the toast it pops. (The reading-progress bar is a CSS
+   scroll timeline now — see .reading-progress in the stylesheet.)
 
    Content rendering (publications, projects, CV) and the
    DOMContentLoaded orchestration stay in js/main.js.
@@ -257,7 +258,6 @@ export function initNavbar() {
   if (!nav) return;
 
   const bag = listenerBag();
-  const progressBar = document.getElementById('reading-progress');
 
   /* ── Project page: highlight "Projects" nav link ────────── */
   const isProjectPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/projects/');
@@ -306,59 +306,29 @@ export function initNavbar() {
     }), { passive: true });
   }
 
-  /* Cache docHeight — reading scrollHeight per scroll event forces a
-     synchronous layout flush. Recompute on resize and when content height
-     changes (font load, image load, dynamic injection). */
-  let _cachedDocHeight = 0;
-  const _recomputeDocHeight = () => {
-    const root = document?.documentElement;
-    const inner = (typeof window !== 'undefined' && typeof window.innerHeight === 'number') ? window.innerHeight : 0;
-    _cachedDocHeight = (root && typeof root.scrollHeight === 'number')
-      ? Math.max(0, root.scrollHeight - inner)
-      : 0;
-  };
-  _recomputeDocHeight();
+  /* The reading-progress bar used to be computed here, and it was the most
+     expensive thing in this function: scrollY over a document height, where
+     the height had to be memoised because reading scrollHeight per scroll
+     event forces a synchronous layout — which in turn needed a resize
+     listener, a load listener and a ResizeObserver on <body> to catch late
+     images and injected content, or the cache went stale and the bar stopped
+     at 80%. Roughly forty lines maintaining a ratio the compositor already
+     has. It is `animation-timeline: scroll(root block)` in css/styles.css now;
+     see the note on .reading-progress. Nothing here touches #reading-progress.
 
-  if (typeof window !== 'undefined') {
-    bag.on(window, 'resize', _recomputeDocHeight, { passive: true });
-    bag.on(window, 'load', _recomputeDocHeight, { passive: true });
-  }
-  if (typeof ResizeObserver !== 'undefined' && document?.body) {
-    /* Catch dynamic content height changes (image loads, late renders) */
-    const ro = new ResizeObserver(_recomputeDocHeight);
-    ro.observe(document.body);
-    bag.add(() => ro.disconnect());
-  }
-
-  let _lastPct = -1;
-  const updateReadingProgress = () => {
-    if (!progressBar) return;
-    const pct = _cachedDocHeight > 0
-      ? Math.min(1, (window.scrollY / _cachedDocHeight))
-      : 0;
-    /* Skip DOM writes when the rounded value hasn't changed (within 0.1%) */
-    const rounded = Math.round(pct * 1000) / 1000;
-    if (rounded === _lastPct) return;
-    _lastPct = rounded;
-    /* transform: scaleX is composited on the GPU — avoids layout/paint */
-    progressBar.style.transform = `scaleX(${rounded})`;
-  };
-
+     What is left is the navbar's own state, which is a class toggle at a
+     threshold rather than a continuous value, and stays in JS. */
   let _lastScrolled = false;
   const onScroll = rafThrottle(() => {
-    const y = window.scrollY;
-    const scrolled = y > 20;
-    if (scrolled !== _lastScrolled) {
-      _lastScrolled = scrolled;
-      nav.classList.toggle('scrolled', scrolled);
-    }
-    updateReadingProgress();
+    const scrolled = window.scrollY > 20;
+    if (scrolled === _lastScrolled) return;
+    _lastScrolled = scrolled;
+    nav.classList.toggle('scrolled', scrolled);
   });
 
   bag.on(window, 'scroll', onScroll, { passive: true });
 
   setActiveLink();
-  updateReadingProgress();
 
   return bag.teardown;
 }
@@ -421,16 +391,43 @@ export function initCommandPalette() {
      'projects.html' would resolve to /projects/projects.html from a project
      detail page. Entries without an href scroll to an on-page section when it
      exists and fall back to the homepage anchor when it doesn't. */
+  /* One icon per destination, not one icon for all nine.
+
+     Every Navigate row used to render the same hamburger, which made the icon
+     column pure decoration — nine identical glyphs down the left edge of the
+     list carry no information and cost a scan. These are the ordinary
+     shorthands (a pin for places, a clock for now, an envelope for contact),
+     so the column becomes something you can aim at instead of read past. */
+  const glyph = (paths) =>
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"`
+    + ` stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+  const ICONS = {
+    about:    glyph('<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>'),
+    projects: glyph('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>'),
+    paper:    glyph('<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>'
+                    + '<path d="M14 3v5h4"/><path d="M8 13h7M8 17h4"/>'),
+    papers:   glyph('<path d="M9 3h6l4 4v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>'
+                    + '<path d="M15 3v5h4"/><path d="M5 7v12a2 2 0 0 0 2 2h9"/>'),
+    cv:       glyph('<rect x="3" y="7" width="18" height="13" rx="2"/>'
+                    + '<path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/>'),
+    places:   glyph('<path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+    links:    glyph('<path d="M10 13a4 4 0 0 0 5.7.4l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/>'
+                    + '<path d="M14 11a4 4 0 0 0-5.7-.4l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/>'),
+    now:      glyph('<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>'),
+    contact:  glyph('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7.5l8.5 6 8.5-6"/>'),
+  };
+
   const SECTIONS = [
-    { id: 'about',        label: 'About',        hint: 'Hello there!' },
-    { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: '/projects.html' },
-    { id: 'publications', label: 'Publications',  hint: 'Selected papers' },
-    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: '/publications.html' },
-    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: '/cv.html' },
-    { id: 'places',       label: 'Places',        hint: 'Where I’ve been' },
-    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: '/links.html' },
-    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html' },
-    { id: 'contact',      label: 'Contact',       hint: "Let’s talk" },
+    { id: 'about',        label: 'About',        hint: 'Hello there!', icon: ICONS.about },
+    { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: '/projects.html', icon: ICONS.projects },
+    { id: 'publications', label: 'Publications',  hint: 'Selected papers', icon: ICONS.paper },
+    { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: '/publications.html', icon: ICONS.papers },
+    { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: '/cv.html', icon: ICONS.cv },
+    { id: 'places',       label: 'Places',        hint: 'Where I’ve been', icon: ICONS.places },
+    { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: '/links.html', icon: ICONS.links },
+    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html', icon: ICONS.now },
+    { id: 'contact',      label: 'Contact',       hint: "Let’s talk", icon: ICONS.contact },
   ];
 
   const ACTIONS = [
@@ -479,7 +476,9 @@ export function initCommandPalette() {
     },
   ];
 
-  const navIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+  /* Fallback for a SECTIONS entry added without an icon — a generic list
+     glyph rather than nothing, so the column never goes ragged. */
+  const navIcon = glyph('<path d="M4 6h16M4 12h16M4 18h16"/>');
 
   /* ── Palettes ───────────────────────────────────────────────
      The whole site's colour scheme is generated from one YAML key, and until
@@ -511,7 +510,7 @@ export function initCommandPalette() {
     ...SECTIONS.map(s => ({
       label: s.label,
       hint: s.hint,
-      icon: navIcon,
+      icon: s.icon || navIcon,
       action() {
         if (s.href) {
           window.location.href = s.href;
@@ -530,8 +529,9 @@ export function initCommandPalette() {
   /* allItems index → filtered set; activeIdx is an index into allItems. */
   let visibleSet = new Set(allItems.map((_, i) => i));
   let activeIdx = allItems.length > 0 ? 0 : -1;
-  /* Element to restore focus to when the palette closes (whatever the
-     user was on before they triggered ⌘K / hint / kbd shortcut). */
+  /* Element to restore focus to when the palette closes. Only used on the
+     non-modal fallback path below — a dialog closed with .close() restores
+     focus to its opener itself. */
   let _previouslyFocused = null;
 
   /* ── Mount items + group labels ONCE ─────────────────────
@@ -658,78 +658,81 @@ export function initCommandPalette() {
       e.preventDefault();
       const item = activeIdx >= 0 ? allItems[activeIdx] : null;
       if (item) execute(item);
-    } else if (e.key === 'Escape') {
-      close();
-    } else if (e.key === 'Tab') {
-      /* The input is the only focusable element inside the overlay; keep
-         focus there so Tab/Shift+Tab can't escape the modal (focus trap). */
-      e.preventDefault();
     }
+    /* Escape and Tab are deliberately absent. #cmd-overlay is a <dialog>
+       opened with showModal(), so the browser closes it on Escape and keeps
+       Tab inside it — the hand-rolled versions of both are gone. */
   });
 
-  /* Elements made inert while the palette is open, so they can be restored. */
-  let _inertedEls = [];
+  /* ── Open / close ───────────────────────────────────────────────────────
+     showModal() does four jobs this used to do by hand, and does them better:
 
-  /* aria-modal alone is advisory; make it a real modal by marking every
-     sibling of the overlay inert (removes them from tab order + the AT tree)
-     while the palette is open, then restoring them on close. */
-  function setBackgroundInert(on) {
-    const body = document.body;
-    if (!body || !body.children) return;
-    if (on) {
-      /* Guard against a double-open overwriting the snapshot — that would
-         strand the first batch permanently inert (they'd never be restored). */
-      if (_inertedEls.length) return;
-      _inertedEls = [];
-      for (const el of Array.from(body.children)) {
-        if (el === overlay) continue;
-        const tag = (el.tagName || '').toUpperCase();
-        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEMPLATE' || tag === 'LINK' || tag === 'META') continue;
-        el.inert = true;
-        if (typeof el.setAttribute === 'function') el.setAttribute('aria-hidden', 'true');
-        _inertedEls.push(el);
-      }
-    } else {
-      for (const el of _inertedEls) {
-        el.inert = false;
-        if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-hidden');
-      }
-      _inertedEls = [];
-    }
-  }
+       · promotes the dialog to the **top layer**, so it paints above every
+         stacked context without a z-index guess;
+       · makes everything behind it **inert** — the old code walked
+         document.body.children setting .inert and aria-hidden, then had to
+         restore exactly that set, with a guard against a double-open
+         stranding the first batch permanently inert;
+       · closes on **Escape**;
+       · **returns focus** to whatever opened it.
 
-  /* ── Open / close ───────────────────────────────────────── */
+     What it does not do is stop the page behind from scrolling, so the scroll
+     lock stays — released from the dialog's own `close` event rather than
+     from close() below, because Escape closes the dialog without going
+     through our code at all.
+
+     The non-modal fallback is for the DOM stubs in test/main.node.test.mjs.
+     Every browser that can run this site's ES modules has had <dialog> for
+     years; nothing in production takes that branch. */
+  const supportsModal = typeof overlay.showModal === 'function';
+
+  const releaseScrollLock = () => {
+    if (document.body && document.body.style) document.body.style.overflow = '';
+  };
+  bag.on(overlay, 'close', releaseScrollLock);
+
   function open() {
-    /* Remember the trigger element so we can restore focus on close. */
-    _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
+    if (overlay.open) return;
     input.value = '';
     applyFilter('');
-    overlay.hidden = false;
-    setBackgroundInert(true);
+    if (supportsModal) {
+      overlay.showModal();
+    } else {
+      /* Stub path: no top layer, no native focus restore — do it by hand. */
+      _previouslyFocused = (typeof document !== 'undefined' && document.activeElement) || null;
+      overlay.open = true;
+    }
+    /* showModal() already focuses the first focusable descendant, which is
+       this input. Setting it explicitly costs nothing and keeps the stub path
+       behaving the same. */
     requestAnimationFrame(() => input.focus());
-    document.body.style.overflow = 'hidden';
+    if (document.body && document.body.style) document.body.style.overflow = 'hidden';
   }
 
   function close() {
-    overlay.hidden = true;
-    setBackgroundInert(false);
-    document.body.style.overflow = '';
-    /* Restore focus to whatever opened the palette so keyboard users
-       don't lose their place in the page. */
-    if (_previouslyFocused && typeof _previouslyFocused.focus === 'function') {
-      try { _previouslyFocused.focus(); } catch (_) { /* element may have unmounted */ }
+    if (!overlay.open) return;
+    if (supportsModal) {
+      overlay.close(); /* fires 'close' → releaseScrollLock() */
+    } else {
+      overlay.open = false;
+      releaseScrollLock();
+      if (_previouslyFocused && typeof _previouslyFocused.focus === 'function') {
+        try { _previouslyFocused.focus(); } catch (_) { /* element may have unmounted */ }
+      }
+      _previouslyFocused = null;
     }
-    _previouslyFocused = null;
   }
 
-  /* Close on overlay click */
+  /* Click outside the box. On a modal dialog the backdrop is a pseudo-element,
+     so a click on it targets the dialog itself — which is why this still reads
+     as `e.target === overlay`. */
   bag.on(overlay, 'click', (e) => { if (e.target === overlay) close(); });
 
   /* Nav hint chip opens the palette through the same open() path as ⌘K, so it
-     gets the focus trap, background inert, and scroll-lock too (clicking the
-     chip used to bypass all three). */
+     gets the modal treatment and the scroll-lock too (clicking the chip used
+     to bypass both). */
   const trigger = document.getElementById('cmd-trigger');
-  if (trigger) bag.on(trigger, 'click', () => { if (overlay.hidden) open(); });
+  if (trigger) bag.on(trigger, 'click', () => open());
 
   /* Global keyboard shortcut — ⌘K or Ctrl+K */
   bag.on(document, 'keydown', (e) => {
@@ -737,7 +740,7 @@ export function initCommandPalette() {
        and the shortcut silently did nothing. */
     if ((e.metaKey || e.ctrlKey) && typeof e.key === 'string' && e.key.toLowerCase() === 'k') {
       e.preventDefault();
-      overlay.hidden ? open() : close();
+      overlay.open ? close() : open();
     }
   });
 

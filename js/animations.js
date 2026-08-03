@@ -269,56 +269,19 @@ export function initCardTilt() {
   return () => teardowns.forEach(fn => fn());
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SCROLL-DRIVEN 3-D TRANSFORMS
-   ═══════════════════════════════════════════════════════════ */
-export function initScroll3D() {
-  if (prefersReducedMotion()) return;
-  if (typeof document === 'undefined') return;
+/* The hero parallax used to live here as initScroll3D(): a scroll listener, a
+   rAF, a read of window.scrollY and #hero.offsetHeight per frame, and a
+   `ready` flag that held everything back for 1.4 s because it wrote the same
+   `transform` property the hero's entrance animation was still using.
 
-  /* Hero parallax — skip on touch devices to prevent scroll jank on mobile */
-  if (typeof window === 'undefined') return;
-  if (window.matchMedia?.('(pointer: coarse)').matches) return;
+   It is now a scroll-progress timeline on .hero-content in css/styles.css,
+   which is a better fit in every direction: it runs off the main thread, it
+   animates `translate` so it composes with the entrance instead of racing it,
+   and `prefers-reduced-motion` is expressed as a media query rather than a
+   branch. It also no longer skips coarse pointers — that guard existed to
+   avoid scroll jank on phones, and a compositor-driven animation has none to
+   avoid.
 
-  const heroContent = document.querySelector('.hero-content');
-  const heroSection = document.getElementById('hero');
-
-  /* Wait for the hero entrance animation to finish before taking over transforms */
-  let ready = false;
-  if (heroContent) {
-    heroContent.addEventListener('animationend', () => { ready = true; }, { once: true });
-    setTimeout(() => { ready = true; }, 1400); /* fallback */
-  } else {
-    ready = true;
-  }
-
-  let rafId = null;
-
-  function update() {
-    rafId = null;
-    if (!ready) return;
-    const scrollY = window.scrollY;
-    const heroH   = heroSection ? heroSection.offsetHeight : 0;
-
-    /* Apply parallax only while the hero section is still in or near view.
-       Orb parallax removed — orbs are now static for battery savings. */
-    if (scrollY < heroH * 1.1) {
-      if (heroContent) heroContent.style.transform = `translateY(${scrollY * 0.28}px)`;
-    }
-  }
-
-  const onScroll = () => {
-    if (!rafId) rafId = requestAnimationFrame(update);
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-
-  update(); /* initial — scrollY is 0 so transforms are no-ops */
-
-  /* Returned so page teardown (pagehide / bfcache) can drop the scroll
-     listener and cancel any pending parallax frame. */
-  return () => {
-    window.removeEventListener('scroll', onScroll);
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-  };
-}
+   Nothing replaced it in this module; the note is here so the next person
+   looking for the parallax finds where it went. */
 

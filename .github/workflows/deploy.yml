@@ -73,8 +73,12 @@ jobs:
       - name: Build for the browser tests
         run: npm run build
 
+      # One glob, shared with e2e.yml and with the local `npm run test:e2e`, so
+      # the deploy gate cannot quietly cover less than the developer's run does.
+      # It used to name four files, which meant a11y.e2e.mjs and
+      # budget.e2e.mjs had never gated a deploy — see the note in e2e.yml.
       - name: Run browser tests
-        run: node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs
+        run: npm run test:e2e:ci
 
       # Regenerate sitemap.xml so <lastmod> reflects the latest commit dates.
       # The test suite already asserts the on-disk sitemap is correct; this
