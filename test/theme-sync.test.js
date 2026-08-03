@@ -76,3 +76,64 @@ test('theme-sync: public/manifest.webmanifest matches the active palette', () =>
     'public/manifest.webmanifest theme_color/background_color are out of sync — ' +
     'run `npm run generate-theme`.');
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Keep the palette-owned <head> lines together.
+
+   The rotation commits straight to main every Monday, so any branch open
+   across it has to merge that commit. That was a conflict rather than a
+   fast-forward because the four lines the rotation rewrites were scattered
+   through the head, two of them directly beneath lines a human edits all the
+   time: og:image sat one line under og:description, twitter:image one line
+   under twitter:description. Git needs three lines of matching context to
+   treat two changes as separate hunks; one line apart, an ordinary copy edit
+   and a palette rotation collide.
+
+   They now live in one block between `theme:start` and `theme:end`, with the
+   font links above and the icon/manifest links below — static neighbours. This
+   asserts they stayed there, because the fix is only a layout convention and
+   nothing else would notice it being undone.
+
+   Project pages are exempt: their og:image/twitter:image point at per-project
+   .webp art that the generator never touches, and their theme-color and
+   favicon already sit in static surroundings.
+──────────────────────────────────────────────────────────────────────────────*/
+const BRAND_PAGES = [
+  'index.html', 'cv.html', 'projects.html', 'publications.html',
+  'travel.html', 'links.html', 'now.html', '404.html',
+];
+
+for (const rel of BRAND_PAGES) {
+  test(`theme-sync: ${rel} keeps the rotated lines inside the theme block`, () => {
+    const html = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+
+    const m = html.match(/<!-- theme:start[\s\S]*?<!-- theme:end -->/);
+    assert.ok(m, `${rel}: no theme:start/theme:end block — the palette rotation ` +
+      'will conflict with ordinary head edits again');
+    const block = m[0];
+
+    /* Every line generate-theme rewrites has to be inside it. */
+    for (const [label, re] of [
+      ['<meta name="theme-color">', /<meta name="theme-color"/],
+      ['og:image', /property="og:image"/],
+      ['twitter:image', /name="twitter:image"/],
+      ['the inline data: favicon', /href="data:image\/svg\+xml,/],
+    ]) {
+      const inBlock = (block.match(re) || []).length;
+      const inPage = (html.match(new RegExp(re.source, 'g')) || []).length;
+      assert.equal(inBlock, 1, `${rel}: ${label} is not inside the theme block`);
+      assert.equal(inPage, 1, `${rel}: ${label} appears ${inPage} times, expected once`);
+    }
+
+    /* And the lines a human edits have to be outside it — putting the copy in
+       the block would recreate the adjacency from the other direction. */
+    for (const [label, re] of [
+      ['og:title', /property="og:title"/],
+      ['og:description', /property="og:description"/],
+      ['twitter:description', /name="twitter:description"/],
+      ['<title>', /<title>/],
+    ]) {
+      assert.ok(!re.test(block), `${rel}: ${label} must stay outside the theme block`);
+    }
+  });
+}
