@@ -76,6 +76,14 @@ continents:
             url: https://whc.unesco.org/en/list/601
           - name: Canal du Midi
             url: https://whc.unesco.org/en/list/770
+          # Toulouse: the Basilica of Saint-Sernin and the Hôtel-Dieu
+          # Saint-Jacques are both component parts of this one serial
+          # inscription, not separate properties — whc.unesco.org has no page
+          # for either on its own, so they belong here rather than as two more
+          # rows. With the Canal du Midi above (which runs through the city),
+          # that is the three World Heritage sites in Toulouse.
+          - name: Routes of Santiago de Compostela in France
+            url: https://whc.unesco.org/en/list/868
           - name: Jurisdiction of Saint-Emilion
             url: https://whc.unesco.org/en/list/933
           - name: Bordeaux, Port of the Moon
