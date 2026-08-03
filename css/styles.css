@@ -753,6 +753,20 @@ figcaption {
 }
 
 /* ─── Reading Progress Bar ───────────────────────────── */
+/* Driven by a scroll-progress timeline, not by JavaScript.
+
+   This used to be a rAF-throttled scroll handler that read window.scrollY,
+   divided it by a cached document height, and wrote a scaleX — and the cache
+   was the interesting part: reading scrollHeight per scroll event forces a
+   synchronous layout, so it was memoised behind a resize listener, a load
+   listener and a ResizeObserver on <body> to catch late images and injected
+   content. All of that existed to answer a question the compositor already
+   knows the answer to. `scroll(root block)` is that same ratio, maintained off
+   the main thread, and it cannot go stale.
+
+   `transform: scaleX(0)` stays as the base: where scroll-driven animations are
+   unsupported the bar simply never grows, which is the right way for a
+   progress *decoration* to fail — it conveys nothing the scrollbar doesn't. */
 .reading-progress {
   position: fixed;
   top: 0;
@@ -764,9 +778,20 @@ figcaption {
   /* GPU-composited scale animation — no layout, no paint */
   transform: scaleX(0);
   transform-origin: left center;
-  transition: transform 0.12s linear;
   will-change: transform;
   pointer-events: none;
+}
+
+@keyframes reading-progress-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reading-progress {
+    animation: reading-progress-fill linear both;
+    animation-timeline: scroll(root block);
+  }
 }
 
 /* Mobile hamburger */
@@ -856,6 +881,40 @@ figcaption {
   max-width: 620px;
   padding: 1rem clamp(1.5rem, 5vw, 4rem);
   animation: heroFadeUp 1.2s var(--ease) both;
+}
+
+/* Hero parallax — the copy drifts down at 0.28× the scroll rate while the hero
+   is still on screen. Was initScroll3D() in js/animations.js: a scroll
+   listener, a rAF, a read of window.scrollY and offsetHeight, and a `ready`
+   flag that waited 1.4 s (or an animationend) before taking over, because it
+   wrote `transform` — the same property heroFadeUp above animates — and
+   starting early meant the two fought over it.
+
+   The `ready` gate has no equivalent here and needs none: this animates the
+   `translate` property, which composes with heroFadeUp's `transform` instead
+   of overwriting it. The two can run at once, from the first frame.
+
+   Range: 0 → 100dvh, the hero's own height, so progress 1 lands exactly as it
+   scrolls away and `both` holds it there. (#hero has min-height: 600px, so on
+   a viewport shorter than that the ratio drifts slightly off 0.28 — a few
+   pixels on a landscape phone, where the parallax is barely perceptible.)
+
+   Scoped to no-preference: with reduced motion the copy just sits still. Where
+   scroll timelines are unsupported the same, which is the correct failure for
+   an effect whose entire content is "this moved a bit". */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-content {
+    animation:
+      heroFadeUp 1.2s var(--ease) both,
+      hero-parallax linear both;
+    /* Longhands must follow the shorthand — `animation` resets both of them. */
+    animation-timeline: auto, scroll(root block);
+    animation-range: normal, 0 100dvh;
+  }
+}
+
+@keyframes hero-parallax {
+  to { translate: 0 28dvh; }
 }
 
 @keyframes heroFadeUp {

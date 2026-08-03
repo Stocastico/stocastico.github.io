@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════════════════════
    UI BEHAVIOURS — navigation, command palette, scroll chrome.
 
-   Pure DOM API — no Three.js, no WebGL. Covers the navbar +
-   reading progress, back-to-top, side dots, mobile menu, stat
-   counters, hero tagline reveal, research carousel, the ⌘K
-   command palette, and the toast it pops.
+   Pure DOM API — no Three.js, no WebGL. Covers the navbar,
+   back-to-top, side dots, mobile menu, stat counters, hero
+   tagline reveal, research carousel, the ⌘K command palette,
+   and the toast it pops. (The reading-progress bar is a CSS
+   scroll timeline now — see .reading-progress in the stylesheet.)
 
    Content rendering (publications, projects, CV) and the
    DOMContentLoaded orchestration stay in js/main.js.
@@ -257,7 +258,6 @@ export function initNavbar() {
   if (!nav) return;
 
   const bag = listenerBag();
-  const progressBar = document.getElementById('reading-progress');
 
   /* ── Project page: highlight "Projects" nav link ────────── */
   const isProjectPage = typeof window !== 'undefined' && window.location?.pathname?.includes('/projects/');
@@ -306,59 +306,29 @@ export function initNavbar() {
     }), { passive: true });
   }
 
-  /* Cache docHeight — reading scrollHeight per scroll event forces a
-     synchronous layout flush. Recompute on resize and when content height
-     changes (font load, image load, dynamic injection). */
-  let _cachedDocHeight = 0;
-  const _recomputeDocHeight = () => {
-    const root = document?.documentElement;
-    const inner = (typeof window !== 'undefined' && typeof window.innerHeight === 'number') ? window.innerHeight : 0;
-    _cachedDocHeight = (root && typeof root.scrollHeight === 'number')
-      ? Math.max(0, root.scrollHeight - inner)
-      : 0;
-  };
-  _recomputeDocHeight();
+  /* The reading-progress bar used to be computed here, and it was the most
+     expensive thing in this function: scrollY over a document height, where
+     the height had to be memoised because reading scrollHeight per scroll
+     event forces a synchronous layout — which in turn needed a resize
+     listener, a load listener and a ResizeObserver on <body> to catch late
+     images and injected content, or the cache went stale and the bar stopped
+     at 80%. Roughly forty lines maintaining a ratio the compositor already
+     has. It is `animation-timeline: scroll(root block)` in css/styles.css now;
+     see the note on .reading-progress. Nothing here touches #reading-progress.
 
-  if (typeof window !== 'undefined') {
-    bag.on(window, 'resize', _recomputeDocHeight, { passive: true });
-    bag.on(window, 'load', _recomputeDocHeight, { passive: true });
-  }
-  if (typeof ResizeObserver !== 'undefined' && document?.body) {
-    /* Catch dynamic content height changes (image loads, late renders) */
-    const ro = new ResizeObserver(_recomputeDocHeight);
-    ro.observe(document.body);
-    bag.add(() => ro.disconnect());
-  }
-
-  let _lastPct = -1;
-  const updateReadingProgress = () => {
-    if (!progressBar) return;
-    const pct = _cachedDocHeight > 0
-      ? Math.min(1, (window.scrollY / _cachedDocHeight))
-      : 0;
-    /* Skip DOM writes when the rounded value hasn't changed (within 0.1%) */
-    const rounded = Math.round(pct * 1000) / 1000;
-    if (rounded === _lastPct) return;
-    _lastPct = rounded;
-    /* transform: scaleX is composited on the GPU — avoids layout/paint */
-    progressBar.style.transform = `scaleX(${rounded})`;
-  };
-
+     What is left is the navbar's own state, which is a class toggle at a
+     threshold rather than a continuous value, and stays in JS. */
   let _lastScrolled = false;
   const onScroll = rafThrottle(() => {
-    const y = window.scrollY;
-    const scrolled = y > 20;
-    if (scrolled !== _lastScrolled) {
-      _lastScrolled = scrolled;
-      nav.classList.toggle('scrolled', scrolled);
-    }
-    updateReadingProgress();
+    const scrolled = window.scrollY > 20;
+    if (scrolled === _lastScrolled) return;
+    _lastScrolled = scrolled;
+    nav.classList.toggle('scrolled', scrolled);
   });
 
   bag.on(window, 'scroll', onScroll, { passive: true });
 
   setActiveLink();
-  updateReadingProgress();
 
   return bag.teardown;
 }

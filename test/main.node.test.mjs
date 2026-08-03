@@ -22,7 +22,6 @@ import {
   initTheme,
   initCardTilt,
   initAnimatedFavicon,
-  initScroll3D,
   initBackToTop,
   NoiseGradient,
   renderProjects,
@@ -1244,137 +1243,12 @@ test('initCardTilt skips when prefers-reduced-motion is set', () => {
   }
 });
 
-/* ─── initScroll3D tests ──────────────────────────────────── */
-
-test('initScroll3D registers scroll listener for hero parallax', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const heroContent = {
-    style: { transform: '' },
-    addEventListener(type, fn, opts) {
-      if (type === 'animationend') fn(); /* fire immediately */
-    },
-  };
-  const winListeners = {};
-  global.document = {
-    querySelector(sel) { return sel === '.hero-content' ? heroContent : null; },
-    getElementById(id) { return id === 'hero' ? { offsetHeight: 800 } : null; },
-  };
-  global.window = {
-    scrollY: 0,
-    matchMedia() { return { matches: false }; },
-    addEventListener(type, fn) { winListeners[type] = fn; },
-  };
-  global.requestAnimationFrame = (fn) => { fn(); return 1; };
-  try {
-    initScroll3D();
-    assert.ok(winListeners.scroll, 'Should register scroll listener');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-  }
-});
-
-test('initScroll3D returns a teardown that removes the scroll listener', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevCAF = global.cancelAnimationFrame;
-  const heroContent = {
-    style: { transform: '' },
-    addEventListener(type, fn) { if (type === 'animationend') fn(); },
-  };
-  let added = null, removed = null;
-  global.document = {
-    querySelector(sel) { return sel === '.hero-content' ? heroContent : null; },
-    getElementById(id) { return id === 'hero' ? { offsetHeight: 800 } : null; },
-  };
-  global.window = {
-    scrollY: 0,
-    matchMedia() { return { matches: false }; },
-    addEventListener(type, fn) { if (type === 'scroll') added = fn; },
-    removeEventListener(type, fn) { if (type === 'scroll') removed = fn; },
-  };
-  global.requestAnimationFrame = (fn) => { fn(); return 1; };
-  global.cancelAnimationFrame = () => {};
-  try {
-    const teardown = initScroll3D();
-    assert.equal(typeof teardown, 'function', 'initScroll3D should return a teardown fn');
-    teardown();
-    assert.ok(removed && removed === added, 'teardown should remove the same scroll listener it added');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.cancelAnimationFrame = prevCAF;
-  }
-});
-
-test('initCardTilt returns a teardown that removes every card pointer listener', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevCAF = global.cancelAnimationFrame;
-  const added = [];
-  const removed = [];
-  const card = {
-    classList: makeClassList(),
-    style: { setProperty() {}, transform: '', transition: '' },
-    addEventListener(type, fn) { added.push([type, fn]); },
-    removeEventListener(type, fn) { removed.push([type, fn]); },
-    getBoundingClientRect() { return { left: 0, top: 0, width: 200, height: 100 }; },
-  };
-  global.document = { querySelectorAll() { return [card]; } };
-  global.window = { matchMedia() { return { matches: false }; } };
-  global.requestAnimationFrame = () => 1;
-  global.cancelAnimationFrame = () => {};
-  try {
-    const teardown = initCardTilt();
-    assert.equal(typeof teardown, 'function', 'initCardTilt should return a teardown fn');
-    assert.equal(added.length, 3, 'should bind mouseenter/mousemove/mouseleave');
-    teardown();
-    /* every added [type, fn] pair must be removed with the identical handler */
-    assert.equal(removed.length, 3);
-    for (const [type, fn] of added) {
-      assert.ok(removed.some(([t, f]) => t === type && f === fn),
-        `teardown should remove the ${type} listener with the same handler`);
-    }
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.cancelAnimationFrame = prevCAF;
-  }
-});
-
-test('initScroll3D skips on coarse pointer devices', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  let scrollRegistered = false;
-  global.document = {
-    querySelector() { return null; },
-    getElementById() { return null; },
-  };
-  global.window = {
-    matchMedia(q) {
-      if (q === '(pointer: coarse)') return { matches: true };
-      return { matches: false };
-    },
-    addEventListener(type) { if (type === 'scroll') scrollRegistered = true; },
-  };
-  try {
-    initScroll3D();
-    assert.ok(!scrollRegistered, 'Should not register scroll on touch devices');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-  }
-});
-
-/* ─── NeuralNetwork2D tests ───────────────────────────────── */
-
+/* initScroll3D is gone — the hero parallax is a CSS scroll-progress timeline
+   on .hero-content now. Its three tests went with it: they asserted that a
+   scroll listener was registered, that the teardown removed it, and that the
+   whole thing was skipped on coarse pointers. None of those facts exist any
+   more, and the behaviour they stood in for (does the hero copy drift as the
+   page scrolls) was never observable from this layer anyway. */
 test('neural-net.js stays Three-free so the homepage hero never loads Three.js', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'neural-net.js'), 'utf8');
   assert.ok(!/three-context/.test(src),
@@ -2920,6 +2794,7 @@ test('initNavbar returns a teardown that removes window listeners + disconnects 
   let ioDisconnected = 0;
   let roDisconnected = 0;
   global.IntersectionObserver = class { observe() {} unobserve() {} disconnect() { ioDisconnected++; } };
+  /* Still stubbed so an accidental re-introduction is visible below. */
   global.ResizeObserver = class { observe() {} disconnect() { roDisconnected++; } };
   global.document = {
     getElementById(id) { return id === 'navbar' ? nav : null; },
@@ -2945,7 +2820,11 @@ test('initNavbar returns a teardown that removes window listeners + disconnects 
     teardown();
     assert.ok(removed.includes('scroll'), 'teardown removes the scroll listener');
     assert.equal(ioDisconnected, 1, 'teardown disconnects the section IntersectionObserver');
-    assert.equal(roDisconnected, 1, 'teardown disconnects the body ResizeObserver');
+    /* The body ResizeObserver is gone. It existed only to keep the
+       reading-progress bar's cached document height fresh, and that bar is a
+       CSS scroll timeline now — so observing every resize of <body> to
+       maintain a number nothing reads would be pure cost. */
+    assert.equal(roDisconnected, 0, 'initNavbar should no longer observe <body>');
   } finally {
     global.document = prevDoc; global.window = prevWin;
     global.IntersectionObserver = prevIO; global.ResizeObserver = prevRO;
