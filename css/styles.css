@@ -397,9 +397,17 @@
 /* ─── Cross-document view transitions ─────────────────────────
    Opt the whole multi-page site into the View Transitions API so same-origin
    navigations (home ↔ projects ↔ project detail ↔ cv ↔ travel ↔ links) animate
-   as a smooth cross-fade in supporting browsers. Pages already prerender on
-   hover via the Speculation Rules API, so the transition lands instantly.
-   Unsupported browsers ignore this rule entirely — navigation just cuts. */
+   as a smooth cross-fade in supporting browsers. Unsupported browsers ignore
+   this rule entirely — navigation just cuts.
+
+   Speculation rules (scripts/generate-speculation-rules.mjs) warm the
+   destination on hover, so the transition usually has something to cross-fade
+   *to* immediately. Note what that buys, per destination: project detail pages
+   are prerendered, so they are ready to paint; everything else is prefetched,
+   which lands the HTML but not its subresources. The claim this comment used
+   to make — that every hop above prerenders on hover — was true of exactly one
+   of them, and only from the homepage, because the rules block was hand-written
+   on index.html alone. */
 @view-transition {
   navigation: auto;
 }

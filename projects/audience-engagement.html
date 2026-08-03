@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-SIFbEUjQCO5bgYrATsvRjxTufrc0kl3vL+PH/9O6eSQ=' 'sha256-buiaYYjG3rVN+A9H8GfXOb/cJH4elrdfB6qJl/1nojs=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-SIFbEUjQCO5bgYrATsvRjxTufrc0kl3vL+PH/9O6eSQ=' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-buiaYYjG3rVN+A9H8GfXOb/cJH4elrdfB6qJl/1nojs=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self' https://nominatim.openstreetmap.org; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
@@ -278,6 +278,42 @@ The work fed into subsequent research at Vicomtech on <strong>multi-device media
   </div>
 
   <script type="module" src="/js/main.js"></script>
+  <!-- generated:speculation-rules -->
+  <script type="speculationrules">
+    {
+      "prerender": [
+        {
+          "where": {
+            "href_matches": "/projects/*"
+          },
+          "eagerness": "moderate"
+        }
+      ],
+      "prefetch": [
+        {
+          "where": {
+            "and": [
+              {
+                "href_matches": "/*.html"
+              },
+              {
+                "not": {
+                  "href_matches": "/projects/*"
+                }
+              },
+              {
+                "not": {
+                  "href_matches": "/404.html"
+                }
+              }
+            ]
+          },
+          "eagerness": "moderate"
+        }
+      ]
+    }
+  </script>
+  <!-- /generated:speculation-rules -->
 <!-- generated:analytics -->
   <img src="https://stocastico.goatcounter.com/count?p=/projects/audience-engagement.html&amp;t=Audience%20Engagement%20Measurement%20System%20%E2%80%94%20Stefano%20Masneri" alt="" width="1" height="1" referrerpolicy="no-referrer-when-downgrade" style="position:absolute;left:-9999px;width:1px;height:1px" />
   <!-- /generated:analytics -->
