@@ -59,5 +59,15 @@ jobs:
       - name: Build site
         run: npm run build
 
+      # `test:e2e:ci` is the same glob the local `npm run test:e2e` uses, minus
+      # the build (the step above already did it). It is a glob rather than a
+      # list because a list is what went wrong: this step named four files and
+      # the two it did not name — a11y.e2e.mjs and budget.e2e.mjs — had
+      # therefore never run in CI, despite being part of `npm run test:e2e`
+      # locally and described in CLAUDE.md as deploy gates. The byte budget in
+      # particular exists to catch a regression nobody would notice by eye, so
+      # a budget CI never evaluates is not a budget. Adding a file to
+      # test/e2e/ now enrolls it automatically, the same way the page list is
+      # read from dist/.
       - name: Run browser tests
-        run: node --test --test-concurrency=2 test/e2e/pages.e2e.mjs test/e2e/content.e2e.mjs test/e2e/interaction.e2e.mjs test/e2e/mnist.e2e.mjs
+        run: npm run test:e2e:ci
