@@ -104,7 +104,14 @@
 <body>
   <!-- Reading progress bar — filled by JS on scroll -->
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-  <a class="skip-link" href="#about">Skip to main content</a>
+  <!-- Points at the main landmark, which starts at the hero — not at #about.
+       Skipping to #about skipped the nav *and* the hero, and the hero is not
+       decoration: it holds the page heading, the "Download CV" button and the
+       link to the LeNet page. Everything focusable in it sits before #about in
+       the DOM, so a keyboard user who took the skip link could never reach the
+       CV download by tabbing forward — the shortcut quietly cost them the
+       page's one call to action. -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <!-- ═══════════════ NAVIGATION ═══════════════ -->
   <nav id="navbar" role="navigation" aria-label="Main navigation">
@@ -151,6 +158,13 @@
       </button>
     </div>
   </nav>
+
+  <!-- The main landmark opens here rather than after the hero. The hero
+       carries the page's only top-level heading, so leaving it outside put the
+       document's primary heading in no landmark at all — and made the skip
+       link above land past it. Purely a wrapper: nothing in css/styles.css
+       selects `main`. -->
+  <main id="main-content">
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section id="hero" aria-label="Introduction">
@@ -207,7 +221,6 @@
   <!-- hero-split: neural canvas fills the right half on wide screens
        via CSS, no extra markup needed -->
 
-  <main>
   <!-- ═══════════════ ABOUT ═══════════════ -->
   <section id="about" class="section" aria-label="About me">
     <div class="container">
@@ -383,7 +396,13 @@
         For a closer look, head to the <a href="travel.html">Travel page</a>.
         And for the one place I stopped travelling to and started living in, I spent a while
         reading San Sebastián through its open data:
-        <a href="/donostia-dataviz/" hreflang="es">Donostia en datos</a>,
+        <!-- Both attributes, and they say different things: hreflang describes
+             the page at the other end, lang describes the four Spanish words
+             in this anchor. Without lang a screen reader in an English voice
+             reads "Donostia en datos" as English. (The project *cards* take
+             hreflang only — their titles are written in English, so lang there
+             would mispronounce them the other way round.) -->
+        <a href="/donostia-dataviz/" hreflang="es" lang="es">Donostia en datos</a>,
         seven stories about a city that changes (in Spanish).
       </p>
     </div>

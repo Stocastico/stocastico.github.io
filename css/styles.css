@@ -4074,6 +4074,29 @@ figcaption {
   }
 }
 
+/* The `display: flex` above is an author declaration, and *every* author
+   declaration beats the UA stylesheet's `[hidden] { display: none }` — origin
+   is resolved before specificity, so no amount of selector weight on the UA
+   side wins. Without this rule the palette's search filter did nothing you
+   could see: applyFilter() sets `hidden` on every non-matching row (correctly,
+   and `aria-selected`/`aria-activedescendant` follow), but the rows kept
+   painting. Typing "travel" left all sixteen commands on screen, only the
+   group labels vanished — those carry no `display` of their own, so `[hidden]`
+   still reaches them, which made the list look like it had lost its headings
+   rather than failed to filter. The "No results" row is a `.cmd-item` too, so
+   it sat at the bottom of the list permanently, on every page.
+
+   The static suite cannot see this — the attribute is set exactly as intended
+   — and the e2e check asserted `.cmd-item:not([hidden])`, which reads the same
+   attribute rather than what the browser drew. The two rules below
+   (.hero-cnn-link, .cmd-overlay) are this same trap, already worked around;
+   this is the third element JS hides with `hidden` and the one that was
+   missed. Anything given a `display` here that JS toggles `hidden` on needs
+   its own `[hidden]` companion. */
+.cmd-item[hidden] {
+  display: none;
+}
+
 .cmd-item-icon {
   width: 1.75rem;
   height: 1.75rem;

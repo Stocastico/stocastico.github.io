@@ -177,6 +177,46 @@ describe('navigation', () => {
       } finally { await page.close(); }
     }
   });
+
+  /* Typing has to narrow the list *on screen*, which is a different question
+     from whether `hidden` was set — and the difference is where the bug lived.
+     applyFilter() set the attribute correctly all along; `.cmd-item`'s
+     `display: flex` overrode the UA `[hidden] { display: none }`, so every row
+     kept painting and the search did nothing visible. The check above asserts
+     `:not([hidden])`, i.e. the same attribute the code writes, so it passed
+     against a palette whose filter was inert. Measure what the browser drew. */
+  test('typing in the command palette narrows what is actually on screen', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.keyboard.press('Control+k');
+      await page.waitForTimeout(300);
+
+      /* offsetParent is null for anything display:none — it reports the
+         rendered outcome rather than the attribute that was meant to cause it. */
+      const painted = () => page.$$eval('#cmd-list .cmd-item',
+        (els) => els.filter((e) => e.offsetParent !== null).length);
+
+      const all = await painted();
+      assert.ok(all > 5, `palette opened with only ${all} rows painted`);
+
+      await page.fill('#cmd-input', 'publications');
+      await page.waitForTimeout(250);
+      const narrowed = await painted();
+      assert.ok(narrowed < all,
+        `filtering painted ${narrowed} of ${all} rows — the filter is not reaching the screen`);
+
+      /* A query matching nothing leaves the "No results" row and nothing else.
+         That row is a .cmd-item as well, which is why it was visible from the
+         moment the palette opened, before anything had been typed. */
+      await page.fill('#cmd-input', 'zzzznotacommand');
+      await page.waitForTimeout(250);
+      const empty = await page.$$eval('#cmd-list .cmd-item',
+        (els) => els.filter((e) => e.offsetParent !== null).map((e) => e.textContent.trim()));
+      assert.deepEqual(empty, ['No results'],
+        `a query matching nothing painted ${empty.length} rows: ${empty.join(' | ')}`);
+    } finally { await page.close(); }
+  });
 });
 
 /* ─── Theme and palette ──────────────────────────────────────────────────── */
