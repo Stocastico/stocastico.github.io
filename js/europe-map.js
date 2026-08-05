@@ -6,6 +6,7 @@
    ============================================================ */
 
 import { getTheme, rgba } from './theme.js';
+import { hasCoords } from './utils.js';
 
 /* Active palette — single map instance per page; refreshed at construction so
    a theme switch (which rebuilds the map via js/main.js) recolours it. Named
@@ -76,15 +77,15 @@ export class EuropeMap2D {
        of truth, so the two views can't drift). */
     this.bounds = { ...EUROPE_BOUNDS };
 
-    /* TopoJSON-decoded land rings (filled async) */
-    this._europeRings = [];
+    /* Coastline polylines (filled async from data/europe-land.json) */
+    this._europeLines = [];
 
     this._resize();
     this._buildFilteredPins();
     this._buildFilteredTrips();
     this._bindEvents();
     this._animate();
-    this._loadTopoJSON();
+    this._loadEuropeLand();
 
     /* Pause when canvas is out of viewport */
     this._io = new IntersectionObserver(([e]) => {
@@ -146,7 +147,7 @@ export class EuropeMap2D {
 
   _buildFilteredPins() {
     this.filteredPins = (LOCATIONS.pins || [])
-      .filter(pin => !pin._skip && this.visibleTypes.has(pin.type))
+      .filter(pin => hasCoords(pin) && this.visibleTypes.has(pin.type))
       .filter(pin => this._isInEurope(pin))
       .map(pin => ({
         ...pin,
@@ -475,51 +476,22 @@ export class EuropeMap2D {
     return color;
   }
 
-  /* ── TopoJSON loader ───────────────────────────────────────────────── */
-
-  async _loadTopoJSON() {
+  /* ── Coastline loader ──────────────────────────────────────────────────
+     Loads data/europe-land.json: the polylines this map strokes, and nothing
+     else. It used to fetch data/land-50m.json — 545 KB of world coastline —
+     decode all 1,419 rings, and discard everything outside the Europe box, on
+     a page that already downloads Three.js. Every step of that was decidable
+     at build time, so scripts/generate-europe-land.mjs does it now: same
+     filter, same subpath split, plus a sub-pixel simplify. 545 KB → 95 KB,
+     with the drawn result unchanged.                                        */
+  async _loadEuropeLand() {
     try {
       /* Root-relative for the same reason as getTopoJSON() in js/utils.js:
          page-relative breaks the moment the map is embedded below the root. */
-      const topo = await fetch('/data/land-50m.json')
+      const data = await fetch('/data/europe-land.json')
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-      const allRings = this._decodeTopoJSON(topo);
-      /* Keep only rings that have at least one vertex inside Europe bounds */
-      this._europeRings = allRings.filter(ring => {
-        for (let i = 0; i < ring.length; i++) {
-          const lon = ring[i][0], lat = ring[i][1];
-          if (lon >= this.bounds.minLon && lon <= this.bounds.maxLon &&
-              lat >= this.bounds.minLat && lat <= this.bounds.maxLat) {
-            return true;
-          }
-        }
-        return false;
-      });
+      this._europeLines = Array.isArray(data?.lines) ? data.lines : [];
     } catch (_) { /* offline / file:// — keep the empty fallback */ }
-  }
-
-  _decodeTopoJSON(topo) {
-    const { scale, translate } = topo.transform;
-    const decodeArc = (idx) => {
-      const rev = idx < 0;
-      const raw = topo.arcs[rev ? ~idx : idx];
-      let cx = 0, cy = 0;
-      const pts = raw.map(([dx, dy]) => {
-        cx += dx; cy += dy;
-        return [cx * scale[0] + translate[0], cy * scale[1] + translate[1]];
-      });
-      return rev ? pts.reverse() : pts;
-    };
-    const rings = [];
-    for (const geom of topo.objects.land.geometries) {
-      const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
-      for (const poly of polys) {
-        const ring = [];
-        for (const arcIdx of poly[0]) ring.push(...decodeArc(arcIdx));
-        rings.push(ring);
-      }
-    }
-    return rings;
   }
 
   _drawEuropeBorders() {
@@ -547,39 +519,27 @@ export class EuropeMap2D {
       ctx.stroke();
     }
 
-    /* Draw TopoJSON land rings clipped to Europe bounds */
-    if (!this._europeRings.length) return;
+    /* Coastlines, prebuilt by scripts/generate-europe-land.mjs */
+    if (!this._europeLines.length) return;
 
     ctx.save();
     ctx.beginPath();
     ctx.rect(this._offsetX || 0, this._offsetY || 0, this.w, this.h);
     ctx.clip();
 
-    /* Classify rings: "local" (small islands/countries) vs "global" (continent) */
-    const isLocal = (ring) => {
-      let lo = Infinity, hi = -Infinity;
-      for (const [lon] of ring) { if (lon < lo) lo = lon; if (lon > hi) hi = lon; }
-      return (hi - lo) < 90;
-    };
+    /* Stroke-only, never filled. The mainland arrives as one polyline whose
+       interior seas (Mediterranean, Black Sea) are holes the TopoJSON decoder
+       dropped, so flood-filling it would paint those seas as land — and
+       islands have to follow the same rule, or Great Britain renders as a
+       solid blob beside a hollow France.
 
-    /* Padded bounds for segment-filtering large rings */
-    const pad = 8;
-    const nearMinLon = this.bounds.minLon - pad;
-    const nearMaxLon = this.bounds.maxLon + pad;
-    const nearMinLat = this.bounds.minLat - pad;
-    const nearMaxLat = this.bounds.maxLat + pad;
-    const isNear = (lon, lat) =>
-      lon >= nearMinLon && lon <= nearMaxLon &&
-      lat >= nearMinLat && lat <= nearMaxLat;
-
-    /* Coastlines are stroke-only (neon outline). The mainland is a single
-       "global" ring whose interior seas (Mediterranean, Black Sea) are holes
-       the TopoJSON decoder drops, so flood-filling it would paint those seas as
-       land — hence the continent is never filled. Islands ("local" rings) must
-       follow the same rule or Great Britain etc. render as solid blobs while
-       every neighbouring country is a hollow outline.
-       Local rings: draw all segments normally.
-       Global rings: only draw segments near Europe (eliminates cross-map artifacts). */
+       The two branches that used to live here — "is this ring an island or a
+       continent" and "is this vertex near enough to Europe to draw" — are
+       gone, not skipped. They decided which subpaths to emit from a worldwide
+       ring set, and that decision does not depend on anything only the browser
+       knows, so the generator makes it once and ships the subpaths. Three
+       stroke passes over 179 short polylines, per frame, instead of the same
+       three passes plus a bounds test per vertex over 16.5k vertices. */
     const strokes = [
       [2.5, rgba(THEME.globe.coast, 0.15)],
       [1.5, rgba(THEME.globe.coast, 0.40)],
@@ -588,36 +548,12 @@ export class EuropeMap2D {
     for (const [lw, color] of strokes) {
       ctx.lineWidth = lw;
       ctx.strokeStyle = color;
-      for (const ring of this._europeRings) {
+      for (const line of this._europeLines) {
+        if (line.length < 2) continue;
         ctx.beginPath();
-        if (isLocal(ring)) {
-          ctx.moveTo(this._lonToX(ring[0][0]), this._latToY(ring[0][1]));
-          for (let i = 1; i < ring.length; i++) {
-            ctx.lineTo(this._lonToX(ring[i][0]), this._latToY(ring[i][1]));
-          }
-        } else {
-          /* Segment-filtered: only draw near-Europe segments */
-          let prevNear = false;
-          for (let i = 0; i < ring.length; i++) {
-            const near = isNear(ring[i][0], ring[i][1]);
-            const x = this._lonToX(ring[i][0]);
-            const y = this._latToY(ring[i][1]);
-            if (near) {
-              if (!prevNear) {
-                if (i > 0) {
-                  ctx.moveTo(this._lonToX(ring[i - 1][0]), this._latToY(ring[i - 1][1]));
-                  ctx.lineTo(x, y);
-                } else {
-                  ctx.moveTo(x, y);
-                }
-              } else {
-                ctx.lineTo(x, y);
-              }
-            } else if (prevNear) {
-              ctx.lineTo(x, y);
-            }
-            prevNear = near;
-          }
+        ctx.moveTo(this._lonToX(line[0][0]), this._latToY(line[0][1]));
+        for (let i = 1; i < line.length; i++) {
+          ctx.lineTo(this._lonToX(line[i][0]), this._latToY(line[i][1]));
         }
         ctx.stroke();
       }

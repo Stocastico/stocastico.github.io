@@ -2,10 +2,10 @@
    UI BEHAVIOURS — navigation, command palette, scroll chrome.
 
    Pure DOM API — no Three.js, no WebGL. Covers the navbar,
-   back-to-top, side dots, mobile menu, stat counters, hero
-   tagline reveal, research carousel, the ⌘K command palette,
-   and the toast it pops. (The reading-progress bar is a CSS
-   scroll timeline now — see .reading-progress in the stylesheet.)
+   back-to-top, mobile menu, stat counters, hero tagline
+   reveal, the ⌘K command palette, and the toast it pops.
+   (The reading-progress bar is a CSS scroll timeline now —
+   see .reading-progress in the stylesheet.)
 
    Content rendering (publications, projects, CV) and the
    DOMContentLoaded orchestration stay in js/main.js.
@@ -480,6 +480,32 @@ export function initCommandPalette() {
      glyph rather than nothing, so the column never goes ragged. */
   const navIcon = glyph('<path d="M4 6h16M4 12h16M4 18h16"/>');
 
+  /* Scroll to a section AND put keyboard focus in it.
+
+     scrollIntoView() alone moved the page and nothing else. close() hands
+     focus back to whatever opened the dialog — the ⌘K chip in the navbar — so
+     picking "Contact" from the palette left a sighted user looking at the
+     contact section while the caret sat at the top of the page and a screen
+     reader announced nothing at all: for anyone not watching pixels, the
+     command did nothing. That is WCAG 2.4.3 (focus order) failing in the one
+     component built specifically for keyboard users.
+
+     tabindex="-1" makes a section focusable programmatically without adding it
+     to the tab sequence, and is removed again on blur so the DOM does not
+     accumulate the attribute. preventScroll because the smooth scroll above is
+     already handling the movement — letting focus() scroll too lands the page
+     instantly and cancels the animation. */
+  function focusSection(el) {
+    el.scrollIntoView({ behavior: 'smooth' });
+    if (typeof el.focus !== 'function') return;
+    const hadTabindex = el.hasAttribute('tabindex');
+    if (!hadTabindex) el.setAttribute('tabindex', '-1');
+    el.focus({ preventScroll: true });
+    if (!hadTabindex) {
+      el.addEventListener('blur', () => el.removeAttribute('tabindex'), { once: true });
+    }
+  }
+
   /* ── Palettes ───────────────────────────────────────────────
      The whole site's colour scheme is generated from one YAML key, and until
      now no visitor could ever see that. Each entry swaps [data-palette]; CSS
@@ -517,7 +543,7 @@ export function initCommandPalette() {
           return;
         }
         const el = document.getElementById(s.id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        if (el) focusSection(el);
         else window.location.href = `/#${s.id}`;
       },
       group: 'Navigate',

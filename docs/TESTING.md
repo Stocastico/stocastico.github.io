@@ -97,12 +97,21 @@ rather than the sources.
 - The browser suite runs on every push and pull request
   (`.github/workflows/e2e.yml`) **and** gates the deploy.
 
-Both Playwright files that predate this (`test/playwright.ui.test.mjs`,
-`test/playwright.iphone.test.mjs`) were excluded from `npm test` and ran in no
-workflow at all. That is precisely how a browser-observable bug reached
-production with a green suite — the layer existed on disk and never executed.
-They are kept for their iPhone-specific layout regressions; the suite in
-`test/e2e/` is the one that runs.
+Two Playwright files predated `test/e2e/` and have now been **deleted**:
+`test/playwright.ui.test.mjs` and `test/playwright.iphone.test.mjs`. They were
+excluded from `npm test` and ran in no workflow at all — precisely how a
+browser-observable bug reached production with a green suite. The note here
+used to say they were "kept for their iPhone-specific layout regressions",
+which had quietly stopped being true twice over: `test/e2e/pages.e2e.mjs`
+covers 375px and 390px overflow and text clipping, and the UI file asserted
+`.skill-bar-fill`, a class deleted when the CV skill bars became proficiency
+tiers. A suite nobody runs does not decay gracefully — it decays into a file
+that fails for reasons that are no longer bugs.
+
+`npm test` is a **glob** for the same family of reasons. It used to enumerate
+33 filenames by hand, and `test/theme-rebuild.test.mjs` was never added to the
+list, so its three assertions — guarding the blank-canvas-after-theme-switch
+regression — had never run in CI. Adding a file to `test/` is now enough.
 
 ## Writing new tests
 

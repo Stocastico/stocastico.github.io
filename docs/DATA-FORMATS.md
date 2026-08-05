@@ -226,7 +226,9 @@ npm run generate-cv                        # write data/cv.js
 
 **Generator:** `npm run generate-locations` → writes `data/locations.js`
 
-The globe on the About section is driven entirely by this file. The generator auto-geocodes any city names that lack explicit `lat`/`lon` values using the OpenStreetMap Nominatim API, and caches results in `.cache/locations-geocode-cache.json`.
+The travel page's globe and 2-D Europe map are driven entirely by this file. The generator auto-geocodes any city names that lack explicit `lat`/`lon` values using the OpenStreetMap Nominatim API, and caches results in `.cache/locations-geocode-cache.json`.
+
+**Geocoding happens here and only here.** `js/globe.js` used to carry a browser-side copy that filled in missing coordinates at page load; it is gone, along with the `connect-src https://nominatim.openstreetmap.org` it kept open in every page's CSP. So an entry that reaches `data/locations.js` without coordinates is now simply dropped by both maps rather than looked up. `test/main.node.test.mjs` fails if that ever happens — the fix is to re-run `npm run generate-locations`, not to add coordinates by hand.
 
 ### Top-level structure
 

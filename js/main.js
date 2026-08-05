@@ -8,8 +8,8 @@
 
    Behaviour and effects now live in focused modules:
 
-     js/ui.js             — navbar, command palette, side dots,
-                            mobile menu, counters, carousel, etc.
+     js/ui.js             — navbar, command palette, mobile menu,
+                            counters, toast, back-to-top
      js/animations.js     — scroll reveals, card tilt, parallax
      js/noise-gradient.js — hero background WebGL shader
      js/globe.js          — 3D globe (Three.js)
@@ -89,7 +89,7 @@ import { THEME, rgba } from './theme.js';
 import { NoiseGradient } from './noise-gradient.js';
 
 /* neural-net.js (NeuralNetwork/NeuralNetwork2D) and globe.js (Globe3D/
-   GlobeFallback2D/geocodeLocations) are dynamically imported at their init
+   GlobeFallback2D) are dynamically imported at their init
    sites below — see the Three.js loading-strategy note at the top. */
 
 /* DOM animations: scroll reveal, card tilt, parallax (extracted) */
@@ -99,7 +99,7 @@ import {
   revealNewContent,
 } from './animations.js';
 
-/* UI behaviours: navbar, command palette, side dots, mobile menu, counters,
+/* UI behaviours: navbar, command palette, mobile menu, counters,
    tagline reveal, etc. (extracted to js/ui.js) */
 import {
   initCounters,
@@ -347,7 +347,15 @@ function initAnimatedFavicon() {
    list exposes the same data (lived/current/worktrip/holiday pins,
    regions, and multi-city trips) in plain semantic HTML. The container
    is visually-hidden but discoverable by assistive tech via the
-   aria-describedby on the canvas. */
+   aria-describedby on the canvas.
+
+   The group headings are <h2>, not <h4>. They used to be h4 under a page whose
+   deepest heading is the <h1> "Travel & Places" — a two-level skip, and
+   heading navigation is the whole reason a screen-reader user would come here
+   rather than to the canvas. Nothing catches it automatically: axe classes
+   heading-order as best-practice and test/e2e/a11y.e2e.mjs excludes those on
+   purpose. The list is visually hidden, so the rank has no visual consequence
+   to weigh against the semantic one. */
 export function renderGlobeA11yList(container, locations) {
   if (!container || !locations) return;
   const TYPE_LABEL = {
@@ -372,7 +380,7 @@ export function renderGlobeA11yList(container, locations) {
       return `<li>${escapeHtml(p.name)}${info}</li>`;
     }).join('');
     sections.push(
-      `<h4>${TYPE_LABEL[type]} (${items.length})</h4>` +
+      `<h2>${TYPE_LABEL[type]} (${items.length})</h2>` +
       `<ul>${lis}</ul>`
     );
   }
@@ -381,14 +389,14 @@ export function renderGlobeA11yList(container, locations) {
       const info = r.info ? ` &mdash; ${escapeHtml(r.info)}` : '';
       return `<li>${escapeHtml(r.name)}${info}</li>`;
     }).join('');
-    sections.push(`<h4>Regions (${locations.regions.length})</h4><ul>${lis}</ul>`);
+    sections.push(`<h2>Regions (${locations.regions.length})</h2><ul>${lis}</ul>`);
   }
   if ((locations.trips || []).length) {
     const lis = locations.trips.map(t => {
       const cities = (t.cities || []).map(c => escapeHtml(c.name)).join(', ');
       return `<li>${escapeHtml(t.name)}${cities ? ': ' + cities : ''}</li>`;
     }).join('');
-    sections.push(`<h4>Trips (${locations.trips.length})</h4><ul>${lis}</ul>`);
+    sections.push(`<h2>Trips (${locations.trips.length})</h2><ul>${lis}</ul>`);
   }
   container.innerHTML = sections.join('');
 }
@@ -522,7 +530,7 @@ export function freshCanvasForRebuild(canvas) {
    suite can keep importing them from ../js/main.js.
 
    The Three.js-backed classes (Globe3D, GlobeFallback2D, NeuralNetwork,
-   NeuralNetwork2D) and geocodeLocations are intentionally NOT re-exported
+   NeuralNetwork2D) are intentionally NOT re-exported
    here: doing so would static-link globe.js/neural-net.js (and all of
    Three.js) back into the main chunk. Tests import them from their source
    modules instead. */
@@ -825,9 +833,8 @@ if (typeof document !== 'undefined') {
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
      canvas is about to enter the viewport. The maps live in the #places
      section near the bottom of the page — eagerly building them costs a
-     545 KB TopoJSON fetch (Europe map), a Globe scene with stars/grids/pins,
-     and a Nominatim geocode round-trip, none of which the user sees until
-     they scroll there. */
+     coastline fetch (Europe map) and a Globe scene with stars/grids/pins,
+     neither of which the user sees until they scroll there. */
   const _lazyOnViewport = (canvas, build) => {
     if (!canvas) return;
     if (typeof IntersectionObserver === 'undefined') { build(); return; }
@@ -843,8 +850,8 @@ if (typeof document !== 'undefined') {
     io.observe(canvas);
   };
 
-  /* Three.js Globe — geocode any entries missing lat/lon, then build. Built
-     through a closure so a theme switch can rebuild it with the active palette
+  /* Three.js Globe. Built through a closure so a theme switch can rebuild it
+     with the active palette
      (globe.js resolves colours from getTheme() per instance). */
   let globeCanvas = document.getElementById('globe-canvas');
   let globeInstance = null;
@@ -862,27 +869,25 @@ if (typeof document !== 'undefined') {
     return Promise.all([
       import('./globe.js'),
       import('../data/locations.js'),
-    ]).then(([{ geocodeLocations, Globe3D, GlobeFallback2D }, { LOCATIONS }]) =>
-      geocodeLocations(LOCATIONS).then(() => {
-        /* A newer build superseded this one (e.g. another theme switch landed
-           while geocoding was in flight). Bail before constructing so we never
-           overwrite the fresh globe with a stale one or leak an orphaned
-           WebGL context. */
-        if (token !== globeBuildToken) return;
-        globeInstance = (prefersReducedMotion() || !hasWebGLSupport())
-          ? new GlobeFallback2D(globeCanvas)
-          : new Globe3D(globeCanvas);
-        _disposables.push(globeInstance);
-        /* Render the SR-accessible alternative list once the location data
-           is final (i.e. all geocoding has resolved). */
-        const a11yList = document.getElementById('globe-a11y-list');
-        if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
-      })
-    ).catch((err) => {
-      /* Three.js import failed or geocoding (Nominatim) is unreachable —
-         leave the globe unbuilt rather than throwing into the global
-         unhandledrejection handler. The static a11y list still describes
-         the locations for non-visual users. */
+    ]).then(([{ Globe3D, GlobeFallback2D }, { LOCATIONS }]) => {
+      /* A newer build superseded this one (e.g. a theme switch landed while
+         the Three.js chunk was in flight). Bail before constructing so we
+         never overwrite the fresh globe with a stale one or leak an orphaned
+         WebGL context. */
+      if (token !== globeBuildToken) return;
+      globeInstance = (prefersReducedMotion() || !hasWebGLSupport())
+        ? new GlobeFallback2D(globeCanvas)
+        : new Globe3D(globeCanvas);
+      _disposables.push(globeInstance);
+      /* The SR-accessible alternative to the canvas. It used to wait on a
+         geocoding round-trip; coordinates are baked into data/locations.js at
+         build time now, so the data is final the moment the module resolves. */
+      const a11yList = document.getElementById('globe-a11y-list');
+      if (a11yList) renderGlobeA11yList(a11yList, LOCATIONS);
+    }).catch((err) => {
+      /* The Three.js chunk failed to load — leave the globe unbuilt rather
+         than throwing into the global unhandledrejection handler. The static
+         a11y list still describes the locations for non-visual users. */
       if (typeof console !== 'undefined') console.warn('Globe build skipped:', err);
     });
   };

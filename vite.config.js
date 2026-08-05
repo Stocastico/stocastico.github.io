@@ -31,8 +31,15 @@ function copyDocsPdfs() {
 }
 
 /* Copy the data JSON that is fetched at *runtime* into dist/data/ — globe.js
-   fetches world-110m.json and europe-map.js fetches land-50m.json via fetch(),
-   so they are not in the Rollup module graph and Vite won't include them.
+   fetches world-110m.json and europe-map.js fetches europe-land.json via
+   fetch(), so they are not in the Rollup module graph and Vite won't include
+   them.
+
+   Note europe-land.json, not land-50m.json. The map used to download the
+   545 KB world coastline file and discard everything outside Europe in the
+   browser; scripts/generate-europe-land.mjs does that at build time now and
+   emits 84 KB. land-50m.json stays in data/ as the generator's *source* and
+   is deliberately absent from the list below — it is no longer deployed.
 
    An explicit allowlist, not `*.json`. Copying the whole directory published
    356 KB that nothing ever requests: cnn-model.json (237 KB of float32
@@ -41,7 +48,7 @@ function copyDocsPdfs() {
    and emitted as inline SVG), cnn-samples.json (Rollup already bundles it, so
    the copy was a second unreferenced one) and the {"type":"module"} stub.
    Adding a runtime fetch means adding its file here. */
-const RUNTIME_DATA_JSON = ['world-110m.json', 'land-50m.json'];
+const RUNTIME_DATA_JSON = ['world-110m.json', 'europe-land.json'];
 
 function copyDataJson() {
   return {

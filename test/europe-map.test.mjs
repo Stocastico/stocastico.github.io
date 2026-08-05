@@ -213,11 +213,13 @@ test('EuropeMap2D: island landmasses are not filled (consistent with the mainlan
   const { canvas, fills } = createCanvasAndContext();
   const tooltip = createTooltip();
 
-  /* A small island ring (Great Britain — longitude span < 90°, so the renderer
-     classifies it "local") and the European mainland ring (span ≥ 90°, the
-     "global" continent). The mainland is only ever stroked; the island must be
-     rendered the same way, otherwise Great Britain shows up as a solid filled
-     blob while every neighbouring country is a hollow neon outline. */
+  /* Two coastline polylines as data/europe-land.json supplies them: a small
+     island (Great Britain) and a stretch of the European mainland. The
+     island/continent split used to happen here at draw time and now happens in
+     scripts/generate-europe-land.mjs, but the invariant it protected is
+     unchanged and still worth pinning: neither is ever filled, or Great Britain
+     shows up as a solid blob while every neighbouring country is a hollow neon
+     outline. */
   const greatBritain = [
     [-5, 50], [-3, 51], [-1, 53], [0, 55], [-2, 57], [-4, 58], [-5, 56], [-5, 50],
   ];
@@ -227,7 +229,7 @@ test('EuropeMap2D: island landmasses are not filled (consistent with the mainlan
 
   withGlobals(makeEnv({ pins: [] }, tooltip), () => {
     const map = new EuropeMap2D(canvas);
-    map._europeRings = [greatBritain, mainland];
+    map._europeLines = [greatBritain, mainland];
 
     map._drawEuropeBorders();
 
