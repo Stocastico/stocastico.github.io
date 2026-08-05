@@ -530,6 +530,16 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+/* Sections the ⌘K palette focuses on the way to them (focusSection() in
+   js/ui.js adds tabindex="-1" for the moment it takes). The ring is what tells
+   a keyboard user where they landed, so it is kept rather than suppressed —
+   only pulled in from the UA default to the site's own, and inset because a
+   full-bleed section's outline would otherwise sit off-screen. */
+[tabindex="-1"]:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: -4px;
+}
+
 .skip-link {
   position: fixed;
   top: 0.5rem;
@@ -1779,35 +1789,7 @@ figcaption {
   border-color: var(--border-hov);
 }
 
-.photo-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 2rem;
-  text-align: center;
-}
 
-.photo-initials {
-  font-family: var(--font-display);
-  font-size: 4rem;
-  letter-spacing: var(--tracking-display);
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
-}
-
-.photo-hint {
-  font-size: 0.75rem;
-  color: var(--text-faint);
-  font-style: italic;
-  border: 1px dashed var(--border);
-  border-radius: var(--r-sm);
-  padding: 0.4em 0.8em;
-}
 
 /* Photo when you add a real image */
 /* <picture> is the flex item, so the <img> inside was resolving height: 100%
@@ -4465,6 +4447,88 @@ figcaption {
    still printed its job titles in light grey on white paper.
    ───────────────────────────────────────────────────────────────────────── */
 /* ─── Print Styles ───────────────────────────────────── */
+/* ─── Forced colours (Windows High Contrast, and friends) ─────────────────
+   Outside @layer, for exactly the reason the print block below is: the palette
+   lives on an unlayered :root, and an unlayered normal declaration beats every
+   layered one regardless of specificity. A forced-colors block inside
+   @layer components could restyle elements but would silently fail to repoint
+   --text.
+
+   The load-bearing rule is the first one. Four headings — the hero name, every
+   section title, the travel-page titles — paint their letterforms from a
+   gradient by way of `background-clip: text` plus
+   `-webkit-text-fill-color: transparent`. Forced-colors mode overrides `color`,
+   but text-fill-color is not in the list of properties it forces, so the
+   letters stay transparent while the background they were painted from is gone:
+   the hero name and every section heading disappear. This is the identical
+   failure the print block already fixes for the identical reason — backgrounds
+   are not printed either — so it gets the identical fix. `forced-color-adjust`
+   is deliberately not used to opt out; the point is to co-operate with the
+   user's colours, not to insist on ours.
+
+   The rest are smaller: a `currentColor`-driven glyph is fine, but anything
+   whose meaning came from a *fill* needs a shape or a border to survive, since
+   forced-colors flattens the palette to the user's own. The world map's
+   lived/visited distinction is the clearest case — two fills that become one
+   colour — so it falls back to a stroke pattern rather than pretending. */
+@media (forced-colors: active) {
+  .hero-name,
+  .section-title,
+  .globe-title {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: CanvasText;
+  }
+
+  /* The palette dots and the ⌘K swatch are two filled circles apiece; forced
+     colours flattens both to the same ink, so the pressed one needs a real
+     border to stay distinguishable from its neighbours. */
+  .palette-dot[aria-pressed='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* Focus rings are drawn in an accent that no longer exists here. */
+  a:focus-visible,
+  button:focus-visible,
+  .btn:focus-visible,
+  .link-chip:focus-visible,
+  .link-card:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
+  }
+
+  /* Lived vs visited was carried by fill alone. Forced colours makes both the
+     same, so hatch one of them: the legend swatches match, so the key still
+     reads. (WCAG 1.4.1 — never colour alone — which the map was quietly
+     relying on everywhere except here.) */
+  .world-map .wm-lived {
+    fill: Highlight;
+  }
+
+  .world-map .wm-visited {
+    fill: Canvas;
+    stroke: CanvasText;
+    stroke-width: 0.6px;
+  }
+
+  .wm-legend-lived {
+    background: Highlight;
+  }
+
+  .wm-legend-visited {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+
+  /* Decorative canvases paint colours the user has asked not to see, and none
+     of them carries information the page does not also state in text. */
+  #noise-canvas,
+  #neural-canvas {
+    display: none;
+  }
+}
+
 @media print {
   /* Repoint the palette itself rather than chasing individual selectors: every
      rule already reads var(--text) / var(--bg-card) / …, so one override sheet
@@ -4525,8 +4589,7 @@ figcaption {
      every job title disappeared. */
   .hero-name,
   .section-title,
-  .globe-title,
-  .photo-initials {
+  .globe-title {
     background: none;
     -webkit-text-fill-color: currentColor;
     color: #111;

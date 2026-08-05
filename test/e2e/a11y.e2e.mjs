@@ -47,8 +47,8 @@ after(async () => {
   await server?.close();
 });
 
-async function analyse(path, theme) {
-  const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+async function analyse(path, theme, viewport = VIEWPORTS.desktop) {
+  const page = await newPage(browser, server, { viewport });
   try {
     /* The site ignores prefers-color-scheme by design — light is a stored
        choice, re-applied by the <head> bootstrap before first paint. Emulating
@@ -99,4 +99,66 @@ describe('a11y: axe-core finds no WCAG A/AA violations', () => {
       assert.deepEqual(failures, [], `\n  ${failures.join('\n  ')}\n`);
     });
   }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   The same sweep at phone width, with the mobile menu open.
+
+   Everything above ran at 1440×900 and only at 1440×900, which left the two
+   things most likely to break unaudited. The layout below 680px is a different
+   one — the nav collapses behind a burger, the ⌘K chip is display:none, the
+   theme controls move — and the open menu is the site's only hand-rolled focus
+   trap. axe cannot see any of it in a viewport where the burger does not exist.
+
+   Dark only, and a smaller page set: this is about the mobile *layout*, and the
+   colour tokens it uses are the ones the pass above already measured in both
+   themes on every page. Opening the menu is the point, so it is opened.
+   ───────────────────────────────────────────────────────────────────────────── */
+const MOBILE_PAGES = ['/index.html', '/cv.html', '/projects.html', '/travel.html', '/links.html'];
+
+describe('a11y: the mobile layout passes too', () => {
+  test('every main page passes at 390px', async () => {
+    const failures = [];
+    for (const path of MOBILE_PAGES) {
+      for (const v of await analyse(path, 'dark', VIEWPORTS.mobile)) {
+        failures.push(`${path} [${v.impact}] ${v.id}: ${v.help}\n      ${v.nodes.join('\n      ')}`);
+      }
+    }
+    assert.deepEqual(failures, [], `\n  ${failures.join('\n  ')}\n`);
+  });
+
+  test('the open mobile menu passes', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.mobile });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.click('#nav-toggle');
+      await page.waitForSelector('#nav-links.open');
+
+      await page.evaluate(AXE_SOURCE);
+      const violations = await page.evaluate(async (tags) => {
+        const res = await window.axe.run(document, {
+          runOnly: { type: 'tag', values: tags },
+          resultTypes: ['violations'],
+        });
+        return res.violations.map((v) => `[${v.impact}] ${v.id}: ${v.help} — `
+          + v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(', '));
+      }, TAGS);
+      assert.deepEqual(violations, [], `\n  ${violations.join('\n  ')}\n`);
+
+      /* The trap itself, which axe cannot judge: Tab from the last item has to
+         come back to the burger rather than escaping into the page behind. */
+      const trapped = await page.evaluate(() => {
+        const links = [...document.querySelectorAll('#nav-links a')];
+        links[links.length - 1].focus();
+        return document.activeElement === links[links.length - 1];
+      });
+      assert.ok(trapped, 'could not focus the last menu link');
+      await page.keyboard.press('Tab');
+      const backAtToggle = await page.evaluate(() => document.activeElement?.id);
+      assert.equal(backAtToggle, 'nav-toggle',
+        'Tab from the last menu link escaped the open menu instead of wrapping to the burger');
+    } finally {
+      await page.close();
+    }
+  });
 });

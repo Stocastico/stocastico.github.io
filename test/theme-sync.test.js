@@ -36,6 +36,12 @@ function activePalette() {
   return tameAccent(p);
 }
 
+/** The active palette's *id* — `activePalette()` returns the body, which
+    carries a display `name` but not the key it was stored under. */
+function activePaletteId() {
+  return parseYaml(fs.readFileSync(path.join(ROOT, 'data/palettes.yaml'), 'utf8')).active;
+}
+
 /** Every *.html in the repo root + projects/ (the set generate-theme rewrites). */
 function htmlFiles() {
   const files = fs.readdirSync(ROOT).filter(f => f.endsWith('.html')).map(f => path.join(ROOT, f));
@@ -49,6 +55,7 @@ function htmlFiles() {
 }
 
 const palette = activePalette();
+const paletteId = activePaletteId();
 
 for (const file of htmlFiles()) {
   const rel = path.relative(ROOT, file);
@@ -135,5 +142,42 @@ for (const rel of BRAND_PAGES) {
     ]) {
       assert.ok(!re.test(block), `${rel}: ${label} must stay outside the theme block`);
     }
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   The navbar palette dots must agree with the active palette.
+
+   `generate-theme-toggle` bakes `aria-pressed="true"` onto the dot whose id
+   equals `active:` in data/palettes.yaml. Nothing re-ran it after a rotation:
+   the workflow's recipe — echoed in README.md and CLAUDE.md — was
+   "generate-theme, then generate-favicons", written before the dots existed.
+   So the palette rotated to crimson and all 21 pages went on claiming apricot
+   was the selected one, 42 lines of drift that no test could see.
+
+   It is only briefly visible (initTheme()'s syncDots() corrects the attribute
+   on load, and a no-JS visitor cannot operate the dots anyway), which is
+   precisely why it needed a test rather than an eye: this is a generated
+   artefact that stopped matching its source, and every other generated
+   artefact here is pinned against drift.
+
+   Guarded from the committed HTML rather than by calling the builder, for the
+   same reason the generate-cards tests read the shipped markup: comparing a
+   builder to itself passes whether or not the page was ever regenerated.
+──────────────────────────────────────────────────────────────────────────────*/
+const DOT_RE = /<button[^>]*class="palette-dot"[^>]*data-palette="([a-z0-9-]+)"[^>]*aria-pressed="(true|false)"[^>]*>/g;
+
+for (const file of htmlFiles()) {
+  const rel = path.relative(ROOT, file);
+  test(`theme-sync: ${rel} marks the active palette dot as pressed`, () => {
+    const html = fs.readFileSync(file, 'utf8');
+    const dots = [...html.matchAll(DOT_RE)].map(m => ({ id: m[1], pressed: m[2] === 'true' }));
+    assert.ok(dots.length, `${rel}: no .palette-dot buttons found — run \`npm run generate-theme-toggle\``);
+
+    const pressed = dots.filter(d => d.pressed).map(d => d.id);
+    assert.deepEqual(pressed, [paletteId],
+      `${rel}: aria-pressed="true" is on [${pressed.join(', ') || 'nothing'}] but the active ` +
+      `palette is "${paletteId}". Run \`npm run generate-theme-toggle\` — and note the ` +
+      'rotation workflow must run it too, or this comes straight back next Monday.');
   });
 }

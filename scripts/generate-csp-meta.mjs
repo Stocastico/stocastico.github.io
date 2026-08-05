@@ -51,8 +51,15 @@ export function cspFor(html) {
     /* GoatCounter no-JS analytics pixel (cookieless) loads from this origin. */
     "img-src 'self' data: blob: https://stocastico.goatcounter.com",
     "font-src 'self'",
-    /* Geocoder calls nominatim.openstreetmap.org over fetch(). */
-    "connect-src 'self' https://nominatim.openstreetmap.org",
+    /* Same-origin only. This used to allow https://nominatim.openstreetmap.org
+       for js/globe.js's runtime geocoder — a lookup that had long stopped being
+       reachable, because scripts/generate-locations.js bakes every coordinate
+       into data/locations.js at build time and the geocoder returned at its
+       first guard every time. It was the one third-party origin in the policy
+       of all 21 pages, on a site whose stated position is that it makes no
+       third-party requests except the analytics pixel. The code is gone (see
+       the note at the top of js/globe.js) and so is the allowance. */
+    "connect-src 'self'",
     "media-src 'self'",
     "worker-src 'self'",
     /* No frame-ancestors: the CSP spec ignores it (with sandbox and

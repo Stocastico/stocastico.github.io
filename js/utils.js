@@ -27,6 +27,25 @@ export function getTopoJSON() {
   return window._topoPromise;
 }
 
+/* A LOCATIONS entry the maps can actually place.
+
+   Replaces the `_skip` flag the old runtime geocoder set on a failed lookup.
+   Coordinates are baked in by scripts/generate-locations.js now, so the honest
+   question at render time is not "did geocoding fail" but "did the build give
+   this one a position" — and an entry without one must be skipped rather than
+   projected to NaN.
+
+   Lives here rather than in globe.js because js/europe-map.js needs it too, and
+   globe.js already imports EUROPE_BOUNDS from europe-map.js: importing back the
+   other way would be a cycle, and would pull the 540 KB Three.js chunk into the
+   Europe map's. utils.js has no dependencies, which is why it is the right
+   home. */
+export function hasCoords(item) {
+  return !!item
+    && typeof item.lat === 'number' && Number.isFinite(item.lat)
+    && typeof item.lon === 'number' && Number.isFinite(item.lon);
+}
+
 export function isLowPowerDevice() {
   const nav = typeof navigator !== 'undefined' ? navigator : null;
   const cores = nav && typeof nav.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : 8;

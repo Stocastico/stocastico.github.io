@@ -31,7 +31,8 @@ import {
 } from '../js/main.js';
 /* Three.js-backed classes are now imported from their source modules — main.js
    dynamically imports them so Three.js is not in the per-page bundle. */
-import { geocodeLocations, Globe3D, GlobeFallback2D, isEuropeanSecondaryPin } from '../js/globe.js';
+import { Globe3D, GlobeFallback2D, isEuropeanSecondaryPin } from '../js/globe.js';
+import { hasCoords } from '../js/utils.js';
 import { NeuralNetwork2D } from '../js/neural-net.js';
 import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
@@ -96,93 +97,54 @@ test('isEuropeanSecondaryPin never hides homes or non-European pins', () => {
   assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 25, lon: -30 }), false);       // mid-Atlantic
 });
 
-test('geocodeLocations does not call fetch when all coordinates are present', async () => {
-  const sample = {
-    pins: [{ name: 'A', lat: 1, lon: 2 }],
-    regions: [{ name: 'R', lat: 3, lon: 4 }],
-    trips: [{ cities: [{ name: 'T', lat: 5, lon: 6 }] }],
-  };
-  let calls = 0;
-  const prevFetch = global.fetch;
-  global.fetch = async () => {
-    calls += 1;
-    return { json: async () => [] };
-  };
-  try {
-    await geocodeLocations(sample);
-    assert.equal(calls, 0);
-  } finally {
-    global.fetch = prevFetch;
+/* ─────────────────────────────────────────────────────────────────────────────
+   Five tests used to live here, exercising a browser-side geocodeLocations()
+   that called Nominatim for any entry missing lat/lon: the no-op path, a
+   successful fill, an HTTP error, an empty result, and the AbortSignal.
+
+   They all passed, and none of them could fail in a way that mattered, because
+   the function had not done anything in production for a long time:
+   scripts/generate-locations.js geocodes at build time and bakes coordinates
+   into data/locations.js, so the real call always returned at its first guard.
+   The code is gone (see the note at the top of js/globe.js), and with it the
+   `connect-src https://nominatim.openstreetmap.org` that was open on all 21
+   pages for a request that could not happen.
+
+   What replaces them is the invariant that made the geocoder dead in the first
+   place, asserted directly. If it ever stops holding, the fix is to re-run the
+   generator — not to reach for the network from the visitor's browser.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+test('every LOCATIONS entry carries coordinates from the build', async () => {
+  const { LOCATIONS } = await import('../data/locations.js');
+
+  const unplaced = [];
+  for (const pin of LOCATIONS.pins || []) {
+    if (!hasCoords(pin)) unplaced.push(`pin: ${pin && pin.name}`);
   }
+  for (const region of LOCATIONS.regions || []) {
+    if (!hasCoords(region)) unplaced.push(`region: ${region && region.name}`);
+  }
+  for (const trip of LOCATIONS.trips || []) {
+    for (const city of trip.cities || []) {
+      if (!hasCoords(city)) unplaced.push(`${trip.name} → ${city && city.name}`);
+    }
+  }
+
+  assert.deepEqual(unplaced, [],
+    'these entries have no lat/lon, so the maps will silently drop them — '
+    + 'run `npm run generate-locations`');
 });
 
-test('geocodeLocations fills coordinates on successful lookup', async () => {
-  const sample = { pins: [{ name: 'Paris, France', info: 'Holiday' }] };
-  const prevFetch = global.fetch;
-  global.fetch = async () => ({
-    ok: true,
-    json: async () => [{ lat: '48.8566', lon: '2.3522' }],
-  });
-  try {
-    await geocodeLocations(sample);
-    assert.equal(sample.pins[0].lat, 48.8566);
-    assert.equal(sample.pins[0].lon, 2.3522);
-    assert.equal(sample.pins[0]._skip, undefined);
-  } finally {
-    global.fetch = prevFetch;
-  }
-});
-
-test('geocodeLocations marks item as skipped on HTTP error response', async () => {
-  const sample = { pins: [{ name: 'Paris, France', info: 'Holiday' }] };
-  const prevFetch = global.fetch;
-  /* A 429/5xx returns ok:false; res.json() would parse a non-JSON body —
-     the guard must skip the pin rather than throw an unhandled error. */
-  global.fetch = async () => ({
-    ok: false,
-    status: 429,
-    json: async () => { throw new Error('Unexpected token < in JSON'); },
-  });
-  try {
-    await geocodeLocations(sample);
-    assert.equal(sample.pins[0]._skip, true);
-    assert.equal(sample.pins[0].lat, undefined);
-    assert.equal(sample.pins[0].lon, undefined);
-  } finally {
-    global.fetch = prevFetch;
-  }
-});
-
-test('geocodeLocations marks item as skipped on failed lookup', async () => {
-  const sample = { pins: [{ name: 'XXXXX_INVALID_LOCATION', info: 'Skip me' }] };
-  const prevFetch = global.fetch;
-  global.fetch = async () => ({ json: async () => [] });
-  try {
-    await geocodeLocations(sample);
-    assert.equal(sample.pins[0]._skip, true);
-    assert.equal(sample.pins[0].lat, undefined);
-    assert.equal(sample.pins[0].lon, undefined);
-  } finally {
-    global.fetch = prevFetch;
-  }
-});
-
-test('geocodeLocations passes an AbortSignal to fetch so a hung request times out', async () => {
-  const prevFetch = global.fetch;
-  const calls = [];
-  global.fetch = (url, opts) => {
-    calls.push({ url, opts });
-    return Promise.resolve({ ok: true, json: () => Promise.resolve([{ lat: '1', lon: '2' }]) });
-  };
-  try {
-    const sample = { pins: [{ name: 'Nowhere' }], regions: [], trips: [] };
-    await geocodeLocations(sample);
-    assert.equal(calls.length, 1, 'should issue one lookup');
-    assert.ok(calls[0].opts && calls[0].opts.signal,
-      'fetch must receive an options object carrying an AbortSignal (timeout)');
-  } finally {
-    global.fetch = prevFetch;
-  }
+test('hasCoords rejects everything the maps cannot place', () => {
+  assert.equal(hasCoords({ lat: 43.3, lon: -1.98 }), true);
+  assert.equal(hasCoords({ lat: 0, lon: 0 }), true, '0,0 is a real place, not a missing one');
+  assert.equal(hasCoords({ lat: 43.3 }), false);
+  assert.equal(hasCoords({ lat: '43.3', lon: '-1.98' }), false, 'strings would project to NaN');
+  assert.equal(hasCoords({ lat: NaN, lon: 2 }), false);
+  assert.equal(hasCoords({ lat: Infinity, lon: 2 }), false);
+  assert.equal(hasCoords(null), false);
+  assert.equal(hasCoords(undefined), false);
 });
 
 test('PUBLICATIONS entries have required fields', () => {
@@ -1612,7 +1574,7 @@ test('GlobeFallback2D constructs with pins and starts animation', () => {
   }
 });
 
-test('GlobeFallback2D skips pins marked with _skip', () => {
+test('GlobeFallback2D skips pins the build left without coordinates', () => {
   const prevDoc = global.document;
   const prevWin = global.window;
   const prevRAF = global.requestAnimationFrame;
@@ -1638,7 +1600,13 @@ test('GlobeFallback2D skips pins marked with _skip', () => {
   global.LOCATIONS = {
     pins: [
       { type: 'lived', name: 'Rome', lat: 41.9, lon: 12.5 },
-      { type: 'holiday', name: 'Hidden', lat: 0, lon: 0, _skip: true },
+      /* Was `_skip: true`, the flag the runtime geocoder set on a failed
+         lookup. The guard is hasCoords() now — same job, but keyed on what the
+         renderer actually needs rather than on a marker only the deleted
+         geocoder ever wrote. Note 0,0 would have been *valid*: the old fixture
+         relied on the flag, so it could pin a real coordinate and still expect
+         a skip. */
+      { type: 'holiday', name: 'Hidden', lon: 0 },
     ],
     regions: [],
     trips: [],

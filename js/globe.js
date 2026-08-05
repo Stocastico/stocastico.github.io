@@ -2,8 +2,6 @@
    3D GLOBE + 2D fallback
 
    Exports:
-   - geocodeLocations(LOCATIONS): fills missing lat/lon via
-     Nominatim and caches results back into the LOCATIONS object.
    - Globe3D: Three.js / WebGL interactive globe.
    - GlobeFallback2D: Canvas2D fallback when WebGL is unavailable.
    ═══════════════════════════════════════════════════════════ */
@@ -13,6 +11,7 @@ import {
   prefersReducedMotion,
   hasWebGLSupport,
   getTopoJSON,
+  hasCoords,
 } from './utils.js';
 import { getTheme, int, rgba } from './theme.js';
 import { EUROPE_BOUNDS } from './europe-map.js';
@@ -60,45 +59,29 @@ onChange((t) => {
 });
 
 /* ═══════════════════════════════════════════════════════════
-   GEOCODING  (OpenStreetMap Nominatim — free, no key needed)
-   Fills lat/lon for any LOCATIONS entry that omits them.
-   Runs once at page load; respects 1-req/sec Nominatim ToS.
+   COORDINATES COME FROM THE BUILD, NOT FROM THE BROWSER
+
+   There used to be a geocodeLocations() here: for any LOCATIONS entry missing
+   lat/lon it queried OpenStreetMap's Nominatim, one request per second, from
+   the visitor's browser, before the globe could be constructed.
+
+   It had not run in a long time. scripts/generate-locations.js geocodes at
+   build time and bakes the coordinates into data/locations.js — all 82 pins
+   and all 120 trip cities carry them — so the function's first statement,
+   `if (!pending.length) return`, was the only one that ever executed. What it
+   left behind was not free: `connect-src https://nominatim.openstreetmap.org`
+   in the CSP of all 21 pages, the single third-party origin on a site whose
+   whole position is that it has none, held open for a request that could not
+   happen.
+
+   So the lookup is gone and the CSP is closed. The invariant it used to repair
+   at runtime is now asserted where it belongs — test/main.node.test.mjs fails
+   if any entry in data/locations.js is missing coordinates — and the renderers
+   below skip an entry without them rather than projecting NaN. The predicate
+   itself is hasCoords() in js/utils.js — shared with the Europe map, and kept
+   out of this file because globe.js already imports from europe-map.js and the
+   reverse import would be a cycle carrying Three.js with it.
    ═══════════════════════════════════════════════════════════ */
-export async function geocodeLocations(locs) {
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const API = 'https://nominatim.openstreetmap.org/search';
-
-  /* Collect every item missing coordinates into a flat list */
-  const pending = [];
-  const collect = (obj) => { if (obj.lat == null || obj.lon == null) pending.push(obj); };
-  (locs.pins || []).forEach(collect);
-  (locs.regions || []).forEach(collect);
-  (locs.trips || []).forEach(t => (t.cities || []).forEach(collect));
-
-  if (!pending.length) return;   /* nothing to do — all coords already provided */
-
-  for (let i = 0; i < pending.length; i++) {
-    if (i > 0) await sleep(1100);   /* max 1 req/sec — Nominatim ToS */
-    const item = pending[i];
-    try {
-      const url = `${API}?q=${encodeURIComponent(item.name)}&format=json&limit=1`;
-      /* Cap each request so one hung lookup can't stall the whole sequential
-         loop (and the globe build that waits on it) indefinitely. */
-      const opts = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
-        ? { signal: AbortSignal.timeout(8000) }
-        : undefined;
-      const res = await fetch(url, opts);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (!json.length) throw new Error('no results');
-      item.lat = parseFloat(json[0].lat);
-      item.lon = parseFloat(json[0].lon);
-    } catch (e) {
-      console.warn(`[Globe] geocoding failed for "${item.name}": ${e.message} — pin skipped`);
-      item._skip = true;
-    }
-  }
-}
 
 /* ── Fallback continent polygon data (used only when data/world-110m.json
    cannot be fetched, e.g. local file:// dev without a server).
@@ -694,7 +677,10 @@ export class Globe3D {
   _buildMarkers() {
     (LOCATIONS.pins || [])
       .filter(loc => {
-        if (loc._skip) return false;
+        /* `_skip` used to be set by the runtime geocoder on a failed lookup.
+           Coordinates are baked at build time now, so the equivalent guard is
+           simply "did the build give this one a position". */
+        if (!hasCoords(loc)) return false;
         /* Hide European worktrips and holidays on globe — show only on 2D map */
         if (isEuropeanSecondaryPin(loc)) return false;
         return true;
@@ -763,7 +749,7 @@ export class Globe3D {
   _buildTrips() {
     (LOCATIONS.trips || []).forEach(trip => {
       const color = new Color(trip.color || THEME.pins.holiday);
-      const cities = (trip.cities || []).filter(c => !c._skip);
+      const cities = (trip.cities || []).filter(hasCoords);
       if (cities.length < 2) return;
 
       const curves = [];
@@ -1154,7 +1140,7 @@ export class GlobeFallback2D {
   _collectPoints() {
     this._points.length = 0;
     (LOCATIONS.pins || []).forEach((p) => {
-      if (p._skip) return;
+      if (!hasCoords(p)) return;
       /* Match Globe3D: European worktrips/holidays live on the 2D map only. */
       if (isEuropeanSecondaryPin(p)) return;
       this._points.push({ lat: p.lat, lon: p.lon, type: p.type });

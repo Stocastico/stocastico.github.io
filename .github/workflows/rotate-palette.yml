@@ -68,10 +68,18 @@ jobs:
         id: rotate
         run: node scripts/rotate-palette.js ${{ inputs.palette && format('--palette {0}', inputs.palette) || '' }}
 
-      - name: Regenerate theme + raster favicons
+      # generate-theme-toggle is here because it was missing here. It bakes
+      # aria-pressed="true" onto the navbar dot for the active palette, and the
+      # recipe everyone copied ("generate-theme, then generate-favicons")
+      # predates the dots — so every rotation left all 21 pages asserting the
+      # *previous* palette was the selected one. test/theme-sync.test.js now
+      # fails on that drift, which means forgetting this step stops the deploy
+      # at the test gate below instead of shipping.
+      - name: Regenerate theme + toggle + raster favicons
         if: steps.rotate.outputs.changed == 'true'
         run: |
           npm run generate-theme
+          npm run generate-theme-toggle
           npm run generate-favicons
 
       # Test suite gates the deploy: a red test stops the rotation here, before

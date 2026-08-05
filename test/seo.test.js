@@ -241,8 +241,7 @@ for (const rel of allRoutes) {
   test(`security: ${rel} ships a Content-Security-Policy meta tag`, () => {
     const csp = cspMeta(read(rel));
     assert.ok(csp, `${rel} missing <meta http-equiv="Content-Security-Policy">`);
-    /* Basic shape: must lock down default-src and only let connect-src
-       reach the Nominatim geocoder (no other third parties allowed). */
+    /* Basic shape: default-src locked down, and no network egress at all. */
     assert.match(csp, /default-src\s+'self'/, `${rel} CSP missing default-src 'self'`);
     assert.match(csp, /base-uri\s+'self'/, `${rel} CSP missing base-uri 'self'`);
     /* frame-ancestors is ignored (per spec) when CSP is delivered via a
@@ -250,8 +249,18 @@ for (const rel of allRoutes) {
        would only document protection the site doesn't have. */
     assert.doesNotMatch(csp, /frame-ancestors/,
       `${rel} CSP lists frame-ancestors, which a <meta> CSP cannot enforce`);
-    assert.match(csp, /connect-src[^;]*nominatim\.openstreetmap\.org/,
-      `${rel} CSP must allow nominatim.openstreetmap.org for the geocoder`);
+    /* connect-src is same-origin only. This assertion used to be its exact
+       inverse — it *required* https://nominatim.openstreetmap.org, for a
+       browser-side geocoder that had long stopped running because
+       generate-locations bakes every coordinate in at build time. A test that
+       demands a third-party origin is a test that keeps one open. */
+    assert.match(csp, /connect-src\s+'self'\s*;/,
+      `${rel} connect-src must be 'self' only — nothing on this site calls out`);
+    /* The single permitted external origin, and only as an image. */
+    const thirdParty = (csp.match(/https:\/\/[^\s;]+/g) || [])
+      .filter((o) => o !== 'https://stocastico.goatcounter.com');
+    assert.deepEqual(thirdParty, [],
+      `${rel} CSP allows third-party origins beyond the analytics pixel: ${thirdParty.join(', ')}`);
   });
 }
 
@@ -269,4 +278,21 @@ test('SEO: index.html stat counters have non-zero values baked into HTML', () =>
     assert.notEqual(textContent, '0', `stat counter (data-count="${dataCount}") still ships with "0" textContent`);
     assert.equal(textContent, dataCount, `stat counter textContent should match data-count (got "${textContent}", expected "${dataCount}")`);
   }
+});
+
+/* The 404 page must NOT carry a canonical.
+
+   It ships `noindex`, and it used to also carry `<link rel="canonical">`
+   pointing at the home page. Those two say contradictory things — "do not
+   index this" and "the canonical version of this document is /" — and Google
+   warns the noindex can be consolidated onto the canonical target, which here
+   is the site's most important URL. Removing the canonical is the fix; this
+   pins it, because a canonical is exactly the kind of line that gets pasted
+   back in when a page is next copied from a sibling. */
+test('SEO: 404.html has noindex and no canonical', () => {
+  const html = read('404.html');
+  assert.match(html, /<meta\s+name="robots"\s+content="noindex"/,
+    '404.html must stay noindex');
+  assert.equal(canonicalHref(html), null,
+    '404.html must not carry <link rel="canonical"> — it conflicts with noindex');
 });
