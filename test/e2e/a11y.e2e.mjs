@@ -162,3 +162,101 @@ describe('a11y: the mobile layout passes too', () => {
     }
   });
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Forced colours: nothing that has text may be painted with invisible ink.
+
+   Windows High Contrast (and any `forced-colors: active` mode) replaces the
+   author palette with the user's own. It overrides `color`, `fill`, `stroke`
+   and the rest — but **not** `-webkit-text-fill-color`. This site sets that to
+   `transparent` on every gradient-clipped heading, painting the letterforms
+   from a `background-clip: text` gradient instead. Take the background away
+   and the text is not restyled, it is gone: the hero name, every section
+   title, and the 404 page's giant "404" rendered as blank space.
+
+   css/styles.css carries the reset, next to the print block that fixes the
+   identical failure for the identical reason (backgrounds are not printed
+   either). This test is what keeps that from rotting.
+
+   It derives the set instead of listing it. Hardcoding `.hero-name`,
+   `.section-title`, `.globe-title` is what the CSS already does, and asserting
+   the same three names back would only prove the rule was copied correctly —
+   it would say nothing about a fourth heading someone adds later. So the page
+   is measured twice: once normally, to find every element that actually paints
+   its text transparently, and again under forced colours, to insist none of
+   them still does. That is how `.error-code` was caught: it lives in
+   404.html's own inline <style>, so it was never going to appear in a list
+   derived from the stylesheet — and being inline and later in the document, it
+   would have beaten a rule added to css/styles.css at equal specificity.
+   ───────────────────────────────────────────────────────────────────────────── */
+/* Tag every element whose text is painted with a transparent fill, and return
+   how they can be identified in a failure message.
+
+   The transparency test is written out inside each function rather than shared
+   from a const: these run in the page, not here, so nothing in this file's
+   scope is reachable from them. */
+const PROBE = () => {
+  const found = [];
+  for (const el of document.querySelectorAll('*')) {
+    if (!el.textContent.trim()) continue;
+    if (!/^rgba\(.*,\s*0\)$/.test(getComputedStyle(el).webkitTextFillColor)) continue;
+    el.setAttribute('data-fc-probe', '');
+    found.push(el.className || el.tagName.toLowerCase());
+  }
+  return found;
+};
+
+const RECHECK = () => [...document.querySelectorAll('[data-fc-probe]')]
+  .filter((el) => /^rgba\(.*,\s*0\)$/.test(getComputedStyle(el).webkitTextFillColor))
+  .map((el) => `${el.className || el.tagName.toLowerCase()}: "${el.textContent.trim().slice(0, 40)}"`);
+
+describe('a11y: forced colours', () => {
+  test('no gradient-clipped text stays invisible', async () => {
+    const invisible = [];
+    let probed = 0;
+    for (const path of allPages()) {
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + path, { waitUntil: 'domcontentloaded' });
+        probed += (await page.evaluate(PROBE)).length;
+        await page.emulateMedia({ forcedColors: 'active' });
+        for (const hit of await page.evaluate(RECHECK)) invisible.push(`${path} → ${hit}`);
+      } finally { await page.close(); }
+    }
+    /* If this drops to zero the probe has stopped finding anything — either
+       the gradient headings are gone (fine, delete this test) or the selector
+       walk broke (not fine, and it would otherwise pass silently). */
+    assert.ok(probed > 0,
+      'found no gradient-clipped text at all — the probe is no longer measuring anything');
+    assert.deepEqual(invisible, [],
+      '\n  these paint their text from a background that forced-colors removes, '
+      + 'without resetting -webkit-text-fill-color:\n  ' + invisible.join('\n  ') + '\n');
+  });
+
+  test('the world map still distinguishes lived from visited', async () => {
+    /* Two fills that flatten to one colour is WCAG 1.4.1 — the legend stops
+       meaning anything. Under forced colours the distinction has to survive as
+       something other than hue, so the visited countries drop to a Canvas fill
+       with a CanvasText outline. */
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
+      await page.emulateMedia({ forcedColors: 'active' });
+      const paint = await page.evaluate(() => {
+        const read = (sel) => {
+          const el = document.querySelector(sel);
+          if (!el) return null;
+          const cs = getComputedStyle(el);
+          return { fill: cs.fill, stroke: cs.stroke };
+        };
+        return { lived: read('.wm-lived'), visited: read('.wm-visited') };
+      });
+      assert.ok(paint.lived && paint.visited, 'world map has no .wm-lived / .wm-visited paths');
+      assert.notEqual(paint.lived.fill, paint.visited.fill,
+        'lived and visited countries paint the same fill under forced colours — '
+        + 'the legend distinguishes nothing');
+      assert.notEqual(paint.visited.stroke, 'none',
+        'visited countries need an outline to carry the distinction once fill cannot');
+    } finally { await page.close(); }
+  });
+});

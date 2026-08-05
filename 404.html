@@ -89,6 +89,43 @@
       margin-bottom: 1rem;
     }
 
+    /* The gradient above paints the digits from a background, and two media
+       throw that background away: forced colours (Windows High Contrast) and
+       print. Neither repaints -webkit-text-fill-color, so without these two
+       rules the "404" is simply not there — the page's largest element,
+       missing, on the page a lost visitor lands on.
+
+       css/styles.css carries the same pair for .hero-name / .section-title /
+       .globe-title, and this rule cannot live there: .error-code is defined in
+       the inline stylesheet below, which comes after the stylesheet link, so
+       at equal specificity the local declaration wins. The reset has to sit
+       beside the rule it is resetting.
+
+       (Written "inline stylesheet" rather than naming the element: the tag in
+       test/html-quality.test.mjs's balance check is matched by regex, so the
+       literal element name inside a CSS comment reads as an unclosed open tag
+       and fails it. Caught by that test, which is the point of it.)
+
+       test/e2e/a11y.e2e.mjs finds gradient text by
+       measuring the rendered page rather than by listing selectors, so a
+       fourth one added anywhere — including in another page's inline style —
+       is caught without anyone remembering this note. */
+    @media (forced-colors: active) {
+      .error-code {
+        background: none;
+        -webkit-text-fill-color: currentColor;
+        color: CanvasText;
+      }
+    }
+
+    @media print {
+      .error-code {
+        background: none;
+        -webkit-text-fill-color: currentColor;
+        color: #111;
+      }
+    }
+
     .error-title {
       font-family: var(--font-display);
       font-size: clamp(1.5rem, 3vw, 2.5rem);
