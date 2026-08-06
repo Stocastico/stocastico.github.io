@@ -38,11 +38,21 @@ export class NoiseGradient {
     /* Resize handler — debounced. Re-runs the 3-frame burst at the new size,
        otherwise the canvas would stay blank after the user resizes their
        window (changing canvas.width clears the WebGL buffer). The debounce
-       avoids spawning a new burst on every pixel of a drag-resize. */
-    let _rszTimer = null;
+       avoids spawning a new burst on every pixel of a drag-resize.
+
+       The pending timer is held on `this` rather than in a closure variable
+       so destroy() can cancel it. Removing the listener is not enough: a
+       resize that lands within 200 ms of a teardown leaves a timeout already
+       scheduled, and it fires after destroy() has force-lost the context and
+       set this.gl = null — _resize() then dereferences a null gl, and the rAF
+       it starts runs _tick() against the same null. Narrow, but the window it
+       needs is exactly a theme or palette switch made mid-drag-resize, which
+       is a thing people do while trying the palette dots. */
+    this._rszTimer = null;
     this._onResizeHandler = () => {
-      clearTimeout(_rszTimer);
-      _rszTimer = setTimeout(() => {
+      clearTimeout(this._rszTimer);
+      this._rszTimer = setTimeout(() => {
+        this._rszTimer = null;
         this._resize();
         this._framesLeft = Math.max(this._framesLeft, 2);
         if (!this._raf) this._raf = requestAnimationFrame(this._tick);
@@ -169,6 +179,7 @@ export class NoiseGradient {
   destroy() {
     if (this._raf) cancelAnimationFrame(this._raf);
     this._raf = null;
+    if (this._rszTimer) { clearTimeout(this._rszTimer); this._rszTimer = null; }
     if (this._onResizeHandler) {
       try { window.removeEventListener('resize', this._onResizeHandler); } catch (_) { /* ignore */ }
       this._onResizeHandler = null;

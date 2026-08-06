@@ -17,6 +17,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { parseYaml } = require('./lib/yaml');
+const { toPosix } = require('./lib/paths');
 
 function isSafeHttpsUrl(url) {
   return typeof url === 'string' && /^https:\/\/\S+$/i.test(url.trim());
@@ -109,7 +110,7 @@ function main() {
 
   const source = parseYaml(fs.readFileSync(inputPath, 'utf8'));
   const data = compileUnesco(source);
-  const js = toUnescoJs(data, path.relative(process.cwd(), inputPath));
+  const js = toUnescoJs(data, toPosix(path.relative(process.cwd(), inputPath)));
 
   const siteCount = data.continents.reduce(
     (n, c) => n + c.countries.reduce((m, k) => m + k.sites.length, 0),

@@ -245,10 +245,10 @@ When a user submits a question, the system answers in real time through a two-st
   <svg class="diagram" role="img" width="800" height="410" viewBox="0 0 800 410" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
   <title>Query and answer pipeline</title>
   <defs>
-    <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+    <marker id="ah-q" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
       <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)"/>
     </marker>
-    <marker id="ahc" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+    <marker id="ahc-q" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
       <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent2)"/>
     </marker>
   </defs>
@@ -264,21 +264,21 @@ When a user submits a question, the system answers in real time through a two-st
   <text x="143" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">User Question</text>
   <text x="143" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Natural language</text>
 
-  <line x1="198" y1="82" x2="235" y2="82" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="198" y1="82" x2="235" y2="82" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah-q)"/>
 
   <!-- Box 2: Embedding Model -->
   <rect x="238" y="50" width="130" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
   <text x="303" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">Embedding Model</text>
   <text x="303" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Encode query vector</text>
 
-  <line x1="368" y1="82" x2="405" y2="82" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#ahc)"/>
+  <line x1="368" y1="82" x2="405" y2="82" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#ahc-q)"/>
 
   <!-- Box 3: Vector DB -->
   <rect x="408" y="50" width="120" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
   <text x="468" y="78" text-anchor="middle" fill="var(--text)" font-size="10.12" font-weight="600">Vector DB</text>
   <text x="468" y="97" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Cosine similarity</text>
 
-  <line x1="528" y1="82" x2="565" y2="82" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#ahc)"/>
+  <line x1="528" y1="82" x2="565" y2="82" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#ahc-q)"/>
 
   <!-- Box 4: Top-K Chunks -->
   <rect x="568" y="50" width="145" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
@@ -294,11 +294,11 @@ When a user submits a question, the system answers in real time through a two-st
   <!-- ── CONNECTORS DOWN TO LLM ── -->
 
   <!-- User Question → LLM: straight down, then right -->
-  <path d="M143,115 L143,310 L246,310" fill="none" stroke="rgb(var(--accent-rgb) / 0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ah)"/>
+  <path d="M143,115 L143,310 L246,310" fill="none" stroke="rgb(var(--accent-rgb) / 0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ah-q)"/>
   <text x="150" y="222" fill="var(--text-muted)" font-size="7.92" font-style="italic">original question</text>
 
   <!-- Top-K → LLM: right, then down, then left -->
-  <path d="M713,82 L758,82 L758,310 L420,310" fill="none" stroke="rgb(var(--accent2-rgb) / 0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ahc)"/>
+  <path d="M713,82 L758,82 L758,310 L420,310" fill="none" stroke="rgb(var(--accent2-rgb) / 0.55)" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ahc-q)"/>
   <text x="763" y="222" fill="var(--text-muted)" font-size="7.92" font-style="italic">retrieved context</text>
 
   <!-- ── BOTTOM ROW: GENERATION ── -->
@@ -308,7 +308,7 @@ When a user submits a question, the system answers in real time through a two-st
   <text x="333" y="317" text-anchor="middle" fill="var(--text)" font-size="11.44" font-weight="700">LLM</text>
   <text x="333" y="336" text-anchor="middle" fill="var(--text-muted)" font-size="8.36">Generates grounded answer</text>
 
-  <line x1="418" y1="320" x2="455" y2="320" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="418" y1="320" x2="455" y2="320" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah-q)"/>
 
   <!-- Box 6: Answer + Citations -->
   <rect x="458" y="288" width="210" height="65" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>

@@ -6,6 +6,7 @@ const path = require('node:path');
 
 /* Shared YAML parser — also used by scripts/generate-cv.js */
 const { parseYaml } = require('./lib/yaml');
+const { toPosix } = require('./lib/paths');
 
 const DEFAULT_TRIP_COLORS = ['#ff6b6b', '#c084fc', '#22c55e', '#38bdf8', '#f59e0b', '#fb7185'];
 const DEFAULT_REGION_COLOR = '#ff8c42';
@@ -275,7 +276,14 @@ async function main() {
   if (!fs.existsSync(inputPath)) throw new Error(`Input file not found: ${inputPath}`);
   const sourceRaw = fs.readFileSync(inputPath, 'utf8');
   const source = parseYaml(sourceRaw);
-  const sourcePath = path.relative(process.cwd(), inputPath);
+  /* posix-normalised: this string is written into the generated file's header,
+     so path.sep would make data/locations.js differ byte-for-byte depending on
+     which OS last ran the generator. The committed file carried
+     "data\locations.yaml" from a Windows run, and re-running on Linux or in CI
+     produced a one-line diff every time — noise in exactly the file nobody is
+     supposed to hand-edit. Same treatment in generate-countries /
+     generate-links / generate-unesco, which bake the same header. */
+  const sourcePath = toPosix(path.relative(process.cwd(), inputPath));
   const compiled = await compileLocations(source, {
     ...options,
     cache: cachePath,

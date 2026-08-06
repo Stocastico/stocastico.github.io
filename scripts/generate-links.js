@@ -27,6 +27,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { parseYaml } = require('./lib/yaml');
+const { toPosix } = require('./lib/paths');
 
 /* Canonical category order + human-readable labels for the filter chips.
    Unknown slugs are tolerated (humanised + appended) so no link silently
@@ -201,7 +202,7 @@ function main() {
 
   const source = parseYaml(fs.readFileSync(inputPath, 'utf8'));
   const data = compileLinks(source);
-  const js = toLinksJs(data, path.relative(process.cwd(), inputPath));
+  const js = toLinksJs(data, toPosix(path.relative(process.cwd(), inputPath)));
 
   if (options.dryRun) {
     console.log(js);

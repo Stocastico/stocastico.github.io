@@ -18,8 +18,9 @@
 
    Content lives in separate, easy-to-edit files:
 
-     index.html           — static sections (hero, about, research,
-                            skills, contact, navigation, footer)
+     index.html           — static sections (hero, about, projects,
+                            publications, places, contact, navigation,
+                            footer)
      data/locations.js    — 3D globe pins, trips, regions
      data/publications.js — selected papers  (PUBLICATIONS array)
      data/projects.js     — projects         (PROJECTS array)
@@ -689,11 +690,12 @@ if (typeof document !== 'undefined') {
                             precomputed activations, on roomy pointer-driven
                             viewports where its labels are legible;
        · js/neural-net.js — the lighter drifting particle field everywhere else.
-     Whichever applies is dynamically imported and deferred until the first
-     user interaction (mousemove / scroll / touchstart) so it stays off the
-     critical path on load; the noise gradient fills the hero meanwhile. The
-     branch happens *before* the import so phones never download the CNN
-     chunk's activation data. On reduced-motion the canvas is hidden entirely. */
+     Whichever applies is dynamically imported at idle time (see the note on
+     the start block further down — the interaction listeners are only an
+     accelerator now), so it stays off the critical path on load while the
+     noise gradient fills the hero meanwhile. The branch happens *before* the
+     import so phones never download the CNN chunk's activation data. On
+     reduced-motion the canvas is hidden entirely. */
   const buildNeural = () => {
     if (!neuralCanvas || prefersReducedMotion()) return;
     const isCnn = supportsCnnHero();

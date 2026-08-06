@@ -368,10 +368,26 @@ export function showToast(message) {
     el.setAttribute('role', 'status');
     document.body.appendChild(el);
   }
-  el.textContent = message;
-  el.classList.add('visible');
   clearTimeout(el._tid);
   el._tid = setTimeout(() => el.classList.remove('visible'), 2500);
+
+  /* Clear, then write on the next frame — the same two-step announce() above
+     already does, and for the same two reasons. `role="status"` is a live
+     region, and a live region that enters the DOM with its text already in
+     place is a *node insertion* rather than a content change, which several
+     screen-reader/browser pairs do not announce — so the very first toast of a
+     session was silent. And setting identical text twice running is not a
+     change at all, so picking the same palette from ⌘K twice went unspoken
+     after that. Clearing fixes the second; deferring fixes the first.
+
+     The `visible` class rides along on the same frame rather than being added
+     synchronously above: adding it first would paint one frame of an empty
+     pill. A frame is 16 ms, and nobody can see the delay; an empty box is the
+     kind of thing you do notice. */
+  el.textContent = '';
+  const show = () => { el.textContent = message; el.classList.add('visible'); };
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(show);
+  else show();
 }
 
 /* ═══════════════════════════════════════════════════════════

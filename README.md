@@ -709,7 +709,7 @@ A nested `<details>` disclosure tree (continent → country → site) built by `
 
 ### Reading progress bar
 
-A thin bar at the very top of the page fills from left to right as the user scrolls through the document. It is updated inside the existing scroll listener — no additional overhead.
+A thin bar at the very top of the page fills from left to right as the user scrolls through the document. It is a **CSS scroll-progress timeline** (`animation-timeline: scroll(root block)`), so it runs on the compositor and no JavaScript touches it — the scroll listener that used to compute `scrollY / (scrollHeight - innerHeight)`, plus the resize listener, `load` listener and `ResizeObserver` needed to keep its memoised denominator honest, are all gone. Scoped to `prefers-reduced-motion: no-preference`; where scroll timelines are unsupported the bar simply never grows, which is the right failure for an indicator that carries no information.
 
 ---
 
