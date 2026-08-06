@@ -755,7 +755,7 @@ Several optimisations were made to keep the page fast on low-power and mobile de
 | NoiseGradient renders 3 frames then stops | Eliminates continuous GPU draw for the hero background |
 | Cursor glow removed; hero orbs removed | Removes per-frame radial-gradient draws and large blurred animated elements |
 | Card-tilt, globe and Europe-map bounding rects cached (invalidated on scroll/resize) | Removes a forced layout read on every `mousemove` while hovering/dragging |
-| Animated favicon replaced with static render | Removes per-frame Canvas2D draw in the background tab |
+| Runtime favicon rendering removed entirely | The favicon is static markup generated from the palette. It was an animated Canvas2D draw, then a single static render, and is now nothing at all — the canvas drew "S" in JetBrains Mono while every artefact it overwrote (`favicon.svg`, `favicon.ico`, the four PNGs, the maskable pair, the inline `data:` URI) draws "SM" in Georgia, and it read the *dark* `THEME` statically, so light mode kept the dark icon. Drops a `toDataURL` PNG encode and a `document.fonts.ready` wait from every page load |
 | All WebGL/Canvas instances, chrome inits (navbar / mobile menu / command palette / back-to-top) + observers torn down on `pagehide` | Releases GL contexts and removes every document/window listener + observer, avoiding leaks on bfcache eviction |
 
 ---

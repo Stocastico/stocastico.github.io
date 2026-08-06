@@ -79,12 +79,9 @@ import {
   cvTimelineLines, cvSkillsLines, unescoAccordionLines, linksGridLines, linksCountLabel,
 } from './render-page.js';
 
-/* Theme colours — single source of truth (data/palettes.yaml → js/theme.js).
-   Only the favicon renderer below reads THEME/rgba now; the noise shader
-   imports its own colours inside js/noise-gradient.js. */
-import { THEME, rgba } from './theme.js';
-
-/* Hero name iridescent WebGL shader (raw WebGL, no Three.js) */
+/* No theme import here any more. THEME/rgba were read by exactly one thing in
+   this file — initAnimatedFavicon(), now deleted — and every other colour-baked
+   module resolves its own palette through getTheme() at construction. */
 
 /* Hero background noise gradient (raw WebGL, no Three.js) */
 import { NoiseGradient } from './noise-gradient.js';
@@ -293,56 +290,6 @@ function renderSkills(skills) {
   container.innerHTML = cvSkillsLines(skills).join('\n');
 }
 
-/* ═══════════════════════════════════════════════════════════
-   STATIC FAVICON — capital "S" rendered once
-   Draws a single frame and sets it as the favicon.
-   No animation loop — saves continuous CPU / PNG-encode cost.
-   ═══════════════════════════════════════════════════════════ */
-function initAnimatedFavicon() {
-  if (typeof document       === 'undefined') return;
-  if (typeof HTMLCanvasElement === 'undefined') return; /* Node / SSR */
-
-  const link = document.querySelector('link[rel="icon"]');
-  if (!link) return;
-
-  const S = 64; /* canvas size (browsers display at 16–32 px, 64 gives HiDPI sharpness) */
-
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = S;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  function render() {
-    /* ── Background: dark rounded square ── */
-    ctx.clearRect(0, 0, S, S);
-    ctx.fillStyle = THEME.faviconBg;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(0, 0, S, S, 13);
-    else               ctx.rect(0, 0, S, S);
-    ctx.fill();
-
-    /* ── Static "S" in the accent colour ── */
-    ctx.save();
-    ctx.translate(S / 2, S / 2);
-    ctx.shadowBlur  = 10;
-    ctx.shadowColor = rgba(THEME.faviconFg, 0.73);
-    ctx.fillStyle   = THEME.faviconFg;
-    ctx.font        = 'bold 44px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.textAlign   = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('S', 0, 2); /* +2 px optical centre correction */
-    ctx.restore();
-
-    link.href = canvas.toDataURL('image/png');
-  }
-
-  /* Render after fonts are loaded so the display face is available */
-  const whenReady = (typeof document.fonts !== 'undefined' && document.fonts.ready)
-    ? document.fonts.ready
-    : Promise.resolve();
-  whenReady.then(render);
-}
-
 /* Renders a screen-reader / keyboard-accessible alternative to the 3D
    globe. The canvas itself is unreachable for non-pointer users; this
    list exposes the same data (lived/current/worktrip/holiday pins,
@@ -547,7 +494,6 @@ export {
   setFooterYear,
   initTheme,
   initCardTilt,
-  initAnimatedFavicon,
   initNavbar,
   initMobileMenu,
   initBackToTop,
@@ -657,8 +603,27 @@ if (typeof document !== 'undefined') {
     });
   });
 
-  /* Animated favicon — starts after fonts load (async, non-blocking) */
-  initAnimatedFavicon();
+  /* The favicon is static markup now — nothing to initialise.
+
+     initAnimatedFavicon() used to run here: it drew a capital "S" in JetBrains
+     Mono onto a 64px canvas, waited for document.fonts.ready, and wrote the
+     PNG data URL over the first link[rel="icon"]. It was deleted because it
+     could only ever disagree with the icon set the rest of the site ships.
+
+     Every static artefact — public/favicon.svg, the inline data: URI in each
+     page's theme block, favicon.ico, the four PNGs and the maskable pair —
+     draws "SM" in Georgia, all of them regenerated from the active palette by
+     generate-theme / generate-favicons. The canvas drew a different letter in
+     a different face, so on any JS-enabled visit the tab disagreed with the
+     bookmark, the PWA icon and the OS icon. Worse, it imported the dark THEME
+     statically rather than resolving getTheme(), and never listened for
+     `themechange`: light mode kept the dark square, and switching palette left
+     it on the old accent. That is why the light variant's faviconBg/faviconFg
+     existed in js/theme.js with no consumer at all.
+
+     Deleting it costs nothing visible — the SVG favicon it was overwriting is
+     the correct, palette-aware icon — and removes a toDataURL PNG encode plus
+     a document.fonts.ready wait from every page load. */
 
   /* ── Hero background canvases ──────────────────────────────────────────
      Both the WebGL noise gradient and the Canvas2D neural net bake their
