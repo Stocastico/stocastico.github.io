@@ -393,3 +393,67 @@ test('parseArgs: flags', () => {
 test('parseArgs: unknown argument throws', () => {
   assert.throws(() => parseArgs(['node', 'generate-theme.js', '--wat']), /Unknown argument/);
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DRIFT: the committed artefacts match what the generator would emit today.
+
+   Everything above tests the generator's functions against fixtures. Nothing
+   tested the generator's *output* — the `@theme-generated` blocks actually
+   sitting in css/styles.css and the js/theme.js actually imported by the
+   canvases. Measured: changing the active palette's --accent in the committed
+   stylesheet by one digit left all 33 tests in this file green.
+
+   That is the one file CLAUDE.md says most emphatically never to hand-edit,
+   and the one a weekly unattended workflow rewrites and commits to main. The
+   failure it leaves is quiet in a specific way: css/styles.css paints the page,
+   js/theme.js colours the WebGL hero and the globe, and data/palettes.yaml is
+   what test/contrast.test.mjs measures for WCAG. Let the first drift from the
+   third and the site ships colours no contrast test ever looked at, while the
+   suite reports on colours the site does not use.
+
+   Splicing a fresh generation into the committed file and requiring it to be a
+   no-op is the same shape as the drift guards on generate-cards, llms.txt, the
+   Europe coastline and the CNN activations — this was the gap in the set.
+──────────────────────────────────────────────────────────────────────────────*/
+const fs   = require('node:fs');
+const path = require('node:path');
+const {
+  generateCssAltBlock,
+  CSS_LIGHT_START, CSS_LIGHT_END, CSS_ALT_START, CSS_ALT_END,
+} = require('../scripts/generate-theme');
+const { parseYaml } = require('../scripts/lib/yaml');
+
+const ROOT = path.resolve(__dirname, '..');
+const livePalettes = () => {
+  const data = parseYaml(fs.readFileSync(path.join(ROOT, 'data', 'palettes.yaml'), 'utf8'));
+  const id = data.active;
+  return {
+    id,
+    data,
+    p: tameAccent(data.palettes[id]),
+    pLight: tameAccent(data.palettes[id].light),
+  };
+};
+
+test('drift: css/styles.css theme blocks match data/palettes.yaml', () => {
+  const { id, data, p, pLight } = livePalettes();
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
+
+  let next = spliceCssBlock(css, generateCssBlock(p, id));
+  next = spliceMarked(next, generateCssLightBlock(pLight, id), CSS_LIGHT_START, CSS_LIGHT_END);
+  next = spliceMarked(next, generateCssAltBlock(data.palettes, id), CSS_ALT_START, CSS_ALT_END);
+
+  assert.equal(next, css,
+    'css/styles.css disagrees with data/palettes.yaml — run `npm run generate-theme`. '
+    + 'The stylesheet is generated; a hand edit here ships colours that no palette '
+    + 'test has measured.');
+});
+
+test('drift: js/theme.js matches data/palettes.yaml', () => {
+  const { id, data, p, pLight } = livePalettes();
+  const committed = fs.readFileSync(path.join(ROOT, 'js', 'theme.js'), 'utf8');
+  assert.equal(generateThemeJs(p, id, pLight, data.palettes), committed,
+    'js/theme.js disagrees with data/palettes.yaml — run `npm run generate-theme`. '
+    + 'This module is what the hero shader, the globe and the Europe map read '
+    + 'their colours from, so drift here repaints the canvases and nothing else.');
+});

@@ -129,7 +129,7 @@ export const LINKS = {
     },
     {
       "name": "Julian Schrittwieser",
-      "url": "https://julian.ac",
+      "url": "https://www.julian.ac",
       "categories": [
         "ai"
       ],

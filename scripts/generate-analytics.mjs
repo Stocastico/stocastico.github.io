@@ -106,16 +106,37 @@ function injectInto(html, blk) {
   return html.slice(0, m.index) + blk + '\n' + html.slice(m.index);
 }
 
-let changed = 0;
-for (const rel of TARGETS) {
-  const abs = path.join(ROOT, rel);
-  const html = fs.readFileSync(abs, 'utf8');
-  const next = injectInto(html, block(rel, html));
-  if (next === html) continue;
-  changed += 1;
-  if (!DRY_RUN) fs.writeFileSync(abs, next);
-  process.stdout.write(`✓ ${DRY_RUN ? '[dry] ' : ''}updated ${rel}\n`);
+function main() {
+  let changed = 0;
+  for (const rel of TARGETS) {
+    const abs = path.join(ROOT, rel);
+    const html = fs.readFileSync(abs, 'utf8');
+    const next = injectInto(html, block(rel, html));
+    if (next === html) continue;
+    changed += 1;
+    if (!DRY_RUN) fs.writeFileSync(abs, next);
+    process.stdout.write(`✓ ${DRY_RUN ? '[dry] ' : ''}updated ${rel}\n`);
+  }
+  process.stdout.write(`Done. ${changed}/${TARGETS.length} pages ${DRY_RUN ? 'would be ' : ''}updated.\n`);
 }
-process.stdout.write(`Done. ${changed}/${TARGETS.length} pages ${DRY_RUN ? 'would be ' : ''}updated.\n`);
 
-export { pathFor, titleOf, block, ENDPOINT, TARGETS };
+/* Only when run as a command. This loop used to sit at the top level, which
+   meant `import` had the same effect as `node scripts/generate-analytics.mjs`
+   — and test/analytics.test.mjs imports this module on its first line.
+
+   So the test rewrote all 21 pages before asserting anything about them, and
+   its drift guard ("the committed block must equal a fresh generation") was
+   comparing a file it had just regenerated against a fresh generation. It
+   could not fail. Measured: deleting the GoatCounter <img> from now.html
+   outright left all 45 assertions green, because the import put it back.
+
+   Two bugs in one, and the second is the worse one: `npm test` was writing to
+   the working tree. A suite that repairs the drift it is meant to report will
+   also repair it in CI, so a page that lost its pixel would deploy with the
+   pixel silently restored and no signal that anything was wrong. Tests read;
+   generators write. */
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  main();
+}
+
+export { pathFor, titleOf, block, injectInto, ENDPOINT, TARGETS, main };

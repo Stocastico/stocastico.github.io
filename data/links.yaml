@@ -53,7 +53,12 @@ links:
     categories: [ai]
     tags: [research, deep-learning]
   - name: "Julian Schrittwieser"
-    url: "https://julian.ac"
+    # www, not the apex: https://julian.ac resets the TLS handshake (no cert
+    # served there), so the browser shows a security interstitial rather than
+    # the site. http://julian.ac redirects to https://www.julian.ac/, which is
+    # the canonical origin and serves 200. generate-links validates https-only,
+    # which cannot catch a URL that is https and dead.
+    url: "https://www.julian.ac"
     description: "AlphaGo/MuZero co-author, now at Anthropic; sharp posts on RL and AI progress."
     categories: [ai]
     tags: [reinforcement-learning]

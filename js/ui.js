@@ -862,7 +862,8 @@ export function initMobileMenu() {
        dots + light/dark toggle) sit between the burger and the links in DOM
        order and stay visible on mobile, so they belong inside the trap —
        enumerating only [toggle, links] made the wrap points skip them. The
-       ⌘K chip is display:none below 681px and needs no entry. */
+       ⌘K chip is display:none below 901px — the width at which the burger
+       takes over — and needs no entry. */
     if (e.key === 'Tab' && toggle.classList.contains('open')) {
       const themeButtons = document.querySelectorAll('.theme-controls button');
       const focusable = [toggle, ...themeButtons, ...links.querySelectorAll('a')];

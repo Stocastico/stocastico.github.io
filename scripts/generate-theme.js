@@ -749,7 +749,13 @@ module.exports = {
   SURFACE_ALPHA,
   parseArgs, validate, validatePaletteBody,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
-  cssVarLines, generateCssBlock, generateCssLightBlock, generateThemeJs, themeObjectBody,
+  cssVarLines, generateCssBlock, generateCssLightBlock, generateCssAltBlock,
+  generateThemeJs, themeObjectBody,
   rewriteHtml, rewriteFaviconSvg, rewriteManifest,
   spliceCssBlock, spliceMarked,
+  /* Exported so test/generate-theme.test.js can splice a fresh generation into
+     the committed stylesheet and assert nothing moves. Without the markers the
+     drift test would have to keep its own copy of them, which is the drift it
+     is trying to detect. */
+  CSS_LIGHT_START, CSS_LIGHT_END, CSS_ALT_START, CSS_ALT_END,
 };

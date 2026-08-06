@@ -12,16 +12,41 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
+/* Derived, not listed. The project pages were already globbed; the top-level
+   ones were typed out — 'index', 'cv', 'projects', 'publications', '404' — and
+   the list then stayed exactly that size while the site grew. travel.html,
+   links.html and now.html were added afterwards and none of the eleven checks
+   below had ever run against any of them: not one <h1>, not an alt attribute,
+   not a rel="noopener", not a lang attribute.
+
+   This is the third time a hand-maintained list of files has quietly stopped
+   matching the files (see the notes on `npm test`'s enumerated filenames and
+   on e2e.yml naming four of six suites). The pattern is the same every time:
+   the list is right when written, nothing fails when it goes stale, and the
+   loss is invisible because a test that does not exist cannot go red. So this
+   one reads the directory, and a new page is covered the moment it lands.
+
+   The count guard below is the other half. A glob that silently matches
+   nothing degrades to zero generated tests, and a file that generates no tests
+   still reports success — which is the same failure wearing a different hat. */
 const PAGES = [
-  'index.html',
-  'cv.html',
-  'projects.html',
-  'publications.html',
-  '404.html',
+  ...fs.readdirSync(ROOT)
+       .filter(f => f.endsWith('.html'))
+       .sort(),
   ...fs.readdirSync(path.join(ROOT, 'projects'))
        .filter(f => f.endsWith('.html'))
+       .sort()
        .map(f => `projects/${f}`),
 ];
+
+test('html: the page list actually found the site', () => {
+  assert.ok(PAGES.length >= 18,
+    `expected at least 18 HTML pages, found ${PAGES.length} — the glob below is not `
+    + 'seeing the site, so every per-page check in this file is generating nothing');
+  for (const required of ['index.html', 'travel.html', 'links.html', 'now.html', '404.html']) {
+    assert.ok(PAGES.includes(required), `page list is missing ${required}`);
+  }
+});
 
 function read(rel) { return fs.readFileSync(path.join(ROOT, rel), 'utf8'); }
 
