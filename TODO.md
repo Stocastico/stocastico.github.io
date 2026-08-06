@@ -25,8 +25,16 @@ need the audit context.
 
 ## Decisions (reviewed, deliberately not changed)
 
-- `--text-faint` contrast (~3.4:1) sits below WCAG AA for small text — kept as
-  an intentional aesthetic choice.
+- ~~`--text-faint` contrast (~3.4:1) sits below WCAG AA for small text — kept as
+  an intentional aesthetic choice.~~ **No longer true — entry retired.** The
+  accent-text / three-tier rework moved it: measured against every surface it
+  actually lands on, `--text-faint` is **6.3–10.1:1** across all six variants
+  (worst case crimson/light on a card, 6.39:1), i.e. above AA everywhere and
+  above AAA in most. `test/contrast.test.mjs` already holds it to 4.5:1 in
+  "every text tier meets WCAG AA on every surface it lands on" — the token is
+  in the asserted list, so the exemption this entry describes does not exist.
+  A decisions log that records a limitation which has since been fixed is worse
+  than an empty one: it argues against re-checking.
 - The public contact email is intentional; leave the obfuscated address as-is.
 - Globe land texture (2048×1024) is rebuilt per construction / theme switch
   rather than cached across instances. Considered and skipped: the colours are

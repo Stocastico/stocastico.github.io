@@ -88,6 +88,36 @@ jobs:
         if: steps.rotate.outputs.changed == 'true'
         run: npm test
 
+      # The browser suite gates the rotation too, exactly as it gates
+      # deploy.yml. It did not, and that gap was the wrong shape: this job is
+      # the *only* path by which a colour change reaches production without a
+      # human, and axe-over-the-rendered-page in both themes is the only layer
+      # that can see a colour problem the token-level test cannot.
+      #
+      # test/contrast.test.mjs (in `npm test` above) measures palette tokens
+      # against the surfaces they land on, which is most of the risk. What it
+      # cannot see, by construction, is contrast that only exists once the page
+      # is composited — the .link-chip-count bug was `opacity: 0.7` over an
+      # already-muted token, below 4.5:1 in every light palette, and invisible
+      # to any test that reasons about the tokens instead of the pixels. A
+      # palette rotation is precisely the change that can turn that kind of
+      # latent margin negative, so it should not be the one change that skips
+      # the check.
+      #
+      # Steps mirror e2e.yml; see the notes there for why both Chromium builds
+      # and why the glob rather than a file list.
+      - name: Install Chromium
+        if: steps.rotate.outputs.changed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Build for the browser tests
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Run browser tests
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm run test:e2e:ci
+
       - name: Commit rotated palette to main
         if: steps.rotate.outputs.changed == 'true'
         run: |

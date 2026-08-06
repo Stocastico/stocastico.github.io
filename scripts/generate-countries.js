@@ -25,6 +25,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { parseYaml } = require('./lib/yaml');
+const { toPosix } = require('./lib/paths');
 
 /* Map the free-form country tokens used in locations.yaml to the canonical
    names found in data/countries-110m.json. Anything not listed passes
@@ -208,7 +209,7 @@ function main() {
     }
     const locations = parseYaml(fs.readFileSync(locationsPath, 'utf8'));
     const derived = compileCountries({ locations });
-    const yaml = toCountriesYaml(derived, path.relative(process.cwd(), locationsPath));
+    const yaml = toCountriesYaml(derived, toPosix(path.relative(process.cwd(), locationsPath)));
     if (options.dryRun) {
       console.log(`--- ${path.relative(process.cwd(), countriesPath)} ---`);
       console.log(yaml);
@@ -227,7 +228,7 @@ function main() {
     ? compileCountries({ countries: countriesSource })
     : compileCountries({ locations: parseYaml(fs.readFileSync(locationsPath, 'utf8')) });
 
-  const js = toCountriesJs(classified, path.relative(process.cwd(), countriesPath));
+  const js = toCountriesJs(classified, toPosix(path.relative(process.cwd(), countriesPath)));
   if (options.dryRun) {
     console.log(`--- ${path.relative(process.cwd(), outputPath)} ---`);
     console.log(js);

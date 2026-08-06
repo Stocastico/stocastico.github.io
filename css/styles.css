@@ -11,22 +11,27 @@
    6. Hero Section
    7. Buttons
    8. Section Shared
-   9. About Section
-   10. Research Section
+   9. About Section (incl. homepage world map, travel page, UNESCO, links)
    11. Publications Section
-   12. Skills Section
    13. Projects Section
    14. Contact Section
    15. Footer
    16. Scroll Reveal Animations
    16c. Curriculum Vitae — Timeline
    16d. CV Page Layout
-   17. Performance (content-visibility)
+   17. Performance (content-visibility) — REMOVED, see the note at that mark
    18. Responsive
    18b. Europe 2D Map
    19. Enhanced Project Cards
-   20. Project Detail Page
+   20. Project Detail Page (incl. inline diagrams, MNIST lab)
    21. Command Palette
+   Unlayered tail: theme controls, back-to-top, toast, forced colours, print
+
+   Gaps in the numbering are deliberate rather than tidied away: the numbers
+   are load-bearing as search anchors in a 4.6 k-line file, so renumbering
+   would invalidate every reference to them. 10 (Research) and 12 (Skills)
+   were sections on the homepage that no longer exist — the homepage no
+   longer duplicates the CV's skill list, and #research went earlier.
    ============================================================ */
 
 /* ─── 0. Cascade layers ───────────────────────────────────
@@ -4582,6 +4587,23 @@ figcaption {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+
+  /* The same trap, one component over. initTaglineReveal() (js/ui.js) replaces
+     the hero tagline with per-word spans that start at opacity 0 and are
+     restored only by a CSS animation — so the site's one-line statement of
+     what it is about, sitting directly under the <h1>, is not painted until
+     ~675 ms after load. Print inside that window and it prints blank, exactly
+     as the counters printed "0 Countries" and the reveal printed empty bands.
+     The rule above cannot reach it: these spans carry no [data-animate].
+
+     The general form: anything whose visibility waits on an animation having
+     finished needs a print reset, because printing neither scrolls nor waits. */
+  .tagline-word,
+  .tagline-sep {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
   }
 
   /* Gradient-filled headings paint from a background, and backgrounds are not

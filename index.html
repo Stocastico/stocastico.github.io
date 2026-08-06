@@ -115,7 +115,10 @@
 </head>
 
 <body>
-  <!-- Reading progress bar — filled by JS on scroll -->
+  <!-- Reading progress bar. Driven by a CSS scroll-progress timeline
+       (animation-timeline: scroll(root block)), not by a scroll handler —
+       nothing in JS touches this element. See .reading-progress in
+       css/styles.css. -->
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <!-- Points at the main landmark, which starts at the hero — not at #about.
        Skipping to #about skipped the nav *and* the hero, and the hero is not
@@ -183,7 +186,9 @@
   <section id="hero" aria-label="Introduction">
     <!-- GLSL noise-gradient background (z-index 0, lowest layer) -->
     <canvas id="noise-canvas" aria-hidden="true"></canvas>
-    <!-- Three.js neural-network particles (z-index 1, above noise gradient) -->
+    <!-- Hero background scene (z-index 1, above the noise gradient). Canvas2D,
+         not Three.js — the homepage ships none. js/cnn-hero.js on roomy
+         pointer-driven viewports, js/neural-net.js everywhere else. -->
     <canvas id="neural-canvas" aria-hidden="true"></canvas>
 
     <div class="hero-content">

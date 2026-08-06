@@ -168,8 +168,28 @@
         </div>
       </header>
 
-      <!-- ── Unified timeline: career left, education right ── -->
-      <div class="cv-timeline" id="cv-timeline" aria-label="Career and education timeline">
+      <!-- ── Unified timeline: career left, education right ──
+           The h2 below is visually hidden but structurally load-bearing. Every
+           entry card is an h3 (js/render-page.js), and this page's only other
+           heading is the h1 above — so without it the document went h1 to h3,
+           a level skip on the page whose entire purpose is to be skimmed by
+           heading. Nothing catches that automatically: axe classes
+           `heading-order` as best-practice and test/e2e/a11y.e2e.mjs excludes
+           those on purpose, the same blind spot that left the globe a11y list
+           at h4 for as long as it did.
+
+           Hidden rather than shown because the eyebrow, the h1 and the legend
+           above already say "career and education" visually, three times over;
+           the heading is here for the reader who navigates by structure
+           instead of by pixels. It sits OUTSIDE #cv-timeline so renderCV()'s
+           innerHTML rewrite on load cannot take it away again.
+
+           Note the deliberate absence of literal tag syntax in this comment:
+           html-quality.test.mjs counts headings by regex over the raw file,
+           comments included, so writing the tag here makes the page claim four
+           h1s. Same trap the 404 forced-colors note hit. -->
+      <h2 class="visually-hidden">Career and education</h2>
+      <div class="cv-timeline" id="cv-timeline">
         <!-- generated:cv-timeline -->
         <div class="tl-row tl-row--career" data-animate><div class="tl-left"><div class="tl-card-single"><div class="tl-card-header"><span class="tl-year">2024 – present</span><span class="tl-location">San Sebastián, ES</span></div><h3 class="tl-title">Senior AI Engineer</h3><p class="tl-sub">Mediapro</p><p class="tl-desc">Designed and deployed GenAI solutions for audiovisual production, including automatic detection of commercials in live sports events. Developed computer vision pipelines for 3D reconstruction using NeRFs and Gaussian Splats, later adopted by Virtual Production to cut shooting costs. Transitioned research PoCs into production workflows.</p><div class="tl-tags"><span class="tl-tag">GenAI</span><span class="tl-tag">LLMs</span><span class="tl-tag">NeRF</span><span class="tl-tag">Gaussian Splatting</span><span class="tl-tag">Computer Vision</span><span class="tl-tag">Python</span></div></div></div><div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div><div class="tl-right"><div class="tl-empty"></div></div></div>
         <div class="tl-concurrent-block" data-animate><div class="tl-left tl-row--career" style="grid-column:2;grid-row:1"><div class="tl-card-single"><div class="tl-card-header"><span class="tl-year">2022 – 2024</span><span class="tl-location">Bilbao, ES</span></div><h3 class="tl-title">Technical Manager</h3><p class="tl-sub">NTT DATA</p><p class="tl-desc">Led a 9-person team delivering AI and GenAI projects for banking, media, and energy sector clients. Architected enterprise RAG systems using Azure OpenAI. Mentored the team in GenAI technologies through weekly technical sessions.</p><div class="tl-tags"><span class="tl-tag">Team Management</span><span class="tl-tag">RAG</span><span class="tl-tag">Azure OpenAI</span><span class="tl-tag">GenAI</span><span class="tl-tag">LangChain</span></div></div></div><div class="tl-spine" style="grid-column:1;grid-row:1"><div class="tl-dot" aria-hidden="true"></div></div><div class="tl-left tl-row--career" style="grid-column:2;grid-row:2"><div class="tl-card-single"><div class="tl-card-header"><span class="tl-year">2018 – 2022</span><span class="tl-location">San Sebastián, ES</span></div><h3 class="tl-title">Researcher</h3><p class="tl-sub">Vicomtech</p><p class="tl-desc">Coordinated H2020/Horizon Europe projects with international partners, securing 600k€ in funding. Developed a collaborative AR platform using computer vision and web technologies for educational applications.</p><div class="tl-tags"><span class="tl-tag">Computer Vision</span><span class="tl-tag">AR</span><span class="tl-tag">H2020</span><span class="tl-tag">EU Projects</span><span class="tl-tag">WebXR</span></div></div></div><div class="tl-spine" style="grid-column:1;grid-row:2"><div class="tl-dot" aria-hidden="true"></div></div><div class="tl-right tl-row--education" style="grid-column:3;grid-row:1/3"><div class="tl-card-single"><div class="tl-card-header"><span class="tl-year">2019 – 2024</span><span class="tl-location">Bilbao, ES</span></div><h3 class="tl-title">PhD in Computer Science</h3><p class="tl-sub">Euskal Herriko Unibertsitatea (UPV/EHU)</p><p class="tl-desc">Thesis: &quot;A Novel Architecture for Collaborative Augmented Reality Experiences for Education.&quot; Graduated cum laude.</p></div></div></div>
@@ -182,7 +202,11 @@
         <!-- /generated:cv-timeline -->
       </div>
 
-      <!-- ── Skills breakdown ─────────────────────────────── -->
+      <!-- ── Skills breakdown ───────────────────────────────
+           Same reasoning as the timeline heading above: the three panels
+           inside are h3 ("Technical", "Leadership", "Languages") with nothing
+           between them and the page h1. -->
+      <h2 class="visually-hidden">Skills</h2>
       <div id="cv-skills" class="cv-skills-section">
         <!-- generated:cv-skills -->
         <div class="skill-panels"><div class="skill-panel" data-animate><h3 class="skill-panel-title">Technical</h3><ul class="skill-list"><li class="skill-item"><span class="skill-item-name">GenAI &amp; LLMs (Agentic AI · Fine-tuning · RAG · LangChain · Vector DBs)</span><span class="skill-tier">Expert</span></li><li class="skill-item"><span class="skill-item-name">LLM Evaluation &amp; Observability (Evals · Guardrails · Tracing)</span><span class="skill-tier">Advanced</span></li><li class="skill-item"><span class="skill-item-name">Python · PyTorch · TensorFlow · Hugging Face</span><span class="skill-tier">Expert</span></li><li class="skill-item"><span class="skill-item-name">Computer Vision &amp; 3D Reconstruction (NeRF · Gaussian Splats · SLAM)</span><span class="skill-tier">Expert</span></li><li class="skill-item"><span class="skill-item-name">MLOps · Docker · Kubernetes · CI/CD · GCP · Azure</span><span class="skill-tier">Advanced</span></li><li class="skill-item"><span class="skill-item-name">Augmented Reality (ARCore · ARKit · WebXR)</span><span class="skill-tier">Advanced</span></li><li class="skill-item"><span class="skill-item-name">C++ · C · OpenCV · CUDA · Matlab</span><span class="skill-tier">Advanced</span></li></ul></div><div class="skill-panel" data-animate><h3 class="skill-panel-title">Leadership</h3><ul class="skill-list"><li class="skill-item"><span class="skill-item-name">Hiring &amp; People Development</span><span class="skill-tier">Expert</span></li><li class="skill-item"><span class="skill-item-name">Delivery Track Record (10+ AI/ML projects, Agile/Scrum)</span><span class="skill-tier">Advanced</span></li><li class="skill-item"><span class="skill-item-name">Technical Mentoring &amp; Training (20+ sessions)</span><span class="skill-tier">Expert</span></li><li class="skill-item"><span class="skill-item-name">Stakeholder &amp; Partner Coordination</span><span class="skill-tier">Expert</span></li><li class="skill-item"><span class="skill-item-name">Strategic AI Roadmap &amp; Vision (OKRs · Research → Production)</span><span class="skill-tier">Advanced</span></li><li class="skill-item"><span class="skill-item-name">Cross-functional Collaboration (Engineering · Research · Product)</span><span class="skill-tier">Expert</span></li></ul></div><div class="skill-panel" data-animate><h3 class="skill-panel-title">Languages</h3><ul class="lang-list"><li class="lang-item"><span class="lang-name">Italian</span><span class="lang-prof">Native</span></li><li class="lang-item"><span class="lang-name">Spanish</span><span class="lang-prof">C2: Proficient</span></li><li class="lang-item"><span class="lang-name">English</span><span class="lang-prof">C2: Proficient</span></li><li class="lang-item"><span class="lang-name">German</span><span class="lang-prof">B2: Upper-Intermediate</span></li><li class="lang-item"><span class="lang-name">Basque</span><span class="lang-prof">B1: Intermediate</span></li></ul></div></div>

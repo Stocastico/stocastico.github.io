@@ -21,7 +21,6 @@ import {
   renderSkills,
   initTheme,
   initCardTilt,
-  initAnimatedFavicon,
   initBackToTop,
   NoiseGradient,
   renderProjects,
@@ -1090,67 +1089,6 @@ test('initBackToTop does nothing when button is missing', () => {
   } finally {
     global.document = prevDoc;
     global.window = prevWin;
-  }
-});
-
-/* ─── initAnimatedFavicon tests ───────────────────────────── */
-
-test('initAnimatedFavicon renders favicon via canvas and sets link href', () => {
-  const prevDoc = global.document;
-  const prevHTML = global.HTMLCanvasElement;
-  let faviconHref = '';
-  const ctx = {
-    clearRect() {}, fillStyle: '', beginPath() {},
-    rect() {}, fill() {}, save() {}, restore() {},
-    translate() {}, font: '', textAlign: '', textBaseline: '',
-    shadowBlur: 0, shadowColor: '', fillText() {},
-  };
-  const canvas = {
-    width: 0, height: 0,
-    getContext() { return ctx; },
-    toDataURL() { return 'data:image/png;base64,FAKE'; },
-  };
-  const link = {
-    get href() { return faviconHref; },
-    set href(v) { faviconHref = v; },
-  };
-  global.HTMLCanvasElement = class {};
-  global.document = {
-    querySelector(sel) {
-      if (sel === 'link[rel="icon"]') return link;
-      return null;
-    },
-    createElement(tag) {
-      if (tag === 'canvas') return canvas;
-      return {};
-    },
-    fonts: { ready: Promise.resolve() },
-  };
-  try {
-    initAnimatedFavicon();
-    /* fonts.ready is a microtask, need to flush promises */
-    return global.document.fonts.ready.then(() => {
-      assert.equal(faviconHref, 'data:image/png;base64,FAKE');
-    });
-  } finally {
-    global.document = prevDoc;
-    global.HTMLCanvasElement = prevHTML;
-  }
-});
-
-test('initAnimatedFavicon does nothing when favicon link is missing', () => {
-  const prevDoc = global.document;
-  const prevHTML = global.HTMLCanvasElement;
-  global.HTMLCanvasElement = class {};
-  global.document = {
-    querySelector() { return null; },
-    createElement() { return {}; },
-  };
-  try {
-    initAnimatedFavicon(); /* should not throw */
-  } finally {
-    global.document = prevDoc;
-    global.HTMLCanvasElement = prevHTML;
   }
 });
 

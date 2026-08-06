@@ -1,6 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Tests for renderCV, renderSkills,
-   and initAnimatedFavicon.
+   Tests for renderCV and renderSkills.
    TDD: these tests are written before (or alongside) the implementation.
    Run:  npm run test:cv
 ──────────────────────────────────────────────────────────────────────────────*/
@@ -10,7 +9,6 @@ import assert from 'node:assert/strict';
 import {
   renderCV,
   renderSkills,
-  initAnimatedFavicon,
 } from '../js/main.js';
 
 /* ── DOM helpers ─────────────────────────────────────────────────────────── */
@@ -331,38 +329,4 @@ test('renderSkills: omits panel when array is empty', () => {
   renderSkills({ technical: [], leadership: [], languages: [] });
   assert.ok(!els['cv-skills'].innerHTML.includes('skill-panel'), 'no panels for empty data');
   restore();
-});
-
-/* ── initAnimatedFavicon ─────────────────────────────────────────────────── */
-
-test('initAnimatedFavicon: exported as a function', () => {
-  assert.strictEqual(typeof initAnimatedFavicon, 'function');
-});
-
-test('initAnimatedFavicon: returns without throwing when document is undefined', () => {
-  const prev = global.document;
-  global.document = undefined;
-  assert.doesNotThrow(() => initAnimatedFavicon());
-  global.document = prev;
-});
-
-test('initAnimatedFavicon: returns without throwing when HTMLCanvasElement is absent (Node env)', () => {
-  const prev = global.HTMLCanvasElement;
-  global.HTMLCanvasElement = undefined;
-  const prevDoc = global.document;
-  global.document = { querySelector: () => null };
-  assert.doesNotThrow(() => initAnimatedFavicon());
-  global.HTMLCanvasElement = prev;
-  global.document = prevDoc;
-});
-
-test('initAnimatedFavicon: returns without throwing when icon link is absent', () => {
-  const prev = global.document;
-  global.document = {
-    querySelector: () => null,
-    fonts: { ready: { then() {} } },
-    hidden: false,
-  };
-  assert.doesNotThrow(() => initAnimatedFavicon());
-  global.document = prev;
 });
