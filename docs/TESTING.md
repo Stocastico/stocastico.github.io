@@ -92,10 +92,24 @@ rather than the sources.
 
 ## In CI
 
-- `npm test` gates **build** and **deploy** (`.github/workflows/build.yml`,
-  `deploy.yml`).
-- The browser suite runs on every push and pull request
-  (`.github/workflows/e2e.yml`) **and** gates the deploy.
+- **Both layers run on every pull request**, from `.github/workflows/e2e.yml` —
+  the only workflow with a `pull_request` trigger. `npm test` goes first, ahead
+  of the Chromium install: it is ~2 s against ~25 s for the install and ~5 min
+  for the browser run, so a drift check or a contrast regression fails the job
+  almost immediately instead of after work nobody will read the result of.
+- Both also gate **deploy** (`deploy.yml`) and the weekly **palette rotation**
+  (`rotate-palette.yml`); `npm test` additionally gates `build.yml`.
+
+`npm test` used to be gated *only* on `push: [main]`, which meant a pull
+request could sit green with all ~890 static assertions red — the first sign
+of it was the deploy gate refusing to publish, after the merge. Nothing broken
+reached the site, so it was a safe failure, but it put the signal on the wrong
+side of the merge button: acting on it meant a revert or a follow-up commit on
+`main` rather than another push to the branch. The lesson generalises past this
+one workflow: **check which trigger a test actually runs under, not which file
+it lives in.** It is the same shape as the two deleted Playwright files below
+and the hand-written `npm test` list further down — a test that exists but
+never executes reads exactly like a test that passes.
 
 Two Playwright files predated `test/e2e/` and have now been **deleted**:
 `test/playwright.ui.test.mjs` and `test/playwright.iphone.test.mjs`. They were

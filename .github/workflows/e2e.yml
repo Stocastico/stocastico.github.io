@@ -1,14 +1,18 @@
 name: E2E
 
-# Browser-based tests, kept in their own workflow because they need a real
-# Chromium and take a couple of minutes — `npm test` stays fast enough to run
-# on every save locally.
+# The pull-request gate: both test layers, in that order.
 #
-# This exists because the fast suite cannot, in principle, catch the class of
-# bug that reached visitors: content stuck at opacity 0, a page that came back
-# dead from the back/forward cache, a map drawn in the same colour as its
-# background. Each needed layout, compositing or the browser's own lifecycle to
-# be observable at all. Static analysis and DOM stubs were green throughout.
+# The browser suite is why this workflow exists. The fast suite cannot, in
+# principle, catch the class of bug that reached visitors: content stuck at
+# opacity 0, a page that came back dead from the back/forward cache, a map
+# drawn in the same colour as its background. Each needed layout, compositing
+# or the browser's own lifecycle to be observable at all — static analysis and
+# DOM stubs were green throughout. It lives in its own workflow because it
+# needs a real Chromium and takes a few minutes, where `npm test` stays fast
+# enough to run on every save locally.
+#
+# `npm test` runs here as well because this is the only workflow triggered by
+# `pull_request` — see the note on that step for what that cost.
 
 on:
   push:
@@ -37,6 +41,29 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # The fast suite runs here too, and that is not redundancy — it is the
+      # only place it runs on a pull request at all.
+      #
+      # `npm test` was gated exclusively on build.yml and deploy.yml, both of
+      # which are `push: [main]`. This workflow was the sole pull_request check.
+      # So a PR could sit green with all ~890 static assertions red, and the
+      # first anyone heard of it was the deploy gate refusing to publish after
+      # the merge. That is a safe failure — nothing broken reaches the site —
+      # but it puts the signal on the wrong side of the merge button, where
+      # acting on it means a revert or a follow-up commit on main instead of a
+      # push to the branch.
+      #
+      # It sits before the Chromium install deliberately. The static suite is
+      # ~2 seconds; the install is ~25 and the browser run ~5 minutes. A drift
+      # check or a contrast regression should fail the job almost immediately
+      # rather than after five minutes of work whose result nobody will read.
+      #
+      # The job keeps the name "Browser tests" so any status check configured
+      # against it keeps resolving. If that name is renamed later, rename it
+      # everywhere it is referenced at the same time.
+      - name: Run static tests
+        run: npm test
 
       # Only Chromium — the suite asserts behaviour (does the reveal fire, does
       # bfcache restore work), not cross-browser rendering.
