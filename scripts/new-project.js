@@ -276,7 +276,19 @@ function markdownToHtml(md) {
       const tbody = `  <tbody>\n${bodyRows
         .map((r) => `    <tr>${r.map((c) => `<td>${applyInline(escapeHtml(c))}</td>`).join('')}</tr>`)
         .join('\n')}\n  </tbody>`;
-      out.push(`<table>\n${thead}\n${tbody}\n</table>`);
+      /* Wrapped in a focusable scroll container, always — a table's width is
+         the sum of its columns' min-content widths and cannot be wrapped
+         narrower, so on a phone a wide one runs off the right edge with no
+         scrollbar to say so (html/body are `overflow-x: clip`). tabindex="0"
+         is required, not cosmetic: an unfocusable scroll region is
+         unreachable by keyboard (WCAG 2.1.1, and axe's
+         scrollable-region-focusable is tagged wcag2a). The wrapper costs
+         nothing when the table already fits. */
+      out.push(
+        `<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrollable">\n`
+        + `<table>\n${thead}\n${tbody}\n</table>\n`
+        + `</div>`
+      );
       continue;
     }
 

@@ -53,7 +53,12 @@ links:
     categories: [ai]
     tags: [research, deep-learning]
   - name: "Julian Schrittwieser"
-    url: "https://julian.ac"
+    # www, not the apex: https://julian.ac resets the TLS handshake (no cert
+    # served there), so the browser shows a security interstitial rather than
+    # the site. http://julian.ac redirects to https://www.julian.ac/, which is
+    # the canonical origin and serves 200. generate-links validates https-only,
+    # which cannot catch a URL that is https and dead.
+    url: "https://www.julian.ac"
     description: "AlphaGo/MuZero co-author, now at Anthropic; sharp posts on RL and AI progress."
     categories: [ai]
     tags: [reinforcement-learning]
@@ -132,11 +137,12 @@ links:
     description: "Visual essays that argue ideas through data journalism and rich interaction."
     categories: [visual-explanation]
     tags: [data-viz, journalism, interactive]
-  - name: "Vi Hart"
-    url: "https://vihart.com"
-    description: "Mathematical doodling and playful video-essays on geometry and music."
-    categories: [visual-explanation, engineering-math-physics]
-    tags: [math, playful]
+# Vi Hart (https://vihart.com) removed 2026-08: the site is gone — the TLS
+# handshake is reset and there is no working host behind the name. A blogroll
+# is a promise that the links work, so a dead one costs more than the entry was
+# worth. Nothing here checks third-party links automatically and nothing should
+# (49 external sites on every PR would be slow and flaky); worth a manual sweep
+# once or twice a year.
   - name: "PerThirtySix"
     url: "https://perthirtysix.com"
     description: "Interactive, design-led data explorations across sports, economics, and society."

@@ -285,6 +285,13 @@ Options:
     + `(${pct}% smaller than the ${before}-byte world file it replaces at runtime)`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+/* `fileURLToPath`, not a `file://` + argv[1] string concat. The concatenated
+   form is wrong on any path needing URL encoding: in a checkout under
+   "/tmp/guard test/", import.meta.url is file:///tmp/guard%20test/... while
+   `file://${process.argv[1]}` is file:///tmp/guard test/..., so the guard is
+   false and the generator silently does nothing — exit 0, no output, and then
+   a confusing drift failure in CI about a stale artefact. Spaces in a checkout
+   path are ordinary (~/My Documents, ~/Google Drive, iCloud paths). */
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   main(process.argv.slice(2));
 }

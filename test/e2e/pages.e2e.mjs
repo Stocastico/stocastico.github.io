@@ -77,39 +77,126 @@ describe('smoke: every page loads without errors', () => {
   });
 });
 
-describe('layout: nothing overflows sideways', () => {
-  /* A horizontal scrollbar on a phone is the single most common CSS
-     regression, and it is invisible to any test that does not do layout. */
-  for (const [label, viewport] of [['mobile', VIEWPORTS.mobile], ['small', VIEWPORTS.small], ['tablet', VIEWPORTS.tablet]]) {
-    test(`no horizontal overflow at ${label} (${viewport.width}px)`, async () => {
+describe('layout: nothing is pushed outside the viewport', () => {
+  /* This asserted `doc.scrollWidth <= doc.clientWidth` for most of its life,
+     which made it a test that could not fail.
+
+     css/styles.css puts `overflow-x: clip` on both html and body (§2). A clip
+     container is not a scroll container, so its scrollWidth is its clientWidth
+     no matter what sticks out of it — the early return on line 1 was therefore
+     always taken and the per-element loop below it was unreachable code.
+     Measured directly: injecting a 3000px-wide <div> into a 390px viewport
+     left scrollWidth at 390 and the assertion green. Fifteen pages times three
+     viewports of assertions, none of which could ever go red.
+
+     Two real bugs went through the gap, and both are the same shape — content
+     pushed off the right edge with no scrollbar to admit it:
+
+       · the navbar between 681 and 835px (the ⌘K chip up to 146px off-screen,
+         "Contact" entirely gone below ~705px, both still keyboard-focusable);
+       · the five-column table on projects/aroundtheworld.html at 390px, whose
+         last column started 15px past the right edge.
+
+     So the question has to be asked of each element about the viewport, never
+     of the document about itself: `overflow-x: clip` converts every horizontal
+     overflow from a visible scrollbar into silent truncation, which is exactly
+     the failure mode a layout test exists to catch. Clipping is not overflow.
+
+     What is deliberately not a failure: an element sticking out of an ancestor
+     that clips or scrolls on purpose (.table-scroll, a rounded card, a canvas
+     box). The ancestor walk below stops *before* body precisely because
+     html/body carry the clip — including them would make every element
+     "handled by an ancestor" and hand the test straight back its no-op. */
+  const BANDS = [
+    ['mobile', VIEWPORTS.mobile],
+    ['small', VIEWPORTS.small],
+    ['tablet', VIEWPORTS.tablet],
+    /* 820px is iPad portrait and the widest width at which the navbar used to
+       clip. It is here because a breakpoint set slightly too low looks
+       identical to a correct one at every other width in this list. */
+    ['tablet-wide', { width: 820, height: 1180 }],
+  ];
+
+  for (const [label, viewport] of BANDS) {
+    test(`nothing sits outside the viewport at ${label} (${viewport.width}px)`, async () => {
       const failures = [];
       for (const path of allPages()) {
         const page = await newPage(browser, server, { viewport });
         try {
           await page.goto(server.base + path, { waitUntil: 'networkidle' });
           await scrollThrough(page);
-          const overflow = await page.evaluate(() => {
-            const doc = document.documentElement;
+          const offenders = await page.evaluate(() => {
+            const vw = document.documentElement.clientWidth;
             const slack = 2;   /* sub-pixel rounding */
-            if (doc.scrollWidth <= doc.clientWidth + slack) return null;
-            /* Name the widest offender, so a failure is actionable. */
-            let worst = null;
-            for (const el of document.querySelectorAll('body *')) {
-              const r = el.getBoundingClientRect();
-              if (r.width === 0 || r.height === 0) continue;
-              const over = r.right - doc.clientWidth;
-              if (over > slack && (!worst || over > worst.over)) {
-                worst = { over: Math.round(over), tag: el.tagName.toLowerCase(), cls: el.className.toString().slice(0, 60) };
+            const out = [];
+
+            /* True when something between el and <body> deliberately clips or
+               scrolls, so the overflow is contained and reachable. */
+            const containedByAncestor = (el) => {
+              for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+                const ox = getComputedStyle(p).overflowX;
+                if (ox && ox !== 'visible') return true;
               }
+              return false;
+            };
+
+            for (const el of document.querySelectorAll('body *')) {
+              const cs = getComputedStyle(el);
+              if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+              const r = el.getBoundingClientRect();
+              /* Tracking pixels and 1x1 .visually-hidden clips are parked
+                 off-canvas on purpose. */
+              if (r.width <= 2 || r.height <= 2) continue;
+              if (el.closest('.visually-hidden')) continue;
+              const over = Math.max(r.right - vw, -r.left);
+              if (over <= slack) continue;
+              if (containedByAncestor(el)) continue;
+              out.push({
+                over: Math.round(over),
+                side: (r.right - vw) >= -r.left ? 'right' : 'left',
+                tag: el.tagName.toLowerCase(),
+                cls: el.className.toString().slice(0, 50),
+                text: (el.textContent || '').trim().slice(0, 30),
+              });
             }
-            return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, worst };
+            /* Widest first — the outermost offender is usually the cause and
+               the rest are its children riding along. */
+            out.sort((a, b) => b.over - a.over);
+            return out.slice(0, 5);
           });
-          if (overflow) failures.push(`${path}: ${JSON.stringify(overflow)}`);
+          if (offenders.length) failures.push(`${path}: ${JSON.stringify(offenders)}`);
         } finally { await page.close(); }
       }
       assert.deepEqual(failures, []);
     });
   }
+
+  /* The guard on the guard. The assertion above is only meaningful while it
+     can still see an element that leaves the viewport — and the reason it
+     stopped being meaningful last time was a stylesheet change nowhere near
+     this file. So plant one and require the detector to find it. */
+  test('the detector actually detects (canary)', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.mobile });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'load' });
+      const found = await page.evaluate(() => {
+        const canary = document.createElement('div');
+        canary.style.cssText = 'width:3000px;height:80px';
+        canary.className = 'overflow-canary';
+        document.body.appendChild(canary);
+        const vw = document.documentElement.clientWidth;
+        const r = canary.getBoundingClientRect();
+        const seen = (r.right - vw) > 2;
+        canary.remove();
+        return { seen, right: Math.round(r.right), viewport: vw };
+      });
+      assert.ok(
+        found.seen,
+        `a 3000px-wide element was not registered as leaving the ${found.viewport}px viewport `
+        + `(measured right edge ${found.right}) — the overflow detector above is a no-op`,
+      );
+    } finally { await page.close(); }
+  });
 });
 
 describe('layout: text is not clipped by its container', () => {

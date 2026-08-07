@@ -273,13 +273,22 @@ export function initNavbar() {
     .map((link) => document.querySelector(link.getAttribute('href')))
     .filter(Boolean);
 
-  /* ── Section tracking with IntersectionObserver ────────── */
+  /* ── Section tracking with IntersectionObserver ──────────
+     `location`, not `page`. These are in-page anchors and the value tracks
+     which section is on screen, which is exactly what ARIA defines `location`
+     for: "the current location within an environment or context". `page` means
+     "this link points at the page you are on" and is the right token for the
+     cross-page nav links — the static markup uses it that way (now.html marks
+     its own Now link `page`, and the project-page branch above marks
+     Projects). Both were writing `page`, so a screen reader heard the same
+     word for two different claims, and on the homepage "About" announced
+     itself as the current *page* as you scrolled past it. */
   let activeId = targets[0]?.id || '';
   const setActiveLink = () => {
     links.forEach((link) => {
       const isActive = link.getAttribute('href') === `#${activeId}`;
       const cur = link.getAttribute('aria-current');
-      const next = isActive ? 'page' : 'false';
+      const next = isActive ? 'location' : 'false';
       if (cur !== next) link.setAttribute('aria-current', next);
     });
   };
@@ -862,7 +871,8 @@ export function initMobileMenu() {
        dots + light/dark toggle) sit between the burger and the links in DOM
        order and stay visible on mobile, so they belong inside the trap —
        enumerating only [toggle, links] made the wrap points skip them. The
-       ⌘K chip is display:none below 681px and needs no entry. */
+       ⌘K chip is display:none below 901px — the width at which the burger
+       takes over — and needs no entry. */
     if (e.key === 'Tab' && toggle.classList.contains('open')) {
       const themeButtons = document.querySelectorAll('.theme-controls button');
       const focusable = [toggle, ...themeButtons, ...links.querySelectorAll('a')];

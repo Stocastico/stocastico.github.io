@@ -63,3 +63,51 @@ test('index.html advertises the feed for autodiscovery', () => {
   assert.match(html, /<link rel="alternate" type="application\/atom\+xml"[^>]*href="\/feed\.xml"/,
     'index.html <head> is missing the Atom autodiscovery link');
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Entry dates are editorial, not file mtimes.
+
+   <updated> used to be the project page's last git commit date, which is right
+   for a sitemap's <lastmod> and wrong here: a reader uses <updated> to decide
+   an item is worth surfacing again, so every commit that touched a project page
+   for unrelated reasons — a CSP hash, a typo, an SVG marker id — pushed that
+   project back to the top of every subscriber's feed. Eight of fourteen entries
+   once carried the dates of two audits that changed no prose.
+
+   The reversion this guards against is subtle and would look like a tidy-up:
+   `lastmodFor(page)` is still in the module (the /now entry uses it as a
+   fallback), so putting it back on the project loop is a one-line change that
+   breaks nothing visible and no other assertion would notice. Pinning the
+   dates to data/projects.js is what makes that change fail.
+──────────────────────────────────────────────────────────────────────────────*/
+test('feed.xml project dates come from data/projects.js, not git history', async () => {
+  const { PROJECTS } = await import('../data/projects.js');
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
+
+  for (const p of PROJECTS) {
+    const entry = entries.find((e) => e.includes(`<title>${p.title.replace(/&/g, '&amp;')}</title>`));
+    assert.ok(entry, `feed.xml has no entry for "${p.title}"`);
+    const updated = /<updated>([^<]+)<\/updated>/.exec(entry)[1];
+    const expected = /^\d{4}-\d{2}-\d{2}$/.test(p.updated || '')
+      ? `${p.updated}T00:00:00Z`
+      : `${parseInt(p.year, 10)}-01-01T00:00:00Z`;
+    assert.equal(updated, expected,
+      `"${p.title}" <updated> is ${updated}, expected ${expected}. If this reads as a `
+      + 'git commit timestamp, the project loop in scripts/generate-feed.mjs has gone '
+      + 'back to lastmodFor() — see the note there.');
+  }
+});
+
+test('feed.xml entry dates are stable across commits (no time-of-day component)', () => {
+  /* A git-derived timestamp carries the commit's clock time; an editorial date
+     is midnight UTC by construction. Asserting the shape catches the reversion
+     even for a project whose `year` happens to match its last commit year. */
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
+  const projectEntries = entries.filter((e) => !e.includes('/now.html'));
+  assert.ok(projectEntries.length >= 10, `only ${projectEntries.length} project entries found`);
+  for (const e of projectEntries) {
+    const updated = /<updated>([^<]+)<\/updated>/.exec(e)[1];
+    assert.match(updated, /T00:00:00Z$/,
+      `${updated} has a wall-clock time — project entry dates must be midnight UTC`);
+  }
+});

@@ -11,7 +11,7 @@
 #
 # It is self-contained on purpose: the commit is pushed with the default
 # GITHUB_TOKEN, which does NOT re-trigger the `on: push` workflows
-# (deploy.yml / build.yml), so this job does the deploy itself — no extra
+# (deploy.yml), so this job does the deploy itself — no extra
 # deploy runs, no personal access token required.
 #
 # Run it manually from the Actions tab any time; optionally force a specific
@@ -132,6 +132,16 @@ jobs:
       - name: Regenerate sitemap
         if: steps.rotate.outputs.changed == 'true'
         run: npm run generate-sitemap
+
+      # deploy.yml runs this and this job did not, despite the comment above
+      # claiming to mirror it. Since the feed's entry dates became editorial
+      # (data/projects.js `updated:`, falling back to `year`) rather than git
+      # mtimes, this is a no-op on a pure palette rotation — which is the point:
+      # the two deploy paths should produce the same artefact, and the one that
+      # runs unattended every Monday is the wrong one to leave a step out of.
+      - name: Regenerate Atom feed
+        if: steps.rotate.outputs.changed == 'true'
+        run: npm run generate-feed
 
       - name: Regenerate project JSON-LD
         if: steps.rotate.outputs.changed == 'true'

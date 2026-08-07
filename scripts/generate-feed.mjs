@@ -7,10 +7,15 @@
    There is no blog, so the feed carries what does change: one entry per
    project, plus one for the current state of the /now page.
 
-   Like the sitemap, entry timestamps come from each page's last git commit
-   date, so the feed cannot claim freshness the repository doesn't have.
-   And like llms.txt, the /now entry lifts its date from the page's own
-   "Last updated" line — one place to edit.
+   Entry timestamps are editorial, NOT git mtimes — see the long note at the
+   `updated` line below. A project entry uses its optional `updated:` field and
+   falls back to its `year`. The /now entry lifts its date from the page's own
+   "Last updated" line, as llms.txt does — one place to edit.
+
+   This deliberately differs from generate-sitemap, which does use git dates:
+   <lastmod> asks when the file changed and <updated> asks when the writing
+   did, and conflating them republished the whole back catalogue to every
+   subscriber every time a page was touched for unrelated reasons.
 
    Run:  node scripts/generate-feed.mjs [--dry-run]
    ============================================================ */
@@ -92,8 +97,28 @@ function build() {
 
   for (const p of PROJECTS) {
     const url = projectUrl(p);
-    const page = /^projects\//.test(p.url) ? p.url : null;
-    const updated = (page && lastmodFor(page)) || `${parseInt(p.year, 10)}-01-01T00:00:00Z`;
+    /* `updated:` from data/projects.js, falling back to the project's year —
+       deliberately NOT the page's git mtime, which is what this used to be.
+
+       A sitemap's <lastmod> and a feed's <updated> look like the same
+       question and are not. <lastmod> is "when did this file change", and git
+       answers it exactly. <updated> is what a reader uses to decide an item is
+       worth showing again, so hanging it off the file's commit date meant any
+       commit touching a project page — a CSP hash refresh, a typo, an SVG
+       marker id — republished that project to every subscriber. The committed
+       feed showed the damage plainly: eight of fourteen entries carried the
+       dates of two audits that changed no prose.
+
+       The <id>s are stable URLs, so nothing was ever duplicated; it was noise,
+       not corruption. But it made the feed loudest exactly when the least had
+       been written, which is the wrong way round. An explicit date is a
+       judgement about the writing, and that is the judgement the field is for.
+       Add `updated: 'YYYY-MM-DD'` to an entry when its write-up meaningfully
+       changes; leave it alone for a typo fix. */
+    const explicit = typeof p.updated === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.updated)
+      ? `${p.updated}T00:00:00Z`
+      : null;
+    const updated = explicit || `${parseInt(p.year, 10)}-01-01T00:00:00Z`;
     entries.push({
       id: url,
       link: url,

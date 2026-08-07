@@ -403,7 +403,7 @@ npm run generate-analytics
 node scripts/generate-analytics.mjs --dry-run
 ```
 
-View aggregate stats (pageviews, top pages, referrers, countries, browsers) at **https://stocastico.goatcounter.com**. `test/analytics.test.mjs` guards the pixel + its CSP origin on every page and fails on drift.
+View aggregate stats (pageviews, top pages, referrers, countries, browsers) at **https://stocastico.goatcounter.com**. `test/analytics.test.mjs` guards the pixel + its CSP origin on every page and fails on drift — though only since the generator stopped running at import time. Its inject loop used to sit at the top level of the module, so the test's own `import` regenerated all 21 pages before asserting anything about them: deleting the pixel from `now.html` outright left the suite green, and `npm test` was quietly writing to the working tree. `generate-speculation-rules.mjs` had the same defect. Both now run only under a `import.meta.url === process.argv[1]` guard. If you write a test that imports a generator, check for that guard first.
 
 ### `generate-favicons` — rasterise the favicon
 

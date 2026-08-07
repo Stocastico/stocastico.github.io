@@ -154,19 +154,33 @@ function injectInto(html, blk) {
   return html.slice(0, m.index) + '  ' + blk + '\n' + html.slice(m.index);
 }
 
-let changed = 0;
-for (const rel of TARGETS) {
-  const abs = path.join(ROOT, rel);
-  const html = fs.readFileSync(abs, 'utf8');
-  const next = injectInto(html, block());
-  if (next === html) continue;
-  changed += 1;
-  if (!DRY_RUN) fs.writeFileSync(abs, next);
-  process.stdout.write(`✓ ${DRY_RUN ? '[dry] ' : ''}updated ${rel}\n`);
-}
-process.stdout.write(`Done. ${changed}/${TARGETS.length} pages ${DRY_RUN ? 'would be ' : ''}updated.\n`);
-if (changed && !DRY_RUN) {
-  process.stdout.write('Now run `npm run generate-csp-meta` — the inline script hash changed.\n');
+function main() {
+  let changed = 0;
+  for (const rel of TARGETS) {
+    const abs = path.join(ROOT, rel);
+    const html = fs.readFileSync(abs, 'utf8');
+    const next = injectInto(html, block());
+    if (next === html) continue;
+    changed += 1;
+    if (!DRY_RUN) fs.writeFileSync(abs, next);
+    process.stdout.write(`✓ ${DRY_RUN ? '[dry] ' : ''}updated ${rel}\n`);
+  }
+  process.stdout.write(`Done. ${changed}/${TARGETS.length} pages ${DRY_RUN ? 'would be ' : ''}updated.\n`);
+  if (changed && !DRY_RUN) {
+    process.stdout.write('Now run `npm run generate-csp-meta` — the inline script hash changed.\n');
+  }
 }
 
-export { RULES, TARGETS, block, START_MARKER, END_MARKER };
+/* Command-line only — see the long note in scripts/generate-analytics.mjs.
+   Same defect, same shape: this loop ran at import time, and
+   test/speculation-rules.test.mjs imports the module, so every assertion it
+   made was about files the import had just rewritten. CLAUDE.md claims this
+   test "fails on drift, on a page missing the block, on `prerender` widening
+   beyond /projects/*, on an `eagerness` bump". Measured: flipping both
+   eagerness values in now.html from "moderate" to "eager" left all 45
+   assertions green — the import had already put them back. */
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  main();
+}
+
+export { RULES, TARGETS, block, injectInto, START_MARKER, END_MARKER, main };

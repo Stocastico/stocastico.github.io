@@ -802,6 +802,15 @@ if (typeof document !== 'undefined') {
      section near the bottom of the page — eagerly building them costs a
      coastline fetch (Europe map) and a Globe scene with stars/grids/pins,
      neither of which the user sees until they scroll there. */
+  /* The observer is registered for teardown, not just disconnected on hit.
+     It used to be the one observer in this file with no path to
+     _pushTeardown: it disconnects itself when the canvas arrives, but a
+     visitor who never scrolls that far leaves it live, and travel.html builds
+     two of them. That is the leak the pagehide rule exists to prevent —
+     "any new init that adds a document/window listener or observer must
+     return a teardown and be _pushTeardown-ed" — and this one had quietly
+     opted out. Disconnecting twice is a no-op, so the self-disconnect on hit
+     stays as well. */
   const _lazyOnViewport = (canvas, build) => {
     if (!canvas) return;
     if (typeof IntersectionObserver === 'undefined') { build(); return; }
@@ -815,6 +824,7 @@ if (typeof document !== 'undefined') {
       }
     }, { rootMargin: '300px 0px' });
     io.observe(canvas);
+    _pushTeardown(() => io.disconnect());
   };
 
   /* Three.js Globe. Built through a closure so a theme switch can rebuild it

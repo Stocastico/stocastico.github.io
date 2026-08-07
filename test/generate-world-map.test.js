@@ -72,3 +72,36 @@ test('replaceBlock swaps content between the generated markers', () => {
 test('replaceBlock throws when markers are missing', () => {
   assert.throws(() => replaceBlock('<div>no markers</div>', 'NEW'));
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DRIFT: the world-map block committed in index.html matches data/countries.js.
+
+   The tests above build SVG from fixture country lists. None of them looked at
+   the SVG actually on the homepage, so the committed block could disagree with
+   the data it was generated from and nothing failed — measured by flipping a
+   country's class from wm-lived to wm-visited in index.html and running the
+   whole suite green.
+
+   Concretely that means a country painted in the wrong category on the front
+   page: somewhere marked lived-in that was only visited, or the reverse. It is
+   invisible as a bug because a coloured country looks exactly as intentional as
+   any other coloured country, and the only person who can spot it is the one
+   who has lived there.
+
+   The generator is deterministic (a projection of committed TopoJSON through a
+   committed country list), so regenerating and comparing is exact.
+──────────────────────────────────────────────────────────────────────────────*/
+const { readCountriesModule } = require('../scripts/generate-world-map.js');
+
+test('drift: the index.html world map matches data/countries.js', () => {
+  const ROOT = path.resolve(__dirname, '..');
+  const countries = readCountriesModule(path.join(ROOT, 'data', 'countries.js'));
+  const svg = buildWorldMapSvg(topo, countries);
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+  assert.ok(html.includes(BLOCK_START) && html.includes(BLOCK_END),
+    'index.html has lost its world-map markers');
+  assert.equal(replaceBlock(html, svg), html,
+    'the world-map SVG in index.html is stale — run `npm run generate-world-map`. '
+    + 'A country is being drawn in a category data/countries.js no longer gives it.');
+});

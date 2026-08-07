@@ -95,7 +95,22 @@ async function main() {
       await page.waitForTimeout(shot.wait || 1400);
       await scrollThrough(page);
       await settleReveal(page);
-      await page.evaluate(() => window.scrollTo(0, 0));
+      /* `behavior: 'instant'`, and then wait for scrollY to actually reach 0.
+         This used to be a bare scrollTo(0, 0) followed by a 400 ms pause —
+         but html carries `scroll-behavior: smooth`, so from the bottom of a
+         5400px homepage the shutter fired mid-flight and index-hero-*.png was
+         a photograph of the Projects section. The one capture named "hero"
+         never contained the hero.
+
+         CLAUDE.md already records this exact trap for test/e2e/content.e2e.mjs
+         ("a fixed timeout after scrollTo() measures mid-flight, and reads as
+         the effect being a few percent wrong"). Same stylesheet, same cause,
+         learned there and not applied here. Polling rather than a longer sleep
+         because the right wait depends on page height, which differs per
+         shot. */
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      await page.waitForFunction(() => window.scrollY === 0, null, { timeout: 5000 })
+        .catch(() => { /* a page too short to scroll is already at 0 */ });
       await page.waitForTimeout(400);
       if (shot.scroll) await page.evaluate((y) => window.scrollTo(0, y), shot.scroll);
       const file = join(OUT, `${shot.name}-${scheme}.png`);

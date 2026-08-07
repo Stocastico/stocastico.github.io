@@ -210,3 +210,64 @@ test('toPosix normalises the host separator away', () => {
   assert.equal(toPosix(''), '');
   assert.equal(toPosix(null), '');
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DRIFT: data/locations.js still describes data/locations.yaml.
+
+   This one cannot be a byte-for-byte regeneration like the other generated
+   modules: generate-locations geocodes through Nominatim, so re-running it in a
+   test would either hit the network or depend on .cache/ being warm. Neither
+   belongs in a suite that has to pass offline in two seconds.
+
+   What is checkable without geocoding is the correspondence: every place named
+   in the YAML appears in the module and nothing appears in the module that the
+   YAML does not name. That catches the drift that actually happens — a pin
+   added, renamed or deleted in the source and the generator never re-run —
+   which is the whole failure mode, since coordinates only change when a name
+   does. Measured: renaming a pin in the committed module left all 925
+   assertions green before this existed.
+
+   test/main.node.test.mjs already asserts the complementary half (every entry
+   carries finite coordinates), so between them a pin cannot be stale *or*
+   unplaceable.
+──────────────────────────────────────────────────────────────────────────────*/
+const fsLoc   = require('node:fs');
+const pathLoc = require('node:path');
+
+const LOC_ROOT = pathLoc.resolve(__dirname, '..');
+
+function namesFromYaml() {
+  const y = parseYaml(fsLoc.readFileSync(pathLoc.join(LOC_ROOT, 'data', 'locations.yaml'), 'utf8'));
+  const pins = (y.pins || []).map((p) => p.name);
+  const regions = (y.regions || []).map((r) => r.name);
+  const trips = (y.trips || []).map((t) => t.name);
+  const tripCities = (y.trips || []).flatMap((t) => (t.cities || []).map((c) => c.name ?? c));
+  return { pins, regions, trips, tripCities };
+}
+
+function namesFromModule() {
+  const src = fsLoc.readFileSync(pathLoc.join(LOC_ROOT, 'data', 'locations.js'), 'utf8');
+  const json = JSON.parse(src.slice(src.indexOf('{'), src.lastIndexOf('}') + 1));
+  return {
+    pins: (json.pins || []).map((p) => p.name),
+    regions: (json.regions || []).map((r) => r.name),
+    trips: (json.trips || []).map((t) => t.name),
+    tripCities: (json.trips || []).flatMap((t) => (t.cities || []).map((c) => c.name)),
+  };
+}
+
+for (const group of ['pins', 'regions', 'trips', 'tripCities']) {
+  test(`drift: data/locations.js ${group} match data/locations.yaml`, () => {
+    const y = namesFromYaml()[group];
+    const j = namesFromModule()[group];
+    assert.deepEqual([...j].sort(), [...y].sort(),
+      `data/locations.js ${group} disagree with data/locations.yaml — run `
+      + '`npm run generate-locations`');
+  });
+}
+
+test('drift: locations.yaml is not empty (the comparison above needs something to compare)', () => {
+  const y = namesFromYaml();
+  assert.ok(y.pins.length >= 20, `only ${y.pins.length} pins parsed from locations.yaml`);
+  assert.ok(y.tripCities.length >= 20, `only ${y.tripCities.length} trip cities parsed`);
+});

@@ -129,7 +129,7 @@ export const LINKS = {
     },
     {
       "name": "Julian Schrittwieser",
-      "url": "https://julian.ac",
+      "url": "https://www.julian.ac",
       "categories": [
         "ai"
       ],
@@ -329,19 +329,6 @@ export const LINKS = {
         "data-viz",
         "journalism",
         "interactive"
-      ]
-    },
-    {
-      "name": "Vi Hart",
-      "url": "https://vihart.com",
-      "categories": [
-        "visual-explanation",
-        "engineering-math-physics"
-      ],
-      "description": "Mathematical doodling and playful video-essays on geometry and music.",
-      "tags": [
-        "math",
-        "playful"
       ]
     },
     {

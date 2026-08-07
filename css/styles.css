@@ -1834,8 +1834,22 @@ figcaption {
   background: var(--bg-card-hov);
 }
 
+/* inline-block, not block. `.stat-suffix` is the inline "+" that follows this
+   element in the markup, so a block here pushed it onto a line of its own and
+   the About stats read
+
+       30            15
+        +             +
+       PUBLICATIONS  YEARS EXP.
+
+   with the plus centred on an otherwise empty row. "Countries" carries no
+   suffix, so one of the three cards looked right and the other two looked like
+   a stray character rather than a style. inline-block puts number and suffix
+   back on one baseline ("30+") and drops 23px of phantom line height out of
+   every stat card. `.stat-label` is still display:block, so it keeps its own
+   line underneath. */
 .stat-number {
-  display: block;
+  display: inline-block;
   font-family: var(--font-display);
   font-size: 2rem;
   letter-spacing: var(--tracking-display);
@@ -3175,7 +3189,42 @@ figcaption {
   }
 }
 
-@media (max-width: 680px) {
+/* ─── Navbar: burger below 900px ──────────────────────────────────────────
+   900, not the 680 the rest of the phone layout uses, and the two are
+   deliberately different numbers now: this one is set by how wide the navbar's
+   own content is, and nothing else on the page shares that constraint.
+
+   The bar holds a logo, three palette dots, a theme toggle, seven links and
+   the ⌘K chip. That content has an intrinsic width of ~793px and cannot
+   shrink — .nav-inner is a `justify-content: space-between` flex row with no
+   wrap, so below its content width the items simply overflow to the right.
+   With the navbar's own `padding-inline: clamp(1.25rem, 5vw, 3rem)` the last
+   width that still fits is ~835px.
+
+   The burger used to arrive at 680px, which left a 155px band (681–835px)
+   with no responsive answer at all: the ⌘K chip hung up to 146px past the
+   right edge and "Contact" was entirely off-screen below ~705px. That band is
+   iPad portrait (768 and 820), iPad Mini (744), Surface (800), and any desktop
+   window dragged narrower than a laptop.
+
+   Nothing caught it for three audits because `overflow-x: clip` on html/body
+   (§2) means an overflowing element never grows the scroll width, so the
+   browser suite's "nothing overflows sideways" check — which asked the
+   *document* whether it scrolled — could not see it. Clipping is not
+   overflow. That assertion now measures each element's own right edge; see
+   test/e2e/pages.e2e.mjs.
+
+   Both elements stayed keyboard-focusable while clipped, so tabbing the
+   navbar at 768px moved focus to two invisible controls (WCAG 2.4.7 / 2.4.11).
+   axe cannot flag that — it has no way to tell a deliberate .visually-hidden
+   offset from an accidental one.
+
+   The rules below are only the ones that answer that width. The phone-layout
+   rules that used to share the block (.pub-item, .pub-year, and the hero
+   centring further down) stay at 680px on purpose: a tablet is wide enough for
+   the left-aligned hero, and moving them here would restyle content that fits
+   perfectly well. */
+@media (max-width: 900px) {
   .nav-links {
     display: none;
     position: fixed;
@@ -3212,7 +3261,9 @@ figcaption {
   .palette-picker {
     gap: 0;
   }
+}
 
+@media (max-width: 680px) {
   .pub-item {
     padding: 1.2rem;
   }
@@ -3671,6 +3722,40 @@ figcaption {
   font-style: italic;
 }
 
+/* A table is the one block of prose content that cannot be made narrower by
+   wrapping: its width is the sum of its columns' min-content widths, and no
+   media query can reduce that below the longest word in each header. The five
+   columns of the ARoundTheWorld study table come to 481px, which on a 390px
+   phone put the whole "Watchers" column past the right edge — and because
+   html/body carry `overflow-x: clip` (§2) there was no scrollbar to hint that
+   anything was missing. The table simply ended mid-column.
+
+   So the table gets its own scroll container rather than the page getting a
+   scrollbar. .table-scroll is emitted by scripts/new-project.js around every
+   markdown table, so this is structural rather than a patch on one page.
+
+   `tabindex="0"` on the wrapper is load-bearing, not decoration: a scrollable
+   region that cannot be focused cannot be scrolled by keyboard, which is
+   WCAG 2.1.1, and axe enforces it (`scrollable-region-focusable`, tagged
+   wcag2a — so adding the overflow without the tabindex would have turned one
+   bug into another). The role/aria-label give the focus stop a name instead of
+   announcing an anonymous group.
+
+   The tighter cell padding below 680px is what usually makes the scroll
+   unnecessary: it buys back ~80px, enough that a table of three or four
+   ordinary columns fits a phone outright and only a wide one scrolls. */
+.table-scroll {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  /* Let the flat scroll edge read as one with the table's own border. */
+  border-radius: var(--r-sm);
+}
+
+.table-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .post table {
   width: 100%;
   border-collapse: collapse;
@@ -3679,11 +3764,25 @@ figcaption {
   color: var(--text-muted);
 }
 
+/* Inside a scroller the wrapper owns the vertical rhythm; a second margin
+   would double it. */
+.table-scroll .post table,
+.table-scroll table {
+  margin: 0;
+}
+
 .post table th,
 .post table td {
   padding: 0.6rem 0.9rem;
   text-align: left;
   border: 1px solid var(--border);
+}
+
+@media (max-width: 680px) {
+  .post table th,
+  .post table td {
+    padding: 0.5rem 0.45rem;
+  }
 }
 
 .post table th {
@@ -4226,12 +4325,18 @@ figcaption {
   color: var(--text-faint);
 }
 
-/* Keyboard shortcut pill in nav */
+/* Keyboard shortcut pill in nav.
+
+   901px, matching the burger breakpoint above — this chip is the widest thing
+   in the bar and was the one hanging furthest off the right edge (146px at
+   681px) while the threshold here read 681. The two numbers have to move
+   together: showing the chip at any width where the burger has taken over puts
+   it back outside the viewport. */
 .cmd-trigger-hint {
   display: none;
 }
 
-@media (pointer: fine) and (min-width: 681px) {
+@media (pointer: fine) and (min-width: 901px) {
   .cmd-trigger-hint {
     display: inline-flex;
     align-items: center;
