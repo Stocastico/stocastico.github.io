@@ -15,7 +15,17 @@
      lang:        'es',                       // OPTIONAL — only for a url that
                                               // leaves the English site; becomes
                                               // hreflang on the card anchor
+     updated:     '2026-03-14',               // OPTIONAL — YYYY-MM-DD, the Atom
+                                              // feed's <updated>; defaults to
+                                              // Jan 1 of `year`
    }
+
+   `updated` is an editorial date, not a file date. It used to be the page's
+   last git commit, which meant a CSP-hash refresh or a typo fix republished
+   the project to every feed subscriber — eight of fourteen entries once
+   carried the dates of two audits that changed no prose. Set it when the
+   write-up meaningfully changes; leave it alone otherwise. Re-run
+   `npm run generate-feed` after editing.
 
    `bg` is only read by a `projects/*.html` detail page (hero + og:image), so an
    entry whose url points elsewhere omits it rather than shipping an image

@@ -243,6 +243,70 @@ test('initNavbar toggles scrolled class on scroll events', () => {
   }
 });
 
+/* The scroll-spy marks the section you are looking at, which ARIA calls
+   `location`. `page` is a different claim — "this link points at the page you
+   are on" — and is what the static markup uses on the cross-page nav links
+   (now.html marks its own Now link, and initNavbar marks Projects from a
+   project detail page). Both used to write `page`, so one word carried two
+   meanings and on the homepage "About" announced itself as the current *page*
+   while you scrolled past it. Nothing asserted either value before this. */
+test('initNavbar marks the visible section aria-current="location", not "page"', () => {
+  const attrs = new Map();
+  const mkLink = (href) => ({
+    _a: new Map([['href', href]]),
+    getAttribute(k) { return this._a.has(k) ? this._a.get(k) : null; },
+    setAttribute(k, v) { this._a.set(k, v); attrs.set(href, v); },
+  });
+  const about = mkLink('#about');
+  const contact = mkLink('#contact');
+  const navLinks = [about, contact];
+  const sections = { '#about': { id: 'about' }, '#contact': { id: 'contact' } };
+
+  const prevDocument = global.document;
+  const prevWindow = global.window;
+  let observerCb = null;
+  global.document = {
+    getElementById: (id) => (id === 'navbar' ? { classList: makeClassList() } : null),
+    querySelectorAll: (sel) => (sel.includes('#nav-links') ? navLinks : []),
+    querySelector: (sel) => sections[sel] || null,
+  };
+  global.window = {
+    scrollY: 0,
+    location: { pathname: '/index.html' },
+    addEventListener() {},
+    removeEventListener() {},
+    IntersectionObserver: class {
+      constructor(cb) { observerCb = cb; }
+      observe() {} disconnect() {}
+    },
+  };
+  global.window.IntersectionObserver = global.window.IntersectionObserver;
+  global.IntersectionObserver = global.window.IntersectionObserver;
+  try {
+    initNavbar();
+    /* First section is active on init. */
+    assert.equal(about.getAttribute('aria-current'), 'location',
+      'the section in view must be aria-current="location"');
+    assert.equal(contact.getAttribute('aria-current'), 'false');
+
+    /* Scrolling to #contact moves the marker, still as `location`. */
+    assert.ok(observerCb, 'initNavbar should have created an IntersectionObserver');
+    observerCb([{ isIntersecting: true, target: { id: 'contact' } }]);
+    assert.equal(contact.getAttribute('aria-current'), 'location');
+    assert.equal(about.getAttribute('aria-current'), 'false');
+
+    /* And never "page" — that token belongs to the cross-page links. */
+    for (const link of navLinks) {
+      assert.notEqual(link.getAttribute('aria-current'), 'page',
+        'in-page anchors must not claim to be the current page');
+    }
+  } finally {
+    global.document = prevDocument;
+    global.window = prevWindow;
+    delete global.IntersectionObserver;
+  }
+});
+
 test('initMobileMenu toggles classes and aria-expanded on click', () => {
   const toggleHandlers = {};
   const linkHandlers = [];

@@ -45,7 +45,8 @@ jobs:
       # The fast suite runs here too, and that is not redundancy — it is the
       # only place it runs on a pull request at all.
       #
-      # `npm test` was gated exclusively on build.yml and deploy.yml, both of
+      # `npm test` was gated exclusively on deploy.yml (and the since-deleted
+      # build.yml), both of
       # which are `push: [main]`. This workflow was the sole pull_request check.
       # So a PR could sit green with all ~890 static assertions red, and the
       # first anyone heard of it was the deploy gate refusing to publish after

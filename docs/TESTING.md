@@ -98,7 +98,7 @@ rather than the sources.
   for the browser run, so a drift check or a contrast regression fails the job
   almost immediately instead of after work nobody will read the result of.
 - Both also gate **deploy** (`deploy.yml`) and the weekly **palette rotation**
-  (`rotate-palette.yml`); `npm test` additionally gates `build.yml`.
+  (`rotate-palette.yml`).
 
 `npm test` used to be gated *only* on `push: [main]`, which meant a pull
 request could sit green with all ~890 static assertions red — the first sign

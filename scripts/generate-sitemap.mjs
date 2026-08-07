@@ -102,7 +102,15 @@ async function main() {
   process.stdout.write(`✓ wrote ${path.relative(ROOT, outPath)} (${entries.length} URLs)\n`);
 }
 
-main().catch((err) => {
-  process.stderr.write(`generate-sitemap failed: ${err.stack || err.message}\n`);
-  process.exit(1);
-});
+/* Command-line only. Every generator in this directory now carries this guard:
+   two of them (analytics, speculation-rules) ran at import time, which made
+   their test suites unable to fail and let `npm test` write to the working
+   tree. See the note in scripts/generate-analytics.mjs. */
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  main().catch((err) => {
+    process.stderr.write(`generate-sitemap failed: ${err.stack || err.message}\n`);
+    process.exit(1);
+  });
+}
+
+export { main };

@@ -223,6 +223,6 @@ function main() {
     `(${(out.length / 1024).toFixed(1)} KB source)\n`);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   main();
 }

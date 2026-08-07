@@ -117,6 +117,12 @@ async function main() {
   process.stdout.write(`Done. ${count} OG card(s) ${DRY_RUN ? 'would be ' : ''}written to img/og/.\n`);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+/* Command-line only. Every generator in this directory now carries this guard:
+   two of them (analytics, speculation-rules) ran at import time, which made
+   their test suites unable to fail and let `npm test` write to the working
+   tree. See the note in scripts/generate-analytics.mjs. */
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  main().catch((err) => { console.error(err); process.exit(1); });
+}
 
 export { svgFor };

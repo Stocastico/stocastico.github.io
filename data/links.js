@@ -332,19 +332,6 @@ export const LINKS = {
       ]
     },
     {
-      "name": "Vi Hart",
-      "url": "https://vihart.com",
-      "categories": [
-        "visual-explanation",
-        "engineering-math-physics"
-      ],
-      "description": "Mathematical doodling and playful video-essays on geometry and music.",
-      "tags": [
-        "math",
-        "playful"
-      ]
-    },
-    {
       "name": "PerThirtySix",
       "url": "https://perthirtysix.com",
       "categories": [

@@ -8,7 +8,7 @@
 
    which reads as a courtesy — green suite without a build — and behaves as a
    deletion. Every workflow runs `npm test` *before* `npm run build`
-   (build.yml, deploy.yml, e2e.yml and rotate-palette.yml all do, deliberately,
+   (deploy.yml, e2e.yml and rotate-palette.yml all do, deliberately,
    so a two-second static failure lands before a five-minute browser run). So
    dist/ never existed at the moment that test was evaluated, and it was
    skipped in CI every single time. It only ever ran on a developer's machine
@@ -79,4 +79,77 @@ describe('build output: the pages Vite was asked for are all present', () => {
       + 'rollupOptions.input map in vite.config.js',
     );
   });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   The raster icons carry the palette the SVG carries.
+
+   test/theme-sync.test.js already asserts public/favicon.svg matches the
+   active palette in data/palettes.yaml, and test/html-quality.test.mjs asserts
+   the PNGs and the .ico exist. Between those two there was a gap exactly the
+   width of the failure that has already happened once: `generate-theme` run,
+   `generate-favicons` forgotten. The SVG would be repainted, the rasters would
+   still exist, and the tab icon, the bookmark, the PWA icon and the OS icon
+   set would all be wearing last week's palette while the site wore this one.
+
+   That is not hypothetical — the same shape of omission left every page
+   marking the previous palette as selected for a full rotation cycle, because
+   the recipe everyone copied predated the step. The weekly rotation workflow
+   is unattended, so nothing else would notice.
+
+   This lives in the browser layer rather than the fast suite because decoding
+   a PNG means `sharp`, and `npm test` staying dependency-free and ~3 seconds
+   is worth more than the two seconds this would add there. It needs no
+   browser; like budget.e2e.mjs it is here for the post-build guarantee.
+──────────────────────────────────────────────────────────────────────────────*/
+const hexToRgb = (hex) => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+};
+
+describe('build output: the raster icons match the active palette', () => {
+  const svgPath = path.join(ROOT, 'public', 'favicon.svg');
+  const svg = fs.readFileSync(svgPath, 'utf8');
+  const bgHex = (svg.match(/<rect[^>]*fill="([^"]+)"/) || [])[1];
+
+  test('public/favicon.svg still declares a background fill', () => {
+    assert.ok(bgHex && hexToRgb(bgHex),
+      `could not read a #rrggbb rect fill from public/favicon.svg (got ${bgHex})`);
+  });
+
+  for (const icon of ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
+    'icon-maskable-192.png', 'icon-maskable-512.png']) {
+    test(`public/${icon} was rasterised from the current favicon.svg`, async () => {
+      const sharp = (await import('sharp')).default;
+      const file = path.join(ROOT, 'public', icon);
+      assert.ok(fs.existsSync(file), `public/${icon} is missing — run \`npm run generate-favicons\``);
+
+      const { data, info } = await sharp(file)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      /* Sample the middle of the upper band: inside the rounded rect (so not
+         the transparent corner) and above the "SM" glyph, which sits around
+         the vertical centre. */
+      const x = Math.floor(info.width / 2);
+      const y = Math.floor(info.height * 0.15);
+      const i = (y * info.width + x) * info.channels;
+      const got = { r: data[i], g: data[i + 1], b: data[i + 2] };
+      const want = hexToRgb(bgHex);
+
+      /* A small tolerance: the SVG is rendered at 4x and downsampled, so the
+         background can pick up a unit of rounding. Anything larger is a
+         different colour, which is the whole question. */
+      const delta = Math.max(
+        Math.abs(got.r - want.r), Math.abs(got.g - want.g), Math.abs(got.b - want.b),
+      );
+      assert.ok(delta <= 4,
+        `public/${icon} background is rgb(${got.r},${got.g},${got.b}) but favicon.svg says `
+        + `${bgHex} = rgb(${want.r},${want.g},${want.b}). The rasters are stale — `
+        + 'run `npm run generate-favicons` after `npm run generate-theme`.');
+    });
+  }
 });
