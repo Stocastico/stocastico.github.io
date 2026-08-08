@@ -1,7 +1,7 @@
 {
   "name": "stocastico-github-io",
   "version": "1.0.0",
-  "description": "Personal website of Stefano Masneri — AI Engineer",
+  "description": "Personal website of Stefano Masneri \u2014 AI Engineer",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -55,6 +55,7 @@
     "generate-cnn-activations": "node scripts/generate-cnn-activations.mjs",
     "generate-lenet-weights": "node scripts/generate-lenet-weights.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "check-links": "node scripts/check-links.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-llms": "node scripts/generate-llms.mjs",
     "generate-feed": "node scripts/generate-feed.mjs",

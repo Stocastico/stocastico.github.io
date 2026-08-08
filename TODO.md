@@ -24,19 +24,16 @@ need the audit context.
   sentences each, lifted and trimmed. Re-run `npm run generate-cv` then
   `npm run generate-cards` afterwards.
 
-- **One link needs a human eye.** `https://addi.ehu.eus/handle/10810/68721` —
-  the thesis link, used in both `data/publications.js` and the JSON-LD on
-  `publications.html`. It could not be settled from a sandbox whose proxy
-  returns its own 503s; every other DOI and IEEE link on the site resolved and
-  only this one did not, so it is worth one click. If ADDI has moved the
-  record, both places need the new handle.
-
-  (`julian.ac` was repointed at `www.julian.ac` — the apex serves no
-  certificate. `vihart.com` was removed: the site is gone.)
-
-  Nothing guards third-party links automatically and nothing should — a checker
-  across 48 external sites on every PR would be slow and flaky. Worth a manual
-  sweep once or twice a year.
+- **Rewrite the PhD sentence in the About section once the dissertation is up.**
+  `index.html` currently offers the *defence slides* twice, at two file sizes:
+  "multi-user augmented reality experiences for education (PDF, 4 MB · full
+  quality, 12 MB)". Two links to the same artefact is a choice about bandwidth
+  dressed up as a choice about content. It should offer the **dissertation** and
+  the **HQ defence slides** — two different documents, one for reading and one
+  for skimming. Waiting on `docs/dissertation.pdf` (name it whatever you like;
+  point me at it and I will wire the copy, the link and the file size).
+  `docs/defense.pdf`, the 4 MB downsampled slide deck, becomes redundant at that
+  point and can go.
 
 - **Check the WebP social cards actually preview.** Most `projects/*.html` point
   `og:image` at a `.webp`; LinkedIn and WhatsApp have historically been
@@ -83,11 +80,37 @@ these are what is left, with the reason.
   full-width mobile stack. Not a bug — a way to delete a class of breakpoint.
 
 - **Revisit the work/personal filter on `projects.html` at four or five personal
-  projects.** There are two now, both from 2026, and a facet returning two of
-  fourteen mostly disappoints. Worth noting that the homepage is work-only, so
-  it currently shows nothing newer than 2025.
+  projects.** There are two now, and a facet returning two of fourteen mostly
+  disappoints. (For why the homepage ends at 2025, see the first entry under
+  Decisions — it is not a data problem and does not need solving here.)
 
 ## Decisions (reviewed, deliberately not changed)
+
+- **"The newest publication is 2024" is not a gap, and neither is "the newest
+  work project is 2025".** An audit will keep finding both and they are both
+  expected. Stefano no longer works in research, so the publication list is a
+  closed record rather than a stalled one — it is complete as of the end of that
+  career, and 37 papers is the number. And professional projects cannot be
+  written up until they ship, so there is a structural lag of a year or more
+  between doing the work and being allowed to describe it. Neither is fixable by
+  editing this repository. **Do not re-raise them.**
+
+  The one consequence worth keeping an eye on: `homepageProjects()` filters to
+  `kind: 'work'`, and both 2026 entries are personal, so the homepage portfolio
+  currently ends in 2025 through no fault of the data. If the confidentiality lag
+  ever makes that gap embarrassing, the lever is letting the homepage fall back
+  to personal projects when the work set is thin — not weakening the filter.
+
+- **Link rot is checked monthly and advisorily, never in CI.** `npm run
+  check-links` (`.github/workflows/link-check.yml`, first of the month) probes
+  the blogroll and the publication URLs and opens an issue if anything is
+  genuinely dead. It deliberately treats 401/403/405/429 as bot-blocking rather
+  than breakage — without that filter `whc.unesco.org` alone would file 130 false
+  positives a month — and retries three times, because an egress proxy that
+  cannot reach an origin answers on the origin's behalf. Gating a pull request on
+  80 third-party hosts would buy flakiness for no safety: a dead link
+  disappoints a visitor, it does not break a build, and that is a much slower
+  clock than a merge.
 
 - The public contact email is intentional; leave the obfuscated address as-is.
 - Globe land texture (2048×1024) is rebuilt per construction / theme switch

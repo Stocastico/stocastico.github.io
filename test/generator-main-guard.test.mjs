@@ -39,13 +39,17 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPTS = path.join(ROOT, 'scripts');
 
-/* Everything that writes into the repo as its job. The dev-only analysis and
-   training scripts (train-cnn, the eval-* and diagnose-* pair, screenshots,
-   ingest-digit-capture) are deliberately out of scope: nothing imports them,
-   they write to .cache/ or to gitignored output, and train-cnn downloads MNIST
-   on import — which is precisely why no test should ever import it either. */
+/* Everything that writes into the repo as its job, plus check-links — which
+   writes nothing, but would fire ~85 HTTP requests at third-party hosts if an
+   import ran it, and "side effect" means more than "touched a file".
+
+   The dev-only analysis and training scripts (train-cnn, the eval-* and
+   diagnose-* pair, screenshots, ingest-digit-capture) are deliberately out of
+   scope: nothing imports them, they write to .cache/ or to gitignored output,
+   and train-cnn downloads MNIST on import — which is precisely why no test
+   should ever import it either. */
 const GENERATORS = fs.readdirSync(SCRIPTS)
-  .filter((f) => /^(generate-.*|set-domain|new-project|rotate-palette)\.(mjs|js)$/.test(f))
+  .filter((f) => /^(generate-.*|set-domain|new-project|rotate-palette|check-links)\.(mjs|js)$/.test(f))
   .sort();
 
 /* `path.resolve` or a destructured `resolve` — generate-lenet-weights.mjs
