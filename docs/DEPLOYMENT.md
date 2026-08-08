@@ -22,35 +22,17 @@ php -S localhost:8080
 
 Then open `http://localhost:8080` in your browser.
 
+
 ---
 
 ## Minification
 
-The main JavaScript file (`js/main.js`) can be minified for production to reduce its size.
+Vite does it. `npm run build` minifies and hashes the JS and CSS into `dist/assets/`; there is
+nothing to run by hand and nothing to commit.
 
-```bash
-npm run minify
-```
-
-This calls `terser` via `npx` to compress and mangle `js/main.js`, writing output to `js/main.min.js`.
-
-> **Note**: `terser` is fetched via `npx` on first run (requires internet). To install it permanently as a dev dependency: `npm install --save-dev terser`.
-
-### Switching the site to use the minified file
-
-After running `npm run minify`, update the `<script>` tag near the bottom of `index.html`:
-
-```html
-<!-- Before (development) -->
-<script src="js/main.js" ...></script>
-
-<!-- After (production) -->
-<script src="js/main.min.js" ...></script>
-```
-
-Commit both `js/main.min.js` and the updated `index.html`.
-
-> **Tip**: The [GitHub Actions workflow](#option-1--github-pages-with-github-actions-recommended) below handles minification automatically in CI.
+This section used to describe `npm run minify`, which called `terser` via `npx` to produce a
+committed `js/main.min.js` that the HTML then had to be pointed at. That script, that file and
+that dependency are all gone — the build replaced them — but the instructions outlived them.
 
 ---
 

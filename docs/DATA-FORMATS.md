@@ -395,42 +395,16 @@ npm run generate-locations
 ./scripts/update-locations.sh
 ```
 
+
 ---
 
-## Blog post frontmatter
+## A note on what is not here
 
-Blog posts are Markdown files with a YAML frontmatter block at the top. The `new-post` script reads this metadata to generate the HTML and the `data/blog.js` entry.
+This file once documented a blog: `new-post`, `data/blog.js`, a `blog/` directory and a
+frontmatter schema for posts. None of it exists, and as far as this repository's history
+goes none of it ever shipped — the site says so itself on the About section ("No blog, but
+I do maintain a now page"). Thirty-seven lines of field reference for a feature that was
+never there is worse than nothing: it is the kind of thing someone builds against.
 
-```markdown
----
-title:   "My Post Title"
-date:    "2025-03-01"
-excerpt: "One-sentence summary shown on the homepage card."
-tag:     "Research"
-readMin: 6
-lead:    "Optional large-type opening sentence."
-url:     "blog/custom-slug.html"
----
-
-## Introduction
-
-Your content here…
-```
-
-### Field reference
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `title` | string | Yes | Post title |
-| `date` | string | Yes | ISO date `YYYY-MM-DD` |
-| `excerpt` | string | Yes | Short teaser shown on the homepage card |
-| `tag` | string | No | Badge label, e.g. `"Research"`, `"Engineering"`, `"AI"` |
-| `readMin` | integer | No | Estimated reading time in minutes |
-| `lead` | string | No | Opening sentence displayed in larger type at the top of the post |
-| `url` | string | No | Override the output path; defaults to `blog/<slugified-title>.html` |
-
-Run the generator:
-
-```bash
-npm run new-post -- path/to/my-post.md
-```
+Removed rather than marked deprecated, for the reason TODO.md gives about its own decisions
+log — a record that has quietly stopped being true argues against re-checking.

@@ -1,0 +1,60 @@
+# Dependabot — the only thing watching the dependency surface.
+#
+# There are five packages (three, vite, sharp, playwright, axe-core) and
+# `npm audit` is clean today, but nothing was checking. Three of those five
+# move fast enough that a year of silence is a real gap: `three` ships monthly,
+# Vite majors change the build, and Playwright drifts against whatever Chromium
+# CI installs.
+#
+# Monthly, not weekly, and grouped into one PR per ecosystem. This repo already
+# has an unattended Monday job (rotate-palette.yml) that commits to main; a
+# second stream of automated PRs at that cadence would be noise, and noise on a
+# repo with one maintainer means nobody reads any of it. Monthly grouped means
+# roughly one PR to look at every four weeks, and it lands with both suites run
+# against it — e2e.yml is triggered by `pull_request`, so a Dependabot PR is
+# gated exactly like a human one.
+#
+# Majors are deliberately included rather than ignored. The value here is
+# knowing when Vite 9 or Three r190 lands, and a config that silently withholds
+# majors is the same "reports success either way" pattern this repo keeps
+# finding in its own tests.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      # One PR for everything that only affects the build and test rig. These
+      # never reach a visitor, so they can move together and be judged by
+      # whether CI is green.
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - '*'
+      # `three` is the only runtime dependency and the only one whose upgrade
+      # can change what the browser renders, so it gets its own PR.
+      runtime:
+        dependency-type: production
+        patterns:
+          - '*'
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+
+  # The workflows pin actions by major (actions/checkout@v6 and friends).
+  # Those majors do get retired, and a retired action fails the deploy rather
+  # than degrading quietly — worth knowing before that happens.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      actions:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: 'chore(ci)'
