@@ -24,17 +24,6 @@ need the audit context.
   sentences each, lifted and trimmed. Re-run `npm run generate-cv` then
   `npm run generate-cards` afterwards.
 
-- **Rewrite the PhD sentence in the About section once the dissertation is up.**
-  `index.html` currently offers the *defence slides* twice, at two file sizes:
-  "multi-user augmented reality experiences for education (PDF, 4 MB · full
-  quality, 12 MB)". Two links to the same artefact is a choice about bandwidth
-  dressed up as a choice about content. It should offer the **dissertation** and
-  the **HQ defence slides** — two different documents, one for reading and one
-  for skimming. Waiting on `docs/dissertation.pdf` (name it whatever you like;
-  point me at it and I will wire the copy, the link and the file size).
-  `docs/defense.pdf`, the 4 MB downsampled slide deck, becomes redundant at that
-  point and can go.
-
 - **Check the WebP social cards actually preview.** Most `projects/*.html` point
   `og:image` at a `.webp`; LinkedIn and WhatsApp have historically been
   unreliable with WebP previews, and LinkedIn is where these get shared. Run a
@@ -111,6 +100,17 @@ these are what is left, with the reason.
   80 third-party hosts would buy flakiness for no safety: a dead link
   disappoints a visitor, it does not break a build, and that is a much slower
   clock than a merge.
+
+- **`docs/defense.pdf` is kept but no longer deployed.** The About section used
+  to offer the defence slides twice at two file sizes — a bandwidth choice
+  dressed up as a content choice — and now offers the dissertation (5 MB) and
+  the HQ slides (12 MB), two different documents. That leaves the 3.8 MB
+  downsampled deck referenced by nothing. It stays in `docs/` because it costs
+  nothing in a repository and is exactly what you want back the day someone
+  asks for a lighter download; `copyDocsPdfs()` in `vite.config.js` copies only
+  the PDFs the built HTML links to, so it simply stops shipping. That plugin
+  used to sweep the whole directory, which is the same mistake
+  `copyReferencedImages()` was written to fix for `img/`.
 
 - The public contact email is intentional; leave the obfuscated address as-is.
 - Globe land texture (2048×1024) is rebuilt per construction / theme switch
