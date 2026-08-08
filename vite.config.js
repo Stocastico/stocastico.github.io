@@ -9,9 +9,28 @@ const projectPages = Object.fromEntries(
     .map((f) => [`projects/${f.replace(/\.html$/, '')}`, resolve(projectsDir, f)]),
 );
 
-/* Copy docs/*.pdf into dist/docs/ — index.html and cv.html link directly to
-   docs/cv.pdf and docs/defense.pdf, but the PDFs aren't in the Rollup graph,
-   so Vite would otherwise drop them from the deploy. */
+/* Copy the PDFs the built HTML actually links to into dist/docs/. They are not
+   in the Rollup graph — an <a href> to a PDF is a navigation, not an import —
+   so Vite would otherwise drop them from the deploy entirely.
+
+   Referenced, not "every file in docs/", and that is the same lesson
+   copyReferencedImages() below records for img/: a directory sweep ships
+   whatever happens to be sitting there forever. It bit immediately. The About
+   section used to offer the defence slides twice, at two file sizes, and when
+   that became a link to the dissertation and one to the HQ slides, the 3.8 MB
+   downsampled deck stopped being referenced by anything — but a sweep would
+   have gone on copying it into every deploy, indefinitely, because nothing
+   would ever say it had become dead weight.
+
+   The file stays in docs/ deliberately: it costs nothing in a repository and
+   it is the kind of thing you want back the day someone asks for a lighter
+   download. It just stops being deployed.
+
+   The scan walks the built HTML under dist/ rather than the sources, so it
+   sees what shipped, and it accepts both `docs/x.pdf` (the pages' relative
+   links) and
+   `/docs/x.pdf` (the ⌘K palette's root-absolute one). A PDF that is linked but
+   missing from docs/ is a hard error rather than a silent 404 in the deploy. */
 function copyDocsPdfs() {
   return {
     name: 'copy-docs-pdfs',
@@ -19,13 +38,50 @@ function copyDocsPdfs() {
     closeBundle() {
       const srcDir = resolve(__dirname, 'docs');
       const outDir = resolve(__dirname, 'dist', 'docs');
+      const distRoot = resolve(__dirname, 'dist');
       if (!existsSync(srcDir)) return;
-      mkdirSync(outDir, { recursive: true });
-      for (const f of readdirSync(srcDir)) {
-        if (f.toLowerCase().endsWith('.pdf')) {
-          copyFileSync(resolve(srcDir, f), resolve(outDir, f));
+
+      const htmlFiles = [];
+      const collectHtml = (dir) => {
+        for (const ent of readdirSync(dir, { withFileTypes: true })) {
+          const p = resolve(dir, ent.name);
+          if (ent.isDirectory()) collectHtml(p);
+          else if (ent.name.endsWith('.html')) htmlFiles.push(p);
+        }
+      };
+      collectHtml(distRoot);
+
+      /* The JS bundle carries the palette's "Open CV PDF" action, so scan the
+         built assets too — otherwise a PDF linked only from ⌘K would ship
+         broken. */
+      const assetsDir = resolve(distRoot, 'assets');
+      const jsFiles = existsSync(assetsDir)
+        ? readdirSync(assetsDir).filter((f) => f.endsWith('.js')).map((f) => resolve(assetsDir, f))
+        : [];
+
+      const wanted = new Set();
+      for (const file of [...htmlFiles, ...jsFiles]) {
+        const text = readFileSync(file, 'utf8');
+        for (const m of text.matchAll(/["'(](?:https?:\/\/[^"'()]*?)?\/?docs\/([^"'()\s]+\.pdf)/gi)) {
+          wanted.add(decodeURIComponent(m[1]));
         }
       }
+
+      mkdirSync(outDir, { recursive: true });
+      let copied = 0;
+      for (const rel of wanted) {
+        const from = resolve(srcDir, rel);
+        if (!existsSync(from)) {
+          throw new Error(
+            `copy-docs-pdfs: the build links to docs/${rel} but that file does not exist. `
+            + 'Add it to docs/ or fix the link — shipping the reference without the file '
+            + 'is a 404 nobody would notice until someone clicked it.',
+          );
+        }
+        copyFileSync(from, resolve(outDir, rel));
+        copied += 1;
+      }
+      this.info?.(`copied ${copied} referenced PDF(s) to dist/docs/`);
     },
   };
 }
