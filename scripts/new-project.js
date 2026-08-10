@@ -461,13 +461,13 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   <meta name="twitter:image"       content="${SITE_URL}/${heroImgEsc}" />
   <meta name="twitter:image:alt"   content="${titleEsc}" />
 
-  <meta name="theme-color" content="#1a1010" />
+  <meta name="theme-color" content="#0c1410" />
 
   <link rel="preload" href="../fonts/source-serif-4-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="../fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="../css/fonts.css" />
   <link rel="icon"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231a1010'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23d64550' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230c1410'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23c8a44d' font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E" />
   <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
