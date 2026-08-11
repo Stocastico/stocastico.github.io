@@ -187,8 +187,9 @@
     <!-- GLSL noise-gradient background (z-index 0, lowest layer) -->
     <canvas id="noise-canvas" aria-hidden="true"></canvas>
     <!-- Hero background scene (z-index 1, above the noise gradient). Canvas2D,
-         not Three.js — the homepage ships none. js/cnn-hero.js on roomy
-         pointer-driven viewports, js/neural-net.js everywhere else. -->
+         not Three.js — the homepage ships none. The same LeNet-5 either way:
+         js/cnn-hero.js draws the whole pipeline on roomy pointer-driven
+         viewports, js/kernel-scan.js draws conv1 close up everywhere else. -->
     <canvas id="neural-canvas" aria-hidden="true"></canvas>
 
     <div class="hero-content">

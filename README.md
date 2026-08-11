@@ -42,7 +42,8 @@ to Pages. There is no release step — the deploy is the release.
 ├── projects/           13 project detail pages
 ├── css/                styles.css (@layer, nesting, oklch) + self-hosted fonts.css
 ├── js/                 ESM. main.js orchestrates; ui.js, animations.js, globe.js,
-│                       cnn-hero.js, mnist-lab.js, europe-map.js are the behaviours
+│                       cnn-hero.js, kernel-scan.js, mnist-lab.js, europe-map.js
+│                       are the behaviours
 ├── data/               YAML sources of truth + their generated .js modules
 ├── scripts/            the generators (all support --help and --dry-run)
 ├── test/               static suite; test/e2e/ is the Playwright suite
@@ -84,7 +85,7 @@ which is the authoritative reference for flags — this table is only a map.
 | Content | `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
 | Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `rotate-palette` |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
-| ML pipeline | `train-cnn`, `generate-cnn-activations`, `generate-lenet-weights` |
+| ML pipeline | `train-cnn`, `generate-cnn-activations`, `generate-lenet-weights`, `generate-hero-scan` |
 | Maintenance | `check-links`, `screenshots`, `set-domain`, `generate-europe-land` |
 | Tests | `test`, `test:e2e`, `test:e2e:a11y`, `test:e2e:budget`, `test:contrast`, and a `test:*` shorthand per suite |
 
