@@ -13,7 +13,8 @@
      js/animations.js     — scroll reveals, card tilt, parallax
      js/noise-gradient.js — hero background WebGL shader
      js/globe.js          — 3D globe (Three.js)
-     js/neural-net.js     — neural-network hero (Canvas2D, no Three.js)
+     js/cnn-hero.js       — LeNet-5 hero, wide viewports (Canvas2D)
+     js/kernel-scan.js    — conv1 hero, narrow/touch viewports (Canvas2D)
      js/europe-map.js     — 2D Canvas Europe map
 
    Content lives in separate, easy-to-edit files:
@@ -25,20 +26,20 @@
      data/publications.js — selected papers  (PUBLICATIONS array)
      data/projects.js     — projects         (PROJECTS array)
 
-   To change any colour on the site — including the neural network,
+   To change any colour on the site — including the hero canvases,
    shaders, and 3D globe — edit data/palettes.yaml and run
    `npm run generate-theme`.
    ============================================================ */
 
 /* ─── Three.js loading strategy ─────────────────────────────────
-   neural-net.js and globe.js (and through them three-context.js → the whole
-   `three` package) are loaded on demand via dynamic import() at their init
-   sites below. That keeps Three.js in a lazy chunk instead of the per-page
-   bundle, so it never ships to pages without a 3D canvas (cv, projects, 404,
-   project pages) and is off the critical path on the home page.
-   Do NOT statically import three-context.js / globe.js / neural-net.js here —
-   that pulls all of Three.js back into every page. Tests import the THREE
-   mock hook (__setThreeForTests) directly from ./three-context.js.
+   globe.js (and through it three-context.js → the whole `three` package) is
+   loaded on demand via dynamic import() at its init site below. That keeps
+   Three.js in a lazy chunk instead of the per-page bundle, so it never ships
+   to pages without a 3D canvas (cv, projects, 404, project pages) and is off
+   the critical path on the home page.
+   Do NOT statically import three-context.js / globe.js here — that pulls all
+   of Three.js back into every page. Tests import the THREE mock hook
+   (__setThreeForTests) directly from ./three-context.js.
 
    europe-map.js follows the same rule for the same reason, even though it has
    no Three.js in it: it was statically imported here, which put its chunk in
@@ -86,9 +87,11 @@ import {
 /* Hero background noise gradient (raw WebGL, no Three.js) */
 import { NoiseGradient } from './noise-gradient.js';
 
-/* neural-net.js (NeuralNetwork/NeuralNetwork2D) and globe.js (Globe3D/
-   GlobeFallback2D) are dynamically imported at their init
-   sites below — see the Three.js loading-strategy note at the top. */
+/* The two hero backgrounds (cnn-hero.js / kernel-scan.js) and globe.js
+   (Globe3D/GlobeFallback2D) are dynamically imported at their init sites
+   below — see the Three.js loading-strategy note at the top. Each hero module
+   statically imports its own data (activations / conv1 kernels), which is
+   precisely why neither may be imported here. */
 
 /* DOM animations: scroll reveal, card tilt, parallax (extracted) */
 import {
@@ -477,11 +480,11 @@ export function freshCanvasForRebuild(canvas) {
    noise gradient (js/noise-gradient.js) are re-exported here so the test
    suite can keep importing them from ../js/main.js.
 
-   The Three.js-backed classes (Globe3D, GlobeFallback2D, NeuralNetwork,
-   NeuralNetwork2D) are intentionally NOT re-exported
-   here: doing so would static-link globe.js/neural-net.js (and all of
-   Three.js) back into the main chunk. Tests import them from their source
-   modules instead. */
+   The Three.js-backed classes (Globe3D, GlobeFallback2D) and the two hero
+   canvases (CnnHero, KernelScan) are intentionally NOT re-exported here:
+   doing so would static-link globe.js (and all of Three.js) back into the
+   main chunk, and pull each hero's baked data onto every page. Tests import
+   them from their source modules instead. */
 export {
   formatIsoDate,
   renderPublications,
@@ -649,12 +652,16 @@ if (typeof document !== 'undefined') {
   };
   buildNoise();
 
-  /* Canvas2D hero background (no Three.js on this page — see neural-net.js).
-     Two implementations share the canvas:
-       · js/cnn-hero.js   — a real LeNet-5 forward pass replayed from
-                            precomputed activations, on roomy pointer-driven
-                            viewports where its labels are legible;
-       · js/neural-net.js — the lighter drifting particle field everywhere else.
+  /* Canvas2D hero background (no Three.js on this page — see kernel-scan.js).
+     Two implementations share the canvas, and both draw the same trained
+     LeNet-5 at the scale their viewport can carry:
+       · js/cnn-hero.js    — the whole pipeline, replayed from precomputed
+                             activations, on roomy pointer-driven viewports
+                             where its six labelled layers are legible;
+       · js/kernel-scan.js — conv1 alone, close up: a 5×5 window sweeping the
+                             digit while the feature map fills in behind it.
+                             Portrait-shaped, and the browser runs the one
+                             convolution rather than downloading its result.
      Whichever applies is dynamically imported at idle time (see the note on
      the start block further down — the interaction listeners are only an
      accelerator now), so it stays off the critical path on load while the
@@ -664,13 +671,9 @@ if (typeof document !== 'undefined') {
   const buildNeural = () => {
     if (!neuralCanvas || prefersReducedMotion()) return;
     const isCnn = supportsCnnHero();
-    /* Dropping to the particle field (a narrow window, a coarse pointer) means
-       there is no LeNet on screen any more, so the aside describing one has to
-       go with it. */
-    if (!isCnn) { heroCnnPainted = false; syncHeroCnnLink(); }
     const loading = isCnn
       ? import('./cnn-hero.js').then((m) => m.CnnHero)
-      : import('./neural-net.js').then((m) => m.NeuralNetwork2D);
+      : import('./kernel-scan.js').then((m) => m.KernelScan);
     loading.then((Background) => {
       /* Fade the canvas in once the first frame has painted (see the
          #neural-canvas opacity transition in css/styles.css), so the
@@ -679,7 +682,8 @@ if (typeof document !== 'undefined') {
         neuralCanvas.classList.add('is-visible');
         /* Same moment the network becomes visible, and the only moment the
            aside's claim becomes true — see syncHeroCnnLink below. */
-        if (isCnn) { heroCnnPainted = true; syncHeroCnnLink(); }
+        heroCnnPainted = true;
+        syncHeroCnnLink();
       };
       neuralInstance = new Background(neuralCanvas, reveal);
       _disposables.push(neuralInstance);
@@ -698,15 +702,23 @@ if (typeof document !== 'undefined') {
      not been drawn. Brief for anyone using a mouse; permanent for every
      headless renderer, social-preview fetcher and print.
 
-     So eligibility and existence are now separate conditions: supportsCnnHero()
-     and reduced-motion still decide whether it *can* appear, and heroCnnPainted
-     — set from the same callback that fades the canvas in — decides whether it
-     does. */
+     So eligibility and existence are separate conditions: reduced-motion (the
+     one case where no background is built at all) decides whether it *can*
+     appear, and heroCnnPainted — set from the same callback that fades the
+     canvas in — decides whether it does.
+
+     supportsCnnHero() used to be part of that gate, because the narrow
+     viewports fell back to a drifting particle field and the sentence would
+     have been describing something that was not there. It no longer is: the
+     fallback is js/kernel-scan.js, which convolves the same network's conv1
+     kernels over a real digit, so the claim holds on a phone — and the phone
+     is where "draw it a digit" is the better invitation, since drawing one
+     with a finger beats drawing one with a mouse. */
   let heroCnnPainted = false;
   const heroCnnLink = document.querySelector('.hero-cnn-link');
   const syncHeroCnnLink = () => {
     if (!heroCnnLink) return;
-    heroCnnLink.hidden = !heroCnnPainted || prefersReducedMotion() || !supportsCnnHero();
+    heroCnnLink.hidden = !heroCnnPainted || prefersReducedMotion();
   };
   syncHeroCnnLink();
 

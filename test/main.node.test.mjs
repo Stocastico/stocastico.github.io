@@ -32,7 +32,7 @@ import {
    dynamically imports them so Three.js is not in the per-page bundle. */
 import { Globe3D, GlobeFallback2D, isEuropeanSecondaryPin } from '../js/globe.js';
 import { hasCoords } from '../js/utils.js';
-import { NeuralNetwork2D } from '../js/neural-net.js';
+import { KernelScan } from '../js/kernel-scan.js';
 import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1213,84 +1213,219 @@ test('initCardTilt skips when prefers-reduced-motion is set', () => {
    whole thing was skipped on coarse pointers. None of those facts exist any
    more, and the behaviour they stood in for (does the hero copy drift as the
    page scrolls) was never observable from this layer anyway. */
-test('neural-net.js stays Three-free so the homepage hero never loads Three.js', () => {
-  const src = fs.readFileSync(path.join(ROOT, 'js', 'neural-net.js'), 'utf8');
-  assert.ok(!/three-context/.test(src),
-    'neural-net.js must not import three-context.js (that pulls all of Three onto the homepage)');
-  assert.ok(!/from ['"]three['"]/.test(src),
-    'neural-net.js must not import the three package directly');
-  assert.ok(!/\bclass NeuralNetwork\b/.test(src),
-    'the Three.js NeuralNetwork class should be gone; only the Canvas2D NeuralNetwork2D remains');
-});
+/* The static analysis that used to live here (neural-net.js imports no Three,
+   holds no Three-backed class) moved to test/hero-scan.test.mjs along with the
+   module it guarded: the narrow-viewport hero is js/kernel-scan.js now, and
+   the checks worth making about it are about conv1, not about particles. */
 
 test('main.js hero uses the Canvas2D backgrounds, not the Three.js path', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
-  /* Two Canvas2D implementations share the hero canvas — the CNN forward-pass
-     scene on roomy viewports, the particle field everywhere else — and both
-     are reached through a dynamic import so neither lands in the main chunk. */
-  assert.ok(/import\(['"]\.\/neural-net\.js['"]\)[\s\S]{0,80}NeuralNetwork2D/.test(src),
-    'hero should still fall back to NeuralNetwork2D');
+  /* Two Canvas2D implementations share the hero canvas — the full CNN
+     forward-pass scene on roomy viewports, conv1 close up everywhere else —
+     and both are reached through a dynamic import so neither lands in the
+     main chunk, along with the baked data each of them imports. */
+  assert.ok(/import\(['"]\.\/kernel-scan\.js['"]\)[\s\S]{0,80}KernelScan/.test(src),
+    'hero should fall back to KernelScan on narrow / touch viewports');
   assert.ok(/import\(['"]\.\/cnn-hero\.js['"]\)[\s\S]{0,80}CnnHero/.test(src),
     'hero should load the CNN background on capable viewports');
   assert.ok(!/new NeuralNetwork\(/.test(src),
     'hero should not construct the Three.js NeuralNetwork any more');
 });
 
-test('NeuralNetwork2D constructs with particles and starts animation', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevIO = global.IntersectionObserver;
-  const prevDpr = global.devicePixelRatio;
-  const prevNav = global.navigator;
+/* ─── KernelScan (narrow / touch hero) ───────────────────────
+   Stubs enough of a browser for the renderer to build its offscreen textures
+   and run a frame: it allocates three small canvases of its own, which is the
+   part a plain ctx stub does not cover. */
+function kernelScanEnv(fn, { heroContent = { offsetTop: 240, offsetHeight: 300 } } = {}) {
+  const prev = {
+    document: global.document,
+    window: global.window,
+    requestAnimationFrame: global.requestAnimationFrame,
+    cancelAnimationFrame: global.cancelAnimationFrame,
+    IntersectionObserver: global.IntersectionObserver,
+    performance: global.performance,
+  };
 
   const ctx = {
-    clearRect() {}, strokeStyle: '', lineWidth: 0,
-    beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
-    fillStyle: '', fill() {}, arc() {},
-    createRadialGradient() {
-      return { addColorStop() {} };
-    },
-    setTransform() {},
+    globalAlpha: 1, globalCompositeOperation: 'source-over',
+    fillStyle: '', strokeStyle: '', lineWidth: 0, font: '',
+    textAlign: '', textBaseline: '', imageSmoothingEnabled: true,
+    setTransform() {}, clearRect() {}, save() {}, restore() {},
+    translate() {}, scale() {}, drawImage() {}, fillRect() {}, strokeRect() {},
+    beginPath() {}, rect() {}, clip() {}, moveTo() {}, lineTo() {}, stroke() {},
+    fill() {}, fillText() {},
+    createLinearGradient() { return { addColorStop() {} }; },
   };
+  const offscreen = () => {
+    const c = {
+      width: 0, height: 0,
+      getContext() {
+        return {
+          createImageData(w, h) {
+            return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) };
+          },
+          putImageData() {},
+        };
+      },
+    };
+    return c;
+  };
+  const listeners = [];
   const canvas = {
-    width: 0, height: 0,
-    getContext() { return ctx; },
+    width: 0, height: 0, clientWidth: 390, clientHeight: 800,
     style: { width: '', height: '' },
-    parentElement: { clientWidth: 800, clientHeight: 600 },
+    getContext() { return ctx; },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 390, height: 800 }; },
+    addEventListener(type, fn_, opts) { listeners.push({ on: 'canvas', type, fn: fn_, opts }); },
+    removeEventListener(type, fn_) {
+      const i = listeners.findIndex(l => l.on === 'canvas' && l.type === type && l.fn === fn_);
+      if (i >= 0) listeners.splice(i, 1);
+    },
   };
+
   global.document = {
     hidden: false,
-    addEventListener() {},
+    createElement(tag) { return tag === 'canvas' ? offscreen() : {}; },
+    querySelector(sel) { return sel === '.hero-content' ? heroContent : null; },
+    addEventListener(type, fn_, opts) { listeners.push({ on: 'document', type, fn: fn_, opts }); },
+    removeEventListener(type, fn_) {
+      const i = listeners.findIndex(l => l.on === 'document' && l.type === type && l.fn === fn_);
+      if (i >= 0) listeners.splice(i, 1);
+    },
   };
   global.window = {
-    innerWidth: 1200,
-    innerHeight: 800,
-    devicePixelRatio: 1,
-    addEventListener() {},
-    matchMedia() { return { matches: false }; },
+    innerWidth: 390, innerHeight: 800, devicePixelRatio: 2,
+    addEventListener(type, fn_, opts) { listeners.push({ on: 'window', type, fn: fn_, opts }); },
+    removeEventListener(type, fn_) {
+      const i = listeners.findIndex(l => l.on === 'window' && l.type === type && l.fn === fn_);
+      if (i >= 0) listeners.splice(i, 1);
+    },
+    matchMedia() { return { matches: false, addEventListener() {} }; },
   };
-  global.devicePixelRatio = 1;
-  Object.defineProperty(global, 'navigator', { value: { hardwareConcurrency: 8 }, configurable: true });
-  let rafCalled = false;
-  global.requestAnimationFrame = () => { rafCalled = true; return 1; };
+  let rafCount = 0;
+  global.requestAnimationFrame = () => { rafCount++; return rafCount; };
+  global.cancelAnimationFrame = () => {};
+  let now = 1000;
+  global.performance = { now: () => now };
+  const observers = [];
   global.IntersectionObserver = class {
-    constructor(cb) { cb([{ isIntersecting: true }]); }
+    constructor(cb) { observers.push(this); cb([{ isIntersecting: true }]); }
     observe() {}
+    disconnect() { this.disconnected = true; }
   };
+
   try {
-    const nn = new NeuralNetwork2D(canvas);
-    assert.ok(nn.points.length > 0, 'Should create particles');
-    assert.ok(nn.ctx === ctx, 'Should store canvas context');
-    assert.ok(rafCalled, 'Should start animation loop');
+    return fn({
+      canvas, ctx, listeners, observers,
+      rafCalls: () => rafCount,
+      advance: (seconds) => { now += seconds * 1000; },
+    });
   } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.IntersectionObserver = prevIO;
-    global.devicePixelRatio = prevDpr;
-    Object.defineProperty(global, 'navigator', { value: prevNav, configurable: true });
+    for (const [k, v] of Object.entries(prev)) {
+      if (v === undefined) delete global[k];
+      else global[k] = v;
+    }
   }
+}
+
+test('KernelScan convolves a real digit and starts animating', () => {
+  kernelScanEnv(({ canvas, rafCalls }) => {
+    const ks = new KernelScan(canvas);
+    assert.equal(ks._digits.length, 10, 'should decode all ten digits');
+    assert.equal(ks._kernels.length, 6, 'should decode all six conv1 filters');
+    assert.equal(ks._map.length, 24 * 24, 'feature map should be 24×24');
+    /* The map is computed up front and revealed progressively — an all-zero
+       map would draw an empty grid for the whole pass and look like a bug in
+       the reveal rather than in the convolution. */
+    assert.ok(ks._mapMax > 0, 'the convolved map should not be flat');
+    assert.ok(Array.from(ks._map).some(v => v > 0), 'ReLU should leave some activation');
+    assert.ok(rafCalls() > 0, 'should start the animation loop');
+  });
+});
+
+test('KernelScan reveals the feature map as the sweep advances, then moves on', () => {
+  kernelScanEnv(({ canvas, advance }) => {
+    const ks = new KernelScan(canvas);
+    const firstFilter = ks._filterIdx;
+    assert.equal(ks._revealed, 0, 'nothing revealed on the first frame');
+
+    /* Mid-sweep: some of the map is written, not all of it. */
+    advance(1.5);
+    ks._animate();
+    assert.ok(ks._revealed > 0 && ks._revealed < 24 * 24,
+      `expected a partial reveal, got ${ks._revealed}`);
+
+    /* Past the end of a full pass: the next filter is up. */
+    advance(4);
+    ks._animate();
+    assert.notEqual(ks._filterIdx, firstFilter, 'a completed pass should advance the filter');
+  });
+});
+
+test('KernelScan never animates a dead filter', () => {
+  /* Two of the six conv1 filters in the committed model are dead ReLUs — no
+     MNIST digit gets them above zero (see test/hero-scan.test.mjs, which pins
+     that fact against the weights themselves). Drawing one means three and a
+     half seconds of empty grid, so _beginPass has to walk past it. */
+  kernelScanEnv(({ canvas }) => {
+    const ks = new KernelScan(canvas);
+    for (let digit = 0; digit < ks._digits.length; digit++) {
+      for (let filter = 0; filter < ks._kernels.length; filter++) {
+        ks._digitIdx = digit;
+        ks._filterIdx = filter;
+        ks._beginPass();
+        assert.ok(ks._mapMax > 0,
+          `digit ${digit} / filter ${filter}: pass opened on a blank feature map`);
+      }
+    }
+  });
+});
+
+test('KernelScan places the scene below the hero copy', () => {
+  kernelScanEnv(({ canvas }) => {
+    const ks = new KernelScan(canvas);
+    /* .hero-content ends at 540 in this stub; the scene must start below it,
+       or the digit is drawn through the name. */
+    assert.ok(ks._oy >= 540, `scene top ${ks._oy} should clear the hero copy at 540`);
+    assert.ok(ks._oy + 150 * ks._scale <= 800, 'scene should stay inside the hero');
+    assert.ok(ks._scale > 0.2, 'scene should not collapse to nothing');
+  });
+});
+
+test('perf: KernelScan enforces an FPS cap (<=30)', () => {
+  kernelScanEnv(({ canvas }) => {
+    const ks = new KernelScan(canvas);
+    assert.equal(typeof ks._minFrameTime, 'number',
+      'KernelScan should expose a _minFrameTime');
+    assert.ok(ks._minFrameTime >= 1 / 30 - 1e-6,
+      `expected min frame time >= 1/30s, got ${ks._minFrameTime}`);
+  });
+});
+
+test('perf: KernelScan registers its pointer listener with { passive: true }', () => {
+  kernelScanEnv(({ canvas, listeners }) => {
+    new KernelScan(canvas);
+    const pd = listeners.find(l => l.type === 'pointerdown');
+    assert.ok(pd, 'tap-to-advance should be wired');
+    assert.ok(pd.opts && pd.opts.passive === true,
+      `pointerdown should be { passive: true }, got ${JSON.stringify(pd && pd.opts)}`);
+    /* A drag over the hero is the visitor scrolling. Nothing here may claim
+       pointermove/touchmove: the scroll is worth more than the effect. */
+    assert.ok(!listeners.some(l => l.type === 'pointermove' || l.type === 'touchmove'),
+      'the hero must not listen for drags — that is the page scrolling');
+  });
+});
+
+test('KernelScan.destroy() releases every listener and observer (bfcache)', () => {
+  kernelScanEnv(({ canvas, listeners, observers }) => {
+    const ks = new KernelScan(canvas);
+    assert.ok(listeners.length > 0, 'should have registered listeners');
+    ks.destroy();
+    assert.equal(listeners.length, 0,
+      `destroy() left ${listeners.length} listener(s): ${listeners.map(l => l.type).join(', ')}`);
+    assert.ok(observers.every(o => o.disconnected), 'destroy() should disconnect the observer');
+    assert.equal(ks.frameId, null, 'destroy() should stop the animation loop');
+  });
 });
 
 /* ─── NoiseGradient tests ─────────────────────────────────── */
@@ -1967,29 +2102,6 @@ function withPerfGlobals(fn, { lowPower = false } = {}) {
   }
 }
 
-test('perf: NeuralNetwork2D enforces an FPS cap (<=30)', () => {
-  withPerfGlobals(() => {
-    const ctx = {
-      clearRect() {}, strokeStyle: '', lineWidth: 0,
-      beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
-      fillStyle: '', fill() {}, arc() {},
-      createRadialGradient() { return { addColorStop() {} }; },
-      setTransform() {},
-    };
-    const canvas = {
-      width: 0, height: 0,
-      getContext() { return ctx; },
-      style: { width: '', height: '' },
-      parentElement: { clientWidth: 800, clientHeight: 600 },
-    };
-    const nn = new NeuralNetwork2D(canvas);
-    assert.equal(typeof nn._minFrameTime, 'number',
-      'NeuralNetwork2D should expose a _minFrameTime');
-    assert.ok(nn._minFrameTime >= 1 / 30 - 1e-6,
-      `expected min frame time >= 1/30s, got ${nn._minFrameTime}`);
-  });
-});
-
 test('perf: Globe3D enforces an FPS cap (<=45 normal)', () => {
   withPerfGlobals(() => {
     __setThreeForTests(createMinimalThree());
@@ -2073,29 +2185,6 @@ test('perf: Globe3D pixelRatio cap is at most 1.5 on normal devices', () => {
 });
 
 /* ─── Passive listener flags (Tier 4) ─────────────────────── */
-
-test('perf: NeuralNetwork2D registers mousemove/touchmove with { passive: true }', () => {
-  withPerfGlobals(() => {
-    const events = [];
-    global.window.addEventListener = (type, _fn, opts) => events.push({ type, opts });
-    const ctx = {
-      clearRect() {}, strokeStyle: '', lineWidth: 0,
-      beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
-      fillStyle: '', fill() {}, arc() {},
-      createRadialGradient() { return { addColorStop() {} }; },
-      setTransform() {},
-    };
-    const canvas = {
-      width: 0, height: 0, getContext() { return ctx; },
-      style: { width: '', height: '' },
-      parentElement: { clientWidth: 800, clientHeight: 600 },
-    };
-    new NeuralNetwork2D(canvas);
-    const mm = events.find(e => e.type === 'mousemove');
-    assert.ok(mm && mm.opts && mm.opts.passive === true,
-      `NN2D mousemove should be { passive: true }, got ${JSON.stringify(mm && mm.opts)}`);
-  });
-});
 
 /* ─── Globe3D teardown ──────────────────────────────────────
    Globe3D allocates a WebGL context, several geometries/materials,
