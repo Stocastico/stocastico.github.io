@@ -80,8 +80,21 @@ test('generate-cards: projects.html badges the personal projects and only those'
 /* Off-site entries. One project (the Donostia dataviz) links out of the Vite
    build to a page served from the same domain by another repo, in another
    language. Two things have to hold for that to be honest: the anchor declares
-   the language it is sending you to, and the sitemap does not claim a page this
-   build never produces. Both are cheap to get wrong silently. */
+   the language it is sending you to, and every sitemap entry is a page the
+   domain actually serves. Both are cheap to get wrong silently.
+
+   The second rule used to read "this build never produces it", which barred
+   the off-site page outright — and so left the strongest piece of the
+   portfolio as the only page never declared to a search engine. The honest
+   line is the domain, not the build: GitHub Pages serves a project repo at
+   /<repo>/ under this same custom domain, so /donostia-dataviz/ is as real a
+   page of this site as /cv.html. What the rule still has to catch is an entry
+   backed by nothing at all — a typo, or a page since deleted — so the check
+   below now runs the stronger direction: every <loc> must be either a file
+   this build produces or an off-site page declared in data/projects.js.
+   (Liveness of the sibling repo is not asserted here: no unit test in this
+   repo reaches the network, and check-links.mjs covers the curated outbound
+   links only.) */
 test('generate-cards: an entry with `lang` renders hreflang on its card', () => {
   const tagged = PROJECTS.filter((p) => p.lang);
   assert.ok(tagged.length >= 1, 'expected at least one off-site entry to guard against');
@@ -92,11 +105,18 @@ test('generate-cards: an entry with `lang` renders hreflang on its card', () => 
   }
 });
 
-test('sitemap: no entry claims a page outside this build', () => {
+test('sitemap: every entry is a page this domain serves', () => {
   const sitemap = read('public/sitemap.xml');
-  for (const p of PROJECTS.filter((x) => x.url && !x.url.startsWith('projects/'))) {
-    assert.ok(!sitemap.includes(p.url),
-      `sitemap.xml lists "${p.url}", which this Vite build does not produce`);
+  const paths = [...sitemap.matchAll(/<loc>https?:\/\/[^/]+([^<]*)<\/loc>/g)].map((m) => m[1]);
+  assert.ok(paths.length >= 12, `expected >=12 <loc> entries, got ${paths.length}`);
+  const offSite = new Set(
+    PROJECTS.filter((p) => p.url && p.url.startsWith('/')).map((p) => p.url),
+  );
+  for (const p of paths) {
+    if (offSite.has(p)) continue; // sibling repo, same domain — declared in data/projects.js
+    const rel = p === '/' ? 'index.html' : p.replace(/^\//, '');
+    assert.ok(fs.existsSync(path.join(ROOT, rel)),
+      `sitemap.xml lists "${p}", which is neither built here nor a declared off-site project`);
   }
 });
 
