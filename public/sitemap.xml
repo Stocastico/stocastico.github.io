@@ -2,121 +2,126 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://stefanomasneri.com/</loc>
-    <lastmod>2026-07-31</lastmod>
+    <lastmod>2026-08-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects.html</loc>
-    <lastmod>2026-07-31</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/publications.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/travel.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/links.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/now.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/cv.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://stefanomasneri.com/donostia-dataviz/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/mnist-lenet.html</loc>
-    <lastmod>2026-07-31</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/gaussian-nerf.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/brand-stadium.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/aroundtheworld.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/clear-architecture.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/rag-document-qa.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/mlops-vertex-media.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/traction.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/audience-engagement.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/ufc-fighter-tracking.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/mpi-brain-research.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/inevent.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://stefanomasneri.com/projects/avatech.html</loc>
-    <lastmod>2026-07-29</lastmod>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>

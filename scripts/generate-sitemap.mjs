@@ -66,25 +66,46 @@ async function main() {
     { rel: 'cv.html',       loc: `${SITE}/cv.html`,       changefreq: 'monthly', priority: '0.7' },
   ];
 
-  /* One entry per project detail page. */
+  /* One entry per project detail page, plus the projects this domain serves
+     from another repo. GitHub Pages puts a project page at /<repo>/ under the
+     same custom domain, so data/projects.js reaches those with a root-relative
+     url ("/donostia-dataviz/") instead of a local file. They are pages of this
+     site like any other and belong in the sitemap; the previous
+     `startsWith('projects/')` filter silently dropped them, which left the
+     strongest piece of the portfolio as the only page never declared to search
+     engines. They carry no `rel`: no local file means no honest <lastmod>. */
   for (const p of projects) {
-    if (!p.url || !p.url.startsWith('projects/')) continue;
-    entries.push({
-      rel: p.url,
-      loc: `${SITE}/${p.url}`,
-      changefreq: 'yearly',
-      priority: '0.6',
-    });
+    if (!p.url) continue;
+    if (p.url.startsWith('projects/')) {
+      entries.push({
+        rel: p.url,
+        loc: `${SITE}/${p.url}`,
+        changefreq: 'yearly',
+        priority: '0.6',
+      });
+    } else if (p.url.startsWith('/')) {
+      entries.push({
+        rel: null,
+        loc: `${SITE}${p.url}`,
+        changefreq: 'monthly',
+        priority: '0.7',
+      });
+    }
   }
 
   const lines = [];
   lines.push('<?xml version="1.0" encoding="UTF-8"?>');
   lines.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
   for (const e of entries) {
-    const mod = lastmodFor(e.rel) || new Date().toISOString().slice(0, 10);
+    /* <lastmod> is drawn from this repo's git history, so it can only be told
+       the truth about files this repo owns. For a page built and deployed from
+       another repo the tag is omitted rather than guessed: it is optional in
+       the spec, and Google stops trusting lastmod site-wide once it catches an
+       inaccurate one. */
+    const mod = e.rel ? (lastmodFor(e.rel) || new Date().toISOString().slice(0, 10)) : null;
     lines.push('  <url>');
     lines.push(`    <loc>${e.loc}</loc>`);
-    lines.push(`    <lastmod>${mod}</lastmod>`);
+    if (mod) lines.push(`    <lastmod>${mod}</lastmod>`);
     lines.push(`    <changefreq>${e.changefreq}</changefreq>`);
     lines.push(`    <priority>${e.priority}</priority>`);
     lines.push('  </url>');
