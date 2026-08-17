@@ -2431,48 +2431,9 @@ figcaption {
 .contact-lead {
   text-align: center;
   color: var(--text-muted);
-  margin-bottom: 1rem;
+  margin-bottom: 2.5rem;
   max-width: 60ch;
   margin-inline: auto;
-}
-
-/* "Open to …" — mono, because it is a status rather than prose, and the site
-   already uses the mono face for every piece of metadata. Boxed lightly so it
-   reads as a standing fact about the person rather than another sentence in
-   the paragraph above.
-
-   Note the text colour is a validated token, not the muted one at reduced
-   opacity: a11y.e2e.mjs caught exactly that mistake on .link-chip-count, where
-   opacity over an already-muted colour composited below 4.5:1 in every light
-   palette. */
-.contact-availability {
-  display: flex;
-  align-items: baseline;
-  gap: 0.55rem;
-  justify-content: center;
-  text-align: center;
-  text-wrap: pretty;
-  max-width: 62ch;
-  margin: 0 auto 2.5rem;
-  padding: 0.7rem 1.1rem;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  line-height: 1.6;
-  color: var(--text-muted);
-  background: rgb(var(--accent-rgb) / 0.06);
-  border: 1px solid rgb(var(--accent-rgb) / 0.18);
-  border-radius: var(--r-md);
-}
-
-/* Purely decorative status dot, aria-hidden in the markup. Sized in em so it
-   tracks the text if the font size changes. */
-.contact-availability-dot {
-  flex: none;
-  width: 0.5em;
-  height: 0.5em;
-  border-radius: 50%;
-  background: var(--accent);
-  transform: translateY(-0.1em);
 }
 
 .contact-grid {
