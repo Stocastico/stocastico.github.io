@@ -266,10 +266,10 @@ export const PUBLICATIONS = [
     },
     {
         year: '2010',
-        title: 'Towards semi-automatic annotations for video and audio corpora',
+        title: 'Towards semi-automatic annotation of video and audio corpora',
         authors: 'S. Masneri, O. Schreer, D. Schneider, S. Tschöpel, R. Bardeli, S. Bordag, E. Auer, H. Sloetjes, P. Wittenburg',
-        venue: 'LREC 2010',
-        url: 'https://www.isca-archive.org/interspeech_2012/lenkiewicz12_interspeech.pdf',
+        venue: 'LREC 2010 Workshop on the Representation and Processing of Sign Languages',
+        url: 'https://www.sign-lang.uni-hamburg.de/lrec/pub/10015.html',
     },
     {
         year: '2009',

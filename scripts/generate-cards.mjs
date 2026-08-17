@@ -25,7 +25,7 @@ import {
   projectCardHtml, publicationsListLines, homepageProjects, assertProjectKinds,
 } from '../js/render-cards.js';
 import {
-  cvTimelineLines, cvSkillsLines, unescoAccordionLines, linksGridLines,
+  cvTimelineLines, cvSkillsLines, unescoAccordionLines, unescoTotalLines, linksGridLines,
 } from '../js/render-page.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
@@ -120,6 +120,7 @@ const TARGETS = {
     'generated:cv-skills': () => cvSkillsLines(CV_SKILLS),
   },
   'travel.html': {
+    'generated:unesco-total': () => unescoTotalLines(UNESCO),
     'generated:unesco-accordion': () => unescoAccordionLines(UNESCO),
   },
   'links.html': {

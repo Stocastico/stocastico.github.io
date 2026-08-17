@@ -6,16 +6,30 @@
 # https:// link to its official UNESCO page (find it at
 # https://whc.unesco.org/en/list/). `year` (when you visited) is optional.
 #
-# NOTE: the entries below are PLACEHOLDERS to wire up the page — replace them
-# with the real list. Continents render in the order listed here; countries
-# and sites likewise.
-
-# UNESCO World Heritage sites Stefano has visited.
-# Source of truth for the travel page accordion → run `npm run generate-unesco`
-# after editing to rebuild data/unesco.js.
+# Continents render in the order listed here; countries and sites likewise.
 #
-# Structure: continent → country → sites. Each site needs a name and an
-# https:// link to its official UNESCO page.
+# ── Grouping rules ───────────────────────────────────────────────────────────
+# These exist because the obvious answers disagree with each other, and a
+# visitor counting the badges deserves numbers that add up.
+#
+# 1. A site is filed by ITS OWN geography, not by its country's. Turkey is
+#    transcontinental, and Hierapolis-Pamukkale is in Anatolia — so it sits
+#    under Asia, not Europe. Filing by country would put a site 700 km east of
+#    the Bosphorus in "Europe" purely because Istanbul is.
+#
+# 2. A site appears EXACTLY ONCE, under the country it was visited from. The
+#    Ohrid region is transboundary Albania / North Macedonia; it is listed
+#    under Albania only. Listing it twice would inflate every count above it
+#    and make the page claim more sites than were visited, which is the one
+#    thing these numbers must not do.
+#
+# 3. Sites within a country are ordered by UNESCO list ID (the trailing number
+#    in the url), oldest inscription first. `bis` suffixes sort with their base
+#    number.
+#
+# The per-continent and per-country counts on the page are computed from this
+# file, so a mis-filed entry shows up as a wrong badge rather than a silent
+# error — the United States sat under Europe for a while and made it read 100.
 
 continents:
   - name: Europe
@@ -130,6 +144,8 @@ continents:
             url: https://whc.unesco.org/en/list/1604
       - name: Italy
         sites:
+          - name: Historic Centre of Rome, the Properties of the Holy See in that City Enjoying Extraterritorial Rights and San Paolo Fuori le Mura
+            url: https://whc.unesco.org/en/list/91
           - name: Rock Drawings in Valcamonica
             url: https://whc.unesco.org/en/list/94
           - name: Historic Centre of Florence
@@ -182,8 +198,6 @@ continents:
             url: https://whc.unesco.org/en/list/1623
           - name: The Porticoes of Bologna
             url: https://whc.unesco.org/en/list/1650
-          - name: Historic Centre of Rome, the Properties of the Holy See in that City Enjoying Extraterritorial Rights and San Paolo Fuori le Mura
-            url: https://whc.unesco.org/en/list/91
       - name: Malta
         sites:
           - name: City of Valletta
@@ -254,10 +268,6 @@ continents:
         sites:
           - name: Swiss Alps Jungfrau-Aletsch
             url: https://whc.unesco.org/en/list/1037
-      - name: Turkey
-        sites:
-          - name: Hierapolis-Pamukkale
-            url: https://whc.unesco.org/en/list/485
       - name: United Kingdom
         sites:
           - name: "Palace of Westminster and Westminster Abbey including Saint Margaret's Church"
@@ -268,12 +278,6 @@ continents:
             url: https://whc.unesco.org/en/list/496
           - name: Old and New Towns of Edinburgh
             url: https://whc.unesco.org/en/list/728
-      - name: United States
-        sites:
-          - name: Independence Hall
-            url: https://whc.unesco.org/en/list/78
-          - name: Statue of Liberty
-            url: https://whc.unesco.org/en/list/307
   - name: Africa
     countries:
       - name: Morocco
@@ -296,6 +300,12 @@ continents:
             url: https://whc.unesco.org/en/list/1202
           - name: Historic Centre of Camagüey
             url: https://whc.unesco.org/en/list/1276
+      - name: United States
+        sites:
+          - name: Independence Hall
+            url: https://whc.unesco.org/en/list/78
+          - name: Statue of Liberty
+            url: https://whc.unesco.org/en/list/307
   - name: Asia
     countries:
       - name: Israel
@@ -314,3 +324,7 @@ continents:
         sites:
           - name: Historic Town of Sukhothai and Associated Historic Towns
             url: https://whc.unesco.org/en/list/574
+      - name: Turkey
+        sites:
+          - name: Hierapolis-Pamukkale
+            url: https://whc.unesco.org/en/list/485

@@ -22,6 +22,9 @@
          location: City, Country       # optional
          description: >               # optional — folded block scalar
            One or two sentences.      # or plain quoted string on one line
+         links:                       # optional — "Related work" row
+           - label: A project page
+             url: /projects/thing.html    # must be root-relative
          tags:                        # optional
            - Tag 1
            - Tag 2
@@ -115,6 +118,25 @@ function validateCv(data) {
       `${path} must be a non-empty string`);
   }
 
+  /* `links` on a career or education entry: a list of { label, url }.
+     The url must be same-origin and root-relative. That is not fussiness —
+     these render as anchors on a page that is otherwise entirely first-party,
+     and validating the shape here means the renderer can stay a plain string
+     builder. An off-site link belongs in the prose, not in this row. */
+  function expectLinks(val, p) {
+    if (val === undefined) return;
+    if (!Array.isArray(val)) { errors.push(`${p}.links must be an array`); return; }
+    val.forEach((l, i) => {
+      const lp = `${p}.links[${i}]`;
+      if (typeof l !== 'object' || l === null) { errors.push(`${lp} must be an object`); return; }
+      expectString(l.label, `${lp}.label`);
+      expectString(l.url,   `${lp}.url`);
+      if (typeof l.url === 'string' && l.url.trim() !== '' && !l.url.startsWith('/')) {
+        errors.push(`${lp}.url must be root-relative (start with "/"), got "${l.url}"`);
+      }
+    });
+  }
+
   /* ── career ── */
   if (!Array.isArray(data.career)) {
     errors.push('career must be an array');
@@ -128,6 +150,7 @@ function validateCv(data) {
       if (e.tags !== undefined) {
         expect(Array.isArray(e.tags), `${p}.tags must be an array`);
       }
+      expectLinks(e.links, p);
     });
   }
 
@@ -141,6 +164,7 @@ function validateCv(data) {
       expectString(e.year,        `${p}.year`);
       expectString(e.degree,      `${p}.degree`);
       expectString(e.institution, `${p}.institution`);
+      expectLinks(e.links, p);
     });
   }
 
@@ -208,6 +232,23 @@ function jsInlineArray(arr) {
 }
 
 /**
+ * Render a list of { label, url } objects, one per line.
+ *
+ * Kept separate from jsInlineArray rather than making that function
+ * polymorphic: it is called with `tags` on every entry, and a String(obj) on
+ * an object silently yields '[object Object]' — a bug that would ship a valid
+ * JS file full of nonsense rather than failing. Two functions, two shapes.
+ */
+function jsLinkArray(arr, baseIndent) {
+  if (!Array.isArray(arr) || arr.length === 0) return '[]';
+  const pad = ' '.repeat(baseIndent + 4);
+  const items = arr.map(
+    (l) => `${pad}{ label: ${jsString(String(l.label))}, url: ${jsString(String(l.url))} },`,
+  );
+  return `[\n${items.join('\n')}\n${' '.repeat(baseIndent + 2)}]`;
+}
+
+/**
  * Render an object's properties with keys aligned to the longest key,
  * indented by `baseIndent` spaces.
  */
@@ -221,9 +262,10 @@ function jsAlignedObject(obj, keys, baseIndent) {
     const align = ' '.repeat(maxLen - k.length + 1);
     const v     = obj[k];
     /* Numbers must not be quoted — they are used as numeric literals */
-    const val   = Array.isArray(v)      ? jsInlineArray(v)
+    const val   = k === 'links'          ? jsLinkArray(v, baseIndent)
+                : Array.isArray(v)       ? jsInlineArray(v)
                 : typeof v === 'number'  ? String(v)
-                :                         jsString(String(v));
+                :                          jsString(String(v));
     return `${pad}  ${k}:${align}${val},`;
   });
 
@@ -238,8 +280,8 @@ function generateCvJs(data) {
   const education = data.education || [];
   const skills    = data.skills    || {};
 
-  const careerKeys = ['year', 'role', 'company', 'location', 'description', 'tags'];
-  const eduKeys    = ['year', 'degree', 'institution', 'location', 'description', 'concurrent_with'];
+  const careerKeys = ['year', 'role', 'company', 'location', 'description', 'links', 'tags'];
+  const eduKeys    = ['year', 'degree', 'institution', 'location', 'description', 'links', 'concurrent_with'];
 
   const careerBlock = career.map(e => jsAlignedObject(e, careerKeys, 2)).join(',\n');
   const eduBlock    = education.map(e => jsAlignedObject(e, eduKeys,  2)).join(',\n');
