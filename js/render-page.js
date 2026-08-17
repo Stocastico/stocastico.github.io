@@ -52,6 +52,26 @@ function tlCardHtml(entry, type) {
     ? `<div class="tl-tags">${tagsArr.map((t) => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
     : '';
 
+  /* "Related work" — the CV's way back into the project pages and the
+     publication list. The label is prefixed with a visually-hidden phrase
+     naming the role, because a screen-reader user pulling up a list of links
+     would otherwise get a dozen bare project titles with no idea which job
+     each belonged to. generate-cv validates that every url is root-relative,
+     so there is no target/rel handling to do here. */
+  const linksArr = entry.links || [];
+  const linksHtml = linksArr.length
+    ? '<div class="tl-links">'
+      + `<span class="tl-links-label" aria-hidden="true">${isCareer ? 'Related work' : 'More'}</span>`
+      + '<ul class="tl-links-list">'
+      + linksArr.map((l) => (
+        '<li><a class="tl-link" href="' + escapeHtml(l.url) + '">'
+        + `<span class="visually-hidden">${escapeHtml(sub || '')} &mdash; </span>`
+        + escapeHtml(l.label)
+        + '</a></li>'
+      )).join('')
+      + '</ul></div>'
+    : '';
+
   return (
     '<div class="tl-card-single">'
     + '<div class="tl-card-header">'
@@ -60,7 +80,7 @@ function tlCardHtml(entry, type) {
     + '</div>'
     + `<h3 class="tl-title">${escapeHtml(title || '')}</h3>`
     + `<p class="tl-sub">${escapeHtml(sub || '')}</p>`
-    + descHtml + tagsHtml
+    + descHtml + linksHtml + tagsHtml
     + '</div>'
   );
 }
@@ -239,6 +259,35 @@ export function unescoAccordionLines(data) {
       + `<div class="unesco-countries">${countries}</div></details>`
     );
   });
+}
+
+/* The one number the travel page was missing. The copy above the accordion
+   states the goal — visit all 1,200+ World Heritage sites — and then never
+   said how far along that is, which is the only fact a reader actually wants
+   from a page of collapsed <details>. Counting it here rather than typing it
+   into travel.html is the whole point: the figure moves every time a site is
+   added to data/unesco.yaml, and a hand-typed one would have said 100 through
+   the entire period the United States was filed under Europe.
+
+   Rendered server-side only. Unlike the accordion there is no client
+   re-render, because there is nothing to wire up — it is a sentence, and
+   generate-cards keeps it honest. */
+export function unescoTotalLines(data) {
+  const continents = (data && Array.isArray(data.continents)) ? data.continents : [];
+  const total = continents.reduce(
+    (n, cont) => n + (cont.countries || []).reduce(
+      (m, country) => m + (country.sites ? country.sites.length : 0), 0,
+    ), 0,
+  );
+  const countries = continents.reduce((n, cont) => n + (cont.countries || []).length, 0);
+  if (!total) return [];
+
+  return [
+    '<p class="unesco-total">'
+    + `<strong class="unesco-total-num">${total}</strong> visited so far`
+    + `, across ${countries} countries and ${continents.length} continents.`
+    + '</p>',
+  ];
 }
 
 /* ═══════════════════════════════════════════════════════════

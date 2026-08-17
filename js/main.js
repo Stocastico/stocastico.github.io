@@ -175,17 +175,41 @@ function initEmailObfuscation() {
     revealEmail();
   });
 
-  card.addEventListener('click', (e) => {
+  /* One activation, not two.
+
+     This used to preventDefault() and only reveal, so the address appeared and
+     the click was swallowed — the visitor had to tap the card a second time to
+     actually open their mail client. On a desktop that is invisible, because
+     `mouseenter` has already revealed the card by the time the pointer arrives
+     and the click follows the real mailto: href. On a phone there is no hover:
+     a recruiter tapped "Email", got a blurred string turning sharp, and had to
+     work out that tapping again would do something. That is the whole cost of
+     the anti-spam obfuscation landing on exactly the person it should not.
+
+     So the first activation now reveals AND navigates. The href is set inside
+     revealEmail(), but this event is already past the point where the browser
+     read it, so the navigation has to be issued explicitly. Nothing about the
+     obfuscation weakens: the address is still absent from the HTML and still
+     assembled from two base64 attributes at runtime, which is the part that
+     defeats a scraper. A visitor who taps a card labelled "Email" has declared
+     their intent — making them declare it twice protects nobody. */
+  const revealAndOpen = (e) => {
     if (card.dataset.emailRevealed === 'true') return;
     e.preventDefault();
     revealEmail();
-  });
+    /* Guarded like every other window touch in this file — main.js is imported
+       directly by the Node tests, which stub `document` and nothing else. */
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.href = `mailto:${email}`;
+    }
+  };
+
+  card.addEventListener('click', revealAndOpen);
 
   card.addEventListener('keydown', (e) => {
     if (card.dataset.emailRevealed === 'true') return;
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    revealEmail();
+    revealAndOpen(e);
   });
 }
 

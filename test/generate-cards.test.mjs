@@ -214,7 +214,17 @@ test('travel.html ships every UNESCO site statically', () => {
 
 /* The failure this guards is a container that renders but stays empty — the
    markers present, the block between them blank. Byte count is a blunt but
-   honest proxy: an empty shell cannot reach these sizes. */
+   honest proxy: an empty shell cannot reach these sizes.
+
+   The floor is per-block rather than one global number because the blocks are
+   not one kind of thing. Every original block was a list — cards, papers,
+   accordion rows — where 200 chars is comfortably below a single entry.
+   `unesco-total` is one sentence, and a single number is the whole point of
+   it; it renders at ~139 chars and always will. Lowering the global floor to
+   fit it would have quietly halved the protection on the six list blocks,
+   which is the opposite of what this test is for. */
+const MIN_BLOCK_CHARS = { 'generated:unesco-total': 60 };
+
 test('no page ships an empty generated block', () => {
   for (const [rel, blocks] of Object.entries(TARGETS)) {
     const html = read(rel);
@@ -223,8 +233,24 @@ test('no page ships an empty generated block', () => {
       const end = html.indexOf(`<!-- /${name} -->`);
       assert.ok(start !== -1 && end > start, `${rel}: ${name} markers missing`);
       const body = html.slice(start + name.length + 8, end).trim();
-      assert.ok(body.length > 200,
-        `${rel}: ${name} is empty or near-empty (${body.length} chars) — run \`npm run generate-cards\``);
+      const floor = MIN_BLOCK_CHARS[name] ?? 200;
+      assert.ok(body.length > floor,
+        `${rel}: ${name} is empty or near-empty (${body.length} chars, floor ${floor}) — run \`npm run generate-cards\``);
     }
   }
+});
+
+/* The total is the one number the travel page exists to report, so it gets a
+   check of its own rather than riding on a byte count: it must equal the
+   number of sites actually in the data. A hand-typed 100 sat on that page
+   through the whole period the United States was filed under Europe. */
+test('travel.html reports the true visited-site total', () => {
+  const html = read('travel.html');
+  const sites = UNESCO.continents.reduce(
+    (n, cont) => n + (cont.countries || []).reduce(
+      (m, country) => m + (country.sites || []).length, 0,
+    ), 0,
+  );
+  assert.match(html, new RegExp(`<strong class="unesco-total-num">${sites}</strong>`),
+    `travel.html should report ${sites} visited sites — run \`npm run generate-cards\``);
 });

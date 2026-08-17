@@ -955,6 +955,50 @@ test('initEmailObfuscation reveals email and sets mailto on click', () => {
   }
 });
 
+/* The first activation must OPEN the mail client, not just unblur the address.
+   It used to preventDefault() and stop, which cost a phone visitor a second
+   tap on the one control the contact section exists for — invisible on a
+   desktop, where mouseenter has already revealed the card before the click
+   lands. Asserting the navigation is the only way to tell the two apart: the
+   revealed/href assertions above pass either way. */
+test('initEmailObfuscation opens the mail client on the first activation', () => {
+  const prevDoc = global.document;
+  const prevWin = global.window;
+  const listeners = {};
+  const card = {
+    dataset: {
+      emailUser: btoa('tap'),
+      emailDomain: btoa('once.com'),
+      emailRevealed: 'false',
+    },
+    querySelector(sel) { return sel === '.contact-value' ? { textContent: '' } : null; },
+    setAttribute() {},
+    addEventListener(evt, fn) { listeners[evt] = fn; },
+  };
+  global.document = {
+    querySelector(sel) { return sel === '.contact-email-obfuscated' ? card : null; },
+  };
+  global.window = { location: { href: '' } };
+  try {
+    initEmailObfuscation();
+
+    let prevented = false;
+    listeners.click({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, true, 'the synthetic click must still be swallowed');
+    assert.equal(global.window.location.href, 'mailto:tap@once.com',
+      'first click should navigate to the mailto, not merely reveal');
+
+    /* A second activation must fall through to the anchor's own href rather
+       than navigating again — by then the card carries a real mailto. */
+    global.window.location.href = '';
+    listeners.click({ preventDefault() { assert.fail('second click must not be swallowed'); } });
+    assert.equal(global.window.location.href, '');
+  } finally {
+    global.document = prevDoc;
+    if (prevWin === undefined) delete global.window; else global.window = prevWin;
+  }
+});
+
 test('initEmailObfuscation reveals email on Enter key', () => {
   const prevDoc = global.document;
   const valueEl = { textContent: '' };

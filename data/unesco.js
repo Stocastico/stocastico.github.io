@@ -225,6 +225,10 @@ export const UNESCO = {
           "name": "Italy",
           "sites": [
             {
+              "name": "Historic Centre of Rome, the Properties of the Holy See in that City Enjoying Extraterritorial Rights and San Paolo Fuori le Mura",
+              "url": "https://whc.unesco.org/en/list/91"
+            },
+            {
               "name": "Rock Drawings in Valcamonica",
               "url": "https://whc.unesco.org/en/list/94"
             },
@@ -327,10 +331,6 @@ export const UNESCO = {
             {
               "name": "The Porticoes of Bologna",
               "url": "https://whc.unesco.org/en/list/1650"
-            },
-            {
-              "name": "Historic Centre of Rome, the Properties of the Holy See in that City Enjoying Extraterritorial Rights and San Paolo Fuori le Mura",
-              "url": "https://whc.unesco.org/en/list/91"
             }
           ]
         },
@@ -483,15 +483,6 @@ export const UNESCO = {
           ]
         },
         {
-          "name": "Turkey",
-          "sites": [
-            {
-              "name": "Hierapolis-Pamukkale",
-              "url": "https://whc.unesco.org/en/list/485"
-            }
-          ]
-        },
-        {
           "name": "United Kingdom",
           "sites": [
             {
@@ -509,19 +500,6 @@ export const UNESCO = {
             {
               "name": "Old and New Towns of Edinburgh",
               "url": "https://whc.unesco.org/en/list/728"
-            }
-          ]
-        },
-        {
-          "name": "United States",
-          "sites": [
-            {
-              "name": "Independence Hall",
-              "url": "https://whc.unesco.org/en/list/78"
-            },
-            {
-              "name": "Statue of Liberty",
-              "url": "https://whc.unesco.org/en/list/307"
             }
           ]
         }
@@ -572,6 +550,19 @@ export const UNESCO = {
               "url": "https://whc.unesco.org/en/list/1276"
             }
           ]
+        },
+        {
+          "name": "United States",
+          "sites": [
+            {
+              "name": "Independence Hall",
+              "url": "https://whc.unesco.org/en/list/78"
+            },
+            {
+              "name": "Statue of Liberty",
+              "url": "https://whc.unesco.org/en/list/307"
+            }
+          ]
         }
       ]
     },
@@ -610,6 +601,15 @@ export const UNESCO = {
             {
               "name": "Historic Town of Sukhothai and Associated Historic Towns",
               "url": "https://whc.unesco.org/en/list/574"
+            }
+          ]
+        },
+        {
+          "name": "Turkey",
+          "sites": [
+            {
+              "name": "Hierapolis-Pamukkale",
+              "url": "https://whc.unesco.org/en/list/485"
             }
           ]
         }

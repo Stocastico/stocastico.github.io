@@ -1434,6 +1434,25 @@ figcaption {
   margin-inline: auto;
 }
 
+/* The running total, directly under the intro that states the 1,200+ goal.
+   Mono, because it is metadata about the list rather than prose — same role as
+   .links-count on the links page. The number itself is sized up and given the
+   display face: it is the one figure the section exists to report. */
+.unesco-total {
+  margin: 1.1rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.unesco-total-num {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--accent-text);
+  margin-right: 0.15rem;
+}
+
 .unesco-accordion {
   max-width: 660px;
   margin-inline: auto;
@@ -2412,9 +2431,48 @@ figcaption {
 .contact-lead {
   text-align: center;
   color: var(--text-muted);
-  margin-bottom: 2.5rem;
+  margin-bottom: 1rem;
   max-width: 60ch;
   margin-inline: auto;
+}
+
+/* "Open to …" — mono, because it is a status rather than prose, and the site
+   already uses the mono face for every piece of metadata. Boxed lightly so it
+   reads as a standing fact about the person rather than another sentence in
+   the paragraph above.
+
+   Note the text colour is a validated token, not the muted one at reduced
+   opacity: a11y.e2e.mjs caught exactly that mistake on .link-chip-count, where
+   opacity over an already-muted colour composited below 4.5:1 in every light
+   palette. */
+.contact-availability {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  justify-content: center;
+  text-align: center;
+  text-wrap: pretty;
+  max-width: 62ch;
+  margin: 0 auto 2.5rem;
+  padding: 0.7rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background: rgb(var(--accent-rgb) / 0.06);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
+  border-radius: var(--r-md);
+}
+
+/* Purely decorative status dot, aria-hidden in the markup. Sized in em so it
+   tracks the text if the font size changes. */
+.contact-availability-dot {
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-0.1em);
 }
 
 .contact-grid {
@@ -2856,6 +2914,54 @@ figcaption {
   margin: 0 0 0.75rem;
 }
 
+/* ── "Related work" — the CV's route into the project pages ────────────
+   Sits between the description and the tags: the tags say what the role was
+   about, these say what it produced, and the produced things are the more
+   interesting click. Deliberately styled as underlined text links rather than
+   as pills — .tl-tag right below is already a pill, and two pill rows on one
+   card make the clickable one indistinguishable from the decorative one. */
+.tl-links {
+  margin: 0 0 0.8rem;
+}
+
+.tl-links-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.3rem;
+}
+
+.tl-links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.tl-link {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: rgb(var(--accent-rgb) / 0.4);
+  transition: color var(--t-fast) var(--ease),
+              text-decoration-color var(--t-fast) var(--ease);
+}
+
+.tl-link:hover,
+.tl-link:focus-visible {
+  color: var(--accent2-text);
+  text-decoration-color: currentColor;
+}
+
 .tl-tags {
   display: flex;
   flex-wrap: wrap;
@@ -3189,17 +3295,29 @@ figcaption {
   }
 }
 
-/* ─── Navbar: burger below 900px ──────────────────────────────────────────
-   900, not the 680 the rest of the phone layout uses, and the two are
+/* ─── Navbar: burger below 1024px ─────────────────────────────────────────
+   1024, not the 680 the rest of the phone layout uses, and the two are
    deliberately different numbers now: this one is set by how wide the navbar's
    own content is, and nothing else on the page shares that constraint.
 
-   The bar holds a logo, three palette dots, a theme toggle, seven links and
-   the ⌘K chip. That content has an intrinsic width of ~793px and cannot
-   shrink — .nav-inner is a `justify-content: space-between` flex row with no
-   wrap, so below its content width the items simply overflow to the right.
-   With the navbar's own `padding-inline: clamp(1.25rem, 5vw, 3rem)` the last
-   width that still fits is ~835px.
+   The bar holds a logo, three palette dots, a theme toggle, EIGHT links and
+   the ⌘K chip. That content cannot shrink — .nav-inner is a
+   `justify-content: space-between` flex row with no wrap, so below its content
+   width the items simply overflow to the right.
+
+   This number is measured, not chosen, and it moved once already. At seven
+   links the last width that still fit was ~835px and the burger arrived at
+   900. Adding "Publications" — the eighth link, and the longest word in the
+   bar — pushed the limit to 990px: at 940 the ⌘K chip hung past the right
+   edge, and at 901 "Contact" went with it. Same failure as the one described
+   below, re-created by adding one <li>, which is exactly why the threshold is
+   written down here rather than left as a round number someone trusts.
+   1024 leaves ~35px of headroom over the measured 990.
+
+   If you add a ninth link, re-measure. The check is a Playwright sweep asking
+   each navbar element whether its own right edge is past the viewport — see
+   test/e2e/pages.e2e.mjs, and the paragraph below on why the document cannot
+   be asked this question.
 
    The burger used to arrive at 680px, which left a 155px band (681–835px)
    with no responsive answer at all: the ⌘K chip hung up to 146px past the
@@ -3224,7 +3342,7 @@ figcaption {
    centring further down) stay at 680px on purpose: a tablet is wide enough for
    the left-aligned hero, and moving them here would restyle content that fits
    perfectly well. */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .nav-links {
     display: none;
     position: fixed;
@@ -4327,16 +4445,19 @@ figcaption {
 
 /* Keyboard shortcut pill in nav.
 
-   901px, matching the burger breakpoint above — this chip is the widest thing
+   1025px, matching the burger breakpoint above — this chip is the widest thing
    in the bar and was the one hanging furthest off the right edge (146px at
    681px) while the threshold here read 681. The two numbers have to move
    together: showing the chip at any width where the burger has taken over puts
-   it back outside the viewport. */
+   it back outside the viewport. It is also the first thing to go off-screen
+   when a link is added, so it is the canary for the measurement above — when
+   the eighth link landed, this chip was clipped at every width from 901 to
+   980 while every link still fitted. */
 .cmd-trigger-hint {
   display: none;
 }
 
-@media (pointer: fine) and (min-width: 901px) {
+@media (pointer: fine) and (min-width: 1025px) {
   .cmd-trigger-hint {
     display: inline-flex;
     align-items: center;
