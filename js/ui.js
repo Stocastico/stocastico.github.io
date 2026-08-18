@@ -806,27 +806,41 @@ export function initTaglineReveal() {
   const tagline = document.querySelector('.hero-tagline');
   if (!tagline) return;
 
+  let delay = 120; /* ms — start after a brief pause */
+  const STEP = 40;  /* ms per word */
+  const spans = [];
+
   /* Split on the · separator, then further split each phrase into words.
      textContent *decodes* entities, and the words go back in through
      innerHTML below — so they have to be re-escaped, or a tagline containing
      "&" or "<" would round-trip into raw markup. Every other renderer on the
      site escapes; this was the one that did not. */
-  const text = tagline.textContent.trim();
-  const parts = text.split('·');
-  let delay = 120; /* ms — start after a brief pause */
-  const STEP = 40;  /* ms per word */
-
-  const spans = [];
-  parts.forEach((phrase, partIdx) => {
-    const words = phrase.trim().split(/\s+/).filter(Boolean);
-    words.forEach(word => {
-      spans.push(`<span class="tagline-word" style="animation-delay:${delay}ms">${escapeHtml(word)}</span>`);
-      delay += STEP;
+  const emit = (text, emphasised) => {
+    const parts = text.split('·');
+    parts.forEach((phrase, partIdx) => {
+      const words = phrase.trim().split(/\s+/).filter(Boolean);
+      words.forEach(word => {
+        const tag = emphasised ? 'em' : 'span';
+        spans.push(`<${tag} class="tagline-word" style="animation-delay:${delay}ms">${escapeHtml(word)}</${tag}>`);
+        delay += STEP;
+      });
+      if (partIdx < parts.length - 1) {
+        spans.push(`<span class="tagline-sep" style="animation-delay:${delay}ms">·</span>`);
+        delay += STEP;
+      }
     });
-    if (partIdx < parts.length - 1) {
-      spans.push(`<span class="tagline-sep" style="animation-delay:${delay}ms">·</span>`);
-      delay += STEP;
-    }
+  };
+
+  /* Walk the child nodes rather than reading textContent off the whole
+     paragraph: the tagline italicises its two verbs, and a textContent
+     round-trip would strip that on every JS visit — right in the source,
+     gone on screen, and only for visitors who don't prefer reduced motion.
+     An emphasised word becomes an <em class="tagline-word">, so it keeps the
+     italic *and* the stagger — and the @media print reset too, which selects
+     the class rather than the element. */
+  Array.from(tagline.childNodes).forEach(node => {
+    if (node.nodeType === 3 /* TEXT_NODE */) emit(node.nodeValue, false);
+    else if (node.nodeType === 1 /* ELEMENT_NODE */) emit(node.textContent, node.tagName === 'EM');
   });
 
   tagline.innerHTML = spans.join(' ');
