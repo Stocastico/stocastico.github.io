@@ -262,9 +262,12 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
     } finally { await page.close(); }
   });
 
-  /* 0.28 is the ratio the JS used; the CSS reproduces it as a 28dvh keyframe
-     over a 100dvh range, so it should agree to within a rounding error. */
-  test('the hero copy parallaxes at the same rate the JS used', async () => {
+  /* The keyframe is `translate: 0 var(--hero-drift)` over a 0→100dvh range, so
+     the copy should have moved that fraction of the scroll. Read the fraction
+     off the element rather than hard-coding it: this used to assert a literal
+     0.28 — "the ratio the JS used" — which made the number look like the
+     invariant when the real one is the test below it. 0.28 was in fact the bug. */
+  test('the hero copy parallaxes by the drift the stylesheet declares', async () => {
     const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
@@ -277,11 +280,57 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
 
       assert.equal(await translateY(), 0, 'the hero copy should start unmoved');
 
+      /* A custom property is not resolved at computed-value time, so this comes
+         back as the authored token ("20dvh") and the number in front of it is
+         the percentage of the range. */
+      const rate = await page.evaluate(() => parseFloat(
+        getComputedStyle(document.querySelector('.hero-content'))
+          .getPropertyValue('--hero-drift')) / 100);
+      assert.ok(rate > 0, 'the stylesheet should declare a non-zero --hero-drift');
+
       const at = await scrollTo(page, 300);
       const y = await translateY();
-      const expected = at * 0.28;
+      const expected = at * rate;
       assert.ok(Math.abs(y - expected) < 1,
         `hero translated ${y}px at ${at}px of scroll, expected about ${expected}px`);
+    } finally { await page.close(); }
+  });
+
+  /* The invariant that actually matters, and the one nothing was asserting.
+
+     #hero clips (overflow: hidden) and the copy inside it is vertically centred
+     and drifting *down*, so the drift is bounded by the space underneath — and
+     28dvh was past that bound on any window shorter than about 1100px. A
+     visitor on a 650px-tall laptop window, a few hundred pixels down the page,
+     got the "draw it a digit" aside cut in half and then the Download CV button
+     after it. Every static assertion in the repo was green, because the markup
+     was perfect; the pixels were not.
+
+     Short viewport, several scroll positions, and the question asked of the
+     elements rather than of the effect: is the bottom of this still inside the
+     box that clips it. */
+  test('nothing in the hero is clipped by the hero at any scroll position', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 1440, height: 650 } });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      /* The aside is revealed only once a hero scene has painted. */
+      await page.waitForSelector('.hero-cnn-link:not([hidden])', { timeout: 8000 }).catch(() => {});
+
+      for (const to of [0, 150, 300, 450, 600]) {
+        await scrollTo(page, to);
+        const spill = await page.evaluate(() => {
+          const heroBottom = document.getElementById('hero').getBoundingClientRect().bottom;
+          return ['.hero-actions', '.hero-cnn-link', '.hero-tagline', '.hero-location']
+            .map((sel) => {
+              const el = document.querySelector(sel);
+              if (!el || el.hidden || getComputedStyle(el).display === 'none') return null;
+              const over = el.getBoundingClientRect().bottom - heroBottom;
+              return over > 1 ? `${sel} hangs ${Math.round(over)}px below the hero` : null;
+            })
+            .filter(Boolean);
+        });
+        assert.deepEqual(spill, [], `at ${to}px of scroll: ${spill.join('; ')}`);
+      }
     } finally { await page.close(); }
   });
 

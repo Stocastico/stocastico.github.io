@@ -708,15 +708,25 @@ if (typeof document !== 'undefined') {
            aside's claim becomes true — see syncHeroCnnLink below. */
         heroCnnPainted = true;
         syncHeroCnnLink();
+        /* The aside was display:none while the scene measured the hero around
+           it, so both renderers need telling that the copy just got a line
+           taller. Called after the constructor has returned, from the first
+           painted frame, so neuralInstance is assigned. */
+        if (neuralInstance && typeof neuralInstance.relayout === 'function') neuralInstance.relayout();
       };
-      neuralInstance = new Background(neuralCanvas, reveal);
+      if (isCnn) {
+        neuralInstance = new Background(neuralCanvas, reveal, pinHeroCnnLink);
+      } else {
+        unpinHeroCnnLink();
+        neuralInstance = new Background(neuralCanvas, reveal);
+      }
       _disposables.push(neuralInstance);
     });
   };
 
-  /* The hero's aside says "The network behind this text is a real LeNet-5 —
-     draw it a digit". That is a claim about something the visitor can see, so
-     it may only be on screen while the thing is.
+  /* The hero's aside says "A real LeNet-5 — draw it a digit". That is a claim
+     about something the visitor can see, so it may only be on screen while the
+     thing is.
 
      It used to be gated on supportsCnnHero() alone, evaluated immediately, so
      that it would not have to wait for a deferred import. But buildNeural() is
@@ -745,6 +755,45 @@ if (typeof document !== 'undefined') {
     heroCnnLink.hidden = !heroCnnPainted || prefersReducedMotion();
   };
   syncHeroCnnLink();
+
+  /* Where the aside sits depends on which scene painted, because the two put
+     the drawing in different places.
+
+     The full pipeline (cnn-hero.js) occupies the right-hand column, so the
+     aside is parked directly under it as a caption on the artwork it is
+     talking about. That also takes it out of `.hero-content`, which matters
+     for more than tidiness: the copy is vertically centred in a hero that
+     clips, and it drifts down on scroll (the hero-parallax timeline), so the
+     last thing in that column is the first thing the bottom edge eats — the
+     aside was being cut off, and then the Download CV button after it.
+
+     KernelScan (narrow, touch) already draws in the band *below* the copy, so
+     there is nothing to park under: the aside stays in flow where it is, one
+     line above the scene, and the scene measures around it.
+
+     The coordinates come from the renderer (sceneBox), never from a second
+     copy of its arithmetic here. */
+  const heroEl = document.getElementById('hero');
+  const heroCopy = document.querySelector('.hero-content');
+  const pinHeroCnnLink = (box) => {
+    if (!heroCnnLink || !heroEl || !box) return;
+    if (heroCnnLink.parentNode !== heroEl) heroEl.appendChild(heroCnnLink);
+    heroCnnLink.classList.add('is-pinned');
+    /* Anchored to the scene's *right* edge, not its left. The scroll hint sits
+       centred at the bottom of the hero, and on a short window the caption's
+       last line and the hint's first pixel arrive within a couple of px of each
+       other; hugging the right edge puts ~400px of clear air between them at
+       every height instead of relying on the gap staying positive. It is also
+       the end of the pipeline — the caption lands under the verdict it is
+       inviting you to go and reproduce. */
+    heroEl.style.setProperty('--hero-link-r', `${Math.round(heroEl.clientWidth - box.right)}px`);
+    heroEl.style.setProperty('--hero-link-y', `${Math.round(box.bottom)}px`);
+  };
+  const unpinHeroCnnLink = () => {
+    if (!heroCnnLink || !heroCopy) return;
+    heroCnnLink.classList.remove('is-pinned');
+    if (heroCnnLink.parentNode !== heroCopy) heroCopy.appendChild(heroCnnLink);
+  };
 
   /* Tear the current hero background down and build the one that now applies —
      shared by the theme switch and the breakpoint watcher below. Canvas2D

@@ -343,6 +343,16 @@ export class KernelScan {
     this._maskTo = Math.max(this._oy, Math.min(copyBottom + 8, this._oy + 40 * this._scale));
   }
 
+  /* Re-run the layout on demand. `copyBottom` above is a measurement of the
+     hero copy, and the aside that ends it ("a real LeNet-5 — draw it a digit")
+     is revealed only once this scene's first frame has painted — i.e. strictly
+     after the measurement. Without a second pass the band is sized against a
+     copy ~60px shorter than the one it ends up sharing the hero with, and the
+     scene creeps up under the new line. */
+  relayout() {
+    if (this.ctx) this._onResize();
+  }
+
   _onPointerDown(e) {
     const x = e.clientX;
     const y = e.clientY;

@@ -845,6 +845,14 @@ figcaption {
 /* Linear-style left-aligned hero: text sits in the left column,
    neural-network canvas fills the entire background.           */
 #hero {
+  /* Written by pinHeroCnnLink() (js/main.js) from CnnHero.sceneBox() — the
+     right inset and the bottom edge of the drawing, so the aside can sit under
+     it. Declared here as well as set there: these are the values that apply
+     before the scene has laid out (and if it never does), and a var() with no
+     definition anywhere in the stylesheet is what test/css-assets.test.mjs
+     exists to catch. */
+  --hero-link-r: 1.5%;
+  --hero-link-y: 62%;
   position: relative;
   height: 100svh;
   /* iOS Safari: dvh tracks the visible area as the URL bar collapses,
@@ -928,8 +936,36 @@ figcaption {
   }
 }
 
+/* How far the copy drifts. A variable rather than a literal because the amount
+   that looks right is bounded by something real: #hero clips (overflow: hidden,
+   for the scene canvases and so the copy never lands on the About section), and
+   the copy is vertically centred, so the space beneath it is only
+   (H − copyHeight) / 2. Drift past that and the hero eats its own bottom line —
+   which is exactly what a visitor on a 650px-tall window saw, the aside cut in
+   half and then the Download CV button.
+
+   The bound is exact rather than a matter of taste. At the end of the range the
+   copy has drifted d·H, so it stays inside iff d ≤ (H − copyHeight) / 2H, and
+   that ceiling *falls* as the window gets shorter: with the ~485px copy this
+   hero has, a 1000px window tolerates 25dvh and a 600px one only 9dvh. So the
+   short end sets the number for everyone — 28dvh was never safe at any height
+   below 1100px, which is why it clipped on an ordinary laptop.
+
+   Two tiers rather than one: 9dvh holds at the 600px min-height, and above
+   840px there is room for 20dvh, which keeps most of the tuned effect on the
+   screens it was tuned on. Both are decoration; being clipped is not. */
+.hero-content {
+  --hero-drift: 20dvh;
+}
+
+@media (max-height: 840px) {
+  .hero-content {
+    --hero-drift: 9dvh;
+  }
+}
+
 @keyframes hero-parallax {
-  to { translate: 0 28dvh; }
+  to { translate: 0 var(--hero-drift); }
 }
 
 @keyframes heroFadeUp {
@@ -1031,7 +1067,11 @@ figcaption {
    syncHeroCnnLink() in js/main.js only when the LeNet scene is what painted. */
 .hero-cnn-link {
   margin-top: 1.5rem;
-  max-width: 34ch;
+  /* Holds the sentence on one line down to a 360px phone. It was 34ch, tuned
+     when the text was half again as long and wrapped either way; at the current
+     length that setting broke a 32-character line after "a" and left "digit →"
+     alone underneath. */
+  max-width: 38ch;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   line-height: 1.6;
@@ -1039,6 +1079,41 @@ figcaption {
 
 .hero-cnn-link[hidden] {
   display: none;
+}
+
+/* On a short phone the scan scene's band (js/kernel-scan.js) is squeezed below
+   the height it needs to stay legible, so it holds its floor and climbs back up
+   under the copy — its own top-edge mask fades the overlap, but the aside is
+   the line it climbs into. Half the margin buys the gap back. Only in flow: the
+   pinned variant is a caption on a scene that is nowhere near it. */
+@media (max-height: 700px) {
+  .hero-cnn-link:not(.is-pinned) {
+    margin-top: 0.75rem;
+  }
+}
+
+/* Parked under the drawing, as a caption on it, when the full pipeline is what
+   painted — js/main.js moves the element out of `.hero-content` and on to #hero
+   itself, then feeds it the scene's own rectangle (CnnHero.sceneBox()). Two
+   things follow from being a child of #hero rather than of the copy: it is out
+   of the hero-parallax timeline, so it cannot drift into the clipped edge, and
+   its coordinates are the canvas's, the canvas being inset: 0 on the hero.
+
+   Only the CNN scene gets this. KernelScan draws in the band *below* the copy,
+   where there is nothing to sit under, so on narrow viewports the aside stays
+   in flow one line above the scene and the scene measures around it. */
+.hero-cnn-link.is-pinned {
+  position: absolute;
+  z-index: 2;
+  right: var(--hero-link-r);
+  top: calc(var(--hero-link-y) + 0.4rem);
+  margin-top: 0;
+  /* Wide enough for the sentence to hold one line at the narrowest viewport
+     this variant runs at (1100px — see supportsCnnHero), because a caption that
+     wraps stops reading as a caption. The vw term keeps it off the copy if the
+     text is ever lengthened. */
+  max-width: min(38ch, 34vw);
+  text-align: right;
 }
 
 .hero-cnn-link a {
