@@ -149,12 +149,18 @@ function decodeBase64(b64) {
 }
 
 export class CnnHero {
-  constructor(canvas, onReady) {
+  constructor(canvas, onReady, onLayout) {
     this.canvas = canvas;
     this._theme = getTheme();
     this._listeners = [];
     this._io = null;
     this._onReady = typeof onReady === 'function' ? onReady : null;
+    /* Fired with sceneBox() every time the scene is laid out, so a caller can
+       park DOM next to the drawing without re-deriving where it landed. The
+       scene's position is a function of the viewport and three constants that
+       live in this file; a second copy of that arithmetic in js/main.js would
+       be wrong the first time one of them is tuned. */
+    this._onLayout = typeof onLayout === 'function' ? onLayout : null;
     this.ctx = canvas.getContext('2d', { alpha: true });
     if (!this.ctx) return;
 
@@ -252,6 +258,29 @@ export class CnnHero {
        scene's own left edge — the input digit is the most legible thing in the
        picture and must not be the part that gets faded out. */
     this._maskTo = Math.min(this.w * 0.44, this._ox);
+
+    if (this._onLayout) this._onLayout(this.sceneBox());
+  }
+
+  /* The drawing's own rectangle in CSS pixels, measured from the canvas's top
+     left — which is the hero's, the canvas being inset: 0 on it. The reference
+     box carries ~30 units of margin below the caption baseline (captions sit at
+     REF_H - 44 / REF_H - 33), so `bottom` clears the deepest ink rather than
+     cutting it. */
+  sceneBox() {
+    return {
+      left: this._ox,
+      top: this._oy,
+      right: this._ox + REF_W * this._scale,
+      bottom: this._oy + REF_H * this._scale,
+    };
+  }
+
+  /* Re-run the layout on demand. The hero aside is revealed only once the
+     first frame has painted, i.e. after this scene has already measured the
+     copy around it, so whoever reveals it has to say so. */
+  relayout() {
+    if (this.ctx) this._onResize();
   }
 
   /* Signed share of the pointer parallax this layer gets: +1 for the input
