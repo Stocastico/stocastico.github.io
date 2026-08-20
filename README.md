@@ -135,4 +135,15 @@ neither for weeks. One fact, one home.
 
 ## Licence
 
-MIT — see [`LICENSE`](LICENSE). The prose, images and CV are © Stefano Masneri and not covered by it.
+Two licences, because a website is two things.
+
+- **Code** — MIT, see [`LICENSE`](LICENSE). The scripts, the generators, the
+  tests, the stylesheet, the markup.
+- **Content** — [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), see
+  [`LICENSE-CONTENT.md`](LICENSE-CONTENT.md). The prose, the project write-ups
+  and the hand-curated data: reuse it anywhere, commercially or not, as long as
+  you credit me and link back.
+
+The photo, the CV and the thesis PDFs are © Stefano Masneri and reserved; the
+fonts and the map data carry their own licences. `LICENSE-CONTENT.md` lists
+each one.
