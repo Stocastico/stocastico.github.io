@@ -26,7 +26,9 @@ import {
 } from '../js/render-cards.js';
 import {
   cvTimelineLines, cvSkillsLines, unescoAccordionLines, unescoTotalLines, linksGridLines,
+  projectFilterLines,
 } from '../js/render-page.js';
+import { PROJECT_TAGS } from '../js/project-tags.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
 import { CV_CAREER, CV_EDUCATION, CV_SKILLS } from '../data/cv.js';
@@ -101,6 +103,7 @@ const TARGETS = {
       publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
   },
   'projects.html': {
+    'generated:project-filter': () => projectFilterLines(PROJECTS, PROJECT_TAGS),
     /* level 2, not 3: this page's only other heading is the <h1>, so h3 here
        would skip a rank. index.html above keeps the default 3 because its
        cards sit under an <h2> section title. */

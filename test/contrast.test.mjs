@@ -331,13 +331,25 @@ test('contrast: label text on an accent-filled button meets AA', () => {
   }
 });
 
-test('contrast: the accent-filled chip labels itself with --on-accent', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
-  const rule = css.match(/^\.link-chip\.is-active\s*\{([^}]*)\}/m);
-  assert.ok(rule, 'expected a .link-chip.is-active rule');
-  assert.match(rule[1], /color:\s*var\(--on-accent\)/,
-    'text on an accent fill must use --on-accent, the only token measured against the accents');
-});
+/* Every chip that fills itself with the accent gradient — the links blogroll's
+   and the project facets' — must label itself with --on-accent. They share one
+   ruleset, but the assertion is made per selector rather than against the
+   ruleset as a whole: a chip moved out into its own rule with var(--bg) back in
+   it is exactly the regression this guards, and matching the shared selector
+   list would stop noticing the moment the list is split. */
+for (const chip of ['.link-chip', '.project-chip']) {
+  test(`contrast: ${chip}.is-active labels itself with --on-accent`, () => {
+    const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
+    const escaped = chip.replace('.', '\\.');
+    /* The selector may sit anywhere in a comma-separated list, so match the
+       whole rule the list belongs to. */
+    const rule = css.match(new RegExp(
+      `^[^{}]*${escaped}\\.is-active[^{}]*\\{([^}]*)\\}`, 'm'));
+    assert.ok(rule, `expected a rule matching ${chip}.is-active`);
+    assert.match(rule[1], /color:\s*var\(--on-accent\)/,
+      'text on an accent fill must use --on-accent, the only token measured against the accents');
+  });
+}
 
 /* ─── Surfaces: the design floor ─────────────────────────────────────────── */
 

@@ -1675,14 +1675,23 @@ figcaption {
   color: var(--text-muted);
 }
 
-/* Category filter chips */
-.links-toolbar {
+/* Filter chips — shared by the links blogroll and the project facets.
+
+   One set of rules, two class names, rather than a second copy under
+   .project-*. Everything tuned into these blocks is the kind that gets tuned
+   again: the .is-active fill is --on-accent because --bg failed AA on the
+   accent gradient in two of six variants, and the count is de-emphasised by
+   size rather than opacity because opacity composited below 4.5:1 in every
+   light palette. A duplicate ruleset would have to relearn both. */
+.links-toolbar,
+.projects-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
 }
 
-.link-chip {
+.link-chip,
+.project-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -1699,18 +1708,21 @@ figcaption {
               color var(--t-fast) var(--ease);
 }
 
-.link-chip:hover {
+.link-chip:hover,
+.project-chip:hover {
   border-color: var(--border-hov);
   background: var(--bg-card-hov);
   color: var(--text);
 }
 
-.link-chip:focus-visible {
+.link-chip:focus-visible,
+.project-chip:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.link-chip.is-active {
+.link-chip.is-active,
+.project-chip.is-active {
   /* --on-accent, not --bg. They are similar colours, but only --on-accent is
      validated against the accents (test/contrast.test.mjs), and --bg was not:
      on the accent gradient it measured 4.31:1 in forest/light and 4.29:1 in
@@ -1733,12 +1745,14 @@ figcaption {
 
    The count inherits the chip's colour instead, in both the resting and active
    states, where --on-accent is already validated against the accent fill. */
-.link-chip-count {
+.link-chip-count,
+.project-chip-count {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
-.links-count {
+.links-count,
+.projects-count {
   text-align: left;
   margin: 1rem 0 0;
   color: var(--text-faint);
@@ -1858,7 +1872,8 @@ figcaption {
 @media (prefers-reduced-motion: reduce) {
   .link-card,
   .link-card-arrow,
-  .link-chip {
+  .link-chip,
+  .project-chip {
     transition: none;
   }
   .link-card:hover,
@@ -2183,6 +2198,17 @@ figcaption {
 
 /* ─── Projects Section ─────────────────────────────────────── */
 
+/* The facet toolbar sits between the page header and the grid. Left-aligned
+   with the section header and the grid, like .links-toolbar — the centred
+   variant is the landing-page tell this site keeps out of its section heads. */
+.projects-toolbar {
+  margin-top: 2rem;
+}
+
+.projects-count {
+  margin: 1rem 0 0;
+}
+
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2227,6 +2253,14 @@ figcaption {
   .projects-grid {
     item-flow: row masonry;
   }
+}
+
+/* .project-card declares `display: flex` below, and an author declaration beats
+   the UA stylesheet's `[hidden] { display: none }` on origin — so the facet
+   filter would set the attribute and change nothing on screen without this.
+   Exactly the trap .cmd-item hit; see the note in the command-palette section. */
+.project-card[hidden] {
+  display: none;
 }
 
 .project-card {
@@ -4760,6 +4794,7 @@ figcaption {
   button:focus-visible,
   .btn:focus-visible,
   .link-chip:focus-visible,
+  .project-chip:focus-visible,
   .link-card:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 3px;

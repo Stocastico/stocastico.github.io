@@ -314,6 +314,115 @@ describe('navigation', () => {
   });
 });
 
+/* ─── Project facet filter ───────────────────────────────────────────────────
+   The unit tests pin the chip markup, the matcher and the server-rendered
+   attributes. None of that can answer the only question that matters: does
+   clicking a chip change what is on the screen. `.project-card` declares
+   `display: flex`, which beats the UA stylesheet's `[hidden] { display: none }`
+   on origin, so the whole feature can be correct in every file and still hide
+   nothing — the same way .cmd-item's rows once stayed painted. offsetParent is
+   read here rather than the attribute, because the attribute is what was
+   intended and offsetParent is what happened. */
+describe('project filter', () => {
+  /* Uses the file's shared browser and server, like every other describe here.
+     An own pair worked, but it launched a second Chromium and a second HTTP
+     server for four short tests — and the describe that follows needs the full
+     channel:'chromium' build for a real bfcache round trip, which is the most
+     resource-sensitive thing the suite does. */
+  const openProjects = async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    await page.goto(server.base + '/projects.html', { waitUntil: 'networkidle' });
+    /* renderProjects() replaces the grid asynchronously, and initProjectFilter()
+       runs after it. Wait for the cards rather than for a timeout. */
+    await page.waitForFunction(
+      () => document.querySelectorAll('#projects-grid .project-card').length > 1);
+    await page.waitForTimeout(250);
+    return page;
+  };
+
+  const painted = (page) => page.$$eval('#projects-grid .project-card',
+    (els) => els.filter((e) => e.offsetParent !== null).length);
+
+  test('clicking a facet chip narrows what is actually painted', async () => {
+    const page = await openProjects();
+    try {
+      const all = await painted(page);
+      assert.equal(all, PROJECTS.length,
+        `projects.html painted ${all} of ${PROJECTS.length} cards before filtering`);
+
+      await page.click('.project-chip[data-filter="computer-vision"]');
+      await page.waitForTimeout(200);
+
+      const expected = PROJECTS.filter((p) => (p.tags || []).includes('Computer Vision')).length;
+      const shown = await painted(page);
+      assert.equal(shown, expected,
+        `the Computer Vision facet painted ${shown} cards, expected ${expected}`);
+      assert.ok(shown < all, 'the filter changed nothing on screen');
+
+      /* Every painted card really belongs to the facet. */
+      const straysShown = await page.$$eval('#projects-grid .project-card',
+        (els) => els.filter((e) => e.offsetParent !== null)
+          .filter((e) => !(e.getAttribute('data-tags') || '').split(' ').includes('computer-vision'))
+          .length);
+      assert.equal(straysShown, 0, 'a card outside the facet is still painted');
+    } finally { await page.close(); }
+  });
+
+  test('cards are hidden, never removed', async () => {
+    /* This page is where the CV\'s role -> project cross-links point their
+       readers next. A filter that emptied the grid would make the page\'s
+       content depend on which chip was last clicked. */
+    const page = await openProjects();
+    try {
+      await page.click('.project-chip[data-filter="llms-mlops"]');
+      await page.waitForTimeout(200);
+      const inDom = await page.$$eval('#projects-grid .project-card', (els) => els.length);
+      assert.equal(inDom, PROJECTS.length,
+        `${inDom} cards left in the DOM after filtering — cards must be hidden, not removed`);
+
+      await page.click('.project-chip[data-filter="all"]');
+      await page.waitForTimeout(200);
+      assert.equal(await painted(page), PROJECTS.length, '"All" did not bring every card back');
+    } finally { await page.close(); }
+  });
+
+  test('single-select: aria-pressed moves to the clicked chip and the count follows', async () => {
+    const page = await openProjects();
+    try {
+      const pressed = () => page.$$eval('.project-chip',
+        (els) => els.filter((e) => e.getAttribute('aria-pressed') === 'true')
+          .map((e) => e.getAttribute('data-filter')));
+
+      assert.deepEqual(await pressed(), ['all'], '"All" is not pressed at rest');
+
+      await page.click('.project-chip[data-filter="ar-3d"]');
+      await page.waitForTimeout(200);
+      assert.deepEqual(await pressed(), ['ar-3d'],
+        'exactly one chip may be pressed — this is single-select');
+
+      const count = await page.textContent('.projects-count');
+      const expected = PROJECTS.filter((p) => (p.tags || []).includes('AR & 3D')).length;
+      assert.match(count.trim(), new RegExp(`${expected} projects in AR & 3D`),
+        `the live count reads "${count.trim()}"`);
+
+      /* The count is announced politely, so a screen-reader user hears the
+         result of their own click without it interrupting them. */
+      assert.equal(await page.getAttribute('.projects-count', 'aria-live'), 'polite');
+    } finally { await page.close(); }
+  });
+
+  test('the homepage grid ships no chips', async () => {
+    /* Three shuffled work projects have nothing worth filtering, and a control
+       that returns one of three is a control that only disappoints. */
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      assert.equal(await page.$$eval('.project-chip', (els) => els.length), 0,
+        'the homepage grew a facet toolbar');
+    } finally { await page.close(); }
+  });
+});
+
 /* ─── Theme and palette ──────────────────────────────────────────────────── */
 
 describe('theme', () => {
@@ -449,7 +558,17 @@ describe('lifecycle: the page survives Back', () => {
         'the headless shell cannot, whatever flags it is given.');
       return;
     }
-    const page = await bfBrowser.newPage({ viewport: VIEWPORTS.desktop });
+    /* newPage(), not bfBrowser.newPage(): this was the one page in the suite
+       opened without blockExternalRequests, and it waits on `networkidle`.
+       The GoatCounter pixel does not fail fast on CI — it hangs until it times
+       out, and networkidle dutifully waits for it. Measured against a real
+       bfcache-capable Chromium: 13,297 ms unblocked versus 657 ms blocked, so
+       the first goto sat a hair under Playwright's 30 s default and went over
+       it the moment the runner's egress got slower. The same probe confirmed
+       request interception does not cost bfcache eligibility — `pageshow:true`
+       still arrives with the route in place — which is presumably why nobody
+       expected the raw newPage() here to matter. */
+    const page = await newPage(bfBrowser, server, { viewport: VIEWPORTS.desktop });
     await page.addInitScript(() => {
       window.__lifecycle = [];
       addEventListener('pagehide', (e) => window.__lifecycle.push(`pagehide:${e.persisted}`));
