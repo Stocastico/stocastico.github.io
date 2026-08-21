@@ -12,6 +12,7 @@
    ═══════════════════════════════════════════════════════════ */
 import { prefersReducedMotion, escapeHtml, rafThrottle } from './utils.js';
 import { THEME, THEME_LIGHT, PALETTES, ACTIVE_PALETTE, getTheme } from './theme.js';
+import { CONTACT_EMAIL } from './contact.js';
 
 /* ═══════════════════════════════════════════════════════════
    LISTENER / OBSERVER BOOKKEEPING
@@ -467,24 +468,16 @@ export function initCommandPalette() {
       hint: 'To clipboard',
       icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
       action() {
-        /* Prefer the revealed mailto: href, then fall back to decoding the
-           obfuscated data attributes — on the contact card (homepage) or on
-           the palette overlay itself (every other page carries the same
-           base64 pair there, since those pages have no contact section). */
-        let email = document.querySelector('a[href^="mailto:"]')?.getAttribute('href')?.replace('mailto:', '') || '';
-        if (!email) {
-          const source = document.querySelector('.contact-email-obfuscated') || overlay;
-          if (source && typeof atob === 'function') {
-            try {
-              const user = atob(source.getAttribute('data-email-user') || '');
-              const domain = atob(source.getAttribute('data-email-domain') || '');
-              if (user && domain) email = `${user}@${domain}`;
-            } catch (_) { /* malformed data attrs — leave email empty */ }
-          }
-        }
-        if (email && email !== 'your.email@example.com') {
-          navigator.clipboard?.writeText(email).then(() => showToast('Email copied!')).catch(() => {});
-        }
+        /* Straight from the constant, not from the DOM. The old code read a
+           base64 pair off the overlay because the address was not in the
+           markup — and that fallback was doing the real work on twenty of the
+           twenty-one pages, since only the homepage has a contact section.
+           Replacing it with a `a[href^="mailto:"]` lookup would have quietly
+           broken this action everywhere else; importing the constant is both
+           simpler and correct on every page. */
+        navigator.clipboard?.writeText(CONTACT_EMAIL)
+          .then(() => showToast('Email copied!'))
+          .catch(() => showToast('Copy it by hand: ' + CONTACT_EMAIL));
       },
     },
     {

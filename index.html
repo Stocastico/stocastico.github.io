@@ -441,36 +441,35 @@
       </header>
       <div class="contact-wrap">
         <p class="contact-lead" data-animate>
-          Stalk my projects on GitHub, read my papers on Scholar and offer me a job on LinkedIn. And if you prefer the old-fashioned way, you can even write me an email.
+          Stalk my projects on GitHub, read my papers on Scholar and offer me a job on LinkedIn. And if you prefer the old-fashioned way, the address is right there — copy it and write me an email.
         </p>
         <!-- Contact cards written directly in HTML; update href/value when details change -->
         <div class="contact-grid" id="contact-grid">
 
-          <!-- aria-describedby, not aria-description. The latter is ARIA 1.3
-               and Chromium-only: Firefox and Safari/VoiceOver ignore it, so the
-               explanation reached roughly the minority of screen-reader users
-               and silently vanished for the rest. A visually-hidden element
-               referenced by id is understood everywhere and says the same
-               thing. -->
-          <a href="#" class="contact-card contact-email-obfuscated" data-email-user="c3RlZmFuby5tYXNuZXJp"
-            data-email-domain="bGl2ZS5jb20=" data-email-revealed="false"
-            aria-label="Click to reveal email address"
-            aria-describedby="contact-email-hint"
-            title="Click to reveal and open mail client"
-            data-animate data-delay="0">
+          <!-- generated:contact-email -->
+          <div class="contact-card contact-card--email" data-animate data-delay="0">
             <div class="contact-icon">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path
-                  d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
               </svg>
             </div>
             <div class="contact-info">
               <span class="contact-label">Email</span>
-              <span class="contact-value">Click to reveal</span>
+              <button type="button" class="contact-value contact-copy" data-email="hello@stefanomasneri.com" aria-label="Copy email address hello@stefanomasneri.com">
+                <span class="contact-email-text">hello@stefanomasneri.com</span>
+                <svg class="contact-copy-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
-          </a>
-          <span id="contact-email-hint" class="visually-hidden">Email address is hidden to prevent
-            spam. Click or press Enter to reveal the address and open your mail client.</span>
+            <a class="contact-mailto" href="mailto:hello@stefanomasneri.com" aria-label="Open hello@stefanomasneri.com in your mail client" title="Open in your mail client">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <!-- /generated:contact-email -->
 
           <a href="https://www.linkedin.com/in/stefanomasneri/" target="_blank" rel="me noopener" class="contact-card"
             data-animate data-delay="100">
@@ -541,8 +540,7 @@
        best. Visibility is the `open` attribute the browser manages, not
        `hidden`, which is what made the old markup able to disagree with the
        CSS. -->
-  <dialog class="cmd-overlay" id="cmd-overlay" aria-label="Command palette"
-    data-email-user="c3RlZmFuby5tYXNuZXJp" data-email-domain="bGl2ZS5jb20=">
+  <dialog class="cmd-overlay" id="cmd-overlay" aria-label="Command palette">
     <div class="cmd-box">
       <div class="cmd-search-row">
         <svg class="cmd-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">

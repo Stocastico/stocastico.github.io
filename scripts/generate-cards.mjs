@@ -26,8 +26,9 @@ import {
 } from '../js/render-cards.js';
 import {
   cvTimelineLines, cvSkillsLines, unescoAccordionLines, unescoTotalLines, linksGridLines,
-  projectFilterLines,
+  projectFilterLines, contactEmailLines,
 } from '../js/render-page.js';
+import { CONTACT_EMAIL } from '../js/contact.js';
 import { PROJECT_TAGS } from '../js/project-tags.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
@@ -101,6 +102,7 @@ const TARGETS = {
       homepageProjects(PROJECTS).slice(0, HOMEPAGE_PROJECTS).map((p, i) => projectCardHtml(p, i)),
     'generated:publication-items': () =>
       publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
+    'generated:contact-email': () => contactEmailLines(CONTACT_EMAIL),
   },
   'projects.html': {
     'generated:project-filter': () => projectFilterLines(PROJECTS, PROJECT_TAGS),
