@@ -324,16 +324,11 @@ describe('navigation', () => {
    read here rather than the attribute, because the attribute is what was
    intended and offsetParent is what happened. */
 describe('project filter', () => {
-  let browser, server;
-  before(async () => {
-    browser = await launchBrowser();
-    server = await startServer();
-  });
-  after(async () => {
-    await server?.close();
-    await browser?.close();
-  });
-
+  /* Uses the file's shared browser and server, like every other describe here.
+     An own pair worked, but it launched a second Chromium and a second HTTP
+     server for four short tests — and the describe that follows needs the full
+     channel:'chromium' build for a real bfcache round trip, which is the most
+     resource-sensitive thing the suite does. */
   const openProjects = async () => {
     const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
     await page.goto(server.base + '/projects.html', { waitUntil: 'networkidle' });
@@ -563,7 +558,17 @@ describe('lifecycle: the page survives Back', () => {
         'the headless shell cannot, whatever flags it is given.');
       return;
     }
-    const page = await bfBrowser.newPage({ viewport: VIEWPORTS.desktop });
+    /* newPage(), not bfBrowser.newPage(): this was the one page in the suite
+       opened without blockExternalRequests, and it waits on `networkidle`.
+       The GoatCounter pixel does not fail fast on CI — it hangs until it times
+       out, and networkidle dutifully waits for it. Measured against a real
+       bfcache-capable Chromium: 13,297 ms unblocked versus 657 ms blocked, so
+       the first goto sat a hair under Playwright's 30 s default and went over
+       it the moment the runner's egress got slower. The same probe confirmed
+       request interception does not cost bfcache eligibility — `pageshow:true`
+       still arrives with the route in place — which is presumably why nobody
+       expected the raw newPage() here to matter. */
+    const page = await newPage(bfBrowser, server, { viewport: VIEWPORTS.desktop });
     await page.addInitScript(() => {
       window.__lifecycle = [];
       addEventListener('pagehide', (e) => window.__lifecycle.push(`pagehide:${e.persisted}`));
