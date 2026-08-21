@@ -445,13 +445,13 @@ export function initCommandPalette() {
 
   const SECTIONS = [
     { id: 'about',        label: 'About',        hint: 'Hello there!', icon: ICONS.about },
+    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html', icon: ICONS.now },
     { id: 'projects',     label: 'Projects',      hint: 'What I’ve been building', href: '/projects.html', icon: ICONS.projects },
     { id: 'publications', label: 'Publications',  hint: 'Selected papers', icon: ICONS.paper },
     { id: 'all-publications', label: 'All publications', hint: 'Full paper list', href: '/publications.html', icon: ICONS.papers },
     { id: 'cv',           label: 'CV',            hint: 'Experience & Education', href: '/cv.html', icon: ICONS.cv },
     { id: 'places',       label: 'Places',        hint: 'Where I’ve been', icon: ICONS.places },
     { id: 'links',        label: 'Links',         hint: 'Blogs & sites I follow', href: '/links.html', icon: ICONS.links },
-    { id: 'now',          label: 'Now',           hint: 'What I’m up to lately', href: '/now.html', icon: ICONS.now },
     { id: 'contact',      label: 'Contact',       hint: "Let’s talk", icon: ICONS.contact },
   ];
 

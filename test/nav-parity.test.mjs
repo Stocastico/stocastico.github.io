@@ -111,6 +111,27 @@ test('nav-parity: the new-project scaffold produces the same nav sequence', () =
     'from index.html\'s — a new project page would be born with the wrong nav.');
 });
 
+/* Parity alone cannot see a change made to all 22 copies at once — every page
+   agreeing on the wrong nav is still parity. So the order itself is pinned
+   here, deliberately by hand: 'Now' sits second because it is the page most
+   visitors actually want, and it spent a long time seventh. */
+const EXPECTED = [
+  { label: 'About',        href: 'index.html#about' },
+  { label: 'Now',          href: 'now.html' },
+  { label: 'CV',           href: 'cv.html' },
+  { label: 'Projects',     href: 'projects.html' },
+  { label: 'Publications', href: 'publications.html' },
+  { label: 'Travel',       href: 'travel.html' },
+  { label: 'Links',        href: 'links.html' },
+  { label: 'Contact',      href: 'index.html#contact' },
+];
+
+test('nav-parity: the nav carries the expected links in the expected order', () => {
+  assert.equal(seq(REFERENCE), seq(EXPECTED),
+    'index.html\'s navbar no longer matches the order this test pins. If the ' +
+    'change is deliberate, update EXPECTED here and re-run every copy of the nav.');
+});
+
 test('nav-parity: every page in the repo was checked', () => {
   assert.ok(PAGES.length >= 20,
     `only ${PAGES.length} pages globbed — the directory read is probably wrong`);
