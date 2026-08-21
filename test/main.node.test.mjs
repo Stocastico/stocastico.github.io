@@ -14,9 +14,8 @@ import {
   initScrollReveal,
   initCounters,
   animateCounter,
-  decodeBase64,
-  getObfuscatedContactEmail,
-  initEmailObfuscation,
+  copyContactEmail,
+  initContactCopy,
   renderCV,
   renderSkills,
   initTheme,
@@ -839,198 +838,135 @@ test('Globe3D: European worktrip/holiday pins are excluded from 3D globe markers
   }
 });
 
-/* ─── Email obfuscation / blur-reveal tests ─────────────── */
+/* ─── Contact copy chip ──────────────────────────────────
+   Replaces the eight blur-reveal tests that used to sit here. The coverage
+   moved rather than went away: the flow changed from "decode two base64
+   attributes and un-blur" to "copy the plain address, and be honest when
+   copying fails". That last part is why these are worth keeping —
+   navigator.clipboard is absent on insecure origins and rejects when the
+   document is unfocused, and the failure path is exactly where a copy button
+   is tempted to lie. */
 
-test('decodeBase64 decodes valid Base64 strings', () => {
-  assert.equal(decodeBase64(btoa('hello')), 'hello');
-  assert.equal(decodeBase64(btoa('user@example.com')), 'user@example.com');
-});
-
-test('decodeBase64 returns empty string for invalid input', () => {
-  assert.equal(decodeBase64('!!!'), '');
-  assert.equal(decodeBase64(''), '');
-  assert.equal(decodeBase64(null), '');
-  assert.equal(decodeBase64(undefined), '');
-});
-
-test('getObfuscatedContactEmail reconstructs email from DOM data attributes', () => {
-  const prevDoc = global.document;
-  global.document = {
-    querySelector(sel) {
-      if (sel === '.contact-email-obfuscated') {
-        return {
-          dataset: {
-            emailUser: btoa('stefano'),
-            emailDomain: btoa('example.com'),
-          },
-        };
-      }
-      return null;
-    },
-  };
-  try {
-    assert.equal(getObfuscatedContactEmail(), 'stefano@example.com');
-  } finally {
-    global.document = prevDoc;
-  }
-});
-
-test('getObfuscatedContactEmail returns empty string when card is missing', () => {
-  const prevDoc = global.document;
-  global.document = { querySelector() { return null; } };
-  try {
-    assert.equal(getObfuscatedContactEmail(), '');
-  } finally {
-    global.document = prevDoc;
-  }
-});
-
-test('initEmailObfuscation sets blurred email text on load', () => {
-  const prevDoc = global.document;
-  const valueEl = { textContent: 'placeholder' };
+/* A stub shaped like the generated markup: a .contact-email-text child and a
+   data-email attribute. */
+function makeCopyButton(email = 'hello@example.com') {
   const listeners = {};
-  const card = {
-    dataset: {
-      emailUser: btoa('test'),
-      emailDomain: btoa('example.com'),
-      emailRevealed: 'false',
-    },
-    querySelector(sel) {
-      if (sel === '.contact-value') return valueEl;
-      return null;
-    },
-    setAttribute() {},
-    addEventListener(evt, fn) { listeners[evt] = fn; },
+  const textNode = { _tag: 'contact-email-text' };
+  return {
+    listeners,
+    attrs: { 'data-email': email },
+    getAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attrs, name) ? this.attrs[name] : null; },
+    querySelector(sel) { return sel === '.contact-email-text' ? textNode : null; },
+    addEventListener(type, fn) { listeners[type] = fn; },
   };
+}
+
+/* showToast() builds a real toast element, so the document stub needs just
+   enough surface for it; selection support is toggled per test. */
+function copyEnv({ clipboard = null, selection = true } = {}) {
+  const selected = [];
+  const prev = {
+    doc: global.document,
+    win: global.window,
+    /* Node 22 defines a getter-only global `navigator`, so it cannot be
+       assigned — only redefined. Capture the descriptor to put back. */
+    navDesc: Object.getOwnPropertyDescriptor(globalThis, 'navigator'),
+  };
+  Object.defineProperty(globalThis, 'navigator', {
+    value: clipboard ? { clipboard } : {},
+    configurable: true, writable: true,
+  });
+  global.window = selection
+    ? { getSelection: () => ({ removeAllRanges() {}, addRange() {} }) }
+    : {};
   global.document = {
-    querySelector(sel) {
-      if (sel === '.contact-email-obfuscated') return card;
-      return null;
+    querySelector: () => null,
+    body: { appendChild() {} },
+    createElement: () => ({ setAttribute() {}, classList: { remove() {}, add() {} } }),
+    createRange: () => ({ selectNodeContents: (n) => selected.push(n) }),
+  };
+  return {
+    selected,
+    restore() {
+      global.document = prev.doc;
+      global.window = prev.win;
+      if (prev.navDesc) Object.defineProperty(globalThis, 'navigator', prev.navDesc);
+      else delete globalThis.navigator;
     },
   };
+}
+
+test('initContactCopy: wires a click handler onto the copy button', async () => {
+  const { initContactCopy } = await import('../js/main.js');
+  const button = makeCopyButton();
+  const prevDoc = global.document;
+  global.document = { querySelector: (sel) => (sel === '.contact-copy' ? button : null) };
   try {
-    initEmailObfuscation();
-    /* Email text should be set immediately (shown blurred via CSS) */
-    assert.equal(valueEl.textContent, 'test@example.com');
-    /* Card should still be in unrevealed state */
-    assert.equal(card.dataset.emailRevealed, 'false');
-  } finally {
-    global.document = prevDoc;
-  }
+    initContactCopy();
+    assert.equal(typeof button.listeners.click, 'function', 'the copy button got no click handler');
+    assert.equal(button.listeners.keydown, undefined,
+      'a real <button> gets Enter and Space from the platform — no keydown handler needed');
+  } finally { global.document = prevDoc; }
 });
 
-test('initEmailObfuscation reveals email and sets mailto on click', () => {
+test('initContactCopy: no-ops without a button, and without a data-email', async () => {
+  const { initContactCopy } = await import('../js/main.js');
   const prevDoc = global.document;
-  const valueEl = { textContent: 'placeholder' };
-  const listeners = {};
-  const attrs = {};
-  const card = {
-    dataset: {
-      emailUser: btoa('click'),
-      emailDomain: btoa('test.com'),
-      emailRevealed: 'false',
-    },
-    querySelector(sel) {
-      if (sel === '.contact-value') return valueEl;
-      return null;
-    },
-    setAttribute(k, v) { attrs[k] = v; },
-    addEventListener(evt, fn) { listeners[evt] = fn; },
-  };
-  global.document = {
-    querySelector(sel) {
-      if (sel === '.contact-email-obfuscated') return card;
-      return null;
-    },
-  };
   try {
-    initEmailObfuscation();
-    /* Simulate click */
-    listeners.click({ preventDefault() {} });
-    assert.equal(card.dataset.emailRevealed, 'true');
-    assert.equal(attrs.href, 'mailto:click@test.com');
-    assert.match(attrs['aria-label'], /click@test\.com/);
-  } finally {
-    global.document = prevDoc;
-  }
+    global.document = { querySelector: () => null };
+    assert.doesNotThrow(() => initContactCopy());
+
+    const bare = makeCopyButton('');
+    global.document = { querySelector: () => bare };
+    initContactCopy();
+    assert.equal(bare.listeners.click, undefined,
+      'an empty data-email must not wire a handler that copies nothing');
+  } finally { global.document = prevDoc; }
 });
 
-/* The first activation must OPEN the mail client, not just unblur the address.
-   It used to preventDefault() and stop, which cost a phone visitor a second
-   tap on the one control the contact section exists for — invisible on a
-   desktop, where mouseenter has already revealed the card before the click
-   lands. Asserting the navigation is the only way to tell the two apart: the
-   revealed/href assertions above pass either way. */
-test('initEmailObfuscation opens the mail client on the first activation', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const listeners = {};
-  const card = {
-    dataset: {
-      emailUser: btoa('tap'),
-      emailDomain: btoa('once.com'),
-      emailRevealed: 'false',
-    },
-    querySelector(sel) { return sel === '.contact-value' ? { textContent: '' } : null; },
-    setAttribute() {},
-    addEventListener(evt, fn) { listeners[evt] = fn; },
-  };
-  global.document = {
-    querySelector(sel) { return sel === '.contact-email-obfuscated' ? card : null; },
-  };
-  global.window = { location: { href: '' } };
+test('copyContactEmail: writes the address to the clipboard on the happy path', async () => {
+  const { copyContactEmail } = await import('../js/main.js');
+  const written = [];
+  const env = copyEnv({ clipboard: { writeText: (t) => { written.push(t); return Promise.resolve(); } } });
   try {
-    initEmailObfuscation();
-
-    let prevented = false;
-    listeners.click({ preventDefault() { prevented = true; } });
-    assert.equal(prevented, true, 'the synthetic click must still be swallowed');
-    assert.equal(global.window.location.href, 'mailto:tap@once.com',
-      'first click should navigate to the mailto, not merely reveal');
-
-    /* A second activation must fall through to the anchor's own href rather
-       than navigating again — by then the card carries a real mailto. */
-    global.window.location.href = '';
-    listeners.click({ preventDefault() { assert.fail('second click must not be swallowed'); } });
-    assert.equal(global.window.location.href, '');
-  } finally {
-    global.document = prevDoc;
-    if (prevWin === undefined) delete global.window; else global.window = prevWin;
-  }
+    const ok = await copyContactEmail(makeCopyButton(), 'hello@example.com');
+    assert.equal(ok, true, 'a resolved writeText must report success');
+    assert.deepEqual(written, ['hello@example.com']);
+    assert.equal(env.selected.length, 0, 'nothing needs selecting when the copy worked');
+  } finally { env.restore(); }
 });
 
-test('initEmailObfuscation reveals email on Enter key', () => {
-  const prevDoc = global.document;
-  const valueEl = { textContent: '' };
-  const listeners = {};
-  const attrs = {};
-  const card = {
-    dataset: {
-      emailUser: btoa('key'),
-      emailDomain: btoa('test.com'),
-      emailRevealed: 'false',
-    },
-    querySelector(sel) {
-      if (sel === '.contact-value') return valueEl;
-      return null;
-    },
-    setAttribute(k, v) { attrs[k] = v; },
-    addEventListener(evt, fn) { listeners[evt] = fn; },
-  };
-  global.document = {
-    querySelector(sel) {
-      if (sel === '.contact-email-obfuscated') return card;
-      return null;
-    },
-  };
+test('copyContactEmail: a rejected clipboard write does NOT report success', async () => {
+  /* The invariant. "Email copied!" after a rejected write is a lie the visitor
+     only discovers when they paste. */
+  const { copyContactEmail } = await import('../js/main.js');
+  const env = copyEnv({ clipboard: { writeText: () => Promise.reject(new Error('denied')) } });
   try {
-    initEmailObfuscation();
-    listeners.keydown({ key: 'Enter', preventDefault() {} });
-    assert.equal(card.dataset.emailRevealed, 'true');
-    assert.equal(attrs.href, 'mailto:key@test.com');
-  } finally {
-    global.document = prevDoc;
-  }
+    const ok = await copyContactEmail(makeCopyButton(), 'hello@example.com');
+    assert.equal(ok, false, 'a rejected write must not report success');
+    assert.equal(env.selected.length, 1,
+      'the fallback must select the address so Ctrl+C can finish the job');
+  } finally { env.restore(); }
+});
+
+test('copyContactEmail: falls back when navigator.clipboard is absent', async () => {
+  const { copyContactEmail } = await import('../js/main.js');
+  const env = copyEnv({ clipboard: null });
+  try {
+    const ok = await copyContactEmail(makeCopyButton(), 'hello@example.com');
+    assert.equal(ok, false);
+    assert.equal(env.selected.length, 1);
+  } finally { env.restore(); }
+});
+
+test('copyContactEmail: survives an environment with no selection API', async () => {
+  const { copyContactEmail } = await import('../js/main.js');
+  const env = copyEnv({ clipboard: null, selection: false });
+  try {
+    const ok = await copyContactEmail(makeCopyButton(), 'hello@example.com');
+    assert.equal(ok, false, 'no clipboard and no selection is still not success');
+    assert.equal(env.selected.length, 0);
+  } finally { env.restore(); }
 });
 
 /* ─── renderCV tests ─────────────────────────────────────── */

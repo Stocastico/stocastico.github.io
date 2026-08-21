@@ -2628,21 +2628,136 @@ figcaption {
   }
 }
 
-.contact-email-obfuscated[data-email-revealed='false'] .contact-value {
-  filter: blur(5px);
-  transition: filter 0.3s ease;
-  user-select: none;
+/* ─── Contact email: copy chip + mailto ──────────────────────────────────
+   The blur-until-revealed rules that used to live here are gone with the
+   obfuscation. The address is plain text now, so the only job left is making
+   the two affordances read as primary and secondary. */
+
+/* The card is a <div> rather than an <a>: it holds two separate controls, and
+   an anchor cannot contain another interactive element. So the hover lift on
+   .contact-card would be a lie about clickability here — the controls own
+   their own affordances instead. */
+.contact-card--email:hover {
+  transform: none;
+}
+
+.contact-card--email .contact-info {
+  flex: 1;
+}
+
+/* The address itself is the copy button — the biggest, most obvious target,
+   because copying is what most visitors actually want. Inherits .contact-value
+   for type and colour, and resets only what a <button> brings with it. */
+.contact-copy {
+  appearance: none;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  /* Flex items default to min-width:auto and refuse to shrink below their
+     content. .contact-info already opts out; this nested flex line needs the
+     same or the address sets a floor on the card's width. */
+  min-width: 0;
+  transition: color var(--t-fast) var(--ease);
 }
 
-.contact-email-obfuscated[data-email-revealed='false']:hover .contact-value,
-.contact-email-obfuscated[data-email-revealed='false']:focus .contact-value {
-  filter: blur(0);
+.contact-copy:hover,
+.contact-copy:focus-visible {
+  color: var(--accent-text);
 }
 
-.contact-email-obfuscated[data-email-revealed='true'] .contact-value {
-  filter: blur(0);
-  transition: filter 0.3s ease;
+.contact-copy:focus-visible,
+.contact-mailto:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+.contact-email-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Must sit AFTER the .contact-email-text rule above, not up with the
+   .contact-value copy of it — the two have equal specificity, so source order
+   is the whole argument. When this lived earlier in the file the nowrap won at
+   every width, the 24-character address could not wrap, and its min-content
+   width pushed the one-column contact grid 24px past the right edge of a
+   375px phone. Every card in the grid overflowed, not just this one, because
+   a grid column is as wide as its widest item. */
+@media (max-width: 480px) {
+  .contact-email-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+}
+
+.contact-copy-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+}
+
+/* The copy glyph is a hint, not a control — it appears on hover/focus and is
+   aria-hidden either way. It stays visible where hover does not exist, since
+   on a touch screen there is no state in which it could appear. */
+.contact-card--email:hover .contact-copy-icon,
+.contact-copy:focus-visible .contact-copy-icon {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .contact-copy-icon { opacity: 1; }
+}
+
+/* Secondary: smaller, muted, and off to the side, so "copy" and "open mail
+   client" cannot be confused for one target. */
+.contact-mailto {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease);
+}
+
+.contact-mailto svg {
+  width: 17px;
+  height: 17px;
+}
+
+.contact-mailto:hover {
+  color: var(--text);
+  border-color: var(--border-hov);
+  background: var(--bg-card-hov);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-copy,
+  .contact-copy-icon,
+  .contact-mailto {
+    transition: none;
+  }
 }
 
 /* ─── 15. Footer ────────────────────────────────────────── */

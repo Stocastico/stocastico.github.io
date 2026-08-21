@@ -113,6 +113,7 @@ import {
   initTaglineReveal,
   initMobileMenu,
   initCmdTriggerHint,
+  showToast,
 } from './ui.js';
 
 /* ═══════════════════════════════════════════════════════════
@@ -138,80 +139,65 @@ function formatIsoDate(iso) {
   });
 }
 
-function decodeBase64(raw) {
+/* Copy the published address to the clipboard.
+
+   The address is in the markup in plain text — there is nothing to reveal and
+   no decoding step left. What remains is the convenience: one press puts it in
+   the clipboard, and a mailto: link beside it opens a mail client for anyone
+   who wants that instead.
+
+   The failure path is the part worth getting right. navigator.clipboard is
+   absent on insecure origins, and writeText() rejects when the document is not
+   focused or permission is refused — so a toast that says "Email copied!"
+   unconditionally is a toast that lies. On failure the address is SELECTED
+   instead, and the toast says what the visitor now has to do themselves. That
+   is a real fallback rather than a consolation prize: the text is on screen
+   and selectable, so Ctrl+C finishes the job. */
+function selectEmailText(button) {
+  if (typeof window === 'undefined' || typeof window.getSelection !== 'function') return false;
+  const text = (button.querySelector && button.querySelector('.contact-email-text')) || button;
   try {
-    return atob(raw || '');
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return true;
   } catch (_) {
-    return '';
+    return false;
   }
 }
 
-function getObfuscatedContactEmail() {
-  const card = document.querySelector('.contact-email-obfuscated');
-  if (!card) return '';
-  const user = decodeBase64(card.dataset.emailUser || '');
-  const domain = decodeBase64(card.dataset.emailDomain || '');
-  if (!user || !domain) return '';
-  return `${user}@${domain}`;
+function copyFailed(button, email) {
+  const selected = selectEmailText(button);
+  showToast(selected ? 'Press Ctrl+C to copy' : 'Copy it by hand: ' + email);
+  return false;
 }
 
-function initEmailObfuscation() {
-  const card = document.querySelector('.contact-email-obfuscated');
-  if (!card) return;
-  const valueEl = card.querySelector('.contact-value');
-  const email = getObfuscatedContactEmail();
+/* Resolves true when the clipboard really took it and false on every degraded
+   path — returned rather than swallowed so a test can tell the two apart. */
+export function copyContactEmail(button, email) {
+  const clip = (typeof navigator !== 'undefined' && navigator.clipboard) || null;
+  if (!clip || typeof clip.writeText !== 'function') {
+    return Promise.resolve(copyFailed(button, email));
+  }
+  return Promise.resolve()
+    .then(() => clip.writeText(email))
+    .then(() => { showToast('Email copied!'); return true; })
+    .catch(() => copyFailed(button, email));
+}
+
+/* A real <button>, so Enter and Space come from the platform rather than from
+   a keydown handler — which is the reason it is a button and not an
+   <a href="#">. The listener is on the element itself, so it is discarded with
+   the document and needs no _pushTeardown (same as the filter chips). */
+export function initContactCopy() {
+  if (typeof document === 'undefined') return;
+  const button = document.querySelector('.contact-copy');
+  if (!button) return;
+  const email = button.getAttribute('data-email') || '';
   if (!email) return;
-
-  /* Show the email text immediately (CSS blur hides it visually) */
-  if (valueEl) valueEl.textContent = email;
-
-  const revealEmail = () => {
-    card.dataset.emailRevealed = 'true';
-    card.setAttribute('href', `mailto:${email}`);
-    card.setAttribute('aria-label', `Send email to ${email}`);
-  };
-
-  card.addEventListener('mouseenter', () => {
-    if (card.dataset.emailRevealed === 'true') return;
-    revealEmail();
-  });
-
-  /* One activation, not two.
-
-     This used to preventDefault() and only reveal, so the address appeared and
-     the click was swallowed — the visitor had to tap the card a second time to
-     actually open their mail client. On a desktop that is invisible, because
-     `mouseenter` has already revealed the card by the time the pointer arrives
-     and the click follows the real mailto: href. On a phone there is no hover:
-     a recruiter tapped "Email", got a blurred string turning sharp, and had to
-     work out that tapping again would do something. That is the whole cost of
-     the anti-spam obfuscation landing on exactly the person it should not.
-
-     So the first activation now reveals AND navigates. The href is set inside
-     revealEmail(), but this event is already past the point where the browser
-     read it, so the navigation has to be issued explicitly. Nothing about the
-     obfuscation weakens: the address is still absent from the HTML and still
-     assembled from two base64 attributes at runtime, which is the part that
-     defeats a scraper. A visitor who taps a card labelled "Email" has declared
-     their intent — making them declare it twice protects nobody. */
-  const revealAndOpen = (e) => {
-    if (card.dataset.emailRevealed === 'true') return;
-    e.preventDefault();
-    revealEmail();
-    /* Guarded like every other window touch in this file — main.js is imported
-       directly by the Node tests, which stub `document` and nothing else. */
-    if (typeof window !== 'undefined' && window.location) {
-      window.location.href = `mailto:${email}`;
-    }
-  };
-
-  card.addEventListener('click', revealAndOpen);
-
-  card.addEventListener('keydown', (e) => {
-    if (card.dataset.emailRevealed === 'true') return;
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    revealAndOpen(e);
-  });
+  button.addEventListener('click', () => { copyContactEmail(button, email); });
 }
 
 /* Publication items — data source: PUBLICATIONS (data/publications.js).
@@ -605,9 +591,6 @@ export {
   initCounters,
   animateCounter,
   NoiseGradient,
-  decodeBase64,
-  getObfuscatedContactEmail,
-  initEmailObfuscation,
   initCmdTriggerHint,
 };
 
@@ -677,7 +660,7 @@ if (typeof document !== 'undefined') {
   _pushTeardown(initTheme());
   _pushTeardown(initNavbar());
   _pushTeardown(initMobileMenu());
-  initEmailObfuscation();
+  initContactCopy();
   _pushTeardown(initBackToTop());
   _pushTeardown(initCommandPalette());
   initCmdTriggerHint();

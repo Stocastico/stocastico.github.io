@@ -301,6 +301,50 @@ export function linksCountLabel(shown, total, filterLabel) {
   return `Showing ${shown} ${shown === 1 ? 'site' : 'sites'} in ${filterLabel}`;
 }
 
+/* ─── Contact card (index.html) ────────────────────────────────────────────
+   The address in plain text, a copy button, and a small mailto: link.
+
+   Generated rather than hand-written for one reason: the address is meant to
+   be disposable, so swapping it must be a single edit to CONTACT_EMAIL
+   (js/contact.js). It appears three times in this markup — visible text, the
+   button's accessible name, the mailto href — and three hand-maintained copies
+   of a value whose whole point is that it changes is how the second one goes
+   stale.
+
+   Copy is the PRIMARY action and the mail client the secondary one, which is
+   the opposite of what the card used to do. mailto: is unreliable on mobile —
+   it depends on a configured client the visitor may not have — and a recruiter
+   on a phone tapping "Email" deserves the address in their clipboard rather
+   than a dialog about choosing an app. The button is a real <button>, so Enter
+   and Space come from the platform rather than from a keydown handler. */
+export function contactEmailLines(email) {
+  const addr = escapeHtml(email);
+  return [
+    '<div class="contact-card contact-card--email" data-animate data-delay="0">',
+    '  <div class="contact-icon">',
+    '    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">',
+    '      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />',
+    '    </svg>',
+    '  </div>',
+    '  <div class="contact-info">',
+    '    <span class="contact-label">Email</span>',
+    `    <button type="button" class="contact-value contact-copy" data-email="${addr}" aria-label="Copy email address ${addr}">`,
+    `      <span class="contact-email-text">${addr}</span>`,
+    '      <svg class="contact-copy-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">',
+    '        <rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>',
+    '        <path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    '      </svg>',
+    '    </button>',
+    '  </div>',
+    `  <a class="contact-mailto" href="mailto:${addr}" aria-label="Open ${addr} in your mail client" title="Open in your mail client">`,
+    '    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">',
+    '      <path d="M4 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    '    </svg>',
+    '  </a>',
+    '</div>',
+  ];
+}
+
 /* ─── Project facet filter (projects.html) ─────────────────────────────────
    The chips above the project grid. Deliberately the same shape as the links
    toolbar below — same single-select rule, same aria-pressed, same polite live

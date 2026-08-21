@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 import test, { after, before, describe } from 'node:test';
 
 import { PROJECTS } from '../../data/projects.js';
+import { CONTACT_EMAIL } from '../../js/contact.js';
 import {
   BFCACHE_ARGS, BFCACHE_IGNORE, VIEWPORTS, allPages, bfcacheWorks, blockExternalRequests,
   launchBrowser, launchBrowserWithBfcache, newPage, nudgePointer, resolveColor, startServer,
@@ -420,6 +421,72 @@ describe('project filter', () => {
       assert.equal(await page.$$eval('.project-chip', (els) => els.length), 0,
         'the homepage grew a facet toolbar');
     } finally { await page.close(); }
+  });
+});
+
+/* ─── Contact copy chip ──────────────────────────────────────────────────────
+   The unit tests pin the honesty rule (a rejected write must not toast
+   success) against a stub. What a stub cannot answer is whether the real
+   Clipboard API actually received the address, whether the button is reachable
+   by keyboard, and whether the address is in the served HTML before any script
+   runs — which is the entire point of dropping the obfuscation. */
+describe('contact', () => {
+  test('the address is in the served HTML with JavaScript disabled', async () => {
+    const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop, javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    await blockExternalRequests(page, server.base);
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
+      const shown = await page.textContent('.contact-email-text');
+      assert.equal(shown.trim(), CONTACT_EMAIL,
+        'a no-JS visitor must see the address itself, not a "click to reveal" placeholder');
+      assert.equal(await page.getAttribute('.contact-mailto', 'href'), `mailto:${CONTACT_EMAIL}`);
+    } finally { await ctx.close(); }
+  });
+
+  test('clicking the chip puts the address on the clipboard', async () => {
+    const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
+    await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+    const page = await ctx.newPage();
+    await blockExternalRequests(page, server.base);
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.click('.contact-copy');
+      await page.waitForTimeout(300);
+      const clip = await page.evaluate(() => navigator.clipboard.readText());
+      assert.equal(clip, CONTACT_EMAIL, `the clipboard holds "${clip}"`);
+
+      /* The toast is role="status", so it must carry the text rather than only
+         appear — an empty live region announces nothing. */
+      const toast = await page.textContent('.toast');
+      assert.match(toast, /copied/i, `the confirmation reads "${toast}"`);
+      assert.equal(await page.getAttribute('.toast', 'role'), 'status');
+    } finally { await ctx.close(); }
+  });
+
+  test('the copy control is a keyboard-operable button with a descriptive name', async () => {
+    const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
+    await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+    const page = await ctx.newPage();
+    await blockExternalRequests(page, server.base);
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+
+      const tag = await page.$eval('.contact-copy', (el) => el.tagName);
+      assert.equal(tag, 'BUTTON', 'the copy control must be a real button, not an <a href="#">');
+
+      const name = await page.$eval('.contact-copy', (el) => el.getAttribute('aria-label'));
+      assert.match(name, new RegExp(`^Copy email address .*${CONTACT_EMAIL.replace(/\./g, '\\.')}`),
+        `the accessible name reads "${name}"`);
+
+      /* Space activates a <button> for free. If this ever regresses it means
+         someone turned it back into an anchor. */
+      await page.focus('.contact-copy');
+      await page.keyboard.press('Space');
+      await page.waitForTimeout(300);
+      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), CONTACT_EMAIL,
+        'Space did not activate the copy button');
+    } finally { await ctx.close(); }
   });
 });
 
