@@ -78,6 +78,7 @@ import { projectCardHtml, publicationsListLines, homepageProjects } from './rend
    to ship as empty shells; see the header of js/render-page.js. */
 import {
   cvTimelineLines, cvSkillsLines, unescoAccordionLines, linksGridLines, linksCountLabel,
+  projectFilterLines, projectsCountLabel,
 } from './render-page.js';
 
 /* No theme import here any more. THEME/rgba were read by exactly one thing in
@@ -282,6 +283,81 @@ function renderProjects(projects) {
   /* No "View all projects" footer button: the section's intro prose already
      links the full list, and unlike a JS-injected footer that link is in the
      static HTML, so crawlers and no-JS visitors get it too. */
+}
+
+/* True when a project (its list of facet slugs) should be shown under the
+   active filter. 'all' matches everything. Pure + exported so the show/hide
+   rule can be unit-tested without a DOM — same contract as linkMatchesFilter
+   further down, deliberately. */
+export function projectMatchesFilter(slugs, filter) {
+  if (filter === 'all' || !filter) return true;
+  return Array.isArray(slugs) && slugs.indexOf(filter) !== -1;
+}
+
+/* Wire the facet chips above the project grid. Single-select, aria-pressed
+   maintained, a polite live count, and cards hidden with the `hidden`
+   attribute — never removed.
+
+   Removal would be the easier implementation and the wrong one: this page is
+   the target of the CV's role -> project cross-links, and a grid that empties
+   itself is a page whose content depends on which chip was last clicked. The
+   [hidden] cards stay in the DOM, in order, findable by Ctrl+F's "all matches"
+   and by anything anchored here.
+
+   Deliberately a sibling of wireLinksFilter() rather than a generalisation of
+   it. The two share a shape, not a data model — links match slugs they carry
+   directly, projects match slugs derived from labels — and the links page
+   works. Merging them would put the working one at risk to save nine lines. */
+function wireProjectFilter(root) {
+  if (!root || typeof root.querySelector !== 'function') return;
+  const toolbar = root.querySelector('.projects-toolbar');
+  const grid = root.querySelector('#projects-grid');
+  if (!toolbar || !grid) return;
+  const countEl = root.querySelector('.projects-count');
+  const chips = Array.from(toolbar.querySelectorAll('.project-chip'));
+
+  const apply = (filter, label) => {
+    const cards = Array.from(grid.querySelectorAll('.project-card'));
+    let shown = 0;
+    for (const card of cards) {
+      const slugs = (card.getAttribute('data-tags') || '').split(' ').filter(Boolean);
+      const match = projectMatchesFilter(slugs, filter);
+      card.hidden = !match;
+      if (match) shown += 1;
+    }
+    for (const chip of chips) {
+      const active = chip.getAttribute('data-filter') === filter;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (countEl) {
+      countEl.textContent = projectsCountLabel(
+        shown, cards.length, filter === 'all' ? '' : label);
+    }
+  };
+
+  toolbar.addEventListener('click', (e) => {
+    const chip = e.target.closest && e.target.closest('.project-chip');
+    if (!chip || !toolbar.contains(chip)) return;
+    apply(chip.getAttribute('data-filter'),
+      chip.getAttribute('data-label') || chip.textContent.trim());
+  });
+}
+
+/* Wire the server-rendered chips. Gated on the toolbar existing, so it is a
+   no-op on the homepage, which shows three shuffled cards and has nothing
+   worth filtering.
+
+   Unlike renderLinks(), this does NOT re-render the toolbar first. It does not
+   need to: generate-cards bakes the chips from projectFilterLines() and
+   test/generate-cards.test.mjs fails on drift, so the served markup already is
+   what the builder produces. renderLinks() re-renders because wireLinksFilter()
+   assumes a DOM it built; here the only DOM the wiring assumes is the chips'
+   own attributes, and it reads the cards fresh on every click, so it does not
+   care that renderProjects() replaces the grid underneath it on load. */
+export function initProjectFilter() {
+  if (typeof document === 'undefined') return;
+  wireProjectFilter(document);
 }
 
 /* Footer year. The HTML bakes the year current at authoring time so a no-JS
@@ -569,6 +645,9 @@ if (typeof document !== 'undefined') {
     _renderSettled.push(import('../data/projects.js').then(({ PROJECTS }) => {
       renderProjects(PROJECTS);
       revealNewContent(projGrid);
+      /* After the re-render, so the chips filter the cards that are actually
+         on the page rather than the ones generate-cards baked in. */
+      initProjectFilter();
     }));
   }
   const cvTimeline = document.getElementById('cv-timeline');

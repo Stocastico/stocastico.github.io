@@ -301,6 +301,52 @@ export function linksCountLabel(shown, total, filterLabel) {
   return `Showing ${shown} ${shown === 1 ? 'site' : 'sites'} in ${filterLabel}`;
 }
 
+/* ─── Project facet filter (projects.html) ─────────────────────────────────
+   The chips above the project grid. Deliberately the same shape as the links
+   toolbar below — same single-select rule, same aria-pressed, same polite live
+   count — because the two are the same control and a visitor who has used one
+   should not have to learn the other. What differs is only what they filter:
+   links carry category slugs of their own, projects carry facet labels that
+   tagSlugsFor() turns into slugs.
+
+   Server-rendered, and inert without JS. That is the correct degradation: the
+   full list is what a no-JS visitor should be served, and the chips can only
+   ever remove entries from it. */
+
+/* The count sentence. Server-rendered once and rewritten by js/main.js on every
+   chip click, so it lives here where both can reach it — the same arrangement
+   as linksCountLabel() below, and for the same reason: two copies of a
+   sentence eventually disagree about a plural. */
+export function projectsCountLabel(shown, total, filterLabel) {
+  if (!filterLabel) return `Showing all ${total} projects`;
+  return `Showing ${shown} ${shown === 1 ? 'project' : 'projects'} in ${filterLabel}`;
+}
+
+export function projectFilterLines(projects, tags) {
+  const list = Array.isArray(projects) ? projects : [];
+  const facets = Array.isArray(tags) ? tags : [];
+
+  const countOf = new Map(facets.map((t) => [t.label, 0]));
+  for (const project of list) {
+    for (const label of (project.tags || [])) {
+      if (countOf.has(label)) countOf.set(label, countOf.get(label) + 1);
+    }
+  }
+
+  const chips = [
+    '<button class="project-chip is-active" type="button" data-filter="all" data-label="All" aria-pressed="true">'
+    + `All <span class="project-chip-count">${list.length}</span></button>`,
+  ].concat(facets.map((tag) => (
+    `<button class="project-chip" type="button" data-filter="${escapeHtml(tag.slug)}" data-label="${escapeHtml(tag.label)}" aria-pressed="false">`
+    + `${escapeHtml(tag.label)} <span class="project-chip-count">${countOf.get(tag.label) || 0}</span></button>`
+  ))).join('');
+
+  return [
+    `<div class="projects-toolbar" role="group" aria-label="Filter projects by facet">${chips}</div>`,
+    `<p class="projects-count" role="status" aria-live="polite">${projectsCountLabel(list.length, list.length, '')}</p>`,
+  ];
+}
+
 /* A category filter bar plus a single, de-duplicated grid of external link
    cards. Each site appears once and is tagged with every category it belongs
    to, so filtering by category never duplicates an entry. The generator

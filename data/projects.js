@@ -11,7 +11,11 @@
      tags:        ['Computer Vision'],        // 1–2 labels from PROJECT_TAGS below
      bg:          'img/projects/my-bg.jpg',    // detail-page hero + og:image
      description: 'Short 2–3 sentence summary shown on the homepage card.',
-     url:         'projects.html#my-project', // link to detail section
+     url:         'projects/my-project.html', // the detail page (not an
+                                              // anchor — no card carries an id,
+                                              // and projects.html's cards are
+                                              // filterable, so an anchor into
+                                              // one could be hidden)
      lang:        'es',                       // OPTIONAL — only for a url that
                                               // leaves the English site; becomes
                                               // hreflang on the card anchor
@@ -52,25 +56,12 @@
    The homepage shows up to 3 'work' projects; projects.html shows everything.
    ============================================================ */
 
-/* The filter facets, in the order their chips appear on projects.html. The
-   `label` is what a project's `tags` entry says and what the card badge shows;
-   the `slug` is what `data-tags` and the chips' `data-filter` carry, because a
-   label with spaces and an ampersand in it makes a poor attribute value.
-   Declared here rather than derived from the projects so that a typo in a tag
-   is a stray rather than a new facet with one member. */
-export const PROJECT_TAGS = [
-  { slug: 'computer-vision',    label: 'Computer Vision' },
-  { slug: 'ar-3d',              label: 'AR & 3D' },
-  { slug: 'llms-mlops',         label: 'LLMs & MLOps' },
-  { slug: 'media-live-events',  label: 'Media & Live Events' },
-  { slug: 'education-research', label: 'Education & Research' },
-  { slug: 'data-interactive',   label: 'Data & Interactive' },
-];
-
-/* label -> slug, for the card markup. Unknown labels are dropped rather than
-   slugified on the fly: an unknown label is a bug the test above catches, and
-   inventing a slug for it would ship a facet no chip can select. */
-export const PROJECT_TAG_SLUGS = new Map(PROJECT_TAGS.map(t => [t.label, t.slug]));
+/* The six facets themselves live in js/project-tags.js — js/render-cards.js
+   needs them to put slugs on a card, and it is imported statically by
+   js/main.js, so anything it reaches lands in the eager bundle of all 21
+   pages. Re-exported here so the vocabulary still reads next to the data it
+   describes, and so `import { PROJECTS, PROJECT_TAGS }` works from one place. */
+export { PROJECT_TAGS, PROJECT_TAG_SLUGS, tagSlugsFor } from '../js/project-tags.js';
 
 export const PROJECTS = [
     {

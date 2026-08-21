@@ -6,6 +6,7 @@
    drift. Pure string functions — no DOM, no browser globals — so they import
    cleanly in Node. */
 import { escapeHtml } from './utils.js';
+import { tagSlugsFor } from './project-tags.js';
 
 /* ─── Project kind ─────────────────────────────────────────────
    Every entry in data/projects.js declares a `kind`:
@@ -81,7 +82,11 @@ export function projectCardHtml(project, i = 0, { level = 3 } = {}) {
   const hreflangAttr = project.lang
     ? ' hreflang="' + escapeHtml(project.lang) + '"'
     : '';
-  return '<a href="' + escapeHtml(project.url || '#') + '"' + hreflangAttr + ' class="project-card" data-animate data-delay="' + (i * 80) + '">' +
+  /* The facet slugs the filter chips on projects.html match against. Present
+     on the homepage cards too, where nothing reads them — one card builder,
+     and an attribute costs less than a second code path. */
+  const tagsAttr = ' data-tags="' + escapeHtml(tagSlugsFor(project.tags).join(' ')) + '"';
+  return '<a href="' + escapeHtml(project.url || '#') + '"' + hreflangAttr + ' class="project-card"' + tagsAttr + ' data-animate data-delay="' + (i * 80) + '">' +
     '<div class="project-card__body">' +
       '<div class="project-card__meta">' +
         '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
