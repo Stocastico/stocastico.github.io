@@ -34,6 +34,6 @@
     }
   ],
   "_comment": "background_color and theme_color are rewritten by `npm run generate-theme`, which the weekly palette rotation runs. They live at the end, away from the hand-edited keys above, so a rotation and an edit never share a merge context.",
-  "background_color": "#161110",
-  "theme_color": "#161110"
+  "background_color": "#1a1010",
+  "theme_color": "#1a1010"
 }
