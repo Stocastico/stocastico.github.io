@@ -169,7 +169,7 @@ AVATecH (<strong>A</strong>udio-<strong>V</strong>isual <strong>T</strong>echnol
 The problem was simple to state and painful to live with. Researchers in linguistics, sign-language studies, child-development psychology, and anthropology depend on annotated audio-visual recordings: transcriptions of speech, boundaries of gestures, phases of interaction, participant labels. Creating those annotations by hand takes between <strong>50 and 100 times the length of the media itself</strong>. A single one-hour field recording could take a PhD student two full weeks to annotate. Corpora of hundreds of hours were common, and every new study needed fresh annotations.
 </p>
 <p>
-AVATecH set out to reduce that burden by automating the most mechanical parts of the annotation pipeline, not to replace the researcher, but to pre-annotate the material so the human expert could focus on correction and semantic judgement rather than clicking through silent segments of video.
+AVATecH set out to reduce that burden by automating the most mechanical parts of the annotation pipeline — not to replace the researcher, but to pre-annotate the material so the human expert could focus on correction and semantic judgement rather than clicking through silent segments of video.
 </p>
 <h2>Approach</h2>
 <p>
@@ -189,7 +189,7 @@ The recognizers were designed as <strong>modular components with adaptation and 
 </p>
 <h2>Technical Context</h2>
 <p>
-The project ran during a period in which audio and video analysis was transitioning from hand-crafted features to learned representations, pre-deep-learning era. The speech and speaker modules relied on MFCC features, GMM/HMM acoustic models, and clustering algorithms; the video modules used colour histograms, motion vectors, and SVM classifiers. Every recognizer had to run acceptably fast on a standard researcher laptop; no GPUs, no cloud.
+The project ran during a period in which audio and video analysis was transitioning from hand-crafted features to learned representations — pre-deep-learning era. The speech and speaker modules relied on MFCC features, GMM/HMM acoustic models, and clustering algorithms; the video modules used colour histograms, motion vectors, and SVM classifiers. Every recognizer had to run acceptably fast on a standard researcher laptop; no GPUs, no cloud.
 </p>
 <p>
 Making all of that <strong>integrate cleanly into a tool users already knew and trusted</strong> was as much of the work as the algorithms themselves. ELAN had an established user base and a very specific interaction model; any pre-annotations had to slot into that model without disrupting existing workflows.
@@ -209,7 +209,7 @@ The recognizers shipped as part of <strong>ELAN</strong> and remained part of th
 </p>
 <h2>Personal Reflection</h2>
 <p>
-AVATecH shaped my approach to every project that followed. The constraints of the problem, messy real-world data, domain experts who are not programmers, a tool ecosystem that already exists, evaluation metrics that must reflect real usefulness rather than benchmark performance, are the same constraints I have met again and again, in AR for education and later in GenAI for enterprise. The specific algorithms have aged (a modern version of almost every recognizer would be built on transformer-based models in a tenth of the code), but the engineering discipline of the project has not.
+AVATecH shaped my approach to every project that followed. The constraints of the problem — messy real-world data, domain experts who are not programmers, a tool ecosystem that already exists, evaluation metrics that must reflect real usefulness rather than benchmark performance — are the same constraints I have met again and again, in AR for education and later in GenAI for enterprise. The specific algorithms have aged (a modern version of almost every recognizer would be built on transformer-based models in a tenth of the code), but the engineering discipline of the project has not.
 </p>
 
       <div class="project-links">

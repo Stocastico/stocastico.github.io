@@ -187,14 +187,14 @@ All of this was published to the cloud, aggregated, and pushed to the consumer-f
 </p>
 <h2>Hardware in the Truss</h2>
 <p>
-Coverage of a UFC octagon, with eight sides, fast lateral motion, and frequent occlusions when fighters clinched, was the first hard problem. We solved it with <strong>two <a href="https://www.stereolabs.com/" target="_blank" rel="noopener">Stereolabs ZED</a> RGB-D cameras</strong> mounted on the <strong>truss above the cage</strong>, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
+Coverage of a UFC octagon — with eight sides, fast lateral motion, and frequent occlusions when fighters clinched — was the first hard problem. We solved it with <strong>two <a href="https://www.stereolabs.com/" target="_blank" rel="noopener">Stereolabs ZED</a> RGB-D cameras</strong> mounted on the <strong>truss above the cage</strong>, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
 </p>
 <p>
 Both cameras were cabled to a <strong>GPU-equipped PC, also mounted on the truss</strong>, which performed all the perception work locally. Doing inference at the venue (rather than streaming raw footage to a remote machine) was a deliberate choice; it eliminated the network as a bottleneck, kept latency in the sub-second range, and meant the system kept working even when venue connectivity wobbled. The PC then streamed only the resulting statistics down to the cloud over a much narrower data path.
 </p>
 <h2>Sensor Fusion: Vision + Accelerometers</h2>
 <p>
-Pure vision could detect that a punch had been <em>thrown</em>, but not whether it had <em>connected</em>, and certainly not the punch <em>type</em> with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' <strong>gloves with accelerometers</strong>, providing a second, completely independent signal for every strike.
+Pure vision could detect that a punch had been <em>thrown</em>, but not whether it had <em>connected</em> — and certainly not the punch <em>type</em> with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' <strong>gloves with accelerometers</strong>, providing a second, completely independent signal for every strike.
 </p>
 <p>
 We fused the two streams in real time:
