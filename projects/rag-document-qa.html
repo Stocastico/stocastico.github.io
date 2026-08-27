@@ -162,7 +162,7 @@
     <div class="post-lead">A retrieval-augmented generation system built for a large European bank, replacing manual SharePoint search with a conversational assistant that answers questions and cites the exact document and page where each answer was found.</div>
 
     <p>
-While working at <strong><a href="https://www.nttdata.com/global/en/" target="_blank" rel="noopener noreferrer">NTT DATA</a></strong>, I designed and built a document question-answering system for a large European bank. The client held an extensive knowledge base — internal policies, compliance guidelines, product documentation, procedural manuals — stored as PDFs scattered across their SharePoint environment. Finding relevant information required employees to know which document to look for, navigate the folder structure, open the file, and search within it. The goal was to replace that process with a chatbot that could answer questions directly and, critically, point the user to the exact document and page containing the answer.
+While working at <strong><a href="https://www.nttdata.com/global/en/" target="_blank" rel="noopener noreferrer">NTT DATA</a></strong>, I designed and built a document question-answering system for a large European bank. The client held an extensive knowledge base (internal policies, compliance guidelines, product documentation, procedural manuals) stored as PDFs scattered across their SharePoint environment. Finding relevant information required employees to know which document to look for, navigate the folder structure, open the file, and search within it. The goal was to replace that process with a chatbot that could answer questions directly and, critically, point the user to the exact document and page containing the answer.
 </p>
 <p>
 The solution was a <strong><a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener noreferrer">Retrieval-Augmented Generation (RAG)</a></strong> pipeline, combining semantic search over a vector database with a large language model for answer synthesis.
@@ -325,7 +325,7 @@ When a user submits a question, the system answers in real time through a two-st
 </ol>
 <h2>What the User Sees</h2>
 <p>
-From the employee's perspective, the interaction is a standard chat interface. They type a question in natural language, such as &quot;What is the escalation procedure for tier-2 complaints?&quot; or &quot;Which products are covered under the cross-border exemption?&quot; — and receive a direct answer with one or more citations of the form <em>Document name, page N</em>. Clicking a citation opens the relevant page of the source PDF.
+From the employee's perspective, the interaction is a standard chat interface. They type a question in natural language, such as &quot;What is the escalation procedure for tier-2 complaints?&quot; or &quot;Which products are covered under the cross-border exemption?&quot;, and receive a direct answer with one or more citations of the form <em>Document name, page N</em>. Clicking a citation opens the relevant page of the source PDF.
 </p>
 <p>
 No need to know which folder anything lives in; you just ask, and you get an answer with a pointer back to the source so you can verify it yourself.

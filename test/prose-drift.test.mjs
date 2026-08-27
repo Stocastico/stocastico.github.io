@@ -74,13 +74,48 @@ for (const file of drafts) {
       const before = draft.slice(Math.max(0, m.index - 34), m.index);
       const after = draft.slice(m.index + 3, m.index + 37);
       if (text.includes(`${before} — ${after}`)) continue;    // intact
-      if (text.includes(`${before}, ${after}`)) {             // flattened
-        flattened.push(`…${before} [— → ,] ${after}…`);
+      for (const alt of [', ', ': ', '; ', '. ', ' (', ') ']) {
+        if (text.includes(before + alt + after)) { flattened.push(`…${before} [— → ${alt.trim() || '('}] ${after}…`); break; }
       }
     }
     assert.deepEqual(flattened, [],
-      `${flattened.length} em-dash(es) in drafts/${file} appear as commas in the page. `
-      + 'A bracketing dash pair flattened to commas usually stops the sentence parsing. '
-      + 'Fix the page, or change the draft if the comma is what you meant.');
+      `${flattened.length} em-dash(es) in drafts/${file} are punctuated differently in the page. `
+      + 'Fix the page, or change the draft if the page is right.');
   });
 }
+
+/* The reverse direction, which matters now that the dashes have been reduced
+   on purpose: a dash reappearing in a page that its draft does not have is the
+   same drift running the other way, and 187 of them came down to 2 precisely
+   so that this stays easy to see. Only the body is checked — inline diagram
+   <title>s and the frontmatter-built lead are not draft body text. */
+test('prose-drift: no page has grown an em-dash its draft does not have', () => {
+  const extra = [];
+  for (const file of drafts) {
+    const id = path.basename(file, '.md');
+    const page = path.join(ROOT, 'projects', `${id}.html`);
+    if (!fs.existsSync(page)) continue;
+
+    let html = fs.readFileSync(page, 'utf8').replace(/<svg[\s\S]*?<\/svg>/g, ' ');
+    if (!html.includes('<main')) continue;
+    let main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
+    const lead = main.indexOf('</div>', main.indexOf('post-lead'));
+    if (main.includes('post-lead') && lead !== -1) main = main.slice(lead + 6);
+
+    const text = pageText(main);
+    const draft = draftText(splitFrontmatter(fs.readFileSync(path.join(DRAFTS, file), 'utf8')).body);
+    for (const m of text.matchAll(/ — /g)) {
+      /* Shrinking window: a wide one can straddle a list-item boundary, where
+         the page joins two entries the draft keeps on separate lines, so the
+         fragment legitimately differs while the dash itself is in both. */
+      const seen = [30, 20, 12, 8].some((w) => {
+        const frag = text.slice(Math.max(0, m.index - w), m.index + w + 3);
+        return draft.includes(frag);
+      });
+      if (seen) continue;
+      extra.push(`${id}: …${text.slice(Math.max(0, m.index - 30), m.index + 33)}…`);
+    }
+  }
+  assert.deepEqual(extra, [],
+    `these em-dashes are in a page but not in its draft:\n  ${extra.join('\n  ')}`);
+});

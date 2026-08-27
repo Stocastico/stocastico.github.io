@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-agSn4TTHuBthTNqRxmFgVh57VbHYn3HLgo1knTrz+KM=' 'sha256-m+NSH5+qjncI6fKzzI31LnnbW52E3kVfTBw/xqzVlz0=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-JlvE6o1g5Vo1m0P8D1x00tK9SNQIK6IBPbafR1oXMVs=' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-m+NSH5+qjncI6fKzzI31LnnbW52E3kVfTBw/xqzVlz0=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
   <!-- /theme-bootstrap -->
-  <meta name="description" content="A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV." />
+  <meta name="description" content="Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure." />
   <meta name="author" content="Stefano Masneri" />
   <meta name="robots" content="index, follow" />
   <title>Brand recognition in football matches — Stefano Masneri</title>
@@ -20,14 +20,14 @@
   <meta property="og:locale"      content="en_GB" />
   <meta property="og:url"         content="https://stefanomasneri.com/projects/brand-stadium.html" />
   <meta property="og:title"       content="Brand recognition in football matches — Stefano Masneri" />
-  <meta property="og:description" content="A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV." />
+  <meta property="og:description" content="Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure." />
   <meta property="og:image"       content="https://stefanomasneri.com/img/projects/og/brand-stadium.png" />
   <meta property="og:image:width"  content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt"   content="Brand recognition in football matches" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="Brand recognition in football matches — Stefano Masneri" />
-  <meta name="twitter:description" content="A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV." />
+  <meta name="twitter:description" content="Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure." />
   <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/og/brand-stadium.png" />
   <meta name="twitter:image:alt"   content="Brand recognition in football matches" />
 
@@ -75,7 +75,7 @@
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": "Brand recognition in football matches",
-    "description": "A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV.",
+    "description": "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure.",
     "image": "https://stefanomasneri.com/img/projects/og/brand-stadium.png",
     "author": {
       "@type": "Person",
@@ -160,11 +160,11 @@
   </header>
 
   <main id="project-content" class="post">
-    <div class="post-lead">A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV.</div>
+    <div class="post-lead">Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure.</div>
 
     <h2>Measuring Brand Exposure in Football Footage with Computer Vision</h2>
 <p>
-We've been building a computer vision system that detects and classifies advertising holders in football footage — the perimeter boards, banners, and signage you see around a pitch — so we can measure how much exposure each brand actually gets during a match. It's a deceptively hard problem, and we wanted to share where it's landed.
+We've been building a computer vision system that detects and classifies advertising holders in football footage (the perimeter boards, banners, and signage you see around a pitch) so we can measure how much exposure each brand actually gets during a match. It's a deceptively hard problem, and we wanted to share where it's landed.
 </p>
 <h2>The setup</h2>
 <p>
@@ -251,18 +251,18 @@ The pipeline is a two-stage stack. A <strong><a href="https://docs.ultralytics.c
 </svg>
 </figure>
 <p>
-The data is the real challenge here. We're working with ~13k crops per game that are small, noisy, and frequently motion-blurred — exactly the kind of footage you'd expect from a moving broadcast camera tracking play. On top of that, the class distribution is brutally imbalanced: roughly <strong>40× between the most and least represented classes</strong>. Some brands appear constantly, others only flash by a handful of times.
+The data is the real challenge here. We're working with ~13k crops per game that are small, noisy, and frequently motion-blurred: exactly the kind of footage you'd expect from a moving broadcast camera tracking play. On top of that, the class distribution is brutally imbalanced: roughly <strong>40× between the most and least represented classes</strong>. Some brands appear constantly, others only flash by a handful of times.
 </p>
 <p>
-There's also a structural split in the ads themselves. <strong>Static ads</strong> stay fixed across matches — the same board, the same brand, week after week — so once the model learns them they're stable. <strong>Dynamic ads</strong> are the harder case: the LED boards rotate their content and the brands on them change every week. That means we can't treat them as a fixed set of classes. Dynamic ads need their own training pipeline that can be re-fit as new brands cycle in, rather than relying on a model trained once and frozen.
+There's also a structural split in the ads themselves. <strong>Static ads</strong> stay fixed across matches (the same board, the same brand, week after week), so once the model learns them they're stable. <strong>Dynamic ads</strong> are the harder case: the LED boards rotate their content and the brands on them change every week. That means we can't treat them as a fixed set of classes. Dynamic ads need their own training pipeline that can be re-fit as new brands cycle in, rather than relying on a model trained once and frozen.
 </p>
 <h2>Choosing the models</h2>
 <p>
-We tested several options for both stages and ended up with the YOLO + DenseNet201 combination after weighing cost against benefit. It wasn't about picking the most modern architecture on paper — on our data (small, blurry, long-tailed crops) the more efficient candidates didn't justify their trade-offs, and this pairing gave us the best accuracy for the compute and complexity we were willing to take on.
+We tested several options for both stages and ended up with the YOLO + DenseNet201 combination after weighing cost against benefit. It wasn't about picking the most modern architecture on paper: on our data (small, blurry, long-tailed crops) the more efficient candidates didn't justify their trade-offs, and this pairing gave us the best accuracy for the compute and complexity we were willing to take on.
 </p>
 <h2>How it runs in production</h2>
 <p>
-All the code lives on <a href="https://azure.microsoft.com/" target="_blank" rel="noopener noreferrer">Azure</a>. We have pipelines that manage both training and inference, so the heavy lifting is orchestrated rather than run by hand. On top of that there's a web application where a user can upload new football matches and trigger the work directly — kicking off training when it's needed (mainly for the dynamic ads that change week to week) or running inference to measure exposure.
+All the code lives on <a href="https://azure.microsoft.com/" target="_blank" rel="noopener noreferrer">Azure</a>. We have pipelines that manage both training and inference, so the heavy lifting is orchestrated rather than run by hand. On top of that there's a web application where a user can upload new football matches and trigger the work directly, kicking off training when it's needed (mainly for the dynamic ads that change week to week) or running inference to measure exposure.
 </p>
 <p>
 To make sure the numbers actually mean something, we validated the system against exposure times measured by human annotators. Comparing the model's output to that ground truth is what gave us confidence the exposure figures are trustworthy.
@@ -273,7 +273,7 @@ A few things we'd approach differently with what we know now:
 </p>
 <ul>
   <li><strong>Drop the holder-vs-creativity distinction.</strong> Splitting detection of the holders from the creatives on them added complexity we'd rather avoid. We'd experiment with models like <strong>SAM 3</strong> to (1) cut annotation requirements as much as possible and (2) preprocess crops by segmenting just the holders before classification.</li>
-  <li><strong>Try unsupervised clustering.</strong> A clustering approach would be useful in the common case where we don't care about measuring <em>every</em> ad — only a handful of specific brands, for which we might have zero or very few labeled samples. That's hard to do well with a fixed supervised classifier, and clustering sidesteps the need for a full labeled class set.</li>
+  <li><strong>Try unsupervised clustering.</strong> A clustering approach would be useful in the common case where we don't care about measuring <em>every</em> ad, only a handful of specific brands, for which we might have zero or very few labeled samples. That's hard to do well with a fixed supervised classifier, and clustering sidesteps the need for a full labeled class set.</li>
 </ul>
 
 

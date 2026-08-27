@@ -169,11 +169,11 @@ AVATecH (<strong>A</strong>udio-<strong>V</strong>isual <strong>T</strong>echnol
 The problem was simple to state and painful to live with. Researchers in linguistics, sign-language studies, child-development psychology, and anthropology depend on annotated audio-visual recordings: transcriptions of speech, boundaries of gestures, phases of interaction, participant labels. Creating those annotations by hand takes between <strong>50 and 100 times the length of the media itself</strong>. A single one-hour field recording could take a PhD student two full weeks to annotate. Corpora of hundreds of hours were common, and every new study needed fresh annotations.
 </p>
 <p>
-AVATecH set out to reduce that burden by automating the most mechanical parts of the annotation pipeline — not to replace the researcher, but to pre-annotate the material so the human expert could focus on correction and semantic judgement rather than clicking through silent segments of video.
+AVATecH set out to reduce that burden by automating the most mechanical parts of the annotation pipeline: not to replace the researcher, but to pre-annotate the material so the human expert could focus on correction and semantic judgement rather than clicking through silent segments of video.
 </p>
 <h2>Approach</h2>
 <p>
-The project produced a suite of <strong>audio and video recognizers</strong>, independent, pluggable modules, that were integrated into <strong><a href="https://archive.mpi.nl/tla/elan" target="_blank" rel="noopener noreferrer">ELAN</a></strong>, the multi-tier annotation tool developed at MPI and used by thousands of humanities researchers worldwide. ELAN was extended with a generic recognizer API described in XML, so each algorithm could be invoked from inside the tool, run on the loaded media, and return tiers of tentative annotations that the user could accept, edit, or reject.
+The project produced a suite of <strong>audio and video recognizers</strong> (independent, pluggable modules) that were integrated into <strong><a href="https://archive.mpi.nl/tla/elan" target="_blank" rel="noopener noreferrer">ELAN</a></strong>, the multi-tier annotation tool developed at MPI and used by thousands of humanities researchers worldwide. ELAN was extended with a generic recognizer API described in XML, so each algorithm could be invoked from inside the tool, run on the loaded media, and return tiers of tentative annotations that the user could accept, edit, or reject.
 </p>
 <p>
 Among the recognizers delivered:
@@ -189,7 +189,7 @@ The recognizers were designed as <strong>modular components with adaptation and 
 </p>
 <h2>Technical Context</h2>
 <p>
-The project ran during a period in which audio and video analysis was transitioning from hand-crafted features to learned representations — pre-deep-learning era. The speech and speaker modules relied on MFCC features, GMM/HMM acoustic models, and clustering algorithms; the video modules used colour histograms, motion vectors, and SVM classifiers. Every recognizer had to run acceptably fast on a standard researcher laptop; no GPUs, no cloud.
+The project ran during a period in which audio and video analysis was transitioning from hand-crafted features to learned representations (the pre-deep-learning era). The speech and speaker modules relied on MFCC features, GMM/HMM acoustic models, and clustering algorithms; the video modules used colour histograms, motion vectors, and SVM classifiers. Every recognizer had to run acceptably fast on a standard researcher laptop; no GPUs, no cloud.
 </p>
 <p>
 Making all of that <strong>integrate cleanly into a tool users already knew and trusted</strong> was as much of the work as the algorithms themselves. ELAN had an established user base and a very specific interaction model; any pre-annotations had to slot into that model without disrupting existing workflows.
@@ -200,7 +200,7 @@ The work produced several peer-reviewed papers, including:
 </p>
 <ul>
   <li><em>AVATecH: Audio/Video Technology for Humanities Research</em>: LREC Workshop on Language Technologies for Digital Humanities, Hissar, Bulgaria, <strong>2011</strong>.</li>
-  <li><em>AVATecH: Automated Annotation Through Audio and Video Analysis</em>: LREC 2012, Istanbul.</li>
+  <li><em>AVATecH — Automated Annotation Through Audio and Video Analysis</em>: LREC 2012, Istanbul.</li>
   <li><em>Application of Audio and Video Processing Methods for Language Research and Documentation: The AVATecH Project</em>: book chapter in <em>Human Language Technology Challenges for Computer Science and Linguistics</em>, Springer, <strong>2014</strong>.</li>
   <li><em>SVM-based Video Segmentation and Annotation of Lectures and Conferences</em>: VISAPP <strong>2014</strong>.</li>
 </ul>
@@ -209,7 +209,7 @@ The recognizers shipped as part of <strong>ELAN</strong> and remained part of th
 </p>
 <h2>Personal Reflection</h2>
 <p>
-AVATecH shaped my approach to every project that followed. The constraints of the problem — messy real-world data, domain experts who are not programmers, a tool ecosystem that already exists, evaluation metrics that must reflect real usefulness rather than benchmark performance — are the same constraints I have met again and again, in AR for education and later in GenAI for enterprise. The specific algorithms have aged (a modern version of almost every recognizer would be built on transformer-based models in a tenth of the code), but the engineering discipline of the project has not.
+AVATecH shaped my approach to every project that followed. The constraints of the problem are the same ones I have met again and again, in AR for education and later in GenAI for enterprise: messy real-world data, domain experts who are not programmers, a tool ecosystem that already exists, and evaluation metrics that must reflect real usefulness rather than benchmark performance. The specific algorithms have aged (a modern version of almost every recognizer would be built on transformer-based models in a tenth of the code), but the engineering discipline of the project has not.
 </p>
 
       <div class="project-links">

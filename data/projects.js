@@ -70,7 +70,7 @@ export const PROJECTS = [
             title: "Is tourism raising the rent? Donostia, in open data",
             year: "2026",
             tags: ["Data & Interactive"],
-            description: "Seven data stories about how San Sebastián is changing — housing, barrios, people, climate, and the gap between the tourist city and the lived one. Built from six open sources with a reproducible pipeline; the question that started it turned out to have an uncomfortable answer. Written in Spanish.",
+            description: "Seven data stories about how San Sebastián is changing: housing, barrios, people, climate, and the gap between the tourist city and the lived one. Built from six open sources with a reproducible pipeline; the question that started it turned out to have an uncomfortable answer. Written in Spanish.",
             /* No detail page: the piece introduces itself — title, subtitle,
                sources and methodology are all on its own first screen — so a
                write-up here would only delay the reader by a click. It lives in
@@ -107,7 +107,7 @@ export const PROJECTS = [
             year: "2025",
             tags: ["Computer Vision","Media & Live Events"],
             bg: "img/projects/annotated-stadium.webp",
-            description: "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands — despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure.",
+            description: "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure.",
             url: "projects/brand-stadium.html",
         },
     {
@@ -147,7 +147,7 @@ export const PROJECTS = [
             year: "2022 – 2023",
             tags: ["LLMs & MLOps"],
             bg: "img/projects/mlops-bg.webp",
-            description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection.",
+            description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models (churn prediction, article recommendation and more) and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection.",
             url: "projects/mlops-vertex-media.html",
         },
     {

@@ -12,7 +12,7 @@ link_paper:  "https://link.springer.com/article/10.1007/s10055-023-00764-5"
 
 cleAR is a modular, interoperable software architecture for building multi-user augmented reality (AR) applications tailored to educational settings. It was the **core contribution of my PhD research**, developed in collaboration with the University of the Basque Country (UPV/EHU) and [Vicomtech](https://www.vicomtech.org/en). The work was published in the *Virtual Reality* journal (Springer, 2023).
 
-Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school infrastructure and curricula. cleAR was designed to address both.
+Despite the well-documented benefits of AR in learning (improved motivation, better concept assimilation, easier knowledge transfer), its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school infrastructure and curricula. cleAR was designed to address both.
 
 ## Design Objectives
 
@@ -20,12 +20,12 @@ The architecture was built around six design objectives (DOs) derived from a sys
 
 !svg(drafts/diagrams/clear-design-objectives.svg)
 
-- **DO1 — Interoperability**: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
-- **DO2 — Multi-user interactions**: Real-time collaboration between students and teachers, both in-person and remotely.
-- **DO3 — Long-term storage**: Persistent capture of student progress, task completion, and interaction data for longitudinal analysis.
-- **DO4 — Data visualisation**: Automatic generation of reports and interactive dashboards accessible to teachers without programming skills.
-- **DO5 — AI integration**: Support for machine learning pipelines that can surface usage patterns, estimate task difficulty, and flag students at risk of falling behind.
-- **DO6 — Ease of development**: A clean, well-documented API surface so developers can build new AR experiences without reimplementing common infrastructure.
+- **DO1: Interoperability**: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
+- **DO2: Multi-user interactions**: Real-time collaboration between students and teachers, both in-person and remotely.
+- **DO3: Long-term storage**: Persistent capture of student progress, task completion, and interaction data for longitudinal analysis.
+- **DO4: Data visualisation**: Automatic generation of reports and interactive dashboards accessible to teachers without programming skills.
+- **DO5: AI integration**: Support for machine learning pipelines that can surface usage patterns, estimate task difficulty, and flag students at risk of falling behind.
+- **DO6: Ease of development**: A clean, well-documented API surface so developers can build new AR experiences without reimplementing common infrastructure.
 
 ## Architecture
 
@@ -45,13 +45,13 @@ cleAR is structured as four loosely coupled modules that can be composed indepen
 
 Three proof-of-concept applications were developed to validate the architecture against the design objectives.
 
-**AR Cube** — a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
+**AR Cube**: a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.
 
 ![Two tablets held side by side over a table, each showing the same red 3D cube from its own viewpoint, with colour buttons underneath. A QR marker on the table between them anchors the shared scene.](img/projects/clear-ar-cube.webp)
 
-**xAPI Data Analysis** — a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in [MongoDB](https://www.mongodb.com/) via Learning Locker on [AWS](https://aws.amazon.com/). Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
+**xAPI Data Analysis**: a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent clients, stored in [MongoDB](https://www.mongodb.com/) via Learning Locker on [AWS](https://aws.amazon.com/). Average processing delay was 145 ms (maximum 314 ms). A classification model trained on the collected data successfully predicted the originating client from the xAPI triplet, validating DO3–DO5.
 
-**AR Geography Quiz** — the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
+**AR Geography Quiz**: the most complete proof-of-concept, placing a teacher and multiple students around a shared 3D Earth model. Students can explore individually or switch to a synchronised shared-perspective mode where the teacher controls the view and sends targeted questions. The application runs on both desktop and mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
 
 ![Three phone screens from the AR Geography Quiz. First, a login screen with room name TestRoom01 and a choice between TEACHER and STUDENT. Second, the teacher view: a 3D Earth placed on a real desk, yellow pins scattered over it, and controls to send a student assignment, reset the session or place the AR scene. Third, the assignment dialogue over the same globe, with the question "Where is NYC" typed in and Cancel and Send buttons.](img/projects/clear-ar-quiz.webp)
 
