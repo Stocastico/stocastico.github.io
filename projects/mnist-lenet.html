@@ -165,7 +165,7 @@
 LeNet-5 on MNIST is the hello world of convolutional networks. I wanted something on the homepage that was actually about deep learning rather than a generic abstract background, and that turned into writing the network myself in JavaScript: first the training, then the visualisation.
 </p>
 <p>
-This page is the interactive version. Draw a digit in the box, and the same trained network classifies it live — no server, no ML runtime, just the weights and a forward pass. Every layer's activations are shown as they fire, along with the confidence for all ten classes, so you can see where the network hesitates rather than only what it decided.
+This page is the interactive version. Draw a digit in the box, and the same trained network classifies it live: no server, no ML runtime, just the weights and a forward pass. Every layer's activations are shown as they fire, along with the confidence for all ten classes, so you can see where the network hesitates rather than only what it decided.
 </p>
 <p>
 Drawing something ambiguous is the interesting part.
@@ -178,7 +178,7 @@ Drawing something ambiguous is the interesting part.
 <section class="mnist-lab" id="mnist-lab" aria-labelledby="mnist-lab-heading">
   <h2 id="mnist-lab-heading" class="mnist-lab__heading">Try it</h2>
   <p class="mnist-lab__fallback">
-    This one needs JavaScript — the network runs entirely in your browser, so there is no
+    This one needs JavaScript: the network runs entirely in your browser, so there is no
     server to fall back to.
   </p>
 
@@ -219,24 +219,24 @@ Drawing something ambiguous is the interesting part.
 
 <h2>How it works</h2>
 <p>
-The network is trained offline by <code>scripts/train-cnn.mjs</code> — plain JavaScript, no dependencies, no framework — reaching 98.27% on the MNIST test split. The weights are quantised to int8 and shipped as a 44 KB module that only this page loads.
+The network is trained offline by <code>scripts/train-cnn.mjs</code> (plain JavaScript, no dependencies, no framework), reaching 98.27% on the MNIST test split. The weights are quantised to int8 and shipped as a 44 KB module that only this page loads.
 </p>
 <p>
 The forward pass in your browser is the identical code the training script uses, so the two can never drift apart. One classification is around 280 000 multiply-accumulates: under a millisecond, which is why it can run inside a pointer-move handler while you are still drawing.
 </p>
 <p>
-The step that actually decides whether this works is the preprocessing. MNIST digits are not raw 28×28 images: each one is cropped to its bounding box, scaled so the longest side is 20 pixels, and then centred in the 28×28 field <strong>by centre of mass</strong> rather than by bounding box. Skip that last part and hand-drawn digits classify badly — which looks like a broken model but is really an out-of-distribution input.
+The step that actually decides whether this works is the preprocessing. MNIST digits are not raw 28×28 images: each one is cropped to its bounding box, scaled so the longest side is 20 pixels, and then centred in the 28×28 field <strong>by centre of mass</strong> rather than by bounding box. Skip that last part and hand-drawn digits classify badly, which looks like a broken model but is really an out-of-distribution input.
 </p>
 
 <h2>Mouse, not pen</h2>
 <p>
-MNIST was written with a pen on paper. You are drawing with a mouse or a trackpad, and those two produce measurably different digits. It is the gap most browser MNIST demos leave open — they ship a model trained on MNIST alone, and the visitor is left to conclude the network is simply bad at reading handwriting.
+MNIST was written with a pen on paper. You are drawing with a mouse or a trackpad, and those two produce measurably different digits. It is the gap most browser MNIST demos leave open; they ship a model trained on MNIST alone, and the visitor is left to conclude the network is simply bad at reading handwriting.
 </p>
 <p>
-The failures turned out to be specific rather than general, which is what made them fixable. A pen closes a loop because the hand keeps moving; a mouse stops, so a 0 drawn as an open C read as <strong>3</strong>, and a 6 whose bowl never quite met its stem read as <strong>5</strong> — four separate times. Strokes measured 4.4 pixels wide against MNIST's 5.5. A 1 drawn with a long entry serif read as 4 or 7. So I captured digits drawn in this very widget — 122 of them across two sessions — and built the training-time augmentation around those artefacts and nothing else: punch gaps <em>in the ink</em> so closed loops open up, thin the strokes, and add the wobble a hand has and ruled paper does not.
+The failures turned out to be specific rather than general, which is what made them fixable. A pen closes a loop because the hand keeps moving; a mouse stops, so a 0 drawn as an open C read as <strong>3</strong>, and a 6 whose bowl never quite met its stem read as <strong>5</strong>, four separate times. Strokes measured 4.4 pixels wide against MNIST's 5.5. A 1 drawn with a long entry serif read as 4 or 7. So I captured digits drawn in this very widget (122 of them across two sessions) and built the training-time augmentation around those artefacts and nothing else: punch gaps <em>in the ink</em> so closed loops open up, thin the strokes, and add the wobble a hand has and ruled paper does not.
 </p>
 <p>
-The captures then go into training themselves, at 7% of the mix. The check that counts is held-out: train on one session's captures only, then evaluate against the 77 digits from a later session that the model has never seen. Those went from <strong>43/77 to 59/77</strong>. MNIST accuracy pays nothing for it — this model scores 98.27%, against 98.20% for the same network trained on MNIST alone. Augmentation aimed at a failure you have actually observed is cheap; a generic grab-bag would have spent capacity this 44 000-parameter network does not have on invariances nobody needs.
+The captures then go into training themselves, at 7% of the mix. The check that counts is held-out: train on one session's captures only, then evaluate against the 77 digits from a later session that the model has never seen. Those went from <strong>43/77 to 59/77</strong>. MNIST accuracy pays nothing for it: this model scores 98.27%, against 98.20% for the same network trained on MNIST alone. Augmentation aimed at a failure you have actually observed is cheap; a generic grab-bag would have spent capacity this 44 000-parameter network does not have on invariances nobody needs.
 </p>
 
 

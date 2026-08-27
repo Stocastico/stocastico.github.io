@@ -222,12 +222,20 @@ function applyInline(text) {
   text = text.replace(/(?<!\w)_(.+?)_(?!\w)/g, '<em>$1</em>');
   text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
     /* The text is already HTML-escaped, so quotes can't break out of the
-       attribute — but the protocol still has to be vetted to keep
-       javascript:/data: links out of the generated href. Allow http(s),
-       mailto, fragments and site-relative paths; anything else is left as
-       inert text. */
+       attribute, but the protocol still has to be vetted to keep
+       javascript: and data: links out of the generated href.
+
+       The rule is "reject dangerous schemes", not "allow a list of prefixes".
+       The allowlist version required http(s), mailto, `/` or `#`, which meant
+       a plain sibling link like [cleAR architecture](clear-architecture.html)
+       fell through and was emitted as literal Markdown — visible bracket-and-
+       parenthesis soup in the middle of a paragraph. Three project pages
+       cross-link each other that way, so regenerating any of them printed the
+       source instead of a link. A relative path cannot carry a scheme, which
+       is the only thing that was ever being guarded against. */
     const raw = url.trim();
-    if (!/^(https?:\/\/|mailto:|[/#])/i.test(raw)) return `[${label}](${url})`;
+    const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(raw);
+    if (scheme && !/^(https?|mailto)$/i.test(scheme[1])) return `[${label}](${url})`;
     const rel = /^https?:\/\//i.test(raw) ? ' target="_blank" rel="noopener noreferrer"' : '';
     return `<a href="${raw}"${rel}>${label}</a>`;
   });
