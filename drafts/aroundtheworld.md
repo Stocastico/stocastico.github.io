@@ -5,7 +5,7 @@ title:       "ARoundTheWorld: Collaborative AR for Education"
 year:        "2024"
 tags:        "AR & 3D, Education & Research"
 bg:          "img/projects/ARound_the_world_2.webp"
-og:          "img/projects/ARound_the_world_2.png"
+og:          "img/projects/og/aroundtheworld.png"
 description: "ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula."
 link_paper:  "https://link.springer.com/article/10.1007/s10055-024-00952-x"
 ---

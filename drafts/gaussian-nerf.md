@@ -5,6 +5,7 @@ title:       "3D reconstruction using Gaussian Splatting and NeRF"
 year:        "2025"
 tags:        "Computer Vision, AR & 3D"
 bg:          "img/projects/gaussian-splat.webp"
+og:          "img/projects/og/gaussian-nerf.png"
 description: "Capturing real locations as photorealistic assets for LED-volume virtual production. Benchmarked nerfacto, splatfacto and MCMC against RealityCapture and Postshot, and shipped a desktop app that runs COLMAP pose estimation and reconstructs either locally or on Azure."
 ---
 

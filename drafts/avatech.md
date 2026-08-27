@@ -5,6 +5,7 @@ title:       "AVATecH: Automated Annotation of Audio/Video Corpora for Humanitie
 year:        "2009 – 2014"
 tags:        "Computer Vision, Education & Research"
 bg:          "img/projects/avatech-bg.webp"
+og:          "img/projects/og/avatech.png"
 description: "AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN, the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide, turning weeks of manual labelling into minutes of supervised review."
 link_paper:  "https://aclanthology.org/L12-1137/"
 ---

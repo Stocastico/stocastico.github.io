@@ -75,12 +75,20 @@ jobs:
       # *previous* palette was the selected one. test/theme-sync.test.js now
       # fails on that drift, which means forgetting this step stops the deploy
       # at the test gate below instead of shipping.
-      - name: Regenerate theme + toggle + raster favicons
+      #
+      # generate-project-og is here for the same reason one step removed: the
+      # thirteen project social cards are drawn from the active palette, so a
+      # rotation that skips them ships cards in last week's colours. Their
+      # drift guard (test/generate-project-og.test.mjs) checks the template
+      # against the active palette, so a forgotten run stops at the gate below
+      # rather than reaching a feed.
+      - name: Regenerate theme + toggle + raster favicons + social cards
         if: steps.rotate.outputs.changed == 'true'
         run: |
           npm run generate-theme
           npm run generate-theme-toggle
           npm run generate-favicons
+          npm run generate-project-og
 
       # Test suite gates the deploy: a red test stops the rotation here, before
       # anything is committed or published.

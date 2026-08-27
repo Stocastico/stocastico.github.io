@@ -83,7 +83,7 @@ which is the authoritative reference for flags — this table is only a map.
 |---|---|
 | Build | `dev`, `build`, `preview` |
 | Content | `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
-| Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `rotate-palette` |
+| Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `generate-project-og`, `rotate-palette` |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
 | ML pipeline | `train-cnn`, `generate-cnn-activations`, `generate-lenet-weights`, `generate-hero-scan` |
 | Maintenance | `check-links`, `screenshots`, `set-domain`, `generate-europe-land` |

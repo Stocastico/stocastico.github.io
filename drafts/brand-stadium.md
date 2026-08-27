@@ -5,6 +5,7 @@ title:       "Brand recognition in football matches"
 year:        "2025"
 tags:        "Computer Vision, Media & Live Events"
 bg:          "img/projects/annotated-stadium.webp"
+og:          "img/projects/og/brand-stadium.png"
 description: "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands — despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure."
 ---
 
