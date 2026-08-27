@@ -224,34 +224,5 @@ output/playwright/
 # Local-only screenshot scratch dir (e.g. PR review captures)
 screenshots/
 
-# transient visual-regression artifacts (CSS modernization branch)
-shots-before/
-shots-after/
-shots-diff/
-scripts/_shot.mjs
-scripts/_diff.mjs
-scripts/_shotdemo.mjs
-scripts/_compose.mjs
-demo-before/
-demo-after/
-demo-compare/
-scripts/_shot2.mjs
-scripts/_compose2.mjs
-d2-before/
-d2-after/
-d2-compare/
-scripts/_shot3.mjs
-scripts/_compose3.mjs
-d3-before/
-d3-after/
-d3-compare/
-scripts/_check46.mjs
-scripts/_compose3.mjs
-scripts/_stack.mjs
-demo2-before/
-demo2-after/
-scripts/_compose4.mjs
-demo2-compare/
-
 # MNIST idx archives pulled by scripts/train-cnn.mjs — ~11 MB, re-downloadable
 .cache/mnist/

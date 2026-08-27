@@ -199,3 +199,24 @@ for (const rel of PAGES) {
       + thin.join('\n    '));
   });
 }
+
+/* `npm test` is a glob on purpose — a hand-written list of test files drifted
+   once and left three assertions in the repo that CI never executed (see the
+   note in CLAUDE.md). The per-suite `test:*` aliases are a different thing:
+   pure convenience, and nothing forces one to exist. But an alias that points
+   at a file which has been renamed or deleted is worse than a missing one,
+   because it fails with a Node error that reads like a broken test rather than
+   like a stale script. Seven suites had no alias at all and one more named a
+   file under a path that had moved. */
+test('html: every test:* script points at a file that exists', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const dangling = [];
+  for (const [name, cmd] of Object.entries(pkg.scripts)) {
+    if (!name.startsWith('test:')) continue;
+    for (const m of cmd.matchAll(/\btest\/[\w./-]+\.(?:test\.)?m?js\b/g)) {
+      if (m[0].includes('*')) continue;
+      if (!fs.existsSync(path.join(ROOT, m[0]))) dangling.push(`${name} -> ${m[0]}`);
+    }
+  }
+  assert.deepEqual(dangling, [], `package.json test aliases naming missing files:\n  ${dangling.join('\n  ')}`);
+});
