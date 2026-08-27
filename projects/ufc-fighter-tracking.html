@@ -205,7 +205,7 @@ We fused the two streams in real time:
   <li>A <strong>fusion layer</strong> matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide <em>hit vs. miss</em> and to commit a final classification of the punch type.</li>
 </ul>
 <figure>
-  <img src="../img/projects/ufc-octagon-bg.webp" alt="Hardware setup and data processing" width="1280" height="853" loading="lazy" decoding="async" />
+  <img src="../img/projects/ufc-octagon-bg.webp" alt="System overview. Top left, hardware in the truss: two ZED RGB-D cameras and a GPU PC mounted above the cage, their overlapping view cones covering the whole octagon, annotated as deployable, portable, rugged and resilient to poor venue connectivity. Top right, the per-fighter statistics output: position and speed, octagon control as a heat map, total movement, posture state as a standing-versus-ground timeline, and a strike table of attempted against landed jabs, crosses, hooks, uppercuts and kicks. Along the bottom, five stages: capture, on-truss perception on the GPU PC, a 10 to 50 kB/s statistics stream, cloud ingest and aggregation, and consumers — the UFC app and broadcast graphics." width="1280" height="853" loading="lazy" decoding="async" />
 </figure>
 <h2>Cloud and Delivery</h2>
 <p>

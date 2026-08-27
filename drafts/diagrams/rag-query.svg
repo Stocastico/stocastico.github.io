@@ -1,5 +1,5 @@
 <svg class="diagram" role="img" width="800" height="410" viewBox="0 0 800 410" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
-  <title>Query and answer pipeline</title>
+  <title>Real-time query pipeline: the user’s natural-language question is encoded by the same embedding model used at ingestion, matched against the index by cosine similarity, and the top-K chunks are passed to an LLM as context alongside the original question. The answer comes back grounded in those chunks, with the document name and page number of each one.</title>
   <defs>
     <marker id="ah-q" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
       <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)"/>

@@ -32,7 +32,7 @@ This is not meant as a criticism of the client; it is just the way things were a
 
 We designed the platform around the standard MLOps lifecycle: data, training, registry, serving, monitoring. We used Vertex AI as the glue between all of them, with the rest of GCP filling in the supporting infrastructure.
 
-![MLOps architecture on GCP](img/projects/mlops-architecture.webp)
+![Four-layer platform diagram. DATA: operational sources (CMS, web, CRM) feed BigQuery, then Dataflow ETL, a Feature Store and GCS artifacts. TRAIN AND REGISTER: Vertex AI Pipelines as KFP DAGs, Vertex AI Training in custom containers, Experiments for metrics and lineage, a versioned Model Registry and an Artifact Registry. SERVE: Vertex AI Endpoints with canary rollout, scheduled Batch Prediction, Model Monitoring for drift and skew, and downstream CRM and API consumers. CI/CD underneath: Cloud Build, GitHub with Terraform, Cloud Scheduler, Cloud Logging, IAM and KMS.](img/projects/mlops-architecture.webp)
 
 **Data layer.** All training and serving data flows through **BigQuery**, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the **Vertex AI Feature Store** so the same definitions can serve both training and online inference — closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in **GCS** with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
 
@@ -48,7 +48,7 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
 
 Each model — churn, recommender, the rest — ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
 
-![Vertex AI pipeline run](img/projects/mlops-pipeline.webp)
+![Pipeline flow chart. Six steps run left to right: Ingest (BigQuery query, snapshot to GCS), Validate (schema, stats, fail-fast), Features (transform, join, Feature Store), Train (custom container, hyperparameter tuning), Evaluate (offline metrics against the champion) and Register (Model Registry, tag candidate). A decision node then asks whether metrics clear the threshold: No halts the run and alerts Slack and PagerDuty, Yes deploys to a canary endpoint with traffic ramp-up. Monitoring for drift and skew feeds back to Ingest as an automatic retraining trigger.](img/projects/mlops-pipeline.webp)
 
 The pipeline runs on a schedule (typically weekly for churn, daily for the recommender) or whenever Model Monitoring raises a drift alert against the corresponding production endpoint. A typical run goes through:
 

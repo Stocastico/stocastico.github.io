@@ -602,7 +602,7 @@ ${links.map(l => `        <a href="${escapeHtml(l.url)}" target="_blank" rel="no
   <link rel="icon" type="image/x-icon" sizes="any" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="alternate" type="application/atom+xml" title="Stefano Masneri" href="/feed.xml" />
+  <link rel="alternate" type="application/atom+xml" title="Stefano Masneri — projects &amp; now" href="/feed.xml" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>

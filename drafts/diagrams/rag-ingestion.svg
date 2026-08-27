@@ -1,5 +1,5 @@
 <svg class="diagram" role="img" width="800" height="280" viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
-  <title>Document ingestion pipeline</title>
+  <title>Offline ingestion pipeline: PDFs in the SharePoint document store are parsed page by page, split into overlapping chunks, encoded by an embedding model into 768-to-1536-dimension vectors, and indexed in a vector database. Filename, page number and chunk index are stored alongside every vector, which is what makes precise citations possible at query time.</title>
   <defs>
     <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
       <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)"/>

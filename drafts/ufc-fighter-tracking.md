@@ -13,7 +13,7 @@ This is one of the projects I tell people about when they ask what the most fun 
 
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 
-![UFC octagon from above — camera coverage](img/projects/ufc-octagon-overhead.webp)
+![UFC octagon from above, camera coverage](img/projects/ufc-octagon-overhead.webp)
 
 ## What We Measured
 
@@ -43,7 +43,7 @@ We fused the two streams in real time:
 - The **accelerometer pipeline** detected the impact event, the magnitude of the deceleration, and the kinematic signature characteristic of different punch types (uppercut, hook, straight).
 - A **fusion layer** matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide *hit vs. miss* and to commit a final classification of the punch type.
 
-![Hardware setup and data processing](img/projects/ufc-octagon-bg.webp)
+![System overview. Top left, hardware in the truss: two ZED RGB-D cameras and a GPU PC mounted above the cage, their overlapping view cones covering the whole octagon, annotated as deployable, portable, rugged and resilient to poor venue connectivity. Top right, the per-fighter statistics output: position and speed, octagon control as a heat map, total movement, posture state as a standing-versus-ground timeline, and a strike table of attempted against landed jabs, crosses, hooks, uppercuts and kicks. Along the bottom, five stages: capture, on-truss perception on the GPU PC, a 10 to 50 kB/s statistics stream, cloud ingest and aggregation, and consumers — the UFC app and broadcast graphics.](img/projects/ufc-octagon-bg.webp)
 
 ## Cloud and Delivery
 
