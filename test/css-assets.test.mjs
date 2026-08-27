@@ -10,7 +10,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { PROJECTS } from '../data/projects.js';
+
+/* new-project.js already reads PNG/JPEG/WebP headers for og:image:width;
+   it is CJS, hence the require. */
+const { imageSize } = createRequire(import.meta.url)('../scripts/new-project.js');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -289,4 +294,71 @@ test('assets: no unreferenced images in img/', () => {
 
   assert.deepEqual(orphans, [],
     'these images are referenced nowhere and would still be deployed:\n  ' + orphans.join('\n  '));
+});
+
+/* Hero images have to survive being stretched.
+
+   `.project-hero` paints `--project-hero-img` with `background-size: cover`
+   across the full viewport width, so at a 1440px window the browser scales the
+   file to at least 1440px wide whatever its intrinsic size. Two heroes are
+   nowhere near it — avatech-bg is 270x187 and mpi-brain-bg is 292x173, so both
+   are blown up more than 4.5x. The scrim hides some of it; it does not hide
+   that avatech's is a dense ELAN screenshot whose text becomes mush, or that
+   mpi-brain's is a multi-panel figure montage whose panel seam lands
+   mid-banner and reads as a half-loaded image.
+
+   Both need new source art, which is not something a test can produce. What it
+   can do is stop the list growing, and notice when the debt is paid.
+
+   The floor is 600px, and it is set by what actually looks wrong rather than
+   by what would be ideal. Five other heroes sit between 673 and 800 — a 1.8x
+   to 2.1x upscale — and under a 65-95% scrim that is genuinely fine; captured
+   at 1440px they read as intended. The two below 300 do not. A floor at 1200
+   would be the size a hero deserves and would pin seven files as debt, which
+   is how a list like this stops being read. */
+const HERO_MIN_WIDTH = 600;
+
+/* Known too small. Replacing either file means deleting its line here — the
+   test fails if a pinned file grows, so the list cannot quietly outlive the
+   problem it records. */
+const UNDERSIZED_HEROES = new Set([
+  'img/projects/avatech-bg.webp',      // 270x187
+  'img/projects/mpi-brain-bg.webp',    // 292x173
+]);
+
+test('assets: project hero images are large enough to be stretched across a hero', () => {
+  const pagesDir = path.join(ROOT, 'projects');
+  const tooSmall = [];
+  const fixed = [];
+  let checked = 0;
+
+  for (const file of fs.readdirSync(pagesDir).filter((f) => f.endsWith('.html'))) {
+    const html = fs.readFileSync(path.join(pagesDir, file), 'utf8');
+    const m = /--project-hero-img:\s*url\('\.\.\/(img\/[^']+)'\)/.exec(html);
+    if (!m) continue;
+    const rel = m[1];
+    /* An SVG hero has no intrinsic pixel size to be too small — it is drawn at
+       whatever scale it is painted, and on these pages it is a stencil painted
+       through mask-image. */
+    if (rel.endsWith('.svg')) continue;
+
+    const abs = path.join(ROOT, rel);
+    assert.ok(fs.existsSync(abs), `projects/${file} names a hero image that does not exist: ${rel}`);
+    const size = imageSize(abs);
+    assert.ok(size, `could not read the dimensions of ${rel}`);
+    checked += 1;
+
+    if (size.width >= HERO_MIN_WIDTH) {
+      if (UNDERSIZED_HEROES.has(rel)) fixed.push(`${rel} is now ${size.width}px wide`);
+    } else if (!UNDERSIZED_HEROES.has(rel)) {
+      tooSmall.push(`projects/${file}: ${rel} is ${size.width}px wide, needs ${HERO_MIN_WIDTH}`);
+    }
+  }
+
+  assert.ok(checked >= 9, `only ${checked} raster hero(es) found — the page scan is probably wrong`);
+  assert.deepEqual(fixed, [],
+    `these heroes have been replaced — delete them from UNDERSIZED_HEROES:\n  ${fixed.join('\n  ')}`);
+  assert.deepEqual(tooSmall, [],
+    'these hero images will be visibly upscaled by background-size: cover:\n  '
+    + tooSmall.join('\n  '));
 });
