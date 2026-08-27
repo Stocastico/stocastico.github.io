@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-tZZE/+3GRJGyi4KS9WwT6qIVakGLpEYFWwPCnpgjtGE=' 'sha256-ttpKqdHGRultwZJ3bTqaV0io46xq3U6Xpj88BK8Hwyw=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-n9p0Z4SvssKV2EAlr4AUqc0AWD9kW3v8J3NLvbr/pQw=' 'sha256-ttpKqdHGRultwZJ3bTqaV0io46xq3U6Xpj88BK8Hwyw=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
@@ -21,14 +21,14 @@
   <meta property="og:url"         content="https://stefanomasneri.com/projects/ufc-fighter-tracking.html" />
   <meta property="og:title"       content="UFC Fighter Tracking: Multi-Modal Sensing — Stefano Masneri" />
   <meta property="og:description" content="Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017." />
-  <meta property="og:image"       content="https://stefanomasneri.com/img/projects/ufc-octagon-bg.webp" />
-  <meta property="og:image:width"  content="1280" />
-  <meta property="og:image:height" content="853" />
+  <meta property="og:image"       content="https://stefanomasneri.com/img/projects/og/ufc-fighter-tracking.png" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:image:alt"   content="UFC Fighter Tracking: Multi-Modal Sensing in the Octagon" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="UFC Fighter Tracking: Multi-Modal Sensing — Stefano Masneri" />
   <meta name="twitter:description" content="Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017." />
-  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/ufc-octagon-bg.webp" />
+  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/og/ufc-fighter-tracking.png" />
   <meta name="twitter:image:alt"   content="UFC Fighter Tracking: Multi-Modal Sensing in the Octagon" />
 
   <meta name="theme-color" content="#1a1010" />
@@ -76,7 +76,7 @@
     "@type": "Article",
     "headline": "UFC Fighter Tracking: Multi-Modal Sensing",
     "description": "Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017.",
-    "image": "https://stefanomasneri.com/img/projects/ufc-octagon-bg.webp",
+    "image": "https://stefanomasneri.com/img/projects/og/ufc-fighter-tracking.png",
     "author": {
       "@type": "Person",
       "name": "Stefano Masneri",
@@ -169,7 +169,7 @@ This is one of the projects I tell people about when they ask what the most fun 
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 </p>
 <figure>
-  <img src="../img/projects/ufc-octagon-overhead.webp" alt="UFC octagon from above, camera coverage" width="1280" height="720" loading="lazy" />
+  <img src="../img/projects/ufc-octagon-overhead.webp" alt="UFC octagon from above, camera coverage" width="1280" height="720" loading="lazy" decoding="async" />
 </figure>
 <h2>What We Measured</h2>
 <p>
@@ -187,14 +187,14 @@ All of this was published to the cloud, aggregated, and pushed to the consumer-f
 </p>
 <h2>Hardware in the Truss</h2>
 <p>
-Coverage of a UFC octagon, with eight sides, fast lateral motion, and frequent occlusions when fighters clinched, was the first hard problem. We solved it with <strong>two <a href="https://www.stereolabs.com/" target="_blank" rel="noopener">Stereolabs ZED</a> RGB-D cameras</strong> mounted on the <strong>truss above the cage</strong>, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
+Coverage of a UFC octagon — with eight sides, fast lateral motion, and frequent occlusions when fighters clinched — was the first hard problem. We solved it with <strong>two <a href="https://www.stereolabs.com/" target="_blank" rel="noopener">Stereolabs ZED</a> RGB-D cameras</strong> mounted on the <strong>truss above the cage</strong>, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
 </p>
 <p>
 Both cameras were cabled to a <strong>GPU-equipped PC, also mounted on the truss</strong>, which performed all the perception work locally. Doing inference at the venue (rather than streaming raw footage to a remote machine) was a deliberate choice; it eliminated the network as a bottleneck, kept latency in the sub-second range, and meant the system kept working even when venue connectivity wobbled. The PC then streamed only the resulting statistics down to the cloud over a much narrower data path.
 </p>
 <h2>Sensor Fusion: Vision + Accelerometers</h2>
 <p>
-Pure vision could detect that a punch had been <em>thrown</em>, but not whether it had <em>connected</em>, and certainly not the punch <em>type</em> with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' <strong>gloves with accelerometers</strong>, providing a second, completely independent signal for every strike.
+Pure vision could detect that a punch had been <em>thrown</em>, but not whether it had <em>connected</em> — and certainly not the punch <em>type</em> with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' <strong>gloves with accelerometers</strong>, providing a second, completely independent signal for every strike.
 </p>
 <p>
 We fused the two streams in real time:
@@ -205,7 +205,7 @@ We fused the two streams in real time:
   <li>A <strong>fusion layer</strong> matched accelerometer events to vision events by timestamp and fighter ID, and used the combination to decide <em>hit vs. miss</em> and to commit a final classification of the punch type.</li>
 </ul>
 <figure>
-  <img src="../img/projects/ufc-octagon-bg.webp" alt="Hardware setup and data processing" width="1280" height="853" loading="lazy" />
+  <img src="../img/projects/ufc-octagon-bg.webp" alt="System overview. Top left, hardware in the truss: two ZED RGB-D cameras and a GPU PC mounted above the cage, their overlapping view cones covering the whole octagon, annotated as deployable, portable, rugged and resilient to poor venue connectivity. Top right, the per-fighter statistics output: position and speed, octagon control as a heat map, total movement, posture state as a standing-versus-ground timeline, and a strike table of attempted against landed jabs, crosses, hooks, uppercuts and kicks. Along the bottom, five stages: capture, on-truss perception on the GPU PC, a 10 to 50 kB/s statistics stream, cloud ingest and aggregation, and consumers — the UFC app and broadcast graphics." width="1280" height="853" loading="lazy" decoding="async" />
 </figure>
 <h2>Cloud and Delivery</h2>
 <p>

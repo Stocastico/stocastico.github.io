@@ -1,9 +1,11 @@
 ---
 id:          rag-document-qa
+kind:        work
 title:       "RAG Document Assistant for Financial Services"
 year:        "2023"
-tags:        "RAG, LLM, NLP"
+tags:        "LLMs & MLOps"
 bg:          "img/projects/rag-query.svg"
+og:          "img/projects/rag-document-qa-og.png"
 description: "A retrieval-augmented generation system built for a large European bank, replacing manual SharePoint search with a conversational assistant that answers questions and cites the exact document and page where each answer was found."
 ---
 
@@ -15,7 +17,7 @@ The solution was a **[Retrieval-Augmented Generation (RAG)](https://arxiv.org/ab
 
 The first stage processes all existing PDF documents and builds a searchable index. This runs offline and is re-triggered whenever documents are added or updated in SharePoint.
 
-![Document ingestion pipeline](img/projects/rag-ingestion.svg)
+!svg(drafts/diagrams/rag-ingestion.svg)
 
 1. **PDF extraction** — each document is parsed page by page, preserving the mapping between text and page number. This granularity is what makes precise citations possible later.
 2. **Text chunking** — the extracted text is split into overlapping chunks of fixed token length. Overlap ensures that sentences spanning a chunk boundary are not lost; it also means a retrieved chunk always includes enough surrounding context for the LLM to produce a coherent answer.
@@ -26,7 +28,7 @@ The first stage processes all existing PDF documents and builds a searchable ind
 
 When a user submits a question, the system answers in real time through a two-stage process.
 
-![Query and answer pipeline](img/projects/rag-query.svg)
+!svg(drafts/diagrams/rag-query.svg)
 
 1. **Query embedding** — the user's question is passed through the same embedding model used during ingestion, producing a query vector in the same semantic space.
 2. **Similarity search** — the vector database computes cosine similarity between the query vector and all stored chunk vectors, returning the top-K most semantically relevant chunks along with their metadata.

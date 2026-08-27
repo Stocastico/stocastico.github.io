@@ -1,0 +1,117 @@
+<svg class="diagram" role="img" width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>Four-layer platform diagram. DATA: operational sources (CMS, web, CRM) feed BigQuery, then Dataflow ETL, a Feature Store serving both online and offline, and GCS artifacts. TRAIN AND REGISTER: Vertex AI Pipelines as KFP DAGs, Vertex AI Training in custom containers, Experiments capturing metrics and lineage, a versioned Model Registry with aliases, and an Artifact Registry; the Feature Store feeds both Training and the Model Registry. SERVE: Vertex AI Endpoints with canary rollout — fed from the Model Registry — scheduled Batch Prediction, Model Monitoring for drift and skew, and downstream CRM and API consumers. CI/CD underneath the whole platform: Cloud Build, GitHub with Terraform, Cloud Scheduler, Cloud Logging, IAM and KMS.</title>
+  <defs>
+    <marker id="ma-a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent)"/>
+    </marker>
+    <marker id="ma-b" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent2)"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="560" fill="var(--bg-alt)"/>
+
+  <!-- ── DATA ───────────────────────────────────────────────── -->
+  <rect x="20" y="20" width="920" height="124" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="48" fill="var(--accent-text)" font-size="12" font-weight="700" letter-spacing="0.14em">DATA</text>
+
+  <rect x="42" y="62" width="188" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="136" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Operational Sources</text>
+  <text x="136" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">CMS · web · CRM</text>
+
+  <line x1="234" y1="93" x2="256" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="260" y="62" width="150" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="335" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">BigQuery</text>
+  <text x="335" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">warehouse</text>
+
+  <line x1="414" y1="93" x2="436" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="440" y="62" width="140" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="510" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Dataflow</text>
+  <text x="510" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">ETL</text>
+
+  <line x1="584" y1="93" x2="606" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="610" y="62" width="170" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="695" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Feature Store</text>
+  <text x="695" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">online &amp; offline</text>
+
+  <line x1="784" y1="93" x2="806" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="810" y="62" width="108" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="864" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">GCS</text>
+  <text x="864" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">artifacts</text>
+
+  <!-- ── TRAIN & REGISTER ───────────────────────────────────── -->
+  <rect x="20" y="164" width="920" height="124" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="192" fill="var(--accent2-text)" font-size="12" font-weight="700" letter-spacing="0.14em">TRAIN &amp; REGISTER</text>
+
+  <rect x="42" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="124" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Vertex AI Pipelines</text>
+  <text x="124" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">KFP DAGs</text>
+
+  <rect x="216" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="298" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Vertex AI Training</text>
+  <text x="298" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">custom containers</text>
+
+  <rect x="390" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="472" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Experiments</text>
+  <text x="472" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">metrics · lineage</text>
+
+  <rect x="564" y="206" width="180" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="654" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Model Registry</text>
+  <text x="654" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">versioned · aliases</text>
+
+  <rect x="754" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="836" y="242" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Artifact Registry</text>
+
+  <!-- Feature Store feeds Training and the Model Registry -->
+  <path d="M695 124 V 168 H 298 V 200" fill="none" stroke="var(--accent)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#ma-a)"/>
+  <path d="M695 124 V 200" fill="none" stroke="var(--accent)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#ma-a)"/>
+
+  <!-- ── SERVE ──────────────────────────────────────────────── -->
+  <rect x="20" y="308" width="920" height="124" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="336" fill="var(--accent-text)" font-size="12" font-weight="700" letter-spacing="0.14em">SERVE</text>
+
+  <rect x="42" y="350" width="188" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="136" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Vertex AI Endpoints</text>
+  <text x="136" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">online · canary</text>
+
+  <rect x="240" y="350" width="176" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="328" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Batch Prediction</text>
+  <text x="328" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">scheduled</text>
+
+  <rect x="426" y="350" width="188" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="520" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Model Monitoring</text>
+  <text x="520" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">drift · skew</text>
+
+  <rect x="624" y="350" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="706" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Downstream</text>
+  <text x="706" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">CRM · API</text>
+
+  <!-- Model Registry promotes into the endpoints -->
+  <path d="M654 268 V 312 H 136 V 344" fill="none" stroke="var(--accent2)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#ma-b)"/>
+
+  <!-- ── CI/CD ──────────────────────────────────────────────── -->
+  <rect x="20" y="452" width="920" height="92" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="478" fill="var(--text-muted)" font-size="12" font-weight="700" letter-spacing="0.14em">CI/CD</text>
+
+  <rect x="42" y="490" width="164" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="124" y="514" text-anchor="middle" fill="var(--text)" font-size="12">Cloud Build</text>
+
+  <rect x="216" y="490" width="180" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="306" y="514" text-anchor="middle" fill="var(--text)" font-size="12">GitHub + Terraform</text>
+
+  <rect x="406" y="490" width="170" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="491" y="514" text-anchor="middle" fill="var(--text)" font-size="12">Cloud Scheduler</text>
+
+  <rect x="586" y="490" width="164" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="668" y="514" text-anchor="middle" fill="var(--text)" font-size="12">Cloud Logging</text>
+
+  <rect x="760" y="490" width="158" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="839" y="514" text-anchor="middle" fill="var(--text)" font-size="12">IAM · KMS</text>
+</svg>

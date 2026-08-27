@@ -159,3 +159,64 @@ test('html: <title> values are unique across indexable pages', () => {
     titles.set(t, rel);
   }
 });
+
+/* An alt attribute that exists is not the same as an alt attribute that says
+   anything. The check above has always passed while four of the site's densest
+   figures — two multi-layer GCP architecture diagrams, a three-tier client /
+   server table and a system overview carrying two dozen labels — were described
+   as "Architecture overview", "Vertex AI pipeline run", "Design objectives
+   diagram" and "Hardware setup and data processing". Each of those names the
+   file rather than the picture, so a screen-reader user got the heading above
+   the figure repeated back to them and nothing else. axe cannot catch this:
+   the attribute is present and non-empty, which is all it can measure.
+
+   The floor is deliberately low and by content type. Photographs are often
+   honestly described in a handful of words; a diagram carrying labelled boxes
+   and arrows almost never is. Failing here means "say what is in it", never
+   "pad this out". A decorative image should carry alt="" and is skipped, since
+   an empty alt is a deliberate statement that the image adds nothing. */
+const DIAGRAM_ALT_MIN = 120;
+const DIAGRAM_HINT = /diagram|architecture|pipeline|objectives|overview|chart|flow/i;
+
+for (const rel of PAGES) {
+  test(`html: descriptive alt text on the figures in ${rel}`, () => {
+    const html = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const thin = [];
+    for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
+      const tag = m[0];
+      if (/\balt=""/.test(tag)) continue;                       // deliberately decorative
+      const src = (/\bsrc="([^"]*)"/.exec(tag) || [, ''])[1];
+      if (!/^\.\.\/img\/|^img\//.test(src)) continue;           // skip the analytics pixel
+      const alt = (/\balt="([^"]*)"/.exec(tag) || [, ''])[1];
+      const looksLikeDiagram = DIAGRAM_HINT.test(src) || DIAGRAM_HINT.test(alt);
+      if (looksLikeDiagram && alt.length < DIAGRAM_ALT_MIN) {
+        thin.push(`${src}\n      alt="${alt}" (${alt.length} chars)`);
+      }
+    }
+    assert.deepEqual(thin, [],
+      `${rel}: these look like diagrams but their alt text only names the file.\n`
+      + `    Describe what the picture shows — the boxes, the arrows, the flow:\n    `
+      + thin.join('\n    '));
+  });
+}
+
+/* `npm test` is a glob on purpose — a hand-written list of test files drifted
+   once and left three assertions in the repo that CI never executed (see the
+   note in CLAUDE.md). The per-suite `test:*` aliases are a different thing:
+   pure convenience, and nothing forces one to exist. But an alias that points
+   at a file which has been renamed or deleted is worse than a missing one,
+   because it fails with a Node error that reads like a broken test rather than
+   like a stale script. Seven suites had no alias at all and one more named a
+   file under a path that had moved. */
+test('html: every test:* script points at a file that exists', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const dangling = [];
+  for (const [name, cmd] of Object.entries(pkg.scripts)) {
+    if (!name.startsWith('test:')) continue;
+    for (const m of cmd.matchAll(/\btest\/[\w./-]+\.(?:test\.)?m?js\b/g)) {
+      if (m[0].includes('*')) continue;
+      if (!fs.existsSync(path.join(ROOT, m[0]))) dangling.push(`${name} -> ${m[0]}`);
+    }
+  }
+  assert.deepEqual(dangling, [], `package.json test aliases naming missing files:\n  ${dangling.join('\n  ')}`);
+});

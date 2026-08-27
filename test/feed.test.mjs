@@ -58,10 +58,36 @@ test('feed.xml has no unescaped ampersands', () => {
   assert.deepEqual(bad, [], 'raw & in feed.xml — escapeXml missed a field');
 });
 
-test('index.html advertises the feed for autodiscovery', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.match(html, /<link rel="alternate" type="application\/atom\+xml"[^>]*href="\/feed\.xml"/,
-    'index.html <head> is missing the Atom autodiscovery link');
+/* Autodiscovery is a per-page convention, not a homepage one: a reader pointed
+   at any URL on this site should find the feed, which is why the <link> is in
+   the head of all 21 pages. It was asserted on index.html alone, and that gap
+   was not theoretical — the scaffold in scripts/new-project.js had no such
+   link, so the next project page created with the documented command would
+   have shipped without one and nothing here would have said so. */
+const AUTODISCOVERY = /<link rel="alternate" type="application\/atom\+xml"[^>]*href="\/feed\.xml"/;
+
+function allPages(dir = ROOT, prefix = '') {
+  const skip = new Set(['node_modules', 'dist', '.git', '.cache', 'drafts', 'test']);
+  const out = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith('.') || skip.has(entry.name)) continue;
+    if (entry.isDirectory()) out.push(...allPages(path.join(dir, entry.name), `${prefix}${entry.name}/`));
+    else if (entry.name.endsWith('.html')) out.push(prefix + entry.name);
+  }
+  return out.sort();
+}
+
+const PAGES = allPages();
+
+test('every page advertises the feed for autodiscovery', () => {
+  assert.ok(PAGES.length >= 20, `only ${PAGES.length} pages globbed — the directory read is wrong`);
+  assert.ok(PAGES.includes('index.html') && PAGES.some((p) => p.startsWith('projects/')));
+
+  const missing = PAGES.filter(
+    (p) => !AUTODISCOVERY.test(fs.readFileSync(path.join(ROOT, p), 'utf8')),
+  );
+  assert.deepEqual(missing, [],
+    `these pages have no Atom autodiscovery <link>: ${missing.join(', ')}`);
 });
 
 /* ─────────────────────────────────────────────────────────────────────────────

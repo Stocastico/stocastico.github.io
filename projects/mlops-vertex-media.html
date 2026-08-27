@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-452bJ4jy71UMcxbP5pNyJwkFuQJRYp2bO7TluSODbrA=' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-tWZO3kxVIlzQDytg/3HnCxubOLTiCq1nWP4Ute+5Ny4=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0v0TgQWODicr6tBX86GczcNNXI5UHi9dC5xLjUtXWNU=' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-tWZO3kxVIlzQDytg/3HnCxubOLTiCq1nWP4Ute+5Ny4=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
@@ -21,14 +21,14 @@
   <meta property="og:url"         content="https://stefanomasneri.com/projects/mlops-vertex-media.html" />
   <meta property="og:title"       content="MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri" />
   <meta property="og:description" content="An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection." />
-  <meta property="og:image"       content="https://stefanomasneri.com/img/projects/mlops-bg.webp" />
-  <meta property="og:image:width"  content="1600" />
-  <meta property="og:image:height" content="840" />
+  <meta property="og:image"       content="https://stefanomasneri.com/img/projects/og/mlops-vertex-media.png" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:image:alt"   content="MLOps Platform on GCP for a Spanish Media Group" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="MLOps Platform on GCP for a Spanish Media Group — Stefano Masneri" />
   <meta name="twitter:description" content="An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection." />
-  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/mlops-bg.webp" />
+  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/og/mlops-vertex-media.png" />
   <meta name="twitter:image:alt"   content="MLOps Platform on GCP for a Spanish Media Group" />
 
   <meta name="theme-color" content="#1a1010" />
@@ -76,7 +76,7 @@
     "@type": "Article",
     "headline": "MLOps Platform on GCP for a Spanish Media Group",
     "description": "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection.",
-    "image": "https://stefanomasneri.com/img/projects/mlops-bg.webp",
+    "image": "https://stefanomasneri.com/img/projects/og/mlops-vertex-media.png",
     "author": {
       "@type": "Person",
       "name": "Stefano Masneri",
@@ -191,13 +191,129 @@ This is not meant as a criticism of the client; it is just the way things were a
 We designed the platform around the standard MLOps lifecycle: data, training, registry, serving, monitoring. We used Vertex AI as the glue between all of them, with the rest of GCP filling in the supporting infrastructure.
 </p>
 <figure>
-  <img src="../img/projects/mlops-architecture.webp" alt="MLOps architecture on GCP" width="1408" height="768" loading="lazy" />
+  <svg class="diagram" role="img" width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>Four-layer platform diagram. DATA: operational sources (CMS, web, CRM) feed BigQuery, then Dataflow ETL, a Feature Store serving both online and offline, and GCS artifacts. TRAIN AND REGISTER: Vertex AI Pipelines as KFP DAGs, Vertex AI Training in custom containers, Experiments capturing metrics and lineage, a versioned Model Registry with aliases, and an Artifact Registry; the Feature Store feeds both Training and the Model Registry. SERVE: Vertex AI Endpoints with canary rollout — fed from the Model Registry — scheduled Batch Prediction, Model Monitoring for drift and skew, and downstream CRM and API consumers. CI/CD underneath the whole platform: Cloud Build, GitHub with Terraform, Cloud Scheduler, Cloud Logging, IAM and KMS.</title>
+  <defs>
+    <marker id="ma-a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent)"/>
+    </marker>
+    <marker id="ma-b" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent2)"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="560" fill="var(--bg-alt)"/>
+
+  <!-- ── DATA ───────────────────────────────────────────────── -->
+  <rect x="20" y="20" width="920" height="124" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="48" fill="var(--accent-text)" font-size="12" font-weight="700" letter-spacing="0.14em">DATA</text>
+
+  <rect x="42" y="62" width="188" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="136" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Operational Sources</text>
+  <text x="136" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">CMS · web · CRM</text>
+
+  <line x1="234" y1="93" x2="256" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="260" y="62" width="150" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="335" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">BigQuery</text>
+  <text x="335" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">warehouse</text>
+
+  <line x1="414" y1="93" x2="436" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="440" y="62" width="140" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="510" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Dataflow</text>
+  <text x="510" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">ETL</text>
+
+  <line x1="584" y1="93" x2="606" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="610" y="62" width="170" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="695" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Feature Store</text>
+  <text x="695" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">online &amp; offline</text>
+
+  <line x1="784" y1="93" x2="806" y2="93" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ma-a)"/>
+
+  <rect x="810" y="62" width="108" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="864" y="88" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">GCS</text>
+  <text x="864" y="107" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">artifacts</text>
+
+  <!-- ── TRAIN & REGISTER ───────────────────────────────────── -->
+  <rect x="20" y="164" width="920" height="124" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="192" fill="var(--accent2-text)" font-size="12" font-weight="700" letter-spacing="0.14em">TRAIN &amp; REGISTER</text>
+
+  <rect x="42" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="124" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Vertex AI Pipelines</text>
+  <text x="124" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">KFP DAGs</text>
+
+  <rect x="216" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="298" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Vertex AI Training</text>
+  <text x="298" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">custom containers</text>
+
+  <rect x="390" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="472" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Experiments</text>
+  <text x="472" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">metrics · lineage</text>
+
+  <rect x="564" y="206" width="180" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="654" y="232" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Model Registry</text>
+  <text x="654" y="251" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">versioned · aliases</text>
+
+  <rect x="754" y="206" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="836" y="242" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Artifact Registry</text>
+
+  <!-- Feature Store feeds Training and the Model Registry -->
+  <path d="M695 124 V 168 H 298 V 200" fill="none" stroke="var(--accent)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#ma-a)"/>
+  <path d="M695 124 V 200" fill="none" stroke="var(--accent)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#ma-a)"/>
+
+  <!-- ── SERVE ──────────────────────────────────────────────── -->
+  <rect x="20" y="308" width="920" height="124" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="336" fill="var(--accent-text)" font-size="12" font-weight="700" letter-spacing="0.14em">SERVE</text>
+
+  <rect x="42" y="350" width="188" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="136" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Vertex AI Endpoints</text>
+  <text x="136" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">online · canary</text>
+
+  <rect x="240" y="350" width="176" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="328" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Batch Prediction</text>
+  <text x="328" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">scheduled</text>
+
+  <rect x="426" y="350" width="188" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="520" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Model Monitoring</text>
+  <text x="520" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">drift · skew</text>
+
+  <rect x="624" y="350" width="164" height="62" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="706" y="376" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">Downstream</text>
+  <text x="706" y="395" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">CRM · API</text>
+
+  <!-- Model Registry promotes into the endpoints -->
+  <path d="M654 268 V 312 H 136 V 344" fill="none" stroke="var(--accent2)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#ma-b)"/>
+
+  <!-- ── CI/CD ──────────────────────────────────────────────── -->
+  <rect x="20" y="452" width="920" height="92" rx="12" fill="rgb(var(--text-rgb) / 0.03)"/>
+  <text x="42" y="478" fill="var(--text-muted)" font-size="12" font-weight="700" letter-spacing="0.14em">CI/CD</text>
+
+  <rect x="42" y="490" width="164" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="124" y="514" text-anchor="middle" fill="var(--text)" font-size="12">Cloud Build</text>
+
+  <rect x="216" y="490" width="180" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="306" y="514" text-anchor="middle" fill="var(--text)" font-size="12">GitHub + Terraform</text>
+
+  <rect x="406" y="490" width="170" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="491" y="514" text-anchor="middle" fill="var(--text)" font-size="12">Cloud Scheduler</text>
+
+  <rect x="586" y="490" width="164" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="668" y="514" text-anchor="middle" fill="var(--text)" font-size="12">Cloud Logging</text>
+
+  <rect x="760" y="490" width="158" height="38" rx="8" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="839" y="514" text-anchor="middle" fill="var(--text)" font-size="12">IAM · KMS</text>
+</svg>
 </figure>
 <p>
-<strong>Data layer.</strong> All training and serving data flows through <strong>BigQuery</strong>, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the <strong>Vertex AI Feature Store</strong> so the same definitions can serve both training and online inference, closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in <strong>GCS</strong> with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
+<strong>Data layer.</strong> All training and serving data flows through <strong>BigQuery</strong>, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the <strong>Vertex AI Feature Store</strong> so the same definitions can serve both training and online inference — closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in <strong>GCS</strong> with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
 </p>
 <p>
-<strong>Training and registry.</strong> Models are trained inside <strong>Vertex AI Pipelines</strong> using the Kubeflow Pipelines (KFP) SDK. Each pipeline is a DAG of containerised steps, ingest, validate, build features, train, evaluate, register, and steps are reusable across models so a new project starts from a working skeleton rather than a blank notebook. <strong>Vertex AI Experiments</strong> captures every run's parameters, metrics and lineage; the trained binaries land in the <strong>Vertex AI Model Registry</strong>, where they are versioned, tagged with their evaluation metrics, and promoted through staging aliases (<code>candidate</code> → <code>staging</code> → <code>production</code>) under explicit approval gates.
+<strong>Training and registry.</strong> Models are trained inside <strong>Vertex AI Pipelines</strong> using the Kubeflow Pipelines (KFP) SDK. Each pipeline is a DAG of containerised steps — ingest, validate, build features, train, evaluate, register — and steps are reusable across models so a new project starts from a working skeleton rather than a blank notebook. <strong>Vertex AI Experiments</strong> captures every run's parameters, metrics and lineage; the trained binaries land in the <strong>Vertex AI Model Registry</strong>, where they are versioned, tagged with their evaluation metrics, and promoted through staging aliases (<code>candidate</code> → <code>staging</code> → <code>production</code>) under explicit approval gates.
 </p>
 <p>
 <strong>Serving.</strong> The recommender and a handful of low-latency models are served as <strong>Vertex AI Endpoints</strong> with canary deployments and traffic splitting; the churn predictor and other batch-oriented models run as scheduled <strong>Vertex AI Batch Prediction</strong> jobs that write their outputs back to BigQuery for the downstream CRM and marketing systems.
@@ -206,14 +322,115 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
 <strong>Monitoring.</strong> Every production endpoint is wired into <strong>Vertex AI Model Monitoring</strong>, which compares the live feature distribution against the training baseline and raises alerts when feature drift, prediction drift or training/serving skew cross a threshold. Alerts flow into the same Cloud Logging / Cloud Monitoring stack the rest of the platform uses, so the on-call rotation sees model issues alongside infrastructure issues.
 </p>
 <p>
-<strong>Cross-cutting concerns.</strong> <strong>Cloud Build</strong> runs CI/CD on every commit, unit tests, integration tests, container builds, pipeline submissions in dev, and <strong><a href="https://www.terraform.io/" target="_blank" rel="noopener noreferrer">Terraform</a></strong> describes all the GCP resources so environments (dev, staging, prod) are not snowflakes. <strong>Cloud Scheduler</strong> triggers the periodic retraining and batch-scoring runs. <strong>IAM</strong> and <strong>KMS</strong> handle access control and secrets uniformly across the platform.
+<strong>Cross-cutting concerns.</strong> <strong>Cloud Build</strong> runs CI/CD on every commit — unit tests, integration tests, container builds, pipeline submissions in dev — and <strong><a href="https://www.terraform.io/" target="_blank" rel="noopener noreferrer">Terraform</a></strong> describes all the GCP resources so environments (dev, staging, prod) are not snowflakes. <strong>Cloud Scheduler</strong> triggers the periodic retraining and batch-scoring runs. <strong>IAM</strong> and <strong>KMS</strong> handle access control and secrets uniformly across the platform.
 </p>
 <h2>What a Pipeline Actually Does</h2>
 <p>
 Each model, churn, recommender, the rest, ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
 </p>
 <figure>
-  <img src="../img/projects/mlops-pipeline.webp" alt="Vertex AI pipeline run" width="1408" height="768" loading="lazy" />
+  <svg class="diagram" role="img" width="960" height="520" viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>Pipeline flow chart. Six steps run left to right: Ingest (a BigQuery query writing a snapshot to GCS), Validate (schema, statistics, fail-fast), Features (transform, join, Feature Store), Train (custom container, hyperparameter tuning), Evaluate (offline metrics against the current champion) and Register (Model Registry, tag candidate). A decision node then asks whether the metrics clear the threshold: No halts the run and alerts Slack and PagerDuty; Yes deploys to a canary endpoint with traffic ramp-up. Monitoring for drift, skew and scheduled checks feeds back to Ingest as an automatic retraining trigger. Triggers listed underneath: Cloud Scheduler on cron, a Git push through Cloud Build to a pipeline submission, and a drift alert starting a retraining run.</title>
+  <defs>
+    <marker id="mp-a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent)"/>
+    </marker>
+    <marker id="mp-b" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent2)"/>
+    </marker>
+    <marker id="mp-m" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--text-muted)"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="520" fill="var(--bg-alt)"/>
+
+  <!-- ── The six pipeline steps ─────────────────────────────── -->
+  <rect x="24" y="34" width="140" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="94" y="62" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Ingest</text>
+  <text x="94" y="81" text-anchor="middle" fill="var(--text-muted)" font-size="10">BigQuery query ·</text>
+  <text x="94" y="96" text-anchor="middle" fill="var(--text-muted)" font-size="10">snapshot to GCS</text>
+
+  <line x1="168" y1="72" x2="188" y2="72" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#mp-a)"/>
+
+  <rect x="192" y="34" width="140" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="262" y="62" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Validate</text>
+  <text x="262" y="81" text-anchor="middle" fill="var(--text-muted)" font-size="10">schema · stats</text>
+  <text x="262" y="96" text-anchor="middle" fill="var(--text-muted)" font-size="10">· fail-fast</text>
+
+  <line x1="336" y1="72" x2="356" y2="72" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#mp-a)"/>
+
+  <rect x="360" y="34" width="140" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="430" y="62" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Features</text>
+  <text x="430" y="81" text-anchor="middle" fill="var(--text-muted)" font-size="10">transform · join</text>
+  <text x="430" y="96" text-anchor="middle" fill="var(--text-muted)" font-size="10">· Feature Store</text>
+
+  <line x1="504" y1="72" x2="524" y2="72" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#mp-b)"/>
+
+  <rect x="528" y="34" width="130" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="593" y="62" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Train</text>
+  <text x="593" y="81" text-anchor="middle" fill="var(--text-muted)" font-size="10">custom</text>
+  <text x="593" y="96" text-anchor="middle" fill="var(--text-muted)" font-size="10">container · HPT</text>
+
+  <line x1="662" y1="72" x2="682" y2="72" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#mp-b)"/>
+
+  <rect x="686" y="34" width="132" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="752" y="62" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Evaluate</text>
+  <text x="752" y="81" text-anchor="middle" fill="var(--text-muted)" font-size="10">offline metrics</text>
+  <text x="752" y="96" text-anchor="middle" fill="var(--text-muted)" font-size="10">vs. champion</text>
+
+  <line x1="822" y1="72" x2="842" y2="72" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#mp-b)"/>
+
+  <rect x="846" y="34" width="90" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="891" y="62" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Register</text>
+  <text x="891" y="81" text-anchor="middle" fill="var(--text-muted)" font-size="10">Model</text>
+  <text x="891" y="96" text-anchor="middle" fill="var(--text-muted)" font-size="10">Registry</text>
+
+  <!-- ── The gate ───────────────────────────────────────────── -->
+  <path d="M891 110 V 152" fill="none" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#mp-b)"/>
+
+  <path d="M891 164 L 954 214 L 891 264 L 828 214 Z"
+        fill="var(--bg-card)" stroke="var(--text-muted)" stroke-width="1.5"/>
+  <text x="891" y="209" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="600">metrics ≥</text>
+  <text x="891" y="226" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="600">threshold?</text>
+
+  <!-- No -> halt -->
+  <path d="M828 214 H 776" fill="none" stroke="var(--accent-hi)" stroke-width="1.5"
+        stroke-dasharray="5 4" marker-end="url(#mp-a)"/>
+  <text x="812" y="205" text-anchor="middle" fill="var(--accent-text)" font-size="11" font-weight="600">No</text>
+
+  <rect x="604" y="184" width="168" height="62" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="688" y="210" text-anchor="middle" fill="var(--text)" font-size="12.5" font-weight="600">halt &amp; alert</text>
+  <text x="688" y="229" text-anchor="middle" fill="var(--text-muted)" font-size="10">Slack · PagerDuty</text>
+
+  <!-- Yes -> deploy -->
+  <path d="M891 264 V 306" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#mp-a)"/>
+  <text x="906" y="290" fill="var(--accent-text)" font-size="11" font-weight="600">Yes</text>
+
+  <rect x="790" y="310" width="146" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="863" y="338" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Deploy</text>
+  <text x="863" y="357" text-anchor="middle" fill="var(--text-muted)" font-size="10">canary endpoint ·</text>
+  <text x="863" y="372" text-anchor="middle" fill="var(--text-muted)" font-size="10">traffic ramp-up</text>
+
+  <!-- Deploy -> Monitor -->
+  <path d="M790 348 H 626" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#mp-a)"/>
+
+  <rect x="446" y="310" width="176" height="76" rx="10" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="534" y="338" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Monitor</text>
+  <text x="534" y="357" text-anchor="middle" fill="var(--text-muted)" font-size="10">drift · skew ·</text>
+  <text x="534" y="372" text-anchor="middle" fill="var(--text-muted)" font-size="10">scheduled checks</text>
+
+  <!-- Monitor -> back to Ingest -->
+  <path d="M446 348 H 200 Q 94 348 94 240 V 116" fill="none" stroke="var(--text-muted)" stroke-width="1.4"
+        stroke-dasharray="5 4" marker-end="url(#mp-m)"/>
+  <text x="228" y="286" fill="var(--text-muted)" font-size="11">drift detected → retrain</text>
+
+  <!-- ── Triggers ───────────────────────────────────────────── -->
+  <line x1="24" y1="418" x2="936" y2="418" stroke="var(--border)" stroke-width="1"/>
+  <text x="24" y="446" fill="var(--text-muted)" font-size="11.5" font-weight="700" letter-spacing="0.14em">TRIGGERS</text>
+  <text x="24" y="474" fill="var(--text)" font-size="12">Cloud Scheduler (cron)  ·  Git push → Cloud Build → pipeline submit</text>
+  <text x="24" y="494" fill="var(--text)" font-size="12">Drift alert → automatic retraining run</text>
+</svg>
 </figure>
 <p>
 The pipeline runs on a schedule (typically weekly for churn, daily for the recommender) or whenever Model Monitoring raises a drift alert against the corresponding production endpoint. A typical run goes through:

@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- generated:csp-meta -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-DYOKdN54FVpy4vHiroFAfD1BmpiC+bEMaqerw51BMs0=' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-XoEbDJX8p8YJIHvXqzx9B88fHya9pFNlYeS0lJ5DO7Y=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-A7/jtg473ajKQAfpn4FH+vFiRDzETZWUXE/xjxi7bjM=' 'sha256-VVHZh2plbL7uZ6WPA/ICUohMqpv6dwAlZWnXYCs3Mzo=' 'sha256-XoEbDJX8p8YJIHvXqzx9B88fHya9pFNlYeS0lJ5DO7Y=' 'sha256-vJMHMNroT/IM6Yq2m0l8Y+MfNUAmkbOPvrRV/G518Uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://stocastico.goatcounter.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests" />
   <!-- /generated:csp-meta -->
   <!-- theme-bootstrap -->
   <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('palette');if(p&&/^[a-z0-9-]{1,24}$/.test(p))document.documentElement.setAttribute('data-palette',p)}catch(e){}</script>
@@ -24,15 +24,15 @@
   <meta property="og:title" content="cleAR: Architecture for Multi-User AR — Stefano Masneri" />
   <meta property="og:description"
     content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
-  <meta property="og:image" content="https://stefanomasneri.com/img/projects/clear-architecture.webp" />
-  <meta property="og:image:width"  content="709" />
-  <meta property="og:image:height" content="405" />
+  <meta property="og:image" content="https://stefanomasneri.com/img/projects/og/clear-architecture.png" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:image:alt"   content="cleAR: Interoperable Architecture for Multi-User AR" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="cleAR: Architecture for Multi-User AR — Stefano Masneri" />
   <meta name="twitter:description"
     content="cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research." />
-  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/clear-architecture.webp" />
+  <meta name="twitter:image"       content="https://stefanomasneri.com/img/projects/og/clear-architecture.png" />
   <meta name="twitter:image:alt"   content="cleAR: Interoperable Architecture for Multi-User AR" />
 
   <meta name="theme-color" content="#1a1010" />
@@ -80,7 +80,7 @@
     "@type": "Article",
     "headline": "cleAR: Architecture for Multi-User AR",
     "description": "cleAR is a modular, interoperable architecture for building multi-user augmented reality applications in education. Designed from the ground up to bridge the gap between AR's potential and its limited classroom adoption, it was the core contribution of my PhD research.",
-    "image": "https://stefanomasneri.com/img/projects/clear-architecture.webp",
+    "image": "https://stefanomasneri.com/img/projects/og/clear-architecture.png",
     "author": {
       "@type": "Person",
       "name": "Stefano Masneri",
@@ -178,8 +178,8 @@
       published in the <em>Virtual Reality</em> journal (Springer, 2023).
     </p>
     <p>
-      Despite the well-documented benefits of AR in learning, improved motivation, better concept assimilation, easier
-      knowledge transfer, its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty
+      Despite the well-documented benefits of AR in learning — improved motivation, better concept assimilation, easier
+      knowledge transfer — its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty
       of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school
       infrastructure and curricula. cleAR was designed to address both.
     </p>
@@ -189,7 +189,127 @@
       secondary school teachers and an extensive review of the literature.
     </p>
     <figure>
-      <img src="../img/projects/clear-design-objectives.webp" alt="Design objectives diagram" width="751" height="469" loading="lazy" />
+      <svg class="diagram" role="img" width="920" height="480" viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+      <title>The six design objectives and the requirements each one satisfies. DO1, Interoperability, is the spine down the left, spanning the four client types the architecture must run on: a teacher on a laptop, a head-mounted display, a student on a phone, and a dashboard on a desktop; it carries requirements R1 and R7. Each client connects to the objectives in the middle. DO2, Multi-user Interactions, sits at the top and carries R2, R3 and R8. Below it, grouped together as the data-analytics objective, DO3 Data Storage feeds DO4 AI-based Analytics, which feeds DO5 Visual Reports; between them they carry R5, R9, R10 and R11. DO6, Easy to Develop, is the spine down the right serving the developer, and carries R4 and R6; it connects back to every objective in the middle.</title>
+      <defs>
+        <marker id="do-a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+        </marker>
+        <marker id="do-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+        </marker>
+        <marker id="do-c" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--accent2)"/>
+        </marker>
+      </defs>
+
+      <rect width="920" height="480" fill="var(--bg-alt)"/>
+
+      <!-- ── DO1: Interoperability (left spine + the clients it spans) ── -->
+      <rect x="24" y="30" width="252" height="420" rx="12" fill="rgb(var(--text-rgb) / 0.03)"
+            stroke="var(--border)" stroke-width="1.4"/>
+      <text x="46" y="240" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.1em"
+            transform="rotate(-90 46 240)" text-anchor="middle">DO1: Interoperability</text>
+
+      <g font-size="11.5">
+        <rect x="70" y="46" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="164" y="82" text-anchor="middle" fill="var(--text)" font-weight="600">Teacher</text>
+        <text x="164" y="102" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">laptop · browser</text>
+
+        <rect x="70" y="146" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="164" y="182" text-anchor="middle" fill="var(--text)" font-weight="600">Student</text>
+        <text x="164" y="202" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">head-mounted display</text>
+
+        <rect x="70" y="246" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="164" y="282" text-anchor="middle" fill="var(--text)" font-weight="600">Student</text>
+        <text x="164" y="302" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">phone · tablet</text>
+
+        <rect x="70" y="346" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="164" y="382" text-anchor="middle" fill="var(--text)" font-weight="600">Dashboard</text>
+        <text x="164" y="402" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">desktop · reports</text>
+      </g>
+
+      <!-- R chips for DO1 -->
+      <g font-size="10" fill="var(--accent-text)">
+        <circle cx="42" cy="52" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="42" y="56" text-anchor="middle">R1</text>
+        <circle cx="42" cy="86" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="42" y="90" text-anchor="middle">R7</text>
+      </g>
+
+      <!-- Clients <-> objectives -->
+      <g stroke="var(--text-muted)" stroke-width="1.4" marker-start="url(#do-b)" marker-end="url(#do-a)">
+        <line x1="262" y1="91"  x2="316" y2="91"/>
+        <line x1="262" y1="191" x2="316" y2="191"/>
+        <line x1="262" y1="291" x2="316" y2="291"/>
+        <line x1="262" y1="391" x2="316" y2="391"/>
+      </g>
+
+      <!-- ── DO2 ─────────────────────────────────────────────────── -->
+      <rect x="322" y="58" width="300" height="66" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+      <text x="472" y="90" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO2: Multi-user Interactions</text>
+      <g font-size="10" fill="var(--accent2-text)">
+        <circle cx="404" cy="112" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="404" y="116" text-anchor="middle">R2</text>
+        <circle cx="440" cy="112" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="440" y="116" text-anchor="middle">R3</text>
+        <circle cx="476" cy="112" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="476" y="116" text-anchor="middle">R8</text>
+      </g>
+
+      <!-- ── The data-analytics group: DO3 -> DO4 -> DO5 ──────────── -->
+      <rect x="302" y="150" width="340" height="290" rx="12" fill="none"
+            stroke="var(--text-muted)" stroke-width="1.4" stroke-dasharray="5 5"/>
+
+      <rect x="322" y="166" width="300" height="60" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+      <text x="472" y="202" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO3: Data Storage</text>
+
+      <line x1="472" y1="226" x2="472" y2="260" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#do-c)"/>
+
+      <rect x="322" y="266" width="300" height="60" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+      <text x="472" y="302" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO4: AI-based Analytics</text>
+
+      <line x1="472" y1="326" x2="472" y2="360" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#do-c)"/>
+
+      <rect x="322" y="366" width="300" height="60" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+      <text x="472" y="402" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO5: Visual Reports</text>
+
+      <g font-size="10" fill="var(--accent2-text)">
+        <circle cx="386" cy="440" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="386" y="444" text-anchor="middle">R5</text>
+        <circle cx="422" cy="440" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="422" y="444" text-anchor="middle">R9</text>
+        <circle cx="460" cy="440" r="14" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="460" y="444" text-anchor="middle">R10</text>
+        <circle cx="500" cy="440" r="14" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+        <text x="500" y="444" text-anchor="middle">R11</text>
+      </g>
+
+      <!-- ── DO6: Easy to Develop (right spine) ──────────────────── -->
+      <rect x="770" y="30" width="126" height="420" rx="12" fill="rgb(var(--text-rgb) / 0.03)"
+            stroke="var(--border)" stroke-width="1.4"/>
+      <text x="874" y="240" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.1em"
+            transform="rotate(-90 874 240)" text-anchor="middle">DO6: Easy to Develop</text>
+
+      <rect x="790" y="196" width="66" height="88" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="823" y="235" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="600">Dev</text>
+      <text x="823" y="253" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">API</text>
+
+      <g font-size="10" fill="var(--accent-text)">
+        <circle cx="756" cy="52" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="756" y="56" text-anchor="middle">R4</text>
+        <circle cx="756" cy="86" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="756" y="90" text-anchor="middle">R6</text>
+      </g>
+
+      <!-- DO6 serves every objective in the middle -->
+      <g stroke="var(--text-muted)" stroke-width="1.4" marker-end="url(#do-a)" fill="none">
+        <path d="M770 91  H 628"/>
+        <path d="M770 196 H 700 V 196 H 628"/>
+        <path d="M770 296 H 700 V 296 H 628"/>
+        <path d="M770 396 H 628"/>
+      </g>
+    </svg>
     </figure>
     <ul>
       <li><strong>DO1: Interoperability</strong>: Cross-platform support for head-mounted displays, tablets,
@@ -212,7 +332,138 @@
       stack.
     </p>
     <figure>
-      <img src="../img/projects/clear-architecture.webp" alt="Architecture overview" width="709" height="405" loading="lazy" />
+      <svg class="diagram" role="img" width="920" height="520" viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+      <title>Three-tier architecture, divided into four columns by concern: multi-user interactions, data storage, AI-based analytics and visualization tools. The CLIENT tier holds a multi-device library with a web client and a Unity client, a logging API over a data storage API, an AI input API with app optimization and EDA tools, and a web dashboard with an AI output API. The SERVER tier beneath it holds socket, static and synchronization servers; an xAPI Manager over a Learning Record Store; an AI framework with a model fine-tuning server; and a dataviz server with a visualization exporter. A storage tier underneath holds shared state, user-app interactions, a model zoo and a visualizations database, all of which connect to the school's existing databases — the digital school register, class schedules and inventory.</title>
+      <defs>
+        <marker id="cl-s" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+        </marker>
+        <marker id="cl-e" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+        </marker>
+        <symbol id="cl-db" viewBox="0 0 18 20">
+          <ellipse cx="9" cy="4" rx="8" ry="3.4" fill="none" stroke="var(--accent2)" stroke-width="1.4"/>
+          <path d="M1 4 V 16 A 8 3.4 0 0 0 17 16 V 4" fill="none" stroke="var(--accent2)" stroke-width="1.4"/>
+          <path d="M1 10 A 8 3.4 0 0 0 17 10" fill="none" stroke="var(--accent2)" stroke-width="1.2"/>
+        </symbol>
+      </defs>
+
+      <rect width="920" height="520" fill="var(--bg-alt)"/>
+
+      <!-- ── Column headings ────────────────────────────────────── -->
+      <text x="200" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">Multi-user interactions</text>
+      <text x="392" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">Data storage</text>
+      <text x="584" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">AI-based analytics</text>
+      <text x="776" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">Visualization tools</text>
+
+      <!-- Column dividers -->
+      <g stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4">
+        <line x1="296" y1="36" x2="296" y2="404"/>
+        <line x1="488" y1="36" x2="488" y2="404"/>
+        <line x1="680" y1="36" x2="680" y2="404"/>
+      </g>
+
+      <!-- ── CLIENT tier ────────────────────────────────────────── -->
+      <text x="26" y="90" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.12em"
+            transform="rotate(-90 26 90)" text-anchor="middle">CLIENT</text>
+
+      <rect x="46" y="36" width="856" height="106" rx="10" fill="rgb(var(--accent2-rgb) / 0.06)"
+            stroke="var(--accent2)" stroke-width="1.4"/>
+
+      <rect x="106" y="48" width="180" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="196" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">Multi-device library</text>
+      <rect x="106" y="92" width="86" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="149" y="108" text-anchor="middle" fill="var(--text)" font-size="11.5">Web</text>
+      <text x="149" y="122" text-anchor="middle" fill="var(--text)" font-size="11.5">Client</text>
+      <rect x="200" y="92" width="86" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="243" y="108" text-anchor="middle" fill="var(--text)" font-size="11.5">Unity</text>
+      <text x="243" y="122" text-anchor="middle" fill="var(--text)" font-size="11.5">Client</text>
+
+      <rect x="306" y="48" width="172" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="392" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">Logging API</text>
+      <rect x="306" y="92" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="392" y="116" text-anchor="middle" fill="var(--text)" font-size="11.5">Data storage API</text>
+
+      <rect x="498" y="48" width="172" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="584" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">AI input API</text>
+      <rect x="498" y="92" width="90" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="543" y="108" text-anchor="middle" fill="var(--text)" font-size="11.5">App</text>
+      <text x="543" y="122" text-anchor="middle" fill="var(--text)" font-size="11.5">optimization</text>
+      <rect x="596" y="92" width="74" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="633" y="116" text-anchor="middle" fill="var(--text)" font-size="11.5">EDA tools</text>
+
+      <rect x="690" y="48" width="172" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="776" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">Web Dashboard</text>
+      <rect x="690" y="92" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+      <text x="776" y="116" text-anchor="middle" fill="var(--text)" font-size="11.5">AI output API</text>
+
+      <!-- Client <-> Server -->
+      <g stroke="var(--text-muted)" stroke-width="1.3" marker-start="url(#cl-e)" marker-end="url(#cl-s)">
+        <line x1="196" y1="146" x2="196" y2="170"/>
+        <line x1="392" y1="146" x2="392" y2="170"/>
+        <line x1="584" y1="146" x2="584" y2="170"/>
+        <line x1="776" y1="146" x2="776" y2="170"/>
+      </g>
+
+      <!-- ── SERVER tier ────────────────────────────────────────── -->
+      <text x="26" y="252" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.12em"
+            transform="rotate(-90 26 252)" text-anchor="middle">SERVER</text>
+
+      <rect x="46" y="174" width="856" height="156" rx="10" fill="rgb(var(--accent-rgb) / 0.07)"
+            stroke="var(--accent)" stroke-width="1.4"/>
+
+      <rect x="106" y="186" width="180" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="196" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">Socket server</text>
+      <rect x="106" y="232" width="180" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="196" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Static server</text>
+      <rect x="106" y="278" width="180" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="196" y="302" text-anchor="middle" fill="var(--text)" font-size="11.5">Synchronization server</text>
+
+      <rect x="306" y="186" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="392" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">xAPI Manager</text>
+      <rect x="306" y="232" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="392" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Learning Record Store</text>
+
+      <rect x="498" y="186" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="584" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">AI Framework</text>
+      <rect x="498" y="232" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="584" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Model fine-tuning server</text>
+
+      <rect x="690" y="186" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="776" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">Dataviz server</text>
+      <rect x="690" y="232" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="776" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Visualization exporter</text>
+
+      <!-- ── Storage tier ───────────────────────────────────────── -->
+      <rect x="46" y="342" width="856" height="62" rx="10" fill="rgb(var(--accent2-rgb) / 0.06)"
+            stroke="var(--accent2)" stroke-width="1.4"/>
+
+      <use href="#cl-db" x="112" y="363" width="18" height="20"/>
+      <text x="140" y="378" fill="var(--text)" font-size="11.5">Shared state</text>
+
+      <use href="#cl-db" x="312" y="363" width="18" height="20"/>
+      <text x="340" y="378" fill="var(--text)" font-size="11.5">User-App Interactions</text>
+
+      <use href="#cl-db" x="504" y="363" width="18" height="20"/>
+      <text x="532" y="378" fill="var(--text)" font-size="11.5">Model Zoo</text>
+
+      <use href="#cl-db" x="696" y="363" width="18" height="20"/>
+      <text x="724" y="378" fill="var(--text)" font-size="11.5">Visualizations DB</text>
+
+      <!-- ── School systems ─────────────────────────────────────── -->
+      <g stroke="var(--text-muted)" stroke-width="1.3" marker-start="url(#cl-e)" marker-end="url(#cl-s)">
+        <line x1="460" y1="408" x2="460" y2="430"/>
+      </g>
+
+      <!-- Dashed rather than the cloud the original drew: everything else on this
+           site's diagrams is a rounded rect, and a dashed border already means
+           "outside the system" in the group above. -->
+      <rect x="286" y="436" width="348" height="60" rx="10" fill="var(--bg-card)"
+            stroke="var(--text-muted)" stroke-width="1.3" stroke-dasharray="5 5"/>
+      <use href="#cl-db" x="306" y="456" width="16" height="18"/>
+      <text x="332" y="462" fill="var(--text)" font-size="11">School DBs (Digital school register,</text>
+      <text x="332" y="478" fill="var(--text)" font-size="11">Class schedules, Inventory, …)</text>
+    </svg>
     </figure>
     <p>
       <strong>Real-time multi-user library.</strong> A WebSocket-based server-side component manages low-latency session
@@ -248,7 +499,7 @@
       Wi-Fi and 4G.
     </p>
     <figure>
-      <img src="../img/projects/clear-ar-cube.webp" alt="AR Cube proof-of-concept" width="551" height="310" loading="lazy" />
+      <img src="../img/projects/clear-ar-cube.webp" alt="Two tablets held side by side over a table, each showing the same red 3D cube from its own viewpoint, with colour buttons underneath. A QR marker on the table between them anchors the shared scene." width="551" height="310" loading="lazy" decoding="async" />
     </figure>
     <p>
       <strong>xAPI Data Analysis</strong>: a stress-test scenario generating ~80,000 xAPI statements from 10 concurrent
@@ -263,7 +514,7 @@
       mobile (Android/iOS) and demonstrates the full cleAR stack end-to-end.
     </p>
     <figure>
-      <img src="../img/projects/clear-ar-quiz.webp" alt="AR Geography Quiz" width="969" height="649" loading="lazy" />
+      <img src="../img/projects/clear-ar-quiz.webp" alt="Three phone screens from the AR Geography Quiz. First, a login screen with room name TestRoom01 and a choice between TEACHER and STUDENT. Second, the teacher view: a 3D Earth placed on a real desk, yellow pins scattered over it, and controls to send a student assignment, reset the session or place the AR scene. Third, the assignment dialogue over the same globe, with the question &quot;Where is NYC&quot; typed in and Cancel and Send buttons." width="969" height="649" loading="lazy" decoding="async" />
     </figure>
     <h2>Impact</h2>
     <p>

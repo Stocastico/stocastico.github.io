@@ -1,0 +1,121 @@
+<svg class="diagram" role="img" width="920" height="480" viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>The six design objectives and the requirements each one satisfies. DO1, Interoperability, is the spine down the left, spanning the four client types the architecture must run on: a teacher on a laptop, a head-mounted display, a student on a phone, and a dashboard on a desktop; it carries requirements R1 and R7. Each client connects to the objectives in the middle. DO2, Multi-user Interactions, sits at the top and carries R2, R3 and R8. Below it, grouped together as the data-analytics objective, DO3 Data Storage feeds DO4 AI-based Analytics, which feeds DO5 Visual Reports; between them they carry R5, R9, R10 and R11. DO6, Easy to Develop, is the spine down the right serving the developer, and carries R4 and R6; it connects back to every objective in the middle.</title>
+  <defs>
+    <marker id="do-a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+    </marker>
+    <marker id="do-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+    </marker>
+    <marker id="do-c" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--accent2)"/>
+    </marker>
+  </defs>
+
+  <rect width="920" height="480" fill="var(--bg-alt)"/>
+
+  <!-- ── DO1: Interoperability (left spine + the clients it spans) ── -->
+  <rect x="24" y="30" width="252" height="420" rx="12" fill="rgb(var(--text-rgb) / 0.03)"
+        stroke="var(--border)" stroke-width="1.4"/>
+  <text x="46" y="240" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.1em"
+        transform="rotate(-90 46 240)" text-anchor="middle">DO1: Interoperability</text>
+
+  <g font-size="11.5">
+    <rect x="70" y="46" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="164" y="82" text-anchor="middle" fill="var(--text)" font-weight="600">Teacher</text>
+    <text x="164" y="102" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">laptop · browser</text>
+
+    <rect x="70" y="146" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="164" y="182" text-anchor="middle" fill="var(--text)" font-weight="600">Student</text>
+    <text x="164" y="202" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">head-mounted display</text>
+
+    <rect x="70" y="246" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="164" y="282" text-anchor="middle" fill="var(--text)" font-weight="600">Student</text>
+    <text x="164" y="302" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">phone · tablet</text>
+
+    <rect x="70" y="346" width="188" height="90" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+    <text x="164" y="382" text-anchor="middle" fill="var(--text)" font-weight="600">Dashboard</text>
+    <text x="164" y="402" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">desktop · reports</text>
+  </g>
+
+  <!-- R chips for DO1 -->
+  <g font-size="10" fill="var(--accent-text)">
+    <circle cx="42" cy="52" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="42" y="56" text-anchor="middle">R1</text>
+    <circle cx="42" cy="86" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="42" y="90" text-anchor="middle">R7</text>
+  </g>
+
+  <!-- Clients <-> objectives -->
+  <g stroke="var(--text-muted)" stroke-width="1.4" marker-start="url(#do-b)" marker-end="url(#do-a)">
+    <line x1="262" y1="91"  x2="316" y2="91"/>
+    <line x1="262" y1="191" x2="316" y2="191"/>
+    <line x1="262" y1="291" x2="316" y2="291"/>
+    <line x1="262" y1="391" x2="316" y2="391"/>
+  </g>
+
+  <!-- ── DO2 ─────────────────────────────────────────────────── -->
+  <rect x="322" y="58" width="300" height="66" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+  <text x="472" y="90" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO2: Multi-user Interactions</text>
+  <g font-size="10" fill="var(--accent2-text)">
+    <circle cx="404" cy="112" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="404" y="116" text-anchor="middle">R2</text>
+    <circle cx="440" cy="112" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="440" y="116" text-anchor="middle">R3</text>
+    <circle cx="476" cy="112" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="476" y="116" text-anchor="middle">R8</text>
+  </g>
+
+  <!-- ── The data-analytics group: DO3 -> DO4 -> DO5 ──────────── -->
+  <rect x="302" y="150" width="340" height="290" rx="12" fill="none"
+        stroke="var(--text-muted)" stroke-width="1.4" stroke-dasharray="5 5"/>
+
+  <rect x="322" y="166" width="300" height="60" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+  <text x="472" y="202" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO3: Data Storage</text>
+
+  <line x1="472" y1="226" x2="472" y2="260" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#do-c)"/>
+
+  <rect x="322" y="266" width="300" height="60" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+  <text x="472" y="302" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO4: AI-based Analytics</text>
+
+  <line x1="472" y1="326" x2="472" y2="360" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#do-c)"/>
+
+  <rect x="322" y="366" width="300" height="60" rx="10" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.6"/>
+  <text x="472" y="402" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">DO5: Visual Reports</text>
+
+  <g font-size="10" fill="var(--accent2-text)">
+    <circle cx="386" cy="440" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="386" y="444" text-anchor="middle">R5</text>
+    <circle cx="422" cy="440" r="13" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="422" y="444" text-anchor="middle">R9</text>
+    <circle cx="460" cy="440" r="14" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="460" y="444" text-anchor="middle">R10</text>
+    <circle cx="500" cy="440" r="14" fill="var(--bg-alt)" stroke="var(--accent2)" stroke-width="1.2"/>
+    <text x="500" y="444" text-anchor="middle">R11</text>
+  </g>
+
+  <!-- ── DO6: Easy to Develop (right spine) ──────────────────── -->
+  <rect x="770" y="30" width="126" height="420" rx="12" fill="rgb(var(--text-rgb) / 0.03)"
+        stroke="var(--border)" stroke-width="1.4"/>
+  <text x="874" y="240" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.1em"
+        transform="rotate(-90 874 240)" text-anchor="middle">DO6: Easy to Develop</text>
+
+  <rect x="790" y="196" width="66" height="88" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.4"/>
+  <text x="823" y="235" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="600">Dev</text>
+  <text x="823" y="253" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">API</text>
+
+  <g font-size="10" fill="var(--accent-text)">
+    <circle cx="756" cy="52" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="756" y="56" text-anchor="middle">R4</text>
+    <circle cx="756" cy="86" r="14" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="756" y="90" text-anchor="middle">R6</text>
+  </g>
+
+  <!-- DO6 serves every objective in the middle -->
+  <g stroke="var(--text-muted)" stroke-width="1.4" marker-end="url(#do-a)" fill="none">
+    <path d="M770 91  H 628"/>
+    <path d="M770 196 H 700 V 196 H 628"/>
+    <path d="M770 296 H 700 V 296 H 628"/>
+    <path d="M770 396 H 628"/>
+  </g>
+</svg>

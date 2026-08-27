@@ -1,9 +1,11 @@
 ---
 id:          mlops-vertex-media
+kind:        work
 title:       "MLOps Platform on GCP for a Spanish Media Group"
 year:        "2022 – 2023"
-tags:        "MLOps, Vertex AI, GCP"
+tags:        "LLMs & MLOps"
 bg:          "img/projects/mlops-bg.webp"
+og:          "img/projects/og/mlops-vertex-media.png"
 description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models — churn prediction, article recommendation and more — and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection."
 ---
 
@@ -31,7 +33,7 @@ This is not meant as a criticism of the client; it is just the way things were a
 
 We designed the platform around the standard MLOps lifecycle: data, training, registry, serving, monitoring. We used Vertex AI as the glue between all of them, with the rest of GCP filling in the supporting infrastructure.
 
-![MLOps architecture on GCP](img/projects/mlops-architecture.webp)
+!svg(drafts/diagrams/mlops-architecture.svg)
 
 **Data layer.** All training and serving data flows through **BigQuery**, with Dataflow handling the batch and streaming ETL feeding it. Curated feature tables are published to the **Vertex AI Feature Store** so the same definitions can serve both training and online inference — closing the most common source of training/serving skew. Raw artefacts and dataset snapshots are stored in **GCS** with object versioning enabled, so any pipeline run can be replayed against the exact data it originally consumed.
 
@@ -47,7 +49,7 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
 
 Each model — churn, recommender, the rest — ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
 
-![Vertex AI pipeline run](img/projects/mlops-pipeline.webp)
+!svg(drafts/diagrams/mlops-pipeline.svg)
 
 The pipeline runs on a schedule (typically weekly for churn, daily for the recommender) or whenever Model Monitoring raises a drift alert against the corresponding production endpoint. A typical run goes through:
 

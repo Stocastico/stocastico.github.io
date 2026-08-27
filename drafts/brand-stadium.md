@@ -1,29 +1,12 @@
 ---
-# Duplicate this file and fill in the values below.
-# Run: node scripts/new-project.js <this-file.md> [--dry-run]
-# Output: projects/<id>.html (standalone detail page) + entry in data/projects.js
-#
-# Required:
-#   id:          kebab-case identifier, becomes the HTML filename
-#   title:       Project title (quoted string)
-#   year:        Project year (quoted string)
-#   tags:        Comma-separated keywords, 1–3 (quoted string)
-#   bg:          Path to image used semi-transparently behind the homepage
-#                card AND as the hero banner on the detail page.
-#   description: Short 2–3 sentence summary shown on the homepage card
-#
-# Optional:
-#   link_paper:  "https://link.springer.com/..."
-#   link_github: "https://github.com/..."
-#   link_demo:   "https://..."
-#   link_video:  "https://youtube.com/..."
-
 id:          brand-stadium
+kind:        work
 title:       "Brand recognition in football matches"
 year:        "2025"
-tags:        "AI, Computer Vision"
+tags:        "Computer Vision, Media & Live Events"
 bg:          "img/projects/annotated-stadium.webp"
-description: "A computer vision solution that detects brands (both static and virtual) appearing in football matches to compute how much time they appear on TV."
+og:          "img/projects/og/brand-stadium.png"
+description: "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands — despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure."
 ---
 
 ## Measuring Brand Exposure in Football Footage with Computer Vision
@@ -34,7 +17,7 @@ We've been building a computer vision system that detects and classifies adverti
 
 The pipeline is a two-stage stack. A **[YOLO](https://docs.ultralytics.com/) detector** finds the advertising holders in each frame, and a **DenseNet201 classifier** then assigns each detected crop to one of 52 brand classes. The whole thing runs on [PyTorch Lightning](https://lightning.ai/), with [MLflow](https://mlflow.org/) handling experiment tracking and [Roboflow](https://roboflow.com/) managing the dataset. Training happens on a single T4 GPU.
 
-![Two-stage pipeline: a YOLO detector locates advertising holders in each broadcast frame, a DenseNet201 classifier assigns each crop to one of 52 brands, and brand exposure time is measured — with static ads trained once and dynamic LED-board ads re-fit weekly, all orchestrated on Azure.](img/projects/brand-stadium-pipeline.svg)
+!svg(drafts/diagrams/brand-stadium-pipeline.svg)
 
 The data is the real challenge here. We're working with ~13k crops per game that are small, noisy, and frequently motion-blurred — exactly the kind of footage you'd expect from a moving broadcast camera tracking play. On top of that, the class distribution is brutally imbalanced: roughly **40× between the most and least represented classes**. Some brands appear constantly, others only flash by a handful of times.
 

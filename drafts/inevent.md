@@ -1,9 +1,11 @@
 ---
 id:          inevent
+kind:        work
 title:       "inEvent: Structuring and Linking Multimedia Archives of Lectures and Meetings"
 year:        "2011 – 2014"
-tags:        "Computer Vision, Video Analysis, Multimedia"
+tags:        "Computer Vision, Media & Live Events"
 bg:          "img/projects/inevent-bg.webp"
+og:          "img/projects/og/inevent.png"
 description: "An EU FP7 project treating archives of lectures and meetings as interconnected hyper-events. At Fraunhofer HHI I led the video analysis: segmentation, slide-transition detection, and face features for speaker linking. Published at VISAPP, Interspeech and the ACM MM Grand Challenge."
 link_paper:  "https://www.scitepress.org/Papers/2014/46860/"
 ---

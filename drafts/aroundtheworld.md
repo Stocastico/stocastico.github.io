@@ -1,10 +1,11 @@
 ---
 id:          aroundtheworld
+kind:        work
 title:       "ARoundTheWorld: Collaborative AR for Education"
 year:        "2024"
-tags:        "AR, Education, User Study"
-bg:       "img/projects/ARound_the_world_1.png"
-bg:          "img/projects/ARound_the_world_2.png"
+tags:        "AR & 3D, Education & Research"
+bg:          "img/projects/ARound_the_world_2.webp"
+og:          "img/projects/og/aroundtheworld.png"
 description: "ARoundTheWorld is a multiplatform collaborative AR geography application built on the cleAR architecture. It was evaluated with 44 students across three schools and represents the final paper of my PhD, validating that the architecture can produce applications that integrate seamlessly into existing school curricula."
 link_paper:  "https://link.springer.com/article/10.1007/s10055-024-00952-x"
 ---
@@ -24,9 +25,9 @@ ARoundTheWorld is built on the design objectives (DOs) defined in the [cleAR arc
 
 A dedicated web interface allows teachers to compose new question sets. Geographical coordinates are resolved automatically via the [Wikimedia API](https://www.mediawiki.org/wiki/API:Main_page) and questions are stored as plain JSON files, so new content can be added without touching application code.
 
-![ARoundTheWorld application workflow](img/projects/ARound_the_world_1.png)
+![Teacher-facing web dashboard, titled ARETE Teacher. A 3D Earth fills the left half; the right half is a live table of connected students listing, per row, the question asked, its difficulty, the answer given, the score and the time used — rows show "Locate Ciudad del Vaticano" scored 7.72 in 24/40 and "Locate Andorra" still unanswered. Underneath, the current student and question are named above a row of continent silhouettes.](img/projects/ARound_the_world_1.webp)
 
-![Teacher web interface for creating question sets](img/projects/ARound_the_world_2.png)
+![Teacher web interface for creating question sets](img/projects/ARound_the_world_2.webp)
 
 ## Evaluation
 
