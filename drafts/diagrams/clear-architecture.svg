@@ -1,0 +1,132 @@
+<svg class="diagram" role="img" width="920" height="520" viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>Three-tier architecture, divided into four columns by concern: multi-user interactions, data storage, AI-based analytics and visualization tools. The CLIENT tier holds a multi-device library with a web client and a Unity client, a logging API over a data storage API, an AI input API with app optimization and EDA tools, and a web dashboard with an AI output API. The SERVER tier beneath it holds socket, static and synchronization servers; an xAPI Manager over a Learning Record Store; an AI framework with a model fine-tuning server; and a dataviz server with a visualization exporter. A storage tier underneath holds shared state, user-app interactions, a model zoo and a visualizations database, all of which connect to the school's existing databases — the digital school register, class schedules and inventory.</title>
+  <defs>
+    <marker id="cl-s" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+    </marker>
+    <marker id="cl-e" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+    </marker>
+    <symbol id="cl-db" viewBox="0 0 18 20">
+      <ellipse cx="9" cy="4" rx="8" ry="3.4" fill="none" stroke="var(--accent2)" stroke-width="1.4"/>
+      <path d="M1 4 V 16 A 8 3.4 0 0 0 17 16 V 4" fill="none" stroke="var(--accent2)" stroke-width="1.4"/>
+      <path d="M1 10 A 8 3.4 0 0 0 17 10" fill="none" stroke="var(--accent2)" stroke-width="1.2"/>
+    </symbol>
+  </defs>
+
+  <rect width="920" height="520" fill="var(--bg-alt)"/>
+
+  <!-- ── Column headings ────────────────────────────────────── -->
+  <text x="200" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">Multi-user interactions</text>
+  <text x="392" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">Data storage</text>
+  <text x="584" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">AI-based analytics</text>
+  <text x="776" y="26" text-anchor="middle" fill="var(--text-muted)" font-size="12" font-weight="600">Visualization tools</text>
+
+  <!-- Column dividers -->
+  <g stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4">
+    <line x1="296" y1="36" x2="296" y2="404"/>
+    <line x1="488" y1="36" x2="488" y2="404"/>
+    <line x1="680" y1="36" x2="680" y2="404"/>
+  </g>
+
+  <!-- ── CLIENT tier ────────────────────────────────────────── -->
+  <text x="26" y="90" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.12em"
+        transform="rotate(-90 26 90)" text-anchor="middle">CLIENT</text>
+
+  <rect x="46" y="36" width="856" height="106" rx="10" fill="rgb(var(--accent2-rgb) / 0.06)"
+        stroke="var(--accent2)" stroke-width="1.4"/>
+
+  <rect x="106" y="48" width="180" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="196" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">Multi-device library</text>
+  <rect x="106" y="92" width="86" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="149" y="108" text-anchor="middle" fill="var(--text)" font-size="11.5">Web</text>
+  <text x="149" y="122" text-anchor="middle" fill="var(--text)" font-size="11.5">Client</text>
+  <rect x="200" y="92" width="86" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="243" y="108" text-anchor="middle" fill="var(--text)" font-size="11.5">Unity</text>
+  <text x="243" y="122" text-anchor="middle" fill="var(--text)" font-size="11.5">Client</text>
+
+  <rect x="306" y="48" width="172" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="392" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">Logging API</text>
+  <rect x="306" y="92" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="392" y="116" text-anchor="middle" fill="var(--text)" font-size="11.5">Data storage API</text>
+
+  <rect x="498" y="48" width="172" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="584" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">AI input API</text>
+  <rect x="498" y="92" width="90" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="543" y="108" text-anchor="middle" fill="var(--text)" font-size="11.5">App</text>
+  <text x="543" y="122" text-anchor="middle" fill="var(--text)" font-size="11.5">optimization</text>
+  <rect x="596" y="92" width="74" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="633" y="116" text-anchor="middle" fill="var(--text)" font-size="11.5">EDA tools</text>
+
+  <rect x="690" y="48" width="172" height="34" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="776" y="70" text-anchor="middle" fill="var(--text)" font-size="11.5">Web Dashboard</text>
+  <rect x="690" y="92" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.3"/>
+  <text x="776" y="116" text-anchor="middle" fill="var(--text)" font-size="11.5">AI output API</text>
+
+  <!-- Client <-> Server -->
+  <g stroke="var(--text-muted)" stroke-width="1.3" marker-start="url(#cl-e)" marker-end="url(#cl-s)">
+    <line x1="196" y1="146" x2="196" y2="170"/>
+    <line x1="392" y1="146" x2="392" y2="170"/>
+    <line x1="584" y1="146" x2="584" y2="170"/>
+    <line x1="776" y1="146" x2="776" y2="170"/>
+  </g>
+
+  <!-- ── SERVER tier ────────────────────────────────────────── -->
+  <text x="26" y="252" fill="var(--text)" font-size="12.5" font-weight="700" letter-spacing="0.12em"
+        transform="rotate(-90 26 252)" text-anchor="middle">SERVER</text>
+
+  <rect x="46" y="174" width="856" height="156" rx="10" fill="rgb(var(--accent-rgb) / 0.07)"
+        stroke="var(--accent)" stroke-width="1.4"/>
+
+  <rect x="106" y="186" width="180" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="196" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">Socket server</text>
+  <rect x="106" y="232" width="180" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="196" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Static server</text>
+  <rect x="106" y="278" width="180" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="196" y="302" text-anchor="middle" fill="var(--text)" font-size="11.5">Synchronization server</text>
+
+  <rect x="306" y="186" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="392" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">xAPI Manager</text>
+  <rect x="306" y="232" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="392" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Learning Record Store</text>
+
+  <rect x="498" y="186" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="584" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">AI Framework</text>
+  <rect x="498" y="232" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="584" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Model fine-tuning server</text>
+
+  <rect x="690" y="186" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="776" y="210" text-anchor="middle" fill="var(--text)" font-size="11.5">Dataviz server</text>
+  <rect x="690" y="232" width="172" height="38" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.3"/>
+  <text x="776" y="256" text-anchor="middle" fill="var(--text)" font-size="11.5">Visualization exporter</text>
+
+  <!-- ── Storage tier ───────────────────────────────────────── -->
+  <rect x="46" y="342" width="856" height="62" rx="10" fill="rgb(var(--accent2-rgb) / 0.06)"
+        stroke="var(--accent2)" stroke-width="1.4"/>
+
+  <use href="#cl-db" x="112" y="363" width="18" height="20"/>
+  <text x="140" y="378" fill="var(--text)" font-size="11.5">Shared state</text>
+
+  <use href="#cl-db" x="312" y="363" width="18" height="20"/>
+  <text x="340" y="378" fill="var(--text)" font-size="11.5">User-App Interactions</text>
+
+  <use href="#cl-db" x="504" y="363" width="18" height="20"/>
+  <text x="532" y="378" fill="var(--text)" font-size="11.5">Model Zoo</text>
+
+  <use href="#cl-db" x="696" y="363" width="18" height="20"/>
+  <text x="724" y="378" fill="var(--text)" font-size="11.5">Visualizations DB</text>
+
+  <!-- ── School systems ─────────────────────────────────────── -->
+  <g stroke="var(--text-muted)" stroke-width="1.3" marker-start="url(#cl-e)" marker-end="url(#cl-s)">
+    <line x1="460" y1="408" x2="460" y2="430"/>
+  </g>
+
+  <!-- Dashed rather than the cloud the original drew: everything else on this
+       site's diagrams is a rounded rect, and a dashed border already means
+       "outside the system" in the group above. -->
+  <rect x="286" y="436" width="348" height="60" rx="10" fill="var(--bg-card)"
+        stroke="var(--text-muted)" stroke-width="1.3" stroke-dasharray="5 5"/>
+  <use href="#cl-db" x="306" y="456" width="16" height="18"/>
+  <text x="332" y="462" fill="var(--text)" font-size="11">School DBs (Digital school register,</text>
+  <text x="332" y="478" fill="var(--text)" font-size="11">Class schedules, Inventory, …)</text>
+</svg>

@@ -18,7 +18,7 @@ Despite the well-documented benefits of AR in learning — improved motivation, 
 
 The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
 
-![Diagram relating the six design objectives. DO1 Interoperability spans four client types down the left: a teacher on a laptop, a head-mounted display user, a student on a phone and a dashboard viewer. Each connects to a stack of objectives: DO2 Multi-user Interactions, then a grouped block of DO3 Data Storage feeding DO4 AI-based Analytics feeding DO5 Visual Reports. DO6 Easy to Develop runs down the right-hand side, serving a developer figure. Requirement labels R1 to R11 are attached to the objectives they satisfy.](img/projects/clear-design-objectives.webp)
+!svg(drafts/diagrams/clear-design-objectives.svg)
 
 - **DO1 — Interoperability**: Cross-platform support for head-mounted displays, tablets, smartphones, and browsers, as well as compatibility with existing AR frameworks and learning management systems.
 - **DO2 — Multi-user interactions**: Real-time collaboration between students and teachers, both in-person and remotely.
@@ -31,7 +31,7 @@ The architecture was built around six design objectives (DOs) derived from a sys
 
 cleAR is structured as four loosely coupled modules that can be composed independently or used as an integrated stack.
 
-![Three-tier architecture table, four columns by concern: multi-user interactions, data storage, AI-based analytics and visualization tools. The CLIENT row holds a multi-device library with web and Unity clients, a data storage API, an AI input API with app optimization and EDA tools, and a web dashboard with an AI output API. The SERVER row holds socket, static and synchronization servers, an xAPI Manager with a Learning Record Store, an AI framework with a model fine-tuning server, and a dataviz server with a visualization exporter. A storage row underneath holds shared state, user-app interactions, a model zoo and a visualizations database, all connected to existing school databases.](img/projects/clear-architecture.webp)
+!svg(drafts/diagrams/clear-architecture.svg)
 
 **Real-time multi-user library.** A WebSocket-based server-side component manages low-latency session routing, room organisation, and user limits. Client-side libraries expose simple APIs for connecting to sessions, exchanging messages, and synchronising multimedia playback across devices. [WebRTC](https://webrtc.org/) integration handles audio and video streams.
 

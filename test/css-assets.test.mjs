@@ -237,14 +237,48 @@ test('inline project diagrams carry no hardcoded colours', () => {
 });
 
 test('every page with an inline diagram actually inlines it', () => {
-  /* The point of inlining is lost the moment one goes back to <img src>. */
+  /* The point of inlining is lost the moment one goes back to <img src>.
+
+     The name list is derived from drafts/diagrams/ rather than written out, so
+     a diagram added there is covered without editing this test — the previous
+     version hardcoded three names and would have said nothing about the four
+     added since. */
+  const names = fs.readdirSync(path.join(ROOT, 'drafts', 'diagrams'))
+    .filter((f) => f.endsWith('.svg'))
+    .map((f) => path.basename(f, '.svg'));
+  assert.ok(names.length >= 7, `only ${names.length} diagram source(s) found`);
+
+  const alt = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const asImg = new RegExp(`<img[^>]+src="[^"]*\\/(${alt})\\.(svg|webp|png)"`, 'g');
+
   const dir = path.join(ROOT, 'projects');
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
     const html = fs.readFileSync(path.join(dir, file), 'utf8');
-    const imgSvg = html.match(/<img[^>]+src="[^"]*\/(rag-ingestion|rag-query|brand-stadium-pipeline)\.svg"/g) || [];
-    assert.deepEqual(imgSvg, [],
+    assert.deepEqual(html.match(asImg) || [], [],
       `${file} references a diagram as <img>; inline it so var(--*) resolves`);
   }
+});
+
+/* Every diagram source must actually reach a page. A file in drafts/diagrams/
+   that nothing inlines is the same kind of invisible dead weight as an
+   unreferenced image — it is never deployed, so nothing breaks, and it rots. */
+test('every diagram source is inlined by some page', () => {
+  const dir = path.join(ROOT, 'projects');
+  const pages = fs.readdirSync(dir).filter((f) => f.endsWith('.html'))
+    .map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+
+  const orphans = [];
+  for (const file of fs.readdirSync(path.join(ROOT, 'drafts', 'diagrams'))) {
+    if (!file.endsWith('.svg')) continue;
+    const svg = fs.readFileSync(path.join(ROOT, 'drafts', 'diagrams', file), 'utf8');
+    /* Match on the <title>, which is unique per diagram and survives the
+       inlining verbatim. */
+    const title = /<title>([\s\S]*?)<\/title>/.exec(svg);
+    assert.ok(title, `drafts/diagrams/${file} has no <title> — it needs one for screen readers`);
+    if (!pages.includes(title[1].trim())) orphans.push(file);
+  }
+  assert.deepEqual(orphans, [],
+    `these diagram sources are inlined nowhere: ${orphans.join(', ')}`);
 });
 
 test('assets: no unreferenced images in img/', () => {

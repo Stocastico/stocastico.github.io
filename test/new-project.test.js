@@ -683,18 +683,33 @@ test('project: every image a draft names exists on disk', () => {
    committed markup byte for byte — the only reason to believe the drafts are
    a real source rather than a plausible-looking one. */
 
-const DIAGRAM_FIGURE = /<figure>\n {2}<svg class="diagram"[\s\S]*?<\/svg>\n<\/figure>/g;
+const DIAGRAM_FIGURE = /^([ \t]*)<figure>\n[ \t]*<svg class="diagram"[\s\S]*?<\/svg>\n[ \t]*<\/figure>/gm;
+
+/* Pages disagree about body indentation — clear-architecture.html has been
+   through a formatter and sits at four spaces, mlops-vertex-media.html at
+   zero — and that is not what this test is about. Strip the block's own
+   leading indent before comparing so it asks about the diagram, not about
+   whitespace the generator never controlled. */
+function dedentFigures(html) {
+  return (html.match(DIAGRAM_FIGURE) || []).map((block) => {
+    const lines = block.split('\n');
+    const pad = (lines[0].match(/^[ \t]*/) || [''])[0].length;
+    return lines.map((l) => (l.startsWith(' '.repeat(pad)) ? l.slice(pad) : l)).join('\n');
+  });
+}
 
 test('project: !svg() inlines a diagram exactly as the committed pages carry it', () => {
   const ROOT = path.join(__dirname, '..');
   const cases = [
     ['drafts/brand-stadium.md', 'projects/brand-stadium.html'],
     ['drafts/rag-document-qa.md', 'projects/rag-document-qa.html'],
+    ['drafts/mlops-vertex-media.md', 'projects/mlops-vertex-media.html'],
+    ['drafts/clear-architecture.md', 'projects/clear-architecture.html'],
   ];
   for (const [draft, page] of cases) {
     const { body } = splitFrontmatter(fs.readFileSync(path.join(ROOT, draft), 'utf8'));
-    const generated = markdownToHtml(body).match(DIAGRAM_FIGURE) || [];
-    const committed = fs.readFileSync(path.join(ROOT, page), 'utf8').match(DIAGRAM_FIGURE) || [];
+    const generated = dedentFigures(markdownToHtml(body));
+    const committed = dedentFigures(fs.readFileSync(path.join(ROOT, page), 'utf8'));
     assert.ok(committed.length > 0, `${page} has no inline diagram to compare against`);
     assert.deepEqual(generated, committed,
       `regenerating ${page} from ${draft} would not reproduce its diagram(s)`);
