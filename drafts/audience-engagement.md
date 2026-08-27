@@ -1,13 +1,13 @@
 ---
 id:          audience-engagement
+kind:        work
 title:       "Multi-modal Audience Engagement Measurement System"
 year:        "2020"
-tags:        "Computer Vision, Multi-modal Sensing, Live Events"
-bg:       "img/projects/audience-engagement-thumb.webp"
+tags:        "Computer Vision, Media & Live Events"
 bg:          "img/projects/audience-engagement-bg.webp"
 description: "A multi-modal system that measures audience engagement at live events by fusing computer vision with WiFi/Bluetooth signal analysis. Designed, implemented, and validated at Vicomtech in 2020, and released as open-source software."
 link_paper:  "https://link.springer.com/chapter/10.1007/978-3-030-71158-0_17"
-link_code:   "https://github.com/tv-vicomtech/AudienceEngagement"
+link_github: "https://github.com/tv-vicomtech/AudienceEngagement"
 ---
 
 How do you know whether an audience is actually paying attention? For a conference organiser, a museum curator, or a retail-space operator, the question matters: did people show up and engage, or did they walk past? Existing answers relied on either expensive, intrusive sensors or proxy metrics (ticket sales, post-event surveys) that say nothing about what happened in the room.

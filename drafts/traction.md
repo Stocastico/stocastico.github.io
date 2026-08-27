@@ -1,13 +1,13 @@
 ---
 id:          traction
+kind:        work
 title:       "TRACTION: Opera Co-creation for Social Transformation"
 year:        "2020 – 2022"
-tags:        "Web Application, Co-creation, Social Inclusion"
-bg:       "img/projects/traction-thumb.png"
+tags:        "Media & Live Events, Education & Research"
 bg:          "img/projects/traction-bg.webp"
-description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage — the real-time distributed performance tool — spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland."
-link_demo:    "https://www.traction-project.eu/"
-link_paper:   "https://ieeexplore.ieee.org/abstract/document/9828558"
+description: "TRACTION was a Horizon 2020 project, coordinated by Vicomtech, that used opera as a vehicle for social inclusion. My work centred on the Co-creation Stage, the real-time distributed performance tool, spanning development, user-requirements gathering, evaluation, and direct engagement with artistic and community partners across Barcelona, Leiria and Ireland."
+link_paper:  "https://ieeexplore.ieee.org/abstract/document/9828558"
+link_demo:   "https://www.traction-project.eu/"
 ---
 
 TRACTION (*Opera co-creation for a social transformation*) was a three-year EU [Horizon 2020](https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en) research and innovation action that ran from **January 2020 to December 2022**, coordinated by **[Vicomtech](https://www.vicomtech.org/en)** and with a total budget of roughly **€3.75M**. The project set out to do something deceptively simple: take opera — an art form often perceived as elitist and inaccessible — and turn it back into a vehicle for social and cultural inclusion, by giving marginalised communities the tools to **co-create** opera performances alongside professional artists.

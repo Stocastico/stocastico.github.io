@@ -1,9 +1,9 @@
 ---
 id:          ufc-fighter-tracking
+kind:        work
 title:       "UFC Fighter Tracking: Multi-Modal Sensing in the Octagon"
 year:        "2017"
-tags:        "Computer Vision, Sensor Fusion, Sports Analytics"
-bg:       "img/projects/ufc-octagon-thumb.webp"
+tags:        "Computer Vision, Media & Live Events"
 bg:          "img/projects/ufc-octagon-bg.webp"
 description: "Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017."
 link_video:  "https://www.youtube.com/watch?v=vataVq9gY_o"
