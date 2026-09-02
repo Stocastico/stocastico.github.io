@@ -65,8 +65,16 @@ Edit the source on the left, run the command on the right. The drift tests will 
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
 | Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-theme-toggle`, `generate-favicons` |
+| Contact address | `js/contact.js` | `generate-cards` |
 | A new project page | a Markdown file | `npm run new-project -- file.md` |
 | Adding any HTML page | — | `generate-analytics`, `generate-speculation-rules`, then `generate-csp-meta` **last** |
+
+Two of those rows have a rule attached, and both fail `npm test` rather than failing quietly.
+**Project tags are a closed vocabulary** — the six facets in `js/project-tags.js`, one or two per
+project, each used by at least two projects; they drive the filter chips on `projects.html`, and a
+facet with one member is a filter that returns one card. **The contact address lives in exactly one
+place**, because the point of it is that it is a disposable alias: `js/contact.js` is the line to
+edit, and `generate-cards` rewrites all four places it appears in the markup.
 
 `generate-csp-meta` goes last whenever inline `<script>` content changed: the CSP hashes each inline
 script, so a rewritten JSON-LD or speculation-rules block invalidates the hash.
@@ -76,7 +84,7 @@ Project frontmatter and supported Markdown: **[`docs/project-template.md`](docs/
 
 ## Scripts
 
-72 npm scripts, but they fall into a few groups. **Every generator supports `--help` and `--dry-run`**,
+80+ npm scripts, but they fall into a few groups. **Every generator supports `--help` and `--dry-run`**,
 which is the authoritative reference for flags — this table is only a map.
 
 | Group | Scripts |
@@ -96,7 +104,7 @@ all sit behind a main guard now, and `test/generator-main-guard.test.mjs` enforc
 ## Testing
 
 ```bash
-npm test           # ~980 assertions, ~3s, no browser
+npm test           # 1,100+ assertions, ~3s, no browser
 npm run test:e2e   # builds dist/, then drives real Chromium (~5 min)
 ```
 
