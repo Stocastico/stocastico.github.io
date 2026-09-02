@@ -36,8 +36,8 @@ Some material in this repository belongs to someone else, or is deliberately
 reserved. None of it is covered by either licence here:
 
 - **Photographs of the author** — `img/photo.webp`. All rights reserved.
-- **The CV and the thesis PDFs** — `docs/cv.pdf`, `docs/CV_web.pdf`,
-  `docs/dissertation.pdf`, `docs/defense.pdf`, `docs/defense-hq.pdf`.
+- **The CV and the thesis PDFs** — `docs/cv.pdf`, `docs/dissertation.pdf`,
+  `docs/defense.pdf`, `docs/defense-hq.pdf`.
   Free to read; not licensed for redistribution or reuse.
 - **The publications themselves.** `data/publications.js` lists papers whose
   copyright sits with their publishers; the entries here are metadata and
