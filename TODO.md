@@ -3,29 +3,19 @@
 Outstanding items. Completed work has been removed — see git history if you
 need the audit context.
 
-Three entries came out of the content list on 2 September after being checked
-against the repo rather than against this file, which had gone stale in the
-reassuring direction: `now.html` was updated on 17 August (`npm run test:now`
-passes; next expiry mid-November), the 2009–2018 gap in `data/cv.yaml` is
-filled — AGT International, MPI and Fraunhofer HHI all carry a `description`
-now — and every one of the 13 project pages serves a PNG `og:image`, so the
-WebP preview worry is moot. **A stale TODO costs more than an empty one**: it
-invites work that is already done and buries the one item that is not.
+**There is no content list at the moment**, which is a state worth stating
+rather than leaving as a missing heading. All four entries closed on 2 September
+after being checked against the repo rather than against this file, which had
+gone stale in the reassuring direction: `now.html` was updated on 17 August
+(`npm run test:now` passes; next expiry mid-November), the 2009–2018 gap in
+`data/cv.yaml` is filled — AGT International, MPI and Fraunhofer HHI all carry a
+`description` now — every one of the 13 project pages serves a PNG `og:image`,
+and the last one was a decision rather than a defect: the CV PDF's header
+subtitle stays "Senior AI/ML Leader", deliberately, because the summary beneath
+it is built on that framing.
 
-## Content — needs your words, not mine
-
-- **Decide whether `docs/cv.pdf` should say "Senior AI Engineer".** The PDF was
-  regenerated on 19 August and most of the drift this entry used to describe is
-  gone: it says "30+ publications" like the site, the role headings inside read
-  SENIOR AI ENGINEER, and the skills are proficiency tiers with no percentages
-  left. One line still differs — the header subtitle under the name reads
-  **"Senior AI/ML Leader"** while the site says Senior AI Engineer.
-
-  That is left as a decision rather than a defect, because it may well be
-  deliberate: the summary directly beneath it is built on the leadership
-  framing ("AI/ML Engineering Leader with 15+ years… teams of up to 9"), so
-  changing the subtitle without the paragraph would read oddly. Either align it
-  or delete this entry.
+**A stale TODO costs more than an empty one**: it invites work that is already
+done and hides the items that are real.
 
 ## Test coverage — known gaps, deliberately left
 
@@ -108,7 +98,15 @@ these are what is left, with the reason.
   used to sweep the whole directory, which is the same mistake
   `copyReferencedImages()` was written to fix for `img/`.
 
-- The public contact email is intentional; leave the obfuscated address as-is.
+- **The contact address is public in plain text on purpose — do not re-add
+  obfuscation.** This line used to read "leave the obfuscated address as-is",
+  and it survived the change that deleted the obfuscation, which is exactly the
+  failure mode this file is supposed to avoid: a stale instruction is worse than
+  no instruction, because it tells the next reader to restore something. The
+  defence is that `hello@stefanomasneri.com` is a disposable forwarding alias
+  swappable in one line (`js/contact.js`), not that the string is hidden — base64
+  in an attribute named `data-email-user` stopped nobody. Full reasoning in
+  `CLAUDE.md`.
 - Globe land texture (2048×1024) is rebuilt per construction / theme switch
   rather than cached across instances. Considered and skipped: the colours are
   theme-dependent and the rebuild path is the one behind past "blank globe
