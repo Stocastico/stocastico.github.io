@@ -3,33 +3,29 @@
 Outstanding items. Completed work has been removed — see git history if you
 need the audit context.
 
+Three entries came out of the content list on 2 September after being checked
+against the repo rather than against this file, which had gone stale in the
+reassuring direction: `now.html` was updated on 17 August (`npm run test:now`
+passes; next expiry mid-November), the 2009–2018 gap in `data/cv.yaml` is
+filled — AGT International, MPI and Fraunhofer HHI all carry a `description`
+now — and every one of the 13 project pages serves a PNG `og:image`, so the
+WebP preview worry is moot. **A stale TODO costs more than an empty one**: it
+invites work that is already done and buries the one item that is not.
+
 ## Content — needs your words, not mine
 
-- **Refresh `docs/cv.pdf`.** It dates from June and has drifted from the site:
-  it claims "40+ publications" where the site says 30+ (37 listed), titles the
-  role "Senior AI/ML Leader" vs. the site's "Senior AI Engineer", and predates
-  the `cv.yaml` skills rework (percentages → proficiency tiers). Reconcile the
-  numbers and regenerate — recruiters read both.
+- **Decide whether `docs/cv.pdf` should say "Senior AI Engineer".** The PDF was
+  regenerated on 19 August and most of the drift this entry used to describe is
+  gone: it says "30+ publications" like the site, the role headings inside read
+  SENIOR AI ENGINEER, and the skills are proficiency tiers with no percentages
+  left. One line still differs — the header subtitle under the name reads
+  **"Senior AI/ML Leader"** while the site says Senior AI Engineer.
 
-- **Update `now.html`.** "Counting down to the summer holidays: a trip to
-  Toulouse" is now in the past; the page is dated 5 June and `npm run test:now`
-  starts failing once it is 90 days old (~3 September).
-
-- **The CV goes quiet for 2009–2018.** `data/cv.yaml` gives a `description` to
-  Mediapro, NTT DATA and Vicomtech and none to AGT International, MPI for Brain
-  Research or Fraunhofer HHI — so nine years of the timeline render as a job
-  title, a company and three tags on the page recruiters read most carefully.
-  The material already exists in `projects/mpi-brain-research.html`,
-  `projects/inevent.html` and `projects/avatech.html`; it needs two or three
-  sentences each, lifted and trimmed. Re-run `npm run generate-cv` then
-  `npm run generate-cards` afterwards.
-
-- **Check the WebP social cards actually preview.** Most `projects/*.html` point
-  `og:image` at a `.webp`; LinkedIn and WhatsApp have historically been
-  unreliable with WebP previews, and LinkedIn is where these get shared. Run a
-  couple through LinkedIn's Post Inspector — if they come back blank, render PNG
-  cards for them (the `generate-og` machinery already exists). The two pages
-  that ship PNGs (`mnist-lenet`, `rag-document-qa`) are unaffected.
+  That is left as a decision rather than a defect, because it may well be
+  deliberate: the summary directly beneath it is built on the leadership
+  framing ("AI/ML Engineering Leader with 15+ years… teams of up to 9"), so
+  changing the subtitle without the paragraph would read oddly. Either align it
+  or delete this entry.
 
 ## Test coverage — known gaps, deliberately left
 
