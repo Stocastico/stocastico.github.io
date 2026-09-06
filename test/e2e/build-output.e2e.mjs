@@ -8,8 +8,8 @@
 
    which reads as a courtesy — green suite without a build — and behaves as a
    deletion. Every workflow runs `npm test` *before* `npm run build`
-   (deploy.yml, e2e.yml and rotate-palette.yml all do, deliberately,
-   so a two-second static failure lands before a five-minute browser run). So
+   (both deploy.yml and e2e.yml do, deliberately, so a two-second static
+   failure lands before a five-minute browser run). So
    dist/ never existed at the moment that test was evaluated, and it was
    skipped in CI every single time. It only ever ran on a developer's machine
    that happened to have a stale dist/ lying around — which is also why it
@@ -94,8 +94,9 @@ describe('build output: the pages Vite was asked for are all present', () => {
 
    That is not hypothetical — the same shape of omission left every page
    marking the previous palette as selected for a full rotation cycle, because
-   the recipe everyone copied predated the step. The weekly rotation workflow
-   is unattended, so nothing else would notice.
+   the recipe everyone copied predated the step. It went unnoticed because the
+   job doing it ran unattended; the recipe is now written out in the
+   data/palettes.yaml header, and every step of it has a drift guard.
 
    This lives in the browser layer rather than the fast suite because decoding
    a PNG means `sharp`, and `npm test` staying dependency-free and ~3 seconds

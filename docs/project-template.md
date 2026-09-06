@@ -75,5 +75,6 @@ An architecture diagram goes in `drafts/diagrams/` as an SVG authored with
 !svg(drafts/diagrams/my-diagram.svg)
 
 Inline, because an external SVG is its own document and cannot read the page's
-custom properties — its colours have to be baked in, and baked colours go stale
-the next time the palette rotates.
+custom properties — its colours have to be baked in, and baked colours are wrong
+for every palette but the one they were drawn in, including the light variant of
+that one.
