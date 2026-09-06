@@ -220,3 +220,80 @@ test('html: every test:* script points at a file that exists', () => {
   }
   assert.deepEqual(dangling, [], `package.json test aliases naming missing files:\n  ${dangling.join('\n  ')}`);
 });
+
+/* ─── Heading structure ───────────────────────────────────────────────────────
+
+   Two checks that nothing else in this repo makes. axe classes `heading-order`
+   as best-practice and test/e2e/a11y.e2e.mjs excludes best-practice rules on
+   purpose, so the browser layer is deliberately blind here — and heading
+   structure has now been got wrong three separate times: the globe a11y list
+   sat at <h4> under an <h1>, projects.html shipped fourteen project cards whose
+   titles were <span>s (one heading on the page), and links.html shipped
+   forty-eight blogroll entries the same way. The first two were found by
+   reading; the third survived every suite in the repo.
+
+   Comments are stripped first. The <h1> count above does not strip them, which
+   is why CLAUDE.md carries a warning about never writing a literal heading tag
+   inside an HTML comment — a rule a reader has to remember. Stripping is two
+   characters of regex and removes the trap instead of documenting it, so these
+   two checks strip and the note in CLAUDE.md is narrowed to the older test. */
+function stripComments(html) { return html.replace(/<!--[\s\S]*?-->/g, ''); }
+
+for (const rel of PAGES) {
+  const html = stripComments(read(rel));
+
+  test(`html: ${rel} heading levels never skip a rank`, () => {
+    const levels = [...html.matchAll(/<h([1-6])[\s>]/gi)].map(m => Number(m[1]));
+    const skips = [];
+    let prev = null;
+    for (const level of levels) {
+      if (prev !== null && level > prev + 1) skips.push(`h${prev} -> h${level}`);
+      prev = level;
+    }
+    assert.deepEqual(skips, [],
+      `${rel} skips a heading rank (${skips.join(', ')}). The ladder is `
+      + `${levels.map(l => `h${l}`).join(' ')} — a screen reader announces the gap as a `
+      + 'missing section. Add the intermediate rank, visually-hidden if the page already '
+      + 'says it visually (cv.html does exactly that).');
+  });
+
+  /* A repeated collection of linked cards has to be skimmable by heading —
+     jumping heading to heading is how a screen-reader user reads a list of
+     forty-eight things without tabbing through forty-eight links.
+
+     Grouped by card class rather than counted per page, and thresholded, so
+     that a handful of one-off cards is not swept in: index.html carries three
+     .contact-card anchors (LinkedIn, Scholar, GitHub) which are chrome under an
+     existing <h2>, and a heading apiece would be noise. Five is the line — well
+     under the fourteen that made this worth fixing on projects.html, well over
+     the three that are fine as they are.
+
+     Deliberately NOT "every element whose class ends in -name/-title must be a
+     heading". That rule was written first and is wrong: it fires on
+     .unesco-name (inside a <summary>, which is already a navigation stop),
+     .skill-item-name and .lang-name, none of which are destinations. What makes
+     a link card different is that it *is* one. */
+  const CARD_MIN = 5;
+
+  test(`html: repeated linked cards in ${rel} carry a heading`, () => {
+    const groups = new Map();
+    for (const m of html.matchAll(/<a\b[^>]*\bclass="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+      const cls = m[1].trim();
+      if (!/(^|\s)[\w-]*card[\w-]*(\s|$)/.test(cls)) continue;
+      if (!groups.has(cls)) groups.set(cls, []);
+      groups.get(cls).push(m[2]);
+    }
+    const offenders = [];
+    for (const [cls, bodies] of groups) {
+      if (bodies.length < CARD_MIN) continue;
+      const without = bodies.filter(b => !/<h[1-6][\s>]/i.test(b)).length;
+      if (without) offenders.push(`.${cls}: ${without} of ${bodies.length} have no heading`);
+    }
+    assert.deepEqual(offenders, [],
+      `${rel} repeats a linked card ${CARD_MIN}+ times with no heading inside it:\n  `
+      + `${offenders.join('\n  ')}\n`
+      + 'The card title should be a heading element, not a <span> — see the `level` '
+      + 'argument threaded through projectCardHtml() in js/render-cards.js for the '
+      + 'shape of the fix (the rank has to vary by page, so it is a parameter).');
+  });
+}

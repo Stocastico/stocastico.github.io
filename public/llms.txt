@@ -7,7 +7,7 @@ All content is written by Stefano Masneri unless a page says otherwise. Every pa
 ## Pages
 
 - [Home](https://stefanomasneri.com/): Stefano Masneri — Senior AI Engineer at Mediapro, PhD in Computer Science. Computer vision and generative AI for audiovisual production. San Sebastián, Spain.
-- [CV](https://stefanomasneri.com/cv.html): Curriculum Vitae of Stefano Masneri, Senior AI Engineer with 15+ years in machine learning, computer vision, AR and generative AI, with a PhD and 30+ publications.
+- [CV](https://stefanomasneri.com/cv.html): Curriculum Vitae of Stefano Masneri, Senior AI Engineer in machine learning, computer vision, AR and generative AI since 2008, with a PhD and 37 publications.
 - [Projects](https://stefanomasneri.com/projects.html): Projects and portfolio of Stefano Masneri, Senior AI Engineer. AR, Computer Vision, LLMs and more.
 - [Publications](https://stefanomasneri.com/publications.html): Full list of peer-reviewed publications by Stefano Masneri — augmented reality for education, computer vision, multimedia analysis, and media technology.
 - [Now](https://stefanomasneri.com/now.html): A now page: what Stefano Masneri is focused on at the moment — work, reading, hobbies and life in Gipuzkoa, San Sebastián.

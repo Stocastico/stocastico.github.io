@@ -1831,6 +1831,14 @@ figcaption {
 }
 
 .link-card-name {
+  /* An <h2> — links.html repeats this card forty-eight times, and jumping
+     heading to heading is how a screen-reader user skims that list instead of
+     tabbing through forty-eight links. Same reasoning, and the same visual
+     contract, as .project-card__title: the rank carries meaning for assistive
+     tech and must carry none visually, so the UA heading margin goes and the
+     line-height stays whatever the card was already giving the span. */
+  margin: 0;
+  line-height: inherit;
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
