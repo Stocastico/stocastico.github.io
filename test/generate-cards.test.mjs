@@ -19,17 +19,58 @@ import { CV_CAREER, CV_EDUCATION, CV_SKILLS } from '../data/cv.js';
 import { UNESCO } from '../data/unesco.js';
 import { LINKS } from '../data/links.js';
 import { escapeHtml } from '../js/utils.js';
+import { COUNTRIES } from '../data/countries.js';
+import { careerStartYear } from '../js/render-page.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
+/* The one generated number on the site that moves without anyone editing
+   anything: `Years Exp.` is (this year - 2008), so on 1 January the committed
+   HTML goes a year stale on its own. Comparing bytes would red the build that
+   morning over a figure that is still true, and this test gates the deploy.
+
+   So the years figure is blanked on both sides before the byte comparison and
+   checked separately below with a one-year tolerance. The tolerance is the
+   whole design: an exact check fails every January, and a looser "never
+   overstates" check would have happily passed the hand-typed "15+" this
+   replaced, which was three years light. One year is the largest gap that can
+   open without anyone touching the repository. */
+const YEARS_STAT = /(<span class="stat-number" data-count=")\d+(">)\d+(<\/span><span class="stat-suffix">\+<\/span><span class="stat-label">Years Exp\.)/;
+const blankYears = (html) => html.replace(YEARS_STAT, '$1N$2N$3');
+
 test('generate-cards: committed HTML is in sync with the data (no drift)', () => {
   const rendered = renderAll();
   for (const rel of Object.keys(TARGETS)) {
-    assert.equal(rendered[rel], read(rel),
+    assert.equal(blankYears(rendered[rel]), blankYears(read(rel)),
       `${rel} is stale — run \`npm run generate-cards\` and commit the result`);
   }
+});
+
+test('generate-cards: the About stats match the data they are drawn from', () => {
+  const html = read('index.html');
+  const num = (label) => {
+    const m = new RegExp(`data-count="(\\d+)"[^<]*>\\d+</span>(?:<span class="stat-suffix">[^<]*</span>)?<span class="stat-label">${label}`).exec(html);
+    assert.ok(m, `index.html has no "${label}" stat — run \`npm run generate-cards\``);
+    return Number(m[1]);
+  };
+
+  /* Exact: neither of these moves unless the data does. The homepage said
+     "30+ Publications" against 37 for long enough that public/llms.txt carried
+     both numbers at once — the generated line said 37, the line lifted from
+     cv.html's hand-written description said 30+. */
+  assert.equal(num('Publications'), PUBLICATIONS.length,
+    'the Publications stat disagrees with data/publications.js');
+  assert.equal(num('Countries'), COUNTRIES.lived.length,
+    'the Countries stat disagrees with data/countries.js (lived-in countries)');
+
+  const expected = new Date().getUTCFullYear() - careerStartYear(CV_CAREER);
+  const committed = num('Years Exp\\.');
+  assert.ok(committed <= expected && expected - committed <= 1,
+    `the Years Exp. stat is ${committed} but the career starts in `
+    + `${careerStartYear(CV_CAREER)}, so it should be ${expected} (a one-year lag is `
+    + 'tolerated for the January rollover). Run `npm run generate-cards`.');
 });
 
 test('generate-cards: homepage ships the 3 newest work project cards statically', () => {

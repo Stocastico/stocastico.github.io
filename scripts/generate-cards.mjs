@@ -26,9 +26,10 @@ import {
 } from '../js/render-cards.js';
 import {
   cvTimelineLines, cvSkillsLines, unescoAccordionLines, unescoTotalLines, linksGridLines,
-  projectFilterLines, contactEmailLines,
+  projectFilterLines, contactEmailLines, aboutStatsLines, careerStartYear,
 } from '../js/render-page.js';
 import { CONTACT_EMAIL } from '../js/contact.js';
+import { COUNTRIES } from '../data/countries.js';
 import { PROJECT_TAGS } from '../js/project-tags.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
@@ -103,6 +104,20 @@ const TARGETS = {
     'generated:publication-items': () =>
       publicationsListLines(PUBLICATIONS.filter((p) => p.featured), { grouped: false }),
     'generated:contact-email': () => contactEmailLines(CONTACT_EMAIL),
+    /* The three About numbers. `Years Exp.` is the one input here that moves on
+       its own — it is (this year - 2008) — so the committed HTML goes one year
+       stale each January until someone regenerates. The drift guard in
+       test/generate-cards.test.mjs therefore allows the years figure to lag by
+       at most one, and pins the other two exactly. A guard that demanded
+       equality would red the build on 1 January for a number that is still
+       true; one that only checked "not overstated" would have passed the 15+
+       this replaced, which was three years and seven papers light. */
+    'generated:about-stats': () => aboutStatsLines({
+      countries: COUNTRIES.lived.length,
+      publications: PUBLICATIONS.length,
+      careerStartYear: careerStartYear(CV_CAREER),
+      now: new Date(),
+    }),
   },
   'projects.html': {
     'generated:project-filter': () => projectFilterLines(PROJECTS, PROJECT_TAGS),

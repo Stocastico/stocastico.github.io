@@ -291,6 +291,56 @@ export function unescoTotalLines(data) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   ABOUT — QUICK STATS
+   ═══════════════════════════════════════════════════════════ */
+
+/* The three numbers under the About bio, derived rather than typed.
+
+   They were typed, and they drifted exactly the way the hand-typed UNESCO
+   total did: the homepage said "30+ Publications" against 37 in
+   data/publications.js, and "15+ Years Exp." against a first research post in
+   2008 — understating the pitch by seven papers and three years on the page
+   whose whole job is the pitch. public/llms.txt ended up carrying both answers
+   at once, because one of its lines is generated from the data and the other
+   was lifted from cv.html's hand-written meta description.
+
+   `now` is injected rather than read from the clock inside here so the
+   generator and its drift test can agree on one instant, and so a test can ask
+   what this renders in 2031 without waiting.
+
+   On the suffixes: publications takes no "+" because the list is a closed
+   record (see TODO.md — Stefano no longer publishes, so 37 is the number, not
+   a floor) and an exact count is the stronger claim. Years keeps its "+"
+   because it is a floor that stays true until the next birthday of the career;
+   countries never had one. */
+export function aboutStatsLines({ countries, publications, careerStartYear, now }) {
+  const years = now.getUTCFullYear() - careerStartYear;
+  const stat = (value, suffix, label) => (
+    '<div class="stat-item">'
+    + `<span class="stat-number" data-count="${value}">${value}</span>`
+    + (suffix ? `<span class="stat-suffix">${suffix}</span>` : '')
+    + `<span class="stat-label">${escapeHtml(label)}</span>`
+    + '</div>'
+  );
+  return [
+    stat(countries, '', 'Countries'),
+    stat(publications, '', 'Publications'),
+    stat(years, '+', 'Years Exp.'),
+  ];
+}
+
+/* The earliest year mentioned in the career list — "2008 – 2009" -> 2008.
+   Reads the generated data/cv.js rather than the YAML so it cannot disagree
+   with the timeline rendered from the same array two functions up. */
+export function careerStartYear(career) {
+  const years = (career || [])
+    .map((c) => String(c && c.year || '').match(/\d{4}/))
+    .filter(Boolean)
+    .map((m) => Number(m[0]));
+  return years.length ? Math.min(...years) : null;
+}
+
+/* ═══════════════════════════════════════════════════════════
    LINKS — BLOGROLL
    ═══════════════════════════════════════════════════════════ */
 
@@ -439,10 +489,14 @@ export function linksGridLines(data) {
     return (
       `<li class="link-card-item" data-categories="${escapeHtml(cats.join(' '))}">`
       + `<a class="link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">`
-      + `<span class="link-card-head"><span class="link-card-name">${escapeHtml(link.name)}</span>`
+      /* <div>, not <span>: the name is an <h2> (see .link-card-name in the
+         stylesheet) and a <span> takes phrasing content only, so a heading
+         inside one is invalid nesting. The <a> itself is fine — its content
+         model is transparent, and this card already put a <p> in it. */
+      + `<div class="link-card-head"><h2 class="link-card-name">${escapeHtml(link.name)}</h2>`
       + '<svg class="link-card-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
       + '<path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      + `</span>${desc}<span class="link-card-foot">${badgeRow}${hostLabel}</span></a></li>`
+      + `</div>${desc}<span class="link-card-foot">${badgeRow}${hostLabel}</span></a></li>`
     );
   }).join('');
 
