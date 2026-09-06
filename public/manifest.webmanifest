@@ -33,7 +33,7 @@
       "purpose": "maskable"
     }
   ],
-  "_comment": "background_color and theme_color are rewritten by `npm run generate-theme`, which the weekly palette rotation runs. They live at the end, away from the hand-edited keys above, so a rotation and an edit never share a merge context.",
+  "_comment": "background_color and theme_color are rewritten by `npm run generate-theme`. They live at the end, away from the hand-edited keys above, so a regeneration and a hand edit never share a merge context.",
   "background_color": "#0c1410",
   "theme_color": "#0c1410"
 }

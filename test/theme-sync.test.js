@@ -2,17 +2,22 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Theme-sync regression test.
 
-   The weekly palette rotation (.github/workflows/rotate-palette.yml) runs
-   `generate-theme`, which rewrites the <meta theme-color>, the inline data:
-   SVG favicon, and the nav-logo gradient stops across EVERY *.html page. If a
-   page is added (or hand-edited) carrying a different palette's values, it
-   silently drifts out of sync until the next regeneration touches it — exactly
-   what happened to links.html.
+   `generate-theme` rewrites the <meta theme-color>, the inline data: SVG
+   favicon, and the nav-logo gradient stops across EVERY *.html page. If a page
+   is added (or hand-edited) carrying a different palette's values, it silently
+   drifts out of sync until the next regeneration touches it — exactly what
+   happened to links.html.
 
    This guards against that: for every committed HTML page, running the real
    generator's rewriteHtml() with the active palette must be a no-op. A drifted
    page makes rewriteHtml() return changed text → the test fails and names the
-   offending file, before the rotation workflow's deploy.
+   offending file, before the deploy.
+
+   This test mattered most while a weekly job rotated the palette unattended.
+   That job is gone and `active` is pinned (see data/palettes.yaml), so the
+   drift it catches now comes from a hand-edit or a new page rather than from
+   a scheduled run — a slower path to the same wrong colours, and still one
+   with no human looking at all 21 pages.
 
    Run:  node --test test/theme-sync.test.js
 ──────────────────────────────────────────────────────────────────────────────*/
@@ -87,8 +92,9 @@ test('theme-sync: public/manifest.webmanifest matches the active palette', () =>
 /* ─────────────────────────────────────────────────────────────────────────────
    Keep the palette-owned <head> lines together.
 
-   The rotation commits straight to main every Monday, so any branch open
-   across it has to merge that commit. That was a conflict rather than a
+   A weekly job used to commit a rotated palette straight to main, so any
+   branch open across a Monday had to merge that commit. That was a conflict
+   rather than a
    fast-forward because the four lines the rotation rewrites were scattered
    through the head, two of them directly beneath lines a human edits all the
    time: og:image sat one line under og:description, twitter:image one line
@@ -149,9 +155,10 @@ for (const rel of BRAND_PAGES) {
    The navbar palette dots must agree with the active palette.
 
    `generate-theme-toggle` bakes `aria-pressed="true"` onto the dot whose id
-   equals `active:` in data/palettes.yaml. Nothing re-ran it after a rotation:
-   the workflow's recipe — echoed in README.md and CLAUDE.md — was
-   "generate-theme, then generate-favicons", written before the dots existed.
+   equals `active:` in data/palettes.yaml. Nothing re-ran it after a palette
+   change: the recipe everyone copied — echoed in README.md and CLAUDE.md —
+   was "generate-theme, then generate-favicons", written before the dots
+   existed.
    So the palette rotated to crimson and all 21 pages went on claiming apricot
    was the selected one, 42 lines of drift that no test could see.
 
@@ -177,7 +184,8 @@ for (const file of htmlFiles()) {
     const pressed = dots.filter(d => d.pressed).map(d => d.id);
     assert.deepEqual(pressed, [paletteId],
       `${rel}: aria-pressed="true" is on [${pressed.join(', ') || 'nothing'}] but the active ` +
-      `palette is "${paletteId}". Run \`npm run generate-theme-toggle\` — and note the ` +
-      'rotation workflow must run it too, or this comes straight back next Monday.');
+      `palette is "${paletteId}". Run \`npm run generate-theme-toggle\` — it is step 2 ` +
+      'of the four-command recipe in the data/palettes.yaml header, and skipping it is ' +
+      'what put 42 lines of drift on 21 pages last time.');
   });
 }

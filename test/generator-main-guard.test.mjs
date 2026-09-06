@@ -49,7 +49,7 @@ const SCRIPTS = path.join(ROOT, 'scripts');
    and train-cnn downloads MNIST on import — which is precisely why no test
    should ever import it either. */
 const GENERATORS = fs.readdirSync(SCRIPTS)
-  .filter((f) => /^(generate-.*|set-domain|new-project|rotate-palette|check-links)\.(mjs|js)$/.test(f))
+  .filter((f) => /^(generate-.*|set-domain|new-project|check-links)\.(mjs|js)$/.test(f))
   .sort();
 
 /* `path.resolve` or a destructured `resolve` — generate-lenet-weights.mjs

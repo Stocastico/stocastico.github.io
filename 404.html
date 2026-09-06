@@ -41,16 +41,18 @@
   <link rel="stylesheet" href="/css/fonts.css" />
 
   <!-- theme:start — every line in this block is rewritten by
-       `npm run generate-theme`, which the weekly palette-rotation workflow
-       runs and commits straight to main. They are grouped here, in static
+       `npm run generate-theme`. They are grouped here, in static
        surroundings, rather than left next to the og:/twitter: title and
        description lines they used to sit beside.
 
        That adjacency was the whole problem: og:image sat one line under
        og:description and twitter:image one line under twitter:description, so
-       a rotation and an ordinary copy edit landed inside each other's
-       three-line merge context and git could not take both. Separated, a
-       branch open across a Monday merges cleanly. Do not hand-edit. -->
+       a palette change and an ordinary copy edit landed inside each other's
+       three-line merge context and git could not take both. It surfaced when
+       a weekly job rotated the palette on main; that job is gone and `active`
+       is pinned, but a regeneration is still a wide mechanical diff and a copy
+       edit is still a narrow human one, so keeping them apart still pays.
+       Do not hand-edit. -->
   <meta name="theme-color" content="#0c1410" />
   <meta property="og:image"       content="https://stefanomasneri.com/img/og/og-forest.png" />
   <meta property="og:image:width"  content="1200" />

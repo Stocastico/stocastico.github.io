@@ -3,7 +3,7 @@
    generate-og
    --------------------------------------------------------------
    Renders one Open Graph / social-card image per palette so the share preview
-   matches whatever palette the site is currently wearing (the palette rotates
+   matches whatever palette the site is currently wearing (the palette can change
    weekly via CI). Each card is a deterministic 1200×630 PNG built from an SVG
    template — no headless browser — using the same colours generate-theme reads
    from data/palettes.yaml. The display/prose fonts are embedded as base64 so the

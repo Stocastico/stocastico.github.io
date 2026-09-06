@@ -97,8 +97,11 @@ rather than the sources.
   of the Chromium install: it is ~2 s against ~25 s for the install and ~5 min
   for the browser run, so a drift check or a contrast regression fails the job
   almost immediately instead of after work nobody will read the result of.
-- Both also gate **deploy** (`deploy.yml`) and the weekly **palette rotation**
-  (`rotate-palette.yml`).
+- Both also gate **deploy** (`deploy.yml`). They used to gate a third
+  workflow, the weekly palette rotation, which was the only path by which a
+  colour change reached production with no human in it; it has been deleted
+  and the active palette pinned, so every colour change is now a reviewed
+  commit like any other.
 
 `npm test` used to be gated *only* on `push: [main]`, which meant a pull
 request could sit green with all ~890 static assertions red — the first sign

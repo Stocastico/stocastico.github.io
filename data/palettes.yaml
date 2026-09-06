@@ -1,11 +1,19 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # THEME PALETTES — single source of truth for every colour on the site.
 #
-# Edit a palette (or switch the `active` key) then run:
+# Edit a palette (or switch the `active` key) then run ALL FOUR of:
 #
-#     npm run generate-theme
+#     npm run generate-theme         # CSS/JS/HTML colour tokens
+#     npm run generate-theme-toggle  # aria-pressed on the navbar palette dots
+#     npm run generate-favicons      # raster icons, drawn from the active palette
+#     npm run generate-project-og    # the 13 palette-driven project social cards
 #
-# That regenerates, in one pass:
+# The last three are easy to forget and each has a drift guard that fails the
+# build, which is deliberate — this recipe used to live in the rotation
+# workflow, and that workflow is gone (see the note on `active` below), so
+# these four lines are now the only place it is written down.
+#
+# generate-theme regenerates, in one pass:
 #   • the :root colour block in css/styles.css
 #   • js/theme.js                (consumed by the WebGL/Canvas modules + shaders)
 #   • <meta theme-color>, the inline favicon, and the nav-logo gradient
@@ -35,6 +43,29 @@
 # and case, not from fading the colour out.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ── On `active` ──────────────────────────────────────────────────────────────
+# This is the site's ONE brand palette, and it is pinned deliberately. There
+# used to be a scheduled job (.github/workflows/rotate-palette.yml) that
+# advanced this key every Monday, committed to main and redeployed. It is gone.
+#
+# A visitor sees whichever palette is active on the day they arrive and has no
+# way to know it ever changes, so the rotation's entire audience was the
+# maintainer — while the costs were real and recurring: an unattended weekly
+# commit to main that every open branch had to merge (which is why the
+# palette-owned <head> lines had to be gathered into one `theme:start` block
+# after a copy edit and a rotation collided), and a returning reader finding a
+# different-coloured site each visit, which is the opposite of what a personal
+# brand wants from repetition.
+#
+# The other palettes are NOT dead code: `generate-theme` emits them as
+# :root[data-palette="<id>"] blocks and the navbar dots + the ⌘K palette let a
+# visitor choose one on demand. That is the version of this idea that reaches
+# an audience — a choice offered, rather than a change imposed between visits.
+#
+# To change the brand palette, edit this one line by hand and run the four
+# commands in the header above. There is no script: it is a one-line edit, and
+# a `rotate-palette` command that cycles the brand is the exact thing this pin
+# exists to prevent.
 active: forest
 
 palettes:

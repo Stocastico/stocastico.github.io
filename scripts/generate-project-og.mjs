@@ -29,7 +29,7 @@
    are frozen in an amber palette the site stopped wearing several rotations
    ago — the same failure the inline diagrams had before they were inlined, and
    the same one og-<palette>.png solves for the brand card. These regenerate,
-   so a palette rotation carries the project cards with it.
+   so a palette change carries the project cards with it.
 
    Output: img/projects/og/<id>.png
 

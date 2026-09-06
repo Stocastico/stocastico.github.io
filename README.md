@@ -30,7 +30,8 @@ forget to re-run its generator.
 **One palette drives every colour.** `data/palettes.yaml` has one `active:` key. `npm run generate-theme`
 rewrites the CSS custom properties, `js/theme.js`, the `<meta theme-color>` on every page, the inline
 favicon and the manifest. CSS reads `var(--*)`; the WebGL shaders and Canvas modules import `THEME`.
-A scheduled job rotates the palette weekly and deploys it.
+The other palettes stay shipped as `:root[data-palette="…"]` blocks, so the navbar dots and the ⌘K
+palette let a visitor pick one; `active:` is what a first-time visitor sees, and it is pinned.
 
 **Push to `main` deploys.** `.github/workflows/deploy.yml` runs both test suites, builds, and publishes
 to Pages. There is no release step — the deploy is the release.
@@ -91,7 +92,7 @@ which is the authoritative reference for flags — this table is only a map.
 |---|---|
 | Build | `dev`, `build`, `preview` |
 | Content | `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
-| Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `generate-project-og`, `rotate-palette` |
+| Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `generate-project-og` |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
 | ML pipeline | `train-cnn`, `generate-cnn-activations`, `generate-lenet-weights`, `generate-hero-scan` |
 | Maintenance | `check-links`, `screenshots`, `set-domain`, `generate-europe-land` |
@@ -111,7 +112,7 @@ npm run test:e2e   # builds dist/, then drives real Chromium (~5 min)
 Two layers, deliberately. The fast one answers anything you can learn by reading a file — pure
 functions, generator round-trips, drift checks, static analysis. The browser one answers what only a
 rendered page can: what painted, what colour it was, where it landed, what the browser's own lifecycle
-did. Both gate every pull request, the deploy, and the weekly palette rotation.
+did. Both gate every pull request and the deploy.
 
 **A CSS change needs a picture, not just a green suite.** Run `npm run screenshots` and look at 390,
 768 and 1440 before opening a PR — the last two bugs to reach visitors were both visual and passed

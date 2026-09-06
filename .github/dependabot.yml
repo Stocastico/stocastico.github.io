@@ -6,10 +6,12 @@
 # Vite majors change the build, and Playwright drifts against whatever Chromium
 # CI installs.
 #
-# Monthly, not weekly, and grouped into one PR per ecosystem. This repo already
-# has an unattended Monday job (rotate-palette.yml) that commits to main; a
-# second stream of automated PRs at that cadence would be noise, and noise on a
-# repo with one maintainer means nobody reads any of it. Monthly grouped means
+# Monthly, not weekly, and grouped into one PR per ecosystem. A weekly stream
+# of automated PRs on a repo with one maintainer is noise, and noise means
+# nobody reads any of it. (This repo used to run a second unattended Monday
+# job, rotate-palette.yml, which is part of why weekly was the wrong cadence;
+# that one is gone now, but the reasoning here never depended on it.) Monthly
+# grouped means
 # roughly one PR to look at every four weeks, and it lands with both suites run
 # against it — e2e.yml is triggered by `pull_request`, so a Dependabot PR is
 # gated exactly like a human one.
