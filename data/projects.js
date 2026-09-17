@@ -65,6 +65,20 @@ export { PROJECT_TAGS, PROJECT_TAG_SLUGS, tagSlugsFor } from '../js/project-tags
 
 export const PROJECTS = [
     {
+            id: "brescia-dataviz",
+            kind: "personal",
+            title: "How Brescia is changing, one comune at a time",
+            year: "2026",
+            tags: ["Data & Interactive"],
+            description: "Ten data stories about the province of Brescia through its 205 municipalities: who is emptying out, incomes that converge while places do not, an industrial collapse that never happened, twenty years of air and climate, and twenty-one years of house prices. Every figure is recomputed from a public table by a public script when the page is built \u2014 none of them is typed by hand. Written in Italian.",
+            /* Same arrangement as the Donostia piece below: its own repo, served
+               from this domain by GitHub Pages, so a root-relative path reaches
+               it and no English detail page sits in between. */
+            url: "/brescia-dataviz/",
+            lang: "it",
+            updated: "2026-09-17",
+        },
+    {
             id: "donostia-dataviz",
             kind: "personal",
             title: "Is tourism raising the rent? Donostia, in open data",

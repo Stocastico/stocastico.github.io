@@ -5,7 +5,7 @@
   <id>https://stefanomasneri.com/feed.xml</id>
   <link href="https://stefanomasneri.com/feed.xml" rel="self" type="application/atom+xml"/>
   <link href="https://stefanomasneri.com/" rel="alternate" type="text/html"/>
-  <updated>2026-08-17T00:00:00.000Z</updated>
+  <updated>2026-09-17T00:00:00Z</updated>
   <author><name>Stefano Masneri</name><uri>https://stefanomasneri.com/</uri></author>
   <entry>
     <id>https://stefanomasneri.com/now.html#2026-08-17</id>
@@ -13,6 +13,13 @@
     <link href="https://stefanomasneri.com/now.html" rel="alternate" type="text/html"/>
     <updated>2026-08-17T00:00:00.000Z</updated>
     <summary>What I’m focused on at the moment — work, reading, hobbies and life in Gipuzkoa.</summary>
+  </entry>
+  <entry>
+    <id>https://stefanomasneri.com/brescia-dataviz/</id>
+    <title>How Brescia is changing, one comune at a time</title>
+    <link href="https://stefanomasneri.com/brescia-dataviz/" rel="alternate" type="text/html"/>
+    <updated>2026-09-17T00:00:00Z</updated>
+    <summary>Ten data stories about the province of Brescia through its 205 municipalities: who is emptying out, incomes that converge while places do not, an industrial collapse that never happened, twenty years of air and climate, and twenty-one years of house prices. Every figure is recomputed from a public table by a public script when the page is built — none of them is typed by hand. Written in Italian.</summary>
   </entry>
   <entry>
     <id>https://stefanomasneri.com/donostia-dataviz/</id>
