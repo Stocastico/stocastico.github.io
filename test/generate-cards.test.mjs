@@ -295,3 +295,42 @@ test('travel.html reports the true visited-site total', () => {
   assert.match(html, new RegExp(`<strong class="unesco-total-num">${sites}</strong>`),
     `travel.html should report ${sites} visited sites — run \`npm run generate-cards\``);
 });
+
+/* The ItemList JSON-LD in projects.html is hand-maintained — deliberately, since
+   it is a list of *projects* rather than of pages this build ships, so the
+   sitemap's rules do not apply to it. Hand-maintained and unguarded is a
+   different thing, though: the entry that drifts is always the newest one,
+   because adding a project means editing data/projects.js and projects.html is
+   somewhere else. This asserts the two agree on both membership and titles. */
+test('projects.html ItemList JSON-LD lists every project in data/projects.js', () => {
+  const html = read('projects.html');
+  const block = html.match(
+    /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
+  ) || [];
+  const collection = block
+    .map((b) => JSON.parse(b.replace(/^<script[^>]*>/, '').replace(/<\/script>$/, '')))
+    .find((j) => j && j['@type'] === 'CollectionPage');
+  assert.ok(collection, 'projects.html must ship a CollectionPage JSON-LD');
+
+  const items = collection.mainEntity.itemListElement;
+  assert.equal(items.length, PROJECTS.length,
+    'the ItemList must hold exactly one entry per project in data/projects.js');
+
+  const SITE = 'https://stefanomasneri.com';
+  const byUrl = new Map(items.map((it) => [it.url, it]));
+  for (const p of PROJECTS) {
+    /* A root-relative url is already absolute from the site root; a
+       "projects/foo.html" one needs the separator. */
+    const abs = p.url.startsWith('/') ? `${SITE}${p.url}` : `${SITE}/${p.url}`;
+    const item = byUrl.get(abs);
+    assert.ok(item, `ItemList is missing "${p.id}" (${abs})`);
+    assert.equal(item.name, p.title,
+      `ItemList name for "${p.id}" disagrees with data/projects.js`);
+  }
+
+  /* Positions must be 1..n with no gaps — a duplicated or skipped number is
+     invalid structured data and the kind of thing a hand edit produces. */
+  const positions = items.map((it) => it.position).sort((a, b) => a - b);
+  assert.deepEqual(positions, PROJECTS.map((_, i) => i + 1),
+    'ItemList positions must run 1..n with no gaps or duplicates');
+});
