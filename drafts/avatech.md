@@ -20,6 +20,8 @@ AVATecH set out to reduce that burden by automating the most mechanical parts of
 
 The project produced a suite of **audio and video recognizers** (independent, pluggable modules) that were integrated into **[ELAN](https://archive.mpi.nl/tla/elan)**, the multi-tier annotation tool developed at MPI and used by thousands of humanities researchers worldwide. ELAN was extended with a generic recognizer API described in XML, so each algorithm could be invoked from inside the tool, run on the loaded media, and return tiers of tentative annotations that the user could accept, edit, or reject.
 
+!svg(drafts/diagrams/avatech-architecture.svg)
+
 Among the recognizers delivered:
 
 - **Shot-boundary detection**: segmenting raw video into visually coherent units, essential for any downstream analysis of filmed interviews or field recordings.

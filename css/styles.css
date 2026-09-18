@@ -4113,6 +4113,15 @@ figcaption {
 
 .post figure img {
   max-width: 100%;
+  /* Load-bearing, and it looks like boilerplate. The width/height attributes
+     these figures carry for CLS protection are also a presentational hint, so
+     `height="575"` means `height: 575px` — not auto. `max-width: 100%` then
+     clamps the width while the height stays pinned, and any image wider than
+     the prose measure is drawn stretched. It shipped that way: the three
+     survey plots on the ARoundTheWorld page were at nearly double their real
+     height. Guarded in test/e2e/pages.e2e.mjs, which measures the drawn box
+     against naturalWidth/naturalHeight. */
+  height: auto;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
 }
@@ -4122,6 +4131,48 @@ figcaption {
   font-size: 0.82rem;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* ─── Framed figures ────────────────────────────────────────
+   For an image whose own colours are baked in and cannot follow the palette:
+   the three ARoundTheWorld survey plots (matplotlib exports from the paper,
+   drawn on white) and the UFC system poster (its own dark/light composition).
+   In dark mode a white slab hard against a warm brown page reads as a broken
+   theme — the same failure the four raster architecture diagrams had, and the
+   reason those were redrawn as inline SVG.
+
+   These deliberately are NOT redrawn. The plots carry roughly a hundred
+   labelled values between them, so redrawing from an image means transcribing
+   published research data by eye, and a transcription error would be a wrong
+   number stated confidently — worse than the theme problem it fixed. The
+   poster is photography and product mock-ups, which is not something
+   `fill="var(--accent)"` can express at all.
+
+   So the image is framed instead of blended: a mat in the page's own card
+   surface, a rule and a shadow, which says "this is an object on the page"
+   rather than "this is page content that failed to load its background". The
+   mat is `var(--bg-card)` and NOT a hardcoded white, which matters for a
+   mixed image — the poster has a dark header, and a white mat round it read
+   as a mistake. Dark mat against a white plot is the contrast that makes the
+   white deliberate; extending the white only makes more white. Asked for from
+   a draft with `![alt](src){plate}` — a plate being a framed illustration,
+   which is what this is. */
+/* A framed figure also breaks out of the prose measure. `.post` is capped at
+   760px for line length, which is right for sentences and wrong for a 1536px
+   poster: at that width the browser is downscaling it 2.3x and every label in
+   it turns to mush. Same breakout `.mnist-lab` uses, and the same reasoning —
+   it is a picture, not a paragraph. 96vw rather than 100vw so a classic
+   scrollbar cannot push it past the viewport. */
+.post figure.figure-plate {
+  width: min(96vw, 1020px);
+  margin: 2rem 50%;
+  transform: translateX(-50%);
+}
+
+.post figure.figure-plate img {
+  background: var(--bg-card);
+  padding: clamp(0.6rem, 2.5vw, 1.25rem);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.28);
 }
 
 /* ─── Inline architecture diagrams ──────────────────────────

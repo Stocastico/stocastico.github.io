@@ -42,6 +42,13 @@ reserved. None of it is covered by either licence here:
 - **The publications themselves.** `data/publications.js` lists papers whose
   copyright sits with their publishers; the entries here are metadata and
   links, not the papers.
+- **UFC event photography** — `img/projects/ufc-octagon-overhead.webp` and
+  `img/projects/ufc-octagon-bg.webp` are official UFC images, used with the
+  permission UFC grants for external use. Not the author's to relicense, and so
+  not covered by the CC BY grant.
+- **Bearded dragon photograph** — `img/projects/mpi-brain-bg.webp` is by
+  Colleen Vaughan Goss, from [Unsplash][un], under the Unsplash licence.
+  Free to use, and not the author's to relicense.
 - **Fonts** — `fonts/*.woff2` are latin subsets of Source Serif 4 and
   JetBrains Mono, both under the [SIL Open Font Licence 1.1][ofl], which
   travels with the files. See the provenance note at the top of
@@ -65,5 +72,6 @@ you changed anything.
 
 [deed]: https://creativecommons.org/licenses/by/4.0/
 [ofl]: https://openfontlicense.org/
+[un]: https://unsplash.com/license
 [wa]: https://github.com/topojson/world-atlas
 [ne]: https://www.naturalearthdata.com/about/terms-of-use/

@@ -28,6 +28,12 @@
      · 404, 410 and persistent 5xx are failures. So is a DNS or TLS failure
        that survives the retry — that is what both real casualties looked
        like.
+     · SKIP_HOSTS is the last resort, for a host that answers a human and
+       cannot be made to answer a script — an anti-bot interstitial that
+       hangs rather than returning one of the statuses above. A skip is
+       reported, never silent, and test/check-links.test.mjs fails once no
+       curated link points at a skipped host, so an entry cannot outlive
+       the link it was written for.
 
    Scope is the hand-curated links: the blogroll (data/links.yaml) and the
    publication URLs (data/publications.js). UNESCO site links are excluded by
@@ -64,6 +70,32 @@ const UA = 'Mozilla/5.0 (compatible; stefanomasneri.com link-check; +https://ste
 /* Statuses that mean "a server answered and does not want to be scraped",
    which is not the same as "this link is broken for a human in a browser". */
 const NOT_A_FAILURE = new Set([401, 403, 405, 406, 429]);
+
+/* Hosts that are alive for a person and unreachable for a script.
+
+   This is not the same as the statuses above: those are a server saying no,
+   which the checker can recognise. These are hosts fronted by a challenge
+   that never answers an automated request at all — it hangs until the
+   timeout, three times over, and reads exactly like a dead host.
+
+   Keep it to hosts verified by hand in a browser, with the date, and keep it
+   short. A skipped host is a link nobody is watching any more, so the cost of
+   a wrong entry is the same silent rot the whole script exists to catch.
+
+   host → why it is here */
+const SKIP_HOSTS = new Map([
+  ['addi.ehu.eus', "the UPV/EHU institutional repository added a human-verification layer; automated requests hang until they time out. Opened in a browser 2026-09-18 and serving the record fine."],
+]);
+
+/* A listed host covers its subdomains. Returns the reason, or null. */
+function skipReason(url) {
+  let host;
+  try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
+  for (const [skipped, reason] of SKIP_HOSTS) {
+    if (host === skipped || host.endsWith(`.${skipped}`)) return reason;
+  }
+  return null;
+}
 
 /* ── Collect the links worth checking ─────────────────────────────────── */
 
@@ -180,13 +212,23 @@ async function main() {
   for (const e of entries) if (!seen.has(e.url)) seen.set(e.url, e);
   const unique = [...seen.values()];
 
-  const results = await pool(unique, check, CONCURRENCY);
+  const skipped = [];
+  const checkable = [];
+  for (const e of unique) {
+    const reason = skipReason(e.url);
+    (reason ? skipped : checkable).push(reason ? { ...e, reason } : e);
+  }
+
+  const results = await pool(checkable, check, CONCURRENCY);
   const dead = results.filter((r) => !r.ok);
 
   if (AS_JSON) {
-    process.stdout.write(`${JSON.stringify({ checked: unique.length, dead }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify({ checked: checkable.length, dead, skipped }, null, 2)}\n`);
   } else {
-    process.stdout.write(`Checked ${unique.length} links.\n`);
+    process.stdout.write(`Checked ${checkable.length} links.\n`);
+    for (const s of skipped) {
+      process.stdout.write(`Not checked: ${s.url}\n  ↳ ${s.reason}\n`);
+    }
     if (!dead.length) {
       process.stdout.write('All reachable (401/403/405/429 treated as bot-blocking, not breakage).\n');
     } else {
@@ -216,4 +258,4 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   });
 }
 
-export { check, NOT_A_FAILURE, fromLinksYaml, main };
+export { check, NOT_A_FAILURE, SKIP_HOSTS, skipReason, fromLinksYaml, fromPublications, main };

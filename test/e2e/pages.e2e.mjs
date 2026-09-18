@@ -248,3 +248,78 @@ describe('assets: nothing 404s', () => {
     assert.deepEqual(failures, []);
   });
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Every image renders at the shape it actually is.
+
+   The width/height attributes on `<img>` exist for CLS protection, and they
+   are also a presentational hint: `height="1024"` sets `height: 1024px`, which
+   is not `auto`. So an image whose intrinsic width exceeds its column has its
+   width clamped by `max-width: 100%` while its height stays pinned at the
+   attribute, and the picture is stretched vertically. The UA `aspect-ratio:
+   attr(width)/attr(height)` rule cannot save it, because that rule only
+   applies when height is auto.
+
+   It shipped. Every body figure on every project page wider than the 760px
+   prose measure was drawn too tall — the ARoundTheWorld survey plots, at
+   2030x575 in a 1020px box, at nearly double their real height. Nothing in
+   the static suite can see it (the markup is correct and the CSS is valid),
+   and it survives a screenshot review too, because a diagram stretched by a
+   consistent factor still looks like a diagram.
+
+   Measured against naturalWidth/naturalHeight rather than the attributes, so
+   a wrong attribute pair is caught by the same assertion.
+   ───────────────────────────────────────────────────────────────────────────── */
+describe('layout: images are not stretched', () => {
+  for (const [name, viewport] of Object.entries(VIEWPORTS)) {
+    test(`every rendered image keeps its intrinsic ratio at ${name}`, async () => {
+      const failures = [];
+      for (const path of allPages()) {
+        const page = await newPage(browser, server, { viewport });
+        try {
+          await page.goto(server.base + path, { waitUntil: 'load' });
+          await scrollThrough(page);
+          await page.evaluate(() => Promise.all(
+            [...document.images].filter((i) => !i.complete).map((i) => new Promise((r) => {
+              i.addEventListener('load', r, { once: true });
+              i.addEventListener('error', r, { once: true });
+            })),
+          ));
+          const bad = await page.evaluate(() => [...document.images]
+            .filter((img) => img.naturalWidth > 0 && img.getBoundingClientRect().width > 0)
+            /* `object-fit` other than `fill` preserves the ratio inside the box
+               by cropping or letterboxing, so a box of a different shape is the
+               point rather than the bug — the About portrait is a square file
+               in a taller frame. `fill` is the default, and the only value that
+               can stretch. */
+            .filter((img) => getComputedStyle(img).objectFit === 'fill')
+            .map((img) => {
+              /* The content box, not the border box: a framed figure pads the
+                 image, and padding is not part of the picture. */
+              const r = img.getBoundingClientRect();
+              const cs = getComputedStyle(img);
+              const px = (v) => parseFloat(cs[v]) || 0;
+              const w = r.width - px('paddingLeft') - px('paddingRight')
+                - px('borderLeftWidth') - px('borderRightWidth');
+              const h = r.height - px('paddingTop') - px('paddingBottom')
+                - px('borderTopWidth') - px('borderBottomWidth');
+              return {
+                src: img.getAttribute('src'),
+                natural: img.naturalWidth / img.naturalHeight,
+                drawn: w / h,
+                box: `${Math.round(w)}x${Math.round(h)}`,
+                intrinsic: `${img.naturalWidth}x${img.naturalHeight}`,
+              };
+            })
+            /* 2% covers sub-pixel rounding. */
+            .filter((m) => Math.abs(m.drawn - m.natural) / m.natural > 0.02));
+          for (const m of bad) {
+            failures.push(`${path}: ${m.src} is ${m.intrinsic} but drawn ${m.box}`);
+          }
+        } finally { await page.close(); }
+      }
+      assert.deepEqual(failures, [],
+        `these images are stretched — the usual cause is a missing \`height: auto\`:\n  ${failures.join('\n  ')}`);
+    });
+  }
+});

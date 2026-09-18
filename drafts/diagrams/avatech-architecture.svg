@@ -1,0 +1,84 @@
+<svg class="diagram" role="img" width="960" height="470" viewBox="0 0 960 470" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+  <title>AVATecH system diagram. Two technology providers, Fraunhofer IAIS and Fraunhofer HHI, supply the recognizers — independent, pluggable audio and video detectors. The recognizers exchange data with the annotation tools across a recognizer API described in XML under CMDI: enriched annotations travel out to the tools, and media files, annotations and corrections travel back. The annotation tools are ELAN, the multi-tier tool linguists already used, and ABAX, which runs the same recognizers in batch; MPI provides the infrastructure they run on. Enriched annotations reach the linguistic researchers at MPI, whose corrections and feedback return to the tools and on to the recognizers, closing the loop. Solid lines are data; dashed lines are interaction.</title>
+  <defs>
+    <marker id="av-d" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent)"/>
+    </marker>
+    <marker id="av-i" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="var(--accent2)"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="470" fill="var(--bg-alt)"/>
+
+  <!-- ── who supplies what ──────────────────────────────────── -->
+  <rect x="24" y="70" width="140" height="58" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="94" y="96" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Technology</text>
+  <text x="94" y="114" text-anchor="middle" fill="var(--text-muted)" font-size="10">Fraunhofer IAIS</text>
+  <rect x="24" y="148" width="140" height="58" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="94" y="174" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Technology</text>
+  <text x="94" y="192" text-anchor="middle" fill="var(--text-muted)" font-size="10">Fraunhofer HHI</text>
+  <rect x="24" y="330" width="140" height="58" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="94" y="356" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Infrastructure</text>
+  <text x="94" y="374" text-anchor="middle" fill="var(--text-muted)" font-size="10">MPI</text>
+
+  <!-- ── recognizers ────────────────────────────────────────── -->
+  <rect x="222" y="60" width="170" height="220" rx="12" fill="rgb(var(--text-rgb) / 0.03)" stroke="var(--border)" stroke-width="1"/>
+  <text x="307" y="86" text-anchor="middle" fill="var(--accent-text)" font-size="11" font-weight="700" letter-spacing="0.12em">RECOGNIZERS</text>
+  <rect x="238" y="102" width="138" height="32" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="307" y="123" text-anchor="middle" fill="var(--text)" font-size="11">Recognizer A</text>
+  <rect x="238" y="144" width="138" height="32" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="307" y="165" text-anchor="middle" fill="var(--text)" font-size="11">Recognizer B</text>
+  <rect x="238" y="186" width="138" height="32" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="307" y="207" text-anchor="middle" fill="var(--text)" font-size="11">Recognizer C</text>
+  <rect x="238" y="228" width="138" height="32" rx="7" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="307" y="249" text-anchor="middle" fill="var(--text)" font-size="11">…</text>
+
+  <!-- ── the contract between the two halves ────────────────── -->
+  <rect x="424" y="60" width="40" height="220" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="444" y="170" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600" transform="rotate(-90 444 170)">Recognizer API &#183; CMDI</text>
+
+  <!-- ── annotation tools ───────────────────────────────────── -->
+  <rect x="500" y="60" width="200" height="220" rx="12" fill="rgb(var(--text-rgb) / 0.03)" stroke="var(--border)" stroke-width="1"/>
+  <text x="600" y="86" text-anchor="middle" fill="var(--accent-text)" font-size="11" font-weight="700" letter-spacing="0.12em">ANNOTATION TOOLS</text>
+  <rect x="516" y="100" width="168" height="64" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="600" y="129" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">ELAN</text>
+  <text x="600" y="147" text-anchor="middle" fill="var(--text-muted)" font-size="10">the tool linguists used</text>
+  <rect x="516" y="184" width="168" height="64" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="600" y="213" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">ABAX</text>
+  <text x="600" y="231" text-anchor="middle" fill="var(--text-muted)" font-size="10">the same, in batch</text>
+
+  <!-- ── the humans the whole thing is for ──────────────────── -->
+  <rect x="760" y="64" width="168" height="52" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="844" y="94" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="600">Enriched annotations</text>
+  <rect x="760" y="148" width="168" height="64" rx="9" fill="var(--bg-card)" stroke="var(--accent2)" stroke-width="1.5"/>
+  <text x="844" y="177" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Linguistic</text>
+  <text x="844" y="195" text-anchor="middle" fill="var(--text-muted)" font-size="10">researchers (MPI)</text>
+  <rect x="760" y="244" width="168" height="52" rx="9" fill="var(--bg-card)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="844" y="274" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="600">Corrections</text>
+
+  <!-- ── flows: solid is data, dashed is interaction.
+       Labels sit clear of the row, above and below: the two gaps between
+       the panels are ~32px, which fits an arrowhead and nothing else. -->
+  <path d="M 164 99 H 214" fill="none" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#av-i)"/>
+  <path d="M 164 177 H 214" fill="none" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#av-i)"/>
+  <text x="189" y="142" text-anchor="middle" fill="var(--text-muted)" font-size="10">provides</text>
+  <path d="M 392 128 H 416" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <path d="M 464 128 H 492" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <text x="444" y="46" text-anchor="middle" fill="var(--text-muted)" font-size="10">enriched annotations →</text>
+  <path d="M 492 232 H 472" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <path d="M 424 232 H 400" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <text x="444" y="306" text-anchor="middle" fill="var(--text-muted)" font-size="10">← media · annotations · corrections</text>
+  <path d="M 700 116 H 752" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <path d="M 844 120 V 144" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <path d="M 844 216 V 240" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <path d="M 760 270 H 726 V 252 H 708" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#av-d)"/>
+  <path d="M 164 359 H 600 V 288" fill="none" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#av-i)"/>
+  <text x="380" y="352" text-anchor="middle" fill="var(--text-muted)" font-size="10">provides</text>
+
+  <rect x="24" y="404" width="300" height="42" rx="9" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1"/>
+  <line x1="44" y1="425" x2="84" y2="425" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="94" y="429" fill="var(--text-muted)" font-size="10.5">data</text>
+  <line x1="160" y1="425" x2="200" y2="425" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="210" y="429" fill="var(--text-muted)" font-size="10.5">interaction</text>
+</svg>

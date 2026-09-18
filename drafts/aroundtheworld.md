@@ -45,13 +45,13 @@ After each session, students completed a 20-item questionnaire adapted from the 
 
 Every question except the first received a positive response ("Agree" or "Strongly agree") from more than 60% of students. The usability and collaborative questions scored particularly well.
 
-![Survey results per question and grouped by category](img/projects/ARound_the_world_3.webp)
+![Survey results per question and grouped by category](img/projects/ARound_the_world_3.webp){plate}
 
-![Mean questionnaire scores with standard deviation](img/projects/ARound_the_world_4.webp)
+![Mean questionnaire scores with standard deviation](img/projects/ARound_the_world_4.webp){plate}
 
 Watchers gave a slightly higher mean score than players, though with greater variability, consistent with being less cognitively loaded during the quiz. Students using Apple devices (iPhone or iPad) rated the application marginally higher than those on Android or PC, but the difference was not statistically significant.
 
-![Survey results by device type, student role, and age group](img/projects/ARound_the_world_5.webp)
+![Survey results by device type, student role, and age group](img/projects/ARound_the_world_5.webp){plate}
 
 A Pearson correlation analysis between the number of in-app interactions and the questionnaire scores revealed a small but statistically significant positive correlation (*p* < 0.05): students who engaged more with the collaborative features rated the application more highly. A hierarchical clustering of active-user data in PCA space identified two main groups (one characterised by a high number of interactions and another by higher survey scores), suggesting that engagement and satisfaction, while correlated, capture different aspects of the experience.
 

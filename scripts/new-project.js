@@ -105,6 +105,14 @@ Body images support an optional caption:
 `);
 }
 
+/* Figure modifiers a draft may ask for, name → class. One entry, and it should
+   stay short: `plate` is for a published figure baked on a white ground that
+   cannot be redrawn (the survey plots on the ARoundTheWorld page are matplotlib
+   exports carrying ~100 labelled values from the paper — redrawing them means
+   transcribing published data by eye). The class makes the white deliberate
+   instead of reading as a broken dark theme. See css/styles.css. */
+const FIGURE_MODIFIERS = { plate: 'figure-plate' };
+
 // ─── Frontmatter parser ───────────────────────────────────────────────────────
 
 function splitFrontmatter(raw) {
@@ -407,6 +415,13 @@ function markdownToHtml(md) {
       continue;
     }
 
+    /* ![alt](src){plate} — the optional trailing modifier. Deliberately a
+       closed list rather than a pass-through class attribute: the point is
+       that a page is regenerated from its draft, so a presentational choice
+       has to survive that trip, and an open attribute would let arbitrary
+       markup in through a Markdown file. An unknown name throws rather than
+       rendering as literal text, which is how "[AVATecH](avatech.html)"
+       reached production as bracket soup. */
     /* ![alt](src) or ![alt](src "caption") — the optional quoted third part
        becomes a <figcaption>. It is worth having for two reasons. `.post figure
        figcaption` has been styled in css/styles.css all along with no consumer
@@ -414,9 +429,16 @@ function markdownToHtml(md) {
        produce one; and a caption is not a duplicate of the alt text, which
        describes the picture for someone who cannot see it, where a caption
        tells every reader what to look at in it. */
-    const imgBlock = raw.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)$/);
+    const imgBlock = raw.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)(?:\{([^}]*)\})?$/);
     if (imgBlock) {
       closeParagraph(); closeUl(); closeOl();
+      const modifier = imgBlock[4];
+      if (modifier !== undefined && !FIGURE_MODIFIERS[modifier]) {
+        throw new Error(
+          `Unknown figure modifier {${modifier}} — known: ${Object.keys(FIGURE_MODIFIERS).join(', ')}.`,
+        );
+      }
+      const figureClass = modifier ? ` class="${FIGURE_MODIFIERS[modifier]}"` : '';
       const alt = escapeHtml(imgBlock[1]);
       const rawSrc = imgBlock[2];
       const external = /^https?:\/\/|^\//.test(rawSrc);
@@ -432,7 +454,7 @@ function markdownToHtml(md) {
         ? `\n  <figcaption>${applyInline(escapeHtml(imgBlock[3]))}</figcaption>`
         : '';
       out.push(
-        `<figure>\n  <img src="${src}" alt="${alt}"${sizeAttr} loading="lazy" decoding="async" />`
+        `<figure${figureClass}>\n  <img src="${src}" alt="${alt}"${sizeAttr} loading="lazy" decoding="async" />`
         + `${caption}\n</figure>`,
       );
       continue;
