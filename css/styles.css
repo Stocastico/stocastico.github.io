@@ -4113,6 +4113,15 @@ figcaption {
 
 .post figure img {
   max-width: 100%;
+  /* Load-bearing, and it looks like boilerplate. The width/height attributes
+     these figures carry for CLS protection are also a presentational hint, so
+     `height="575"` means `height: 575px` — not auto. `max-width: 100%` then
+     clamps the width while the height stays pinned, and any image wider than
+     the prose measure is drawn stretched. It shipped that way: the three
+     survey plots on the ARoundTheWorld page were at nearly double their real
+     height. Guarded in test/e2e/pages.e2e.mjs, which measures the drawn box
+     against naturalWidth/naturalHeight. */
+  height: auto;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
 }
@@ -4148,6 +4157,18 @@ figcaption {
    white deliberate; extending the white only makes more white. Asked for from
    a draft with `![alt](src){plate}` — a plate being a framed illustration,
    which is what this is. */
+/* A framed figure also breaks out of the prose measure. `.post` is capped at
+   760px for line length, which is right for sentences and wrong for a 1536px
+   poster: at that width the browser is downscaling it 2.3x and every label in
+   it turns to mush. Same breakout `.mnist-lab` uses, and the same reasoning —
+   it is a picture, not a paragraph. 96vw rather than 100vw so a classic
+   scrollbar cannot push it past the viewport. */
+.post figure.figure-plate {
+  width: min(96vw, 1020px);
+  margin: 2rem 50%;
+  transform: translateX(-50%);
+}
+
 .post figure.figure-plate img {
   background: var(--bg-card);
   padding: clamp(0.6rem, 2.5vw, 1.25rem);

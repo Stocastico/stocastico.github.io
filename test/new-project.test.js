@@ -245,10 +245,14 @@ test('project: buildProjectPage omits og:image:width/height when dimensions are 
 });
 
 test('project: imageSize reads PNG and WebP dimensions, returns null when missing', () => {
-  /* Real repo assets with known dimensions cover the PNG + WebP code paths. */
+  /* Real repo assets with known dimensions cover the PNG + WebP code paths.
+     Note these are *content* files, not fixtures: re-exporting a hero moves
+     the numbers and fails here, which is what happened when the two undersized
+     heroes were finally replaced (issue #170). Update them; do not reach for a
+     looser assertion, because the point of the test is the exact pair. */
   assert.deepEqual(imageSize('img/projects/rag-document-qa-og.png'), { width: 1200, height: 630 });
   assert.deepEqual(imageSize('img/projects/mlops-bg.webp'), { width: 1600, height: 840 });
-  assert.deepEqual(imageSize('img/projects/avatech-bg.webp'), { width: 270, height: 187 });
+  assert.deepEqual(imageSize('img/projects/avatech-bg.webp'), { width: 1381, height: 506 });
   assert.equal(imageSize('img/projects/__does_not_exist__.webp'), null);
 });
 

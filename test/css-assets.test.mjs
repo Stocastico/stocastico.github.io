@@ -352,13 +352,11 @@ test('assets: no unreferenced images in img/', () => {
    is how a list like this stops being read. */
 const HERO_MIN_WIDTH = 600;
 
-/* Known too small. Replacing either file means deleting its line here — the
-   test fails if a pinned file grows, so the list cannot quietly outlive the
-   problem it records. */
-const UNDERSIZED_HEROES = new Set([
-  'img/projects/avatech-bg.webp',      // 270x187
-  'img/projects/mpi-brain-bg.webp',    // 292x173
-]);
+/* Known too small. Replacing a file means deleting its line here — the test
+   fails if a pinned file grows, so the list cannot quietly outlive the problem
+   it records, and it emptied out exactly that way: both entries were replaced
+   (issue #170) and the test named them on the next run. */
+const UNDERSIZED_HEROES = new Set([]);
 
 test('assets: project hero images are large enough to be stretched across a hero', () => {
   const pagesDir = path.join(ROOT, 'projects');
