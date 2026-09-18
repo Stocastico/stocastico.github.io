@@ -42,6 +42,9 @@ reserved. None of it is covered by either licence here:
 - **The publications themselves.** `data/publications.js` lists papers whose
   copyright sits with their publishers; the entries here are metadata and
   links, not the papers.
+- **UFC event photography** — `img/projects/ufc-octagon-overhead.webp` is an
+  official UFC image, used with the permission UFC grants for external use.
+  Not the author's to relicense, and so not covered by the CC BY grant.
 - **Fonts** — `fonts/*.woff2` are latin subsets of Source Serif 4 and
   JetBrains Mono, both under the [SIL Open Font Licence 1.1][ofl], which
   travels with the files. See the provenance note at the top of
