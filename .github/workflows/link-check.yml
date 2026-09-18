@@ -18,8 +18,10 @@
 #
 # The script filters 401/403/405/429 as bot-blocking rather than breakage —
 # without that, whc.unesco.org alone would file 130 false positives a month
-# and the issue would stop being read by the second run. See the long note at
-# the top of scripts/check-links.mjs.
+# and the issue would stop being read by the second run. A host that answers
+# a person but hangs on every automated request (an anti-bot interstitial,
+# rather than a status the checker can read) goes in SKIP_HOSTS instead, and
+# the report names it. See the long note at the top of scripts/check-links.mjs.
 
 name: Link check
 
