@@ -539,6 +539,38 @@ test('project: markdownToHtml emits no figcaption when none is given', () => {
   assert.doesNotMatch(markdownToHtml('![A](img/projects/mlops-bg.webp)'), /figcaption/);
 });
 
+/* `{plate}` — the one figure modifier, for a published figure that is baked on
+   a white ground and cannot be redrawn (see the note in css/styles.css). It has
+   to live in the Markdown rather than be hand-added to the page, because the
+   page is regenerated from the draft and a hand-added class dies silently the
+   first time that happens — which no parity test would catch, since parity
+   compares text and a class is not text. */
+test('project: markdownToHtml marks a {plate} figure', () => {
+  const html = markdownToHtml('![A chart](img/projects/mlops-bg.webp){plate}');
+  assert.match(html, /<figure class="figure-plate">/);
+  assert.match(html, /alt="A chart"/, 'the modifier must not leak into the alt text');
+  assert.doesNotMatch(html, /\{plate\}/, 'the modifier must not survive into the page');
+  assert.match(html, /width="1600" height="840"/, 'dimensions still read off the file');
+});
+
+test('project: markdownToHtml accepts {plate} alongside a caption', () => {
+  const html = markdownToHtml('![Alt](img/projects/mlops-bg.webp "From the paper"){plate}');
+  assert.match(html, /<figure class="figure-plate">/);
+  assert.match(html, /<figcaption>From the paper<\/figcaption>/);
+});
+
+test('project: markdownToHtml rejects an unknown figure modifier', () => {
+  assert.throws(
+    () => markdownToHtml('![A](img/projects/mlops-bg.webp){sparkle}'),
+    /sparkle/,
+    'an unknown modifier must fail loudly, not render as literal text',
+  );
+});
+
+test('project: a plain figure keeps no class attribute', () => {
+  assert.doesNotMatch(markdownToHtml('![A](img/projects/mlops-bg.webp)'), /<figure class=/);
+});
+
 // ─── the scaffold cannot silently lose site-wide chrome ───────────────────────
 
 /* test/nav-parity.test.mjs already checks this template's nav <ul>, and that

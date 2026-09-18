@@ -16,3 +16,15 @@ is in `js/render-cards.js`). What is in here is:
 
 `test/css-assets.test.mjs` fails on any file in here that nothing references,
 so a replaced image must have its old version deleted in the same commit.
+
+## Wanted
+
+* **A replacement for the UFC page's body figure.** `ufc-octagon-overhead.webp`
+  was a New York Times photograph with a visible `NYT | Published 2016`
+  watermark, republished here; it is gone (issue #170). The `<figure>` that
+  held it is deleted from both `drafts/ufc-fighter-tracking.md` and
+  `projects/ufc-fighter-tracking.html`, so nothing is broken and nothing is
+  marked TODO in the shipped page — the hole is recorded here and in the
+  issue. What goes back in needs a licence that permits it: own work, or an
+  explicit CC / stock grant. A press photo without a watermark is the same
+  photo without the evidence.

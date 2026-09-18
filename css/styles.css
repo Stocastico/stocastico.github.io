@@ -4124,6 +4124,32 @@ figcaption {
   font-style: italic;
 }
 
+/* ─── Published figures baked on white ──────────────────────
+   The three survey plots on projects/aroundtheworld.html are matplotlib
+   exports from the Virtual Reality paper, drawn on a white ground. In dark
+   mode a white rectangle hard against a warm brown page reads as a broken
+   theme — the same failure the four raster architecture diagrams had, and the
+   reason those were redrawn as inline SVG.
+
+   These deliberately are NOT redrawn. Between them they carry roughly a
+   hundred labelled values, so redrawing from an image means transcribing
+   published research data by eye, and a transcription error would be a wrong
+   number stated confidently — worse than the theme problem it fixed.
+
+   So the white is made deliberate instead of accidental: the plate extends
+   past the plot on every side, takes a neutral rule and a shadow, and reads
+   as a sheet laid on the page rather than as an image whose background failed
+   to load. The white is hardcoded, and this is the one place in this
+   stylesheet where that is right — it is not a palette colour, it is the
+   colour of the pixels inside the file, and it must not move when the palette
+   does. Asked for from a draft with `![alt](src){plate}`. */
+.post figure.figure-plate img {
+  background: #fff;
+  padding: clamp(0.6rem, 2.5vw, 1.25rem);
+  border-color: rgb(0 0 0 / 0.14);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.28);
+}
+
 /* ─── Inline architecture diagrams ──────────────────────────
    These are authored SVGs, and they used to ship as <img src="…svg">. An
    external SVG is its own document: it cannot see this page's custom

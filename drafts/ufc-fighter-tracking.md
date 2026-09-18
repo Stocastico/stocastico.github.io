@@ -14,8 +14,6 @@ This is one of the projects I tell people about when they ask what the most fun 
 
 The brief was easy to state, but the implementation was very complex: produce real-time, broadcast-quality statistics for an MMA fight, generated from the cage itself, with no human operator pressing buttons. The system had to work everywhere the UFC went, install in hours (usually the day before the event), survive the production environment of a live televised event, and feed numbers into the official mobile app while the fight was still happening.
 
-![UFC octagon from above, camera coverage](img/projects/ufc-octagon-overhead.webp)
-
 ## What We Measured
 
 The output of the system was a continuous stream of statistics for each of the two fighters:
