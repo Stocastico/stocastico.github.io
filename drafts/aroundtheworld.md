@@ -33,6 +33,7 @@ A dedicated web interface allows teachers to compose new question sets. Geograph
 
 The application was tested across three Basque secondary school classes: a group of 14-year-olds, a group of 17-year-olds, and a group of 19-year-olds. In total, 44 students and 3 teachers took part. Students were assigned either a tablet or a smartphone (players) or used the browser-based watcher interface, mirroring how devices are actually distributed in Basque classrooms.
 
+Table: Device allocation per class group
 | Group | Students | Tablets (players) | Smartphones (players) | Watchers |
 |---|---|---|---|---|
 | 14 year-olds | 17 | 4 | 5 | 8 |

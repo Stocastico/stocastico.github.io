@@ -792,3 +792,69 @@ test('project: diagram sources carry no baked-in colours', () => {
     assert.match(svg, /var\(--/, `drafts/diagrams/${file} reads no palette variable`);
   }
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Every scroll-region label in a committed page comes from its draft (#184).
+
+   draft-parity strips tags and compares rendered text, deliberately — that is
+   what keeps it robust against JSON-LD, CSP hashes and the analytics pixel.
+   An aria-label is an attribute, so it is invisible there, and one had already
+   drifted: projects/aroundtheworld.html carried
+   `aria-label="Device allocation per class group, scrollable"` where the
+   converter emits a fixed `"Table, scrollable"`. Someone improved it by hand
+   in a generated file, and regenerating the page would have thrown it away —
+   turning a named focus stop back into an anonymous one, with the page
+   rendering identically and nothing failing.
+
+   Checked against the regenerated body rather than against a list of expected
+   strings, so the Diagram and Figure labels added with the scroll shells are
+   covered by the same assertion, and so will whatever comes next.
+   ───────────────────────────────────────────────────────────────────────────── */
+test('project: scroll-region labels in a page are reproducible from its draft', () => {
+  const ROOT = path.join(__dirname, '..');
+  const labels = (html) => [...html.matchAll(/aria-label="([^"]*scrollable)"/g)].map((m) => m[1]).sort();
+  let checked = 0;
+  for (const file of fs.readdirSync(path.join(ROOT, 'drafts')).filter((f) => f.endsWith('.md'))) {
+    const page = path.join(ROOT, 'projects', file.replace('.md', '.html'));
+    if (!fs.existsSync(page)) continue;
+    const { body } = splitFrontmatter(fs.readFileSync(path.join(ROOT, 'drafts', file), 'utf8'));
+    const generated = labels(markdownToHtml(body));
+    const committed = labels(fs.readFileSync(page, 'utf8'));
+    checked += committed.length;
+    assert.deepEqual(committed, generated,
+      `${path.basename(page)} has scroll-region labels its draft does not produce — `
+      + 'regenerating it would silently replace them');
+  }
+  assert.ok(checked >= 12, `expected the scroll regions to be found, saw ${checked}`);
+});
+
+// ─── table captions (#184) ────────────────────────────────────────────────────
+
+test('project: "Table:" above a table becomes a caption and the region label', () => {
+  const html = markdownToHtml('Table: Device allocation per class group\n| A | B |\n|---|---|\n| 1 | 2 |');
+  assert.match(html, /<caption>Device allocation per class group<\/caption>/);
+  assert.match(html, /aria-label="Device allocation per class group, scrollable"/);
+  assert.doesNotMatch(html, /aria-label="Table, scrollable"/);
+});
+
+test('project: a table with no caption keeps the generic label and emits none', () => {
+  const html = markdownToHtml('| A | B |\n|---|---|\n| 1 | 2 |');
+  assert.match(html, /aria-label="Table, scrollable"/);
+  assert.doesNotMatch(html, /<caption>/);
+});
+
+/* The line has to sit directly above the header row. Without that, a
+   paragraph that merely opens "Table:" would be eaten and its text would
+   vanish from the page — which draft-parity *would* catch, but only after it
+   had shipped to someone regenerating a page. */
+test('project: "Table:" not followed by a table stays a paragraph', () => {
+  const html = markdownToHtml('Table: this is just prose.\n\nAnd more.');
+  assert.match(html, /<p>\nTable: this is just prose\.\n<\/p>/);
+  assert.doesNotMatch(html, /<caption>/);
+});
+
+test('project: a caption is escaped in both the element and the label', () => {
+  const html = markdownToHtml('Table: Fish & chips <b>\n| A |\n|---|\n| 1 |');
+  assert.match(html, /<caption>Fish &amp; chips &lt;b&gt;<\/caption>/);
+  assert.match(html, /aria-label="Fish &amp; chips &lt;b&gt;, scrollable"/);
+});
