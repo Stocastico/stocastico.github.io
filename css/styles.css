@@ -4175,6 +4175,47 @@ figcaption {
   box-shadow: 0 2px 10px rgb(0 0 0 / 0.28);
 }
 
+/* ─── Wide figures on a phone (#182) ────────────────────────
+   `.post` is capped at 760px for line length, and a framed figure's breakout
+   to `min(96vw, 1020px)` is a no-op at 390px, where 96vw is 374. So a 1536px
+   poster was drawn at 0.24x and an 11px label inside it landed under 3 CSS
+   pixels — present, and carrying nothing. Pinch-zoom works (the viewport meta
+   allows it), but a figure rendered that small does not look like something
+   worth zooming into.
+
+   Below the breakpoint the figure's content therefore renders at a readable
+   size and the reader pans, which is what `.table-scroll` already does for a
+   wide table. 1100px is a compromise measured against the real figures rather
+   than a round number: the UFC poster lands at 0.72x and the survey plots at
+   0.54x, legible, while the pan stays near 3x — at their full intrinsic width
+   the labels would be perfect and the pan would be 4x and nobody would finish
+   it. The inline diagrams are under the cap already and render at their own
+   size, sharp.
+
+   The caption sits outside the scroller on purpose: panning sideways to
+   finish a sentence would be worse than the problem being solved. */
+@media (max-width: 760px) {
+  .post figure .figure-scroll {
+    overflow-x: auto;
+    /* A horizontal swipe belongs to the figure, not to the browser's
+       back gesture. */
+    overscroll-behavior-x: contain;
+  }
+
+  .post figure.figure-plate .figure-scroll > img,
+  .post figure .figure-scroll > .diagram {
+    max-width: 1100px;
+    width: auto;
+  }
+}
+
+/* The focus ring matches .table-scroll's — this is the same kind of stop. */
+.post figure .figure-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-md);
+}
+
 /* ─── Inline architecture diagrams ──────────────────────────
    These are authored SVGs, and they used to ship as <img src="…svg">. An
    external SVG is its own document: it cannot see this page's custom

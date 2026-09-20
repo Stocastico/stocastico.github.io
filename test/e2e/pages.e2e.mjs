@@ -323,3 +323,92 @@ describe('layout: images are not stretched', () => {
     });
   }
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Wide figures stay readable on a phone (#182).
+
+   `.post` is capped at 760px for line length, and a framed figure's breakout
+   to `min(96vw, 1020px)` is a no-op at 390px — 96vw is 374. So a 1536px poster
+   was being scaled to 0.24x and an 11px label inside it landed under 3 CSS
+   pixels. Pinch-zoom works (the viewport meta allows it), but a figure drawn
+   that small does not look like something worth zooming into.
+
+   The fix is the pattern `.table-scroll` already established: below the
+   breakpoint the figure is its own horizontal scroller and the content renders
+   large enough to read. Two halves, and both are asserted here, because
+   shipping the first without the second trades one bug for another:
+
+     · the content is not squeezed to the viewport (CONTENT_FLOOR), and
+     · the scroller is keyboard-reachable — an unfocusable scroll region is
+       WCAG 2.1.1, and axe's scrollable-region-focusable is tagged wcag2a.
+
+   The desktop case is asserted too, in the opposite direction: the mechanism
+   must stay confined to narrow viewports. A scroller that appears at 1440,
+   where everything already fits, would be a regression nothing else would
+   report.
+   ───────────────────────────────────────────────────────────────────────────── */
+const WIDE_FIGURES = '.post figure .figure-scroll';
+
+/* Below this the figure is not really readable, and above ~1100 the pan gets
+   long enough that a reader gives up. It is a floor, not the chosen width. */
+const CONTENT_FLOOR = 700;
+
+const measureWideFigures = (page) => page.evaluate((sel) => [...document.querySelectorAll(sel)]
+  .map((el) => ({
+    cls: el.className || el.tagName.toLowerCase(),
+    clientWidth: el.clientWidth,
+    scrollWidth: el.scrollWidth,
+    tabIndex: el.tabIndex,
+    role: el.getAttribute('role'),
+    label: el.getAttribute('aria-label'),
+    overflowX: getComputedStyle(el).overflowX,
+  })), WIDE_FIGURES);
+
+describe('layout: wide figures are readable on a phone', () => {
+  test('at 390px a wide figure scrolls instead of shrinking, and can be focused', async () => {
+    const failures = [];
+    let seen = 0;
+    for (const path of allPages()) {
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.mobile });
+      try {
+        await page.goto(server.base + path, { waitUntil: 'load' });
+        await scrollThrough(page);
+        for (const f of await measureWideFigures(page)) {
+          seen += 1;
+          if (f.scrollWidth < CONTENT_FLOOR) {
+            failures.push(`${path}: ${f.cls} content is only ${f.scrollWidth}px wide`);
+          }
+          if (!['auto', 'scroll'].includes(f.overflowX)) {
+            failures.push(`${path}: ${f.cls} has overflow-x: ${f.overflowX}, so the content is cut off`);
+          }
+          if (f.scrollWidth > f.clientWidth && f.tabIndex < 0) {
+            failures.push(`${path}: ${f.cls} scrolls but is not focusable (WCAG 2.1.1)`);
+          }
+          if (f.scrollWidth > f.clientWidth && !(f.role && f.label)) {
+            failures.push(`${path}: ${f.cls} is a focus stop with no role/aria-label`);
+          }
+        }
+      } finally { await page.close(); }
+    }
+    assert.ok(seen >= 8, `expected the wide figures to be found, saw ${seen}`);
+    assert.deepEqual(failures, [], `\n  ${failures.join('\n  ')}`);
+  });
+
+  test('at 1440px no wide figure needs to scroll', async () => {
+    const failures = [];
+    for (const path of allPages()) {
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + path, { waitUntil: 'load' });
+        await scrollThrough(page);
+        for (const f of await measureWideFigures(page)) {
+          if (f.scrollWidth > f.clientWidth + 1) {
+            failures.push(`${path}: ${f.cls} scrolls at 1440 (${f.scrollWidth} in ${f.clientWidth})`);
+          }
+        }
+      } finally { await page.close(); }
+    }
+    assert.deepEqual(failures, [],
+      `the phone treatment has leaked on to the desktop layout:\n  ${failures.join('\n  ')}`);
+  });
+});
