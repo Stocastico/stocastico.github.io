@@ -719,7 +719,14 @@ test('project: every image a draft names exists on disk', () => {
    committed markup byte for byte — the only reason to believe the drafts are
    a real source rather than a plausible-looking one. */
 
-const DIAGRAM_FIGURE = /^([ \t]*)<figure>\n[ \t]*<svg class="diagram"[\s\S]*?<\/svg>\n[ \t]*<\/figure>/gm;
+/* The shape is spelled out rather than loosened, so that a change to the
+   figure markup fails here loudly instead of silently matching nothing. It
+   already earned that once: adding the `.figure-scroll` shell (#182) put a
+   <div> between <figure> and <svg>, this stopped matching, and the "has no
+   inline diagram to compare against" guard below is what said so — without
+   it the test would have compared an empty list to an empty list and
+   passed. */
+const DIAGRAM_FIGURE = /^([ \t]*)<figure>\n[ \t]*<div class="figure-scroll"[^>]*>\n[ \t]*<svg class="diagram"[\s\S]*?<\/svg>\n[ \t]*<\/div>\n[ \t]*<\/figure>/gm;
 
 /* Pages disagree about body indentation — clear-architecture.html has been
    through a formatter and sits at four spaces, mlops-vertex-media.html at
@@ -754,7 +761,10 @@ test('project: !svg() inlines a diagram exactly as the committed pages carry it'
 
 test('project: !svg() emits inline SVG, never an <img>', () => {
   const html = markdownToHtml('!svg(drafts/diagrams/rag-query.svg)');
-  assert.match(html, /<figure>\n {2}<svg class="diagram"/);
+  /* The SVG sits inside the focusable scroll shell (#182), not directly under
+     the <figure> — the shell is what lets a phone pan a 960px diagram instead
+     of being shown it at 0.4x. */
+  assert.match(html, /<figure>\n {2}<div class="figure-scroll" tabindex="0" role="group"[^>]*>\n {4}<svg class="diagram"/);
   assert.doesNotMatch(html, /<img/,
     'test/css-assets.test.mjs fails on a diagram that reverts to <img> — and it '
     + 'would be right to: an external SVG cannot read the page\'s palette');

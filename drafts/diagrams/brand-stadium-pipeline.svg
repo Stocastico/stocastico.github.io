@@ -1,4 +1,4 @@
-<svg class="diagram" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
+<svg class="diagram" role="img" width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace">
   <title>Two-stage pipeline: a YOLO detector locates advertising holders in each broadcast frame, a DenseNet201 classifier assigns each crop to one of 52 brands, and brand exposure time is measured — with static ads trained once and dynamic LED-board ads re-fit weekly, all orchestrated on Azure.</title>
   <defs>
     <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="0">

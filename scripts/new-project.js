@@ -113,6 +113,29 @@ Body images support an optional caption:
    instead of reading as a broken dark theme. See css/styles.css. */
 const FIGURE_MODIFIERS = { plate: 'figure-plate' };
 
+/* A wide figure gets its own focusable horizontal scroller below the phone
+   breakpoint (#182): `.post` is capped at 760px and a 1536px poster scaled to
+   fit it lands at 0.24x, where an 11px label is under 3 CSS pixels.
+
+   The scroller is an inner div rather than the <figure> itself, and that is
+   not a detail. A <figure> takes its accessible name from its <figcaption>,
+   so putting the aria-label there would override the caption, and a role
+   would drop the figure semantics the caption depends on. The caption also
+   belongs outside the scroller — nobody should have to pan sideways to read
+   it.
+
+   tabindex="0" is required rather than cosmetic, exactly as on .table-scroll:
+   an unfocusable scroll region cannot be scrolled by keyboard (WCAG 2.1.1,
+   and axe's scrollable-region-focusable is tagged wcag2a), so shipping the
+   overflow without it would trade one bug for another. It costs an idle tab
+   stop at desktop widths, where nothing scrolls, which is the same bargain
+   the table wrapper already makes. */
+function scrollShell(inner, label) {
+  return `  <div class="figure-scroll" tabindex="0" role="group" aria-label="${label}, scrollable">\n`
+    + inner.split('\n').map((l) => `  ${l}`).join('\n')
+    + `\n  </div>`;
+}
+
 // ─── Frontmatter parser ───────────────────────────────────────────────────────
 
 function splitFrontmatter(raw) {
@@ -411,7 +434,7 @@ function markdownToHtml(md) {
          every line of a regenerated page differ from the one it replaces —
          which is exactly the noise that hides a real change in a diff. */
       const [open, ...rest] = markup.split('\n');
-      out.push(`<figure>\n  ${[open, ...rest].join('\n')}\n</figure>`);
+      out.push(`<figure>\n${scrollShell(`  ${[open, ...rest].join('\n')}`, 'Diagram')}\n</figure>`);
       continue;
     }
 
@@ -453,8 +476,9 @@ function markdownToHtml(md) {
       const caption = imgBlock[3]
         ? `\n  <figcaption>${applyInline(escapeHtml(imgBlock[3]))}</figcaption>`
         : '';
+      const img = `  <img src="${src}" alt="${alt}"${sizeAttr} loading="lazy" decoding="async" />`;
       out.push(
-        `<figure${figureClass}>\n  <img src="${src}" alt="${alt}"${sizeAttr} loading="lazy" decoding="async" />`
+        `<figure${figureClass}>\n${modifier ? scrollShell(img, 'Figure') : img}`
         + `${caption}\n</figure>`,
       );
       continue;
