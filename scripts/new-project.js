@@ -276,6 +276,7 @@ function applyInline(text) {
 function markdownToHtml(md) {
   const lines = md.split('\n');
   const out = [];
+  let pendingCaption = null;
   let inParagraph = false;
   let inUl = false;
   let inOl = false;
@@ -347,6 +348,30 @@ function markdownToHtml(md) {
       continue;
     }
 
+    /* `Table: <text>` immediately above a table names it (#184). The name
+       becomes a visible <caption> as well as the scroll region's aria-label,
+       and that is the point rather than a nicety: an aria-label is an
+       attribute, and draft-parity compares rendered *text*, so a label that
+       lives only in an attribute is a label nothing guards. One had already
+       drifted — aroundtheworld.html carried a hand-written
+       "Device allocation per class group" that regenerating the page would
+       have silently replaced with the generic "Table". As content it is
+       covered by the guard that already exists.
+
+       It must sit on the line directly above the header row, with no blank
+       line, so an ordinary paragraph that happens to begin "Table:" is not
+       swallowed. */
+    const tableCaption = raw.match(/^Table:\s*(.+)$/);
+    if (
+      tableCaption
+      && i + 2 < lines.length
+      && /^\s*\|.*\|\s*$/.test(lines[i + 1])
+      && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 2])
+    ) {
+      pendingCaption = tableCaption[1].trim();
+      continue;
+    }
+
     /* Markdown table: a header row, a |---|---| delimiter, then body rows. */
     if (
       /^\s*\|.*\|\s*$/.test(raw) &&
@@ -378,9 +403,14 @@ function markdownToHtml(md) {
          unreachable by keyboard (WCAG 2.1.1, and axe's
          scrollable-region-focusable is tagged wcag2a). The wrapper costs
          nothing when the table already fits. */
+      const name = pendingCaption;
+      pendingCaption = null;
+      const caption = name
+        ? `  <caption>${applyInline(escapeHtml(name))}</caption>\n`
+        : '';
       out.push(
-        `<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrollable">\n`
-        + `<table>\n${thead}\n${tbody}\n</table>\n`
+        `<div class="table-scroll" tabindex="0" role="region" aria-label="${escapeHtml(name || 'Table')}, scrollable">\n`
+        + `<table>\n${caption}${thead}\n${tbody}\n</table>\n`
         + `</div>`
       );
       continue;

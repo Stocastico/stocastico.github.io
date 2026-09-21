@@ -4067,6 +4067,24 @@ figcaption {
   outline-offset: 3px;
 }
 
+/* A named table says its name out loud (#184). The name also becomes the
+   scroll region's aria-label, and putting it here rather than only in that
+   attribute is what keeps it guarded: draft-parity compares rendered text, so
+   a label that exists only as an attribute is a label nothing checks — which
+   is how a hand-written one came to be sitting in a generated page waiting to
+   be overwritten. Above the table, where a caption belongs, and left-aligned
+   with everything else on the page. */
+.post table caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 0.6rem;
+}
+
 .post table {
   width: 100%;
   border-collapse: collapse;
