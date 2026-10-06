@@ -58,6 +58,7 @@
     "check-links": "node scripts/check-links.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-llms": "node scripts/generate-llms.mjs",
+    "archive-now": "node scripts/archive-now.mjs",
     "generate-feed": "node scripts/generate-feed.mjs",
     "generate-project-jsonld": "node scripts/generate-project-jsonld.mjs",
     "generate-csp-meta": "node scripts/generate-csp-meta.mjs",

@@ -1,0 +1,49 @@
+# Archive the /now page's prose whenever it changes.
+#
+# now.html is overwritten in place, so each update erases the last. This job
+# runs scripts/archive-now.mjs, which writes now-archive/now-<date>.md from the
+# page's "Last updated" date, and commits the file back to main. The archive is
+# for the author and is never deployed (Vite does not copy it).
+#
+# A push made with GITHUB_TOKEN does not trigger other workflows, so this
+# commit does not redeploy the site — nothing user-visible changed.
+#
+# If main has branch protection requiring PRs, this push will be rejected;
+# allow github-actions[bot] to bypass it, or switch to opening a PR.
+
+name: Archive Now
+
+on:
+  push:
+    branches: [main]
+    paths: [now.html]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: archive-now
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    name: Archive now.html prose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/archive-now.mjs
+      - name: Commit the archive entry
+        run: |
+          if [ -z "$(git status --porcelain now-archive)" ]; then
+            echo "Archive already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add now-archive
+          git commit -m "Archive /now update"
+          git push
