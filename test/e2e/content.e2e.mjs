@@ -208,11 +208,11 @@ describe('content: the sections that carry the substance are populated', () => {
 });
 
 /* ─── Scroll-driven animations ────────────────────────────────────────────
-   The reading-progress bar and the hero parallax used to be JavaScript: a
-   scroll listener, a rAF, and — for the bar — a document height memoised
+   The reading-progress bar (and once the hero parallax) used to be JavaScript:
+   a scroll listener, a rAF, and — for the bar — a document height memoised
    behind a resize listener, a load listener and a ResizeObserver, because
    reading scrollHeight per scroll event forces a synchronous layout. Both are
-   CSS scroll-progress timelines now.
+   CSS scroll-progress timelines now (the parallax has since been removed).
 
    That move is only safe if the effects actually still happen, and nothing in
    the static suite can tell: `animation-timeline: scroll(root block)` is a
@@ -262,82 +262,11 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
     } finally { await page.close(); }
   });
 
-  /* The keyframe is `translate: 0 var(--hero-drift)` over a 0→100dvh range, so
-     the copy should have moved that fraction of the scroll. Read the fraction
-     off the element rather than hard-coding it: this used to assert a literal
-     0.28 — "the ratio the JS used" — which made the number look like the
-     invariant when the real one is the test below it. 0.28 was in fact the bug. */
-  test('the hero copy parallaxes by the drift the stylesheet declares', async () => {
-    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-
-      const translateY = () => page.evaluate(() => {
-        const t = getComputedStyle(document.querySelector('.hero-content')).translate;
-        const parts = String(t).split(/\s+/);
-        return parts.length > 1 ? parseFloat(parts[1]) : 0;
-      });
-
-      assert.equal(await translateY(), 0, 'the hero copy should start unmoved');
-
-      /* A custom property is not resolved at computed-value time, so this comes
-         back as the authored token ("20dvh") and the number in front of it is
-         the percentage of the range. */
-      const rate = await page.evaluate(() => parseFloat(
-        getComputedStyle(document.querySelector('.hero-content'))
-          .getPropertyValue('--hero-drift')) / 100);
-      assert.ok(rate > 0, 'the stylesheet should declare a non-zero --hero-drift');
-
-      const at = await scrollTo(page, 300);
-      const y = await translateY();
-      const expected = at * rate;
-      assert.ok(Math.abs(y - expected) < 1,
-        `hero translated ${y}px at ${at}px of scroll, expected about ${expected}px`);
-    } finally { await page.close(); }
-  });
-
-  /* The invariant that actually matters, and the one nothing was asserting.
-
-     #hero clips (overflow: hidden) and the copy inside it is vertically centred
-     and drifting *down*, so the drift is bounded by the space underneath — and
-     28dvh was past that bound on any window shorter than about 1100px. A
-     visitor on a 650px-tall laptop window, a few hundred pixels down the page,
-     got the "draw it a digit" aside cut in half and then the Download CV button
-     after it. Every static assertion in the repo was green, because the markup
-     was perfect; the pixels were not.
-
-     Short viewport, several scroll positions, and the question asked of the
-     elements rather than of the effect: is the bottom of this still inside the
-     box that clips it. */
-  test('nothing in the hero is clipped by the hero at any scroll position', async () => {
-    const page = await newPage(browser, server, { viewport: { width: 1440, height: 650 } });
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      /* The aside is revealed only once a hero scene has painted. */
-      await page.waitForSelector('.hero-cnn-link:not([hidden])', { timeout: 8000 }).catch(() => {});
-
-      for (const to of [0, 150, 300, 450, 600]) {
-        await scrollTo(page, to);
-        const spill = await page.evaluate(() => {
-          const heroBottom = document.getElementById('hero').getBoundingClientRect().bottom;
-          return ['.hero-actions', '.hero-cnn-link', '.hero-tagline', '.hero-location']
-            .map((sel) => {
-              const el = document.querySelector(sel);
-              if (!el || el.hidden || getComputedStyle(el).display === 'none') return null;
-              const over = el.getBoundingClientRect().bottom - heroBottom;
-              return over > 1 ? `${sel} hangs ${Math.round(over)}px below the hero` : null;
-            })
-            .filter(Boolean);
-        });
-        assert.deepEqual(spill, [], `at ${to}px of scroll: ${spill.join('; ')}`);
-      }
-    } finally { await page.close(); }
-  });
-
-  /* Both effects are decoration, so reduced motion drops them entirely. This
-     is a media query in the stylesheet now rather than a prefersReducedMotion()
-     branch at the top of two init functions. */
-  test('reduced motion leaves both of them alone', async () => {
+  /* Decoration, so reduced motion drops it entirely. This is a media query
+     in the stylesheet now rather than a prefersReducedMotion() branch at the
+     top of an init function. (The hero parallax this test also covered is
+     gone; the hero no longer stages copy over a background scene.) */
+  test('reduced motion leaves the progress bar alone', async () => {
     const page = await newPage(browser, server, {
       viewport: VIEWPORTS.desktop, reducedMotion: 'reduce',
     });
@@ -345,13 +274,85 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       await scrollTo(page, 600);
 
-      const state = await page.evaluate(() => ({
-        bar: +new DOMMatrix(
-          getComputedStyle(document.getElementById('reading-progress')).transform).a.toFixed(3),
-        hero: getComputedStyle(document.querySelector('.hero-content')).translate,
-      }));
-      assert.equal(state.bar, 0, 'the progress bar animated under reduced motion');
-      assert.equal(state.hero, 'none', 'the hero parallaxed under reduced motion');
+      const bar = await page.evaluate(() => +new DOMMatrix(
+        getComputedStyle(document.getElementById('reading-progress')).transform).a.toFixed(3));
+      assert.equal(bar, 0, 'the progress bar animated under reduced motion');
     } finally { await page.close(); }
   });
 });
+
+/* ─── The hero: the name through a receptive field ───────────────────────
+   js/receptive-field.js paints the name as a pixel grid and swaps the text
+   <h1> out of sight once it has. Everything here is about that swap and the
+   controls, because those are the parts a static test cannot see: whether the
+   canvas painted anything, whether the name is still the page's heading for a
+   screen reader, and whether choosing a filter or moving the window actually
+   changes the picture. */
+describe('hero: the receptive field', () => {
+  const canvasHash = (page) => page.evaluate(() => {
+    const c = document.getElementById('field-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let h = 0, ink = 0;
+    for (let i = 0; i < d.length; i += 4 * 5) { h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 3]) | 0; if (d[i + 3] > 0) ink++; }
+    return { h, ink };
+  });
+
+  for (const [label, viewport] of [['desktop', VIEWPORTS.desktop], ['phone', { width: 390, height: 844 }]]) {
+    test(`${label}: the grid paints, the name stays the heading, the controls work`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+
+        const first = await canvasHash(page);
+        assert.ok(first.ink > 500, `the hero canvas is nearly blank (${first.ink} painted samples)`);
+
+        const h1 = await page.evaluate(() => {
+          const el = document.querySelector('#hero h1');
+          return { text: el.textContent.trim(), count: document.querySelectorAll('h1').length };
+        });
+        assert.equal(h1.text, 'Stefano Masneri');
+        assert.equal(h1.count, 1);
+        assert.equal(await page.isVisible('.field-controls'), true, 'the filter controls were not revealed');
+
+        await page.click('[data-filter="corners"]');
+        await page.waitForTimeout(150);
+        assert.equal(await page.getAttribute('[data-filter="corners"]', 'aria-pressed'), 'true');
+        const corners = await canvasHash(page);
+        assert.notEqual(corners.h, first.h, 'choosing a filter did not change the picture');
+
+        await page.click('[data-filter="learned"]');
+        await page.waitForTimeout(400);
+        assert.equal(await page.isVisible('.field-next'), true, 'the learned filter offers the next kernel');
+        assert.match(await page.textContent('.field-caption'), /Filter \d of 6/);
+
+        /* Keyboard path: the range input moves the window. */
+        const before = await canvasHash(page);
+        await page.focus('#field-pos');
+        for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowLeft');
+        await page.waitForTimeout(100);
+        assert.notEqual((await canvasHash(page)).h, before.h, 'moving the range did not move the window');
+
+        /* Pointer path: a horizontal drag across the grid. */
+        const box = await page.locator('#field-canvas').boundingBox();
+        await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.5);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.5, { steps: 5 });
+        await page.mouse.up();
+        const pos = Number(await page.inputValue('#field-pos'));
+        assert.ok(pos > 850, `dragging to 90% left the range at ${pos}`);
+      } finally { await page.close(); }
+    });
+  }
+
+  test('without JavaScript the name is plain text and no dead controls show', async () => {
+    const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });
+    const page = await ctx.newPage();
+    try {
+      await page.goto(server.base + '/index.html');
+      assert.equal(await page.isVisible('#hero h1'), true, 'the name is hidden with JS off');
+      assert.equal(await page.isVisible('.field-controls'), false, 'filter buttons showed with nothing to drive them');
+    } finally { await ctx.close(); }
+  });
+});
+

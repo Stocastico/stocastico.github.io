@@ -329,14 +329,16 @@ export class ReceptiveField {
     if (f.id === 'learned' && !this._learned) {
       const { HERO_SCAN } = await import('../data/hero-scan.js');
       this._learned = decodeLearned(HERO_SCAN);
-      /* Start on the filter that has the most to say about this name —
-         two of the six are dead ReLUs in the trained model, and opening on
-         a near-blank map would read as a bug. */
+      /* Start on the most edge-like of the six: large weights that nearly
+         cancel. Picking by raw response energy chose filter 4, whose weights
+         are all negative — a blur with its sign flipped, which paints the
+         name as one green smudge and says nothing about what a conv layer
+         learns. (Two others are dead ReLUs in the trained model.) */
       let best = -1;
       this._learned.forEach((k, i) => {
-        const r = convolve(this.grid, this.cols, this.rows, k);
-        const energy = r.reduce((a, v) => a + Math.abs(v), 0) / k.reduce((a, v) => a + Math.abs(v), 0);
-        if (energy > best) { best = energy; this._learnedIdx = i; }
+        const mass = k.reduce((a, v) => a + Math.abs(v), 0);
+        const score = mass - Math.abs(k.reduce((a, v) => a + v, 0));
+        if (score > best) { best = score; this._learnedIdx = i; }
       });
     }
     this.filter = f;
@@ -370,7 +372,10 @@ export class ReceptiveField {
     const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/^(-?)0\./, '$1.'));
     const { accent, accent2 } = this._theme;
     const cells = Array.from(k, (v) => {
-      const a = (Math.abs(v) / max) * 0.85;
+      /* Capped well below opaque: the numbers sit on the tint in the
+         page's text colour, and a full-strength accent behind them fails
+         4.5:1 (axe caught the centre weight of the Laplacian). */
+      const a = (Math.abs(v) / max) * 0.38;
       const bg = v > 0 ? rgba(accent, a) : v < 0 ? rgba(accent2, a) : 'transparent';
       return `<span style="background:${bg}">${fmt(v)}</span>`;
     });
@@ -416,7 +421,10 @@ export class ReceptiveField {
         let fill = empty;
         if (x < sx) {
           const v = response[i];
-          if (Math.abs(v) >= 0.06) fill = rgba(v > 0 ? accent : accent2, Math.min(1, 0.3 + Math.abs(v) * 0.9));
+          /* Weak responses fade out rather than holding a floor: on thick
+             strokes a 5×5 filter answers faintly almost everywhere near the
+             ink, and painting all of it at 30% read as mud, not structure. */
+          if (Math.abs(v) >= 0.08) fill = rgba(v > 0 ? accent : accent2, Math.min(1, 0.12 + Math.abs(v) ** 0.9));
         } else if (grid[i] > 0.35) {
           fill = rgba(text, grid[i]);
         }
@@ -438,6 +446,14 @@ export class ReceptiveField {
 
     if (this._range) this._range.value = String(Math.round(this.t * 1000));
     if (this._onReady) { const cb = this._onReady; this._onReady = null; cb(); }
+  }
+
+  /* themechange: same filter, same window, the new palette. */
+  recolour() {
+    if (!this.ctx) return;
+    this._theme = getTheme();
+    this._renderKernel();
+    this._draw();
   }
 
   destroy() {

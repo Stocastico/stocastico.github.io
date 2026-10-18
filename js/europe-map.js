@@ -128,7 +128,7 @@ export class EuropeMap2D {
     /* All the geometry above is in CSS pixels and stays that way — only the
        backing store is scaled, with _draw() applying the matching transform.
        Without this the map was the one canvas on the site rendering at 1×
-       (globe 1.7, cnn-hero 1.75, mnist-lab 2.0), and its coastlines are
+       (globe 1.7, mnist-lab 2.0), and its coastlines are
        hairlines, which is precisely what a half-resolution buffer ruins.
        Capped at 2: beyond that the fill cost climbs faster than anyone can
        see the difference. */

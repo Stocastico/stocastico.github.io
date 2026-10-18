@@ -21,7 +21,6 @@ import {
   initTheme,
   initCardTilt,
   initBackToTop,
-  NoiseGradient,
   renderProjects,
   homepageProjects,
   PROJECTS_MAX_HOMEPAGE,
@@ -31,7 +30,7 @@ import {
    dynamically imports them so Three.js is not in the per-page bundle. */
 import { Globe3D, GlobeFallback2D, isEuropeanSecondaryPin } from '../js/globe.js';
 import { hasCoords } from '../js/utils.js';
-import { KernelScan } from '../js/kernel-scan.js';
+import { ReceptiveField, FILTERS } from '../js/receptive-field.js';
 import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1187,440 +1186,153 @@ test('initCardTilt skips when prefers-reduced-motion is set', () => {
   }
 });
 
-/* initScroll3D is gone — the hero parallax is a CSS scroll-progress timeline
-   on .hero-content now. Its three tests went with it: they asserted that a
-   scroll listener was registered, that the teardown removed it, and that the
-   whole thing was skipped on coarse pointers. None of those facts exist any
-   more, and the behaviour they stood in for (does the hero copy drift as the
-   page scrolls) was never observable from this layer anyway. */
-/* The static analysis that used to live here (neural-net.js imports no Three,
-   holds no Three-backed class) moved to test/hero-scan.test.mjs along with the
-   module it guarded: the narrow-viewport hero is js/kernel-scan.js now, and
-   the checks worth making about it are about conv1, not about particles. */
+/* initScroll3D is gone, and so is the hero parallax it once drove (later a
+   CSS scroll timeline, now nothing: the hero no longer stages copy over a
+   background scene). Its three tests went with the JS version. */
+/* The hero used to be two Canvas2D scenes (the CNN pipeline, the conv1 kernel
+   scan) over a WebGL noise gradient, swapped at a breakpoint. All three went
+   when the hero became js/receptive-field.js; their tests went with them. The
+   filter arithmetic is tested in test/receptive-field.test.mjs, and the
+   chunk boundaries in test/hero-scan.test.mjs. What is left for this layer is
+   the wiring and the renderer's DOM contract. */
 
-test('main.js hero uses the Canvas2D backgrounds, not the Three.js path', () => {
+test('main.js reaches the hero through a dynamic import and recolours it in place', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
-  /* Two Canvas2D implementations share the hero canvas — the full CNN
-     forward-pass scene on roomy viewports, conv1 close up everywhere else —
-     and both are reached through a dynamic import so neither lands in the
-     main chunk, along with the baked data each of them imports. */
-  assert.ok(/import\(['"]\.\/kernel-scan\.js['"]\)[\s\S]{0,80}KernelScan/.test(src),
-    'hero should fall back to KernelScan on narrow / touch viewports');
-  assert.ok(/import\(['"]\.\/cnn-hero\.js['"]\)[\s\S]{0,80}CnnHero/.test(src),
-    'hero should load the CNN background on capable viewports');
-  assert.ok(!/new NeuralNetwork\(/.test(src),
-    'hero should not construct the Three.js NeuralNetwork any more');
+  assert.ok(/import\(['"]\.\/receptive-field\.js['"]\)[\s\S]{0,80}ReceptiveField/.test(src),
+    'the hero should be loaded at its init site');
+  assert.ok(!/cnn-hero|kernel-scan|noise-gradient|NoiseGradient/.test(src),
+    'nothing may still reach for the retired hero modules');
+  assert.ok(/recolour\(\)/.test(src),
+    'a theme switch should recolour the hero rather than rebuild it (keeps the chosen filter)');
 });
 
-/* ─── KernelScan (narrow / touch hero) ───────────────────────
-   Stubs enough of a browser for the renderer to build its offscreen textures
-   and run a frame: it allocates three small canvases of its own, which is the
-   part a plain ctx stub does not cover. */
-function kernelScanEnv(fn, { heroContent = { offsetTop: 240, offsetHeight: 300 } } = {}) {
+/* ─── ReceptiveField (the hero) ──────────────────────────────
+   Stubs enough of a document for the renderer to rasterise the name into an
+   offscreen canvas and draw a frame. The offscreen getImageData returns ink
+   in a block, so the convolution has edges to find. */
+function fieldEnv(fn, { reduced = true } = {}) {
   const prev = {
-    document: global.document,
-    window: global.window,
+    document: global.document, window: global.window,
+    getComputedStyle: global.getComputedStyle,
     requestAnimationFrame: global.requestAnimationFrame,
     cancelAnimationFrame: global.cancelAnimationFrame,
-    IntersectionObserver: global.IntersectionObserver,
-    performance: global.performance,
-  };
-
-  const ctx = {
-    globalAlpha: 1, globalCompositeOperation: 'source-over',
-    fillStyle: '', strokeStyle: '', lineWidth: 0, font: '',
-    textAlign: '', textBaseline: '', imageSmoothingEnabled: true,
-    setTransform() {}, clearRect() {}, save() {}, restore() {},
-    translate() {}, scale() {}, drawImage() {}, fillRect() {}, strokeRect() {},
-    beginPath() {}, rect() {}, clip() {}, moveTo() {}, lineTo() {}, stroke() {},
-    fill() {}, fillText() {},
-    createLinearGradient() { return { addColorStop() {} }; },
-  };
-  const offscreen = () => {
-    const c = {
-      width: 0, height: 0,
-      getContext() {
-        return {
-          createImageData(w, h) {
-            return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) };
-          },
-          putImageData() {},
-        };
-      },
-    };
-    return c;
+    ResizeObserver: global.ResizeObserver, performance: global.performance,
   };
   const listeners = [];
-  const canvas = {
-    width: 0, height: 0, clientWidth: 390, clientHeight: 800,
-    style: { width: '', height: '' },
-    getContext() { return ctx; },
-    getBoundingClientRect() { return { left: 0, top: 0, width: 390, height: 800 }; },
-    addEventListener(type, fn_, opts) { listeners.push({ on: 'canvas', type, fn: fn_, opts }); },
+  const track = (on) => ({
+    addEventListener(type, fn_, opts) { listeners.push({ on, type, fn: fn_, opts }); },
     removeEventListener(type, fn_) {
-      const i = listeners.findIndex(l => l.on === 'canvas' && l.type === type && l.fn === fn_);
+      const i = listeners.findIndex((l) => l.on === on && l.type === type && l.fn === fn_);
       if (i >= 0) listeners.splice(i, 1);
     },
+  });
+  const drawn = { fillRect: 0, strokeRect: 0 };
+  const ctx = {
+    fillStyle: '', strokeStyle: '', lineWidth: 0,
+    setTransform() {}, clearRect() {}, setLineDash() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+    fillRect() { drawn.fillRect++; }, strokeRect() { drawn.strokeRect++; },
   };
-
-  global.document = {
-    hidden: false,
-    createElement(tag) { return tag === 'canvas' ? offscreen() : {}; },
-    querySelector(sel) { return sel === '.hero-content' ? heroContent : null; },
-    addEventListener(type, fn_, opts) { listeners.push({ on: 'document', type, fn: fn_, opts }); },
-    removeEventListener(type, fn_) {
-      const i = listeners.findIndex(l => l.on === 'document' && l.type === type && l.fn === fn_);
-      if (i >= 0) listeners.splice(i, 1);
-    },
-  };
-  global.window = {
-    innerWidth: 390, innerHeight: 800, devicePixelRatio: 2,
-    addEventListener(type, fn_, opts) { listeners.push({ on: 'window', type, fn: fn_, opts }); },
-    removeEventListener(type, fn_) {
-      const i = listeners.findIndex(l => l.on === 'window' && l.type === type && l.fn === fn_);
-      if (i >= 0) listeners.splice(i, 1);
-    },
-    matchMedia() { return { matches: false, addEventListener() {} }; },
-  };
-  let rafCount = 0;
-  global.requestAnimationFrame = () => { rafCount++; return rafCount; };
-  global.cancelAnimationFrame = () => {};
-  let now = 1000;
-  global.performance = { now: () => now };
-  const observers = [];
-  global.IntersectionObserver = class {
-    constructor(cb) { observers.push(this); cb([{ isIntersecting: true }]); }
-    observe() {}
-    disconnect() { this.disconnected = true; }
-  };
-
-  try {
-    return fn({
-      canvas, ctx, listeners, observers,
-      rafCalls: () => rafCount,
-      advance: (seconds) => { now += seconds * 1000; },
+  const offscreen = () => {
+    const c = { width: 0, height: 0 };
+    c.getContext = () => ({
+      font: '', fillStyle: '', textBaseline: '',
+      fillText() {},
+      getImageData: (x, y, w, h) => {
+        const data = new Uint8ClampedArray(w * h * 4);
+        for (let yy = 2; yy < h - 2; yy++) for (let xx = 3; xx < Math.min(w - 3, 40); xx++) data[(yy * w + xx) * 4 + 3] = 255;
+        return { data };
+      },
     });
+    return c;
+  };
+  /* measureText needs the font the renderer set; give the probe a real one. */
+  const probe = () => {
+    const p = { font: '' };
+    p.measureText = (t) => ({ width: t.length * 0.6 * (parseFloat((p.font.match(/(\d+)px/) || [])[1]) || 1) });
+    return p;
+  };
+  let created = 0;
+  const el = (extra = {}) => ({ hidden: false, textContent: '', innerHTML: '', dataset: {}, attrs: {},
+    setAttribute(k, v) { this.attrs[k] = v; }, ...track('el'), ...extra });
+  const canvas = { width: 0, height: 0, clientWidth: 1200, style: {},
+    getContext: () => ctx, setPointerCapture() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 1200, height: 500 }), ...track('canvas') };
+  const buttons = FILTERS.map((f) => el({ dataset: { filter: f.id } }));
+  const parts = {
+    '#field-canvas': canvas, h1: el({ textContent: 'Stefano Masneri' }),
+    '.field-controls': el({ hidden: true }), '#field-pos': el({ value: '0' }),
+    '.field-caption': el(), '.field-kernel': el(), '.field-next': el({ hidden: true }),
+  };
+  const root = { clientWidth: 1200, querySelector: (s) => parts[s] || null,
+    querySelectorAll: (s) => (s === '[data-filter]' ? buttons : []), classList: { add() {} } };
+
+  global.document = { createElement: () => (created++ === 0 ? Object.assign(offscreen(), { getContext: () => probe() }) : offscreen()), ...track('document') };
+  global.window = { devicePixelRatio: 2, matchMedia: () => ({ matches: reduced }), ...track('window') };
+  global.getComputedStyle = () => ({ fontFamily: 'monospace' });
+  global.requestAnimationFrame = () => 1;
+  global.cancelAnimationFrame = () => {};
+  global.performance = { now: () => 0 };
+  const observers = [];
+  global.ResizeObserver = class { constructor() { observers.push(this); } observe() {} disconnect() { this.disconnected = true; } };
+  try {
+    return fn({ root, parts, buttons, canvas, listeners, observers, drawn });
   } finally {
     for (const [k, v] of Object.entries(prev)) {
-      if (v === undefined) delete global[k];
-      else global[k] = v;
+      if (v === undefined) delete global[k]; else global[k] = v;
     }
   }
 }
 
-test('KernelScan convolves a real digit and starts animating', () => {
-  kernelScanEnv(({ canvas, rafCalls }) => {
-    const ks = new KernelScan(canvas);
-    assert.equal(ks._digits.length, 10, 'should decode all ten digits');
-    assert.equal(ks._kernels.length, 6, 'should decode all six conv1 filters');
-    assert.equal(ks._map.length, 24 * 24, 'feature map should be 24×24');
-    /* The map is computed up front and revealed progressively — an all-zero
-       map would draw an empty grid for the whole pass and look like a bug in
-       the reveal rather than in the convolution. */
-    assert.ok(ks._mapMax > 0, 'the convolved map should not be flat');
-    assert.ok(Array.from(ks._map).some(v => v > 0), 'ReLU should leave some activation');
-    assert.ok(rafCalls() > 0, 'should start the animation loop');
+test('ReceptiveField draws the name, reveals its controls and reports its first paint', () => {
+  fieldEnv(({ root, parts, drawn }) => {
+    let ready = 0;
+    const rf = new ReceptiveField(root, () => ready++);
+    assert.ok(rf.cols > 50 && rf.rows > 5, `grid ${rf.cols}×${rf.rows}`);
+    assert.equal(parts['.field-controls'].hidden, false, 'controls are revealed once JS has a filter to offer');
+    assert.ok(drawn.fillRect >= rf.cols * rf.rows, 'every cell is painted');
+    assert.ok(drawn.strokeRect >= 1, 'the window is drawn');
+    assert.equal(ready, 1, 'onReady fires once, after the first frame');
+    assert.ok(parts['.field-caption'].textContent.length > 10, 'the caption names the filter');
+    assert.equal(parts['.field-kernel'].innerHTML.split('<span').length - 1, 25, 'the kernel shows 25 weights');
+    rf.destroy();
   });
 });
 
-test('KernelScan reveals the feature map as the sweep advances, then moves on', () => {
-  kernelScanEnv(({ canvas, advance }) => {
-    const ks = new KernelScan(canvas);
-    const firstFilter = ks._filterIdx;
-    assert.equal(ks._revealed, 0, 'nothing revealed on the first frame');
-
-    /* Mid-sweep: some of the map is written, not all of it. */
-    advance(1.5);
-    ks._animate();
-    assert.ok(ks._revealed > 0 && ks._revealed < 24 * 24,
-      `expected a partial reveal, got ${ks._revealed}`);
-
-    /* Past the end of a full pass: the next filter is up. */
-    advance(4);
-    ks._animate();
-    assert.notEqual(ks._filterIdx, firstFilter, 'a completed pass should advance the filter');
+test('ReceptiveField: choosing a filter updates aria-pressed and the caption', () => {
+  fieldEnv(({ root, parts, buttons }) => {
+    const rf = new ReceptiveField(root);
+    const corners = buttons.find((b) => b.dataset.filter === 'corners');
+    rf._select('corners');
+    assert.equal(corners.attrs['aria-pressed'], 'true');
+    assert.ok(buttons.filter((b) => b !== corners).every((b) => b.attrs['aria-pressed'] === 'false'));
+    assert.match(parts['.field-caption'].textContent, /Harris/);
+    assert.equal(parts['.field-kernel'].hidden, true, 'Harris is not one kernel, so no kernel is shown');
+    rf.destroy();
   });
 });
 
-test('KernelScan never animates a dead filter', () => {
-  /* Two of the six conv1 filters in the committed model are dead ReLUs — no
-     MNIST digit gets them above zero (see test/hero-scan.test.mjs, which pins
-     that fact against the weights themselves). Drawing one means three and a
-     half seconds of empty grid, so _beginPass has to walk past it. */
-  kernelScanEnv(({ canvas }) => {
-    const ks = new KernelScan(canvas);
-    for (let digit = 0; digit < ks._digits.length; digit++) {
-      for (let filter = 0; filter < ks._kernels.length; filter++) {
-        ks._digitIdx = digit;
-        ks._filterIdx = filter;
-        ks._beginPass();
-        assert.ok(ks._mapMax > 0,
-          `digit ${digit} / filter ${filter}: pass opened on a blank feature map`);
-      }
-    }
-  });
+test('ReceptiveField: under reduced motion there is no intro sweep, but the window is placed', () => {
+  fieldEnv(({ root, parts }) => {
+    const rf = new ReceptiveField(root);
+    assert.equal(rf._frame, null, 'no animation frame requested');
+    assert.ok(rf.t > 0.5, 'the window starts part-way across, so the effect is visible at once');
+    assert.equal(parts['#field-pos'].value, String(Math.round(rf.t * 1000)), 'the range input mirrors the window');
+    rf.destroy();
+  }, { reduced: true });
 });
 
-test('KernelScan places the scene below the hero copy', () => {
-  kernelScanEnv(({ canvas }) => {
-    const ks = new KernelScan(canvas);
-    /* .hero-content ends at 540 in this stub; the scene must start below it,
-       or the digit is drawn through the name. */
-    assert.ok(ks._oy >= 540, `scene top ${ks._oy} should clear the hero copy at 540`);
-    assert.ok(ks._oy + 150 * ks._scale <= 800, 'scene should stay inside the hero');
-    assert.ok(ks._scale > 0.2, 'scene should not collapse to nothing');
-  });
-});
-
-test('perf: KernelScan enforces an FPS cap (<=30)', () => {
-  kernelScanEnv(({ canvas }) => {
-    const ks = new KernelScan(canvas);
-    assert.equal(typeof ks._minFrameTime, 'number',
-      'KernelScan should expose a _minFrameTime');
-    assert.ok(ks._minFrameTime >= 1 / 30 - 1e-6,
-      `expected min frame time >= 1/30s, got ${ks._minFrameTime}`);
-  });
-});
-
-test('perf: KernelScan registers its pointer listener with { passive: true }', () => {
-  kernelScanEnv(({ canvas, listeners }) => {
-    new KernelScan(canvas);
-    const pd = listeners.find(l => l.type === 'pointerdown');
-    assert.ok(pd, 'tap-to-advance should be wired');
-    assert.ok(pd.opts && pd.opts.passive === true,
-      `pointerdown should be { passive: true }, got ${JSON.stringify(pd && pd.opts)}`);
-    /* A drag over the hero is the visitor scrolling. Nothing here may claim
-       pointermove/touchmove: the scroll is worth more than the effect. */
-    assert.ok(!listeners.some(l => l.type === 'pointermove' || l.type === 'touchmove'),
-      'the hero must not listen for drags — that is the page scrolling');
-  });
-});
-
-test('KernelScan.destroy() releases every listener and observer (bfcache)', () => {
-  kernelScanEnv(({ canvas, listeners, observers }) => {
-    const ks = new KernelScan(canvas);
-    assert.ok(listeners.length > 0, 'should have registered listeners');
-    ks.destroy();
+test('ReceptiveField: dragging is pan-y only, and destroy() releases everything (bfcache)', () => {
+  fieldEnv(({ root, listeners, observers }) => {
+    const rf = new ReceptiveField(root);
+    assert.ok(listeners.some((l) => l.on === 'canvas' && l.type === 'pointerdown'), 'drag is wired');
+    rf.destroy();
     assert.equal(listeners.length, 0,
-      `destroy() left ${listeners.length} listener(s): ${listeners.map(l => l.type).join(', ')}`);
-    assert.ok(observers.every(o => o.disconnected), 'destroy() should disconnect the observer');
-    assert.equal(ks.frameId, null, 'destroy() should stop the animation loop');
+      `destroy() left ${listeners.length} listener(s): ${listeners.map((l) => l.type).join(', ')}`);
+    assert.ok(observers.every((o) => o.disconnected), 'destroy() disconnects the ResizeObserver');
   });
-});
-
-/* ─── NoiseGradient tests ─────────────────────────────────── */
-
-test('NoiseGradient sets up WebGL program and renders frames', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevPerf = global.performance;
-
-  let drawCalled = 0;
-  const gl = {
-    VERTEX_SHADER: 35633,
-    FRAGMENT_SHADER: 35632,
-    ARRAY_BUFFER: 34962,
-    STATIC_DRAW: 35044,
-    FLOAT: 5126,
-    TRIANGLE_STRIP: 5,
-    COMPILE_STATUS: 35713,
-    LINK_STATUS: 35714,
-    createShader() { return {}; },
-    shaderSource() {},
-    compileShader() {},
-    getShaderParameter() { return true; },
-    getShaderInfoLog() { return ''; },
-    createProgram() { return {}; },
-    attachShader() {},
-    linkProgram() {},
-    getProgramParameter() { return true; },
-    getProgramInfoLog() { return ''; },
-    useProgram() {},
-    createBuffer() { return {}; },
-    bindBuffer() {},
-    bufferData() {},
-    getAttribLocation() { return 0; },
-    enableVertexAttribArray() {},
-    vertexAttribPointer() {},
-    getUniformLocation() { return {}; },
-    uniform1f() {},
-    uniform2f() {},
-    viewport() {},
-    drawArrays() { drawCalled++; },
-  };
-  const canvas = {
-    width: 0, height: 0,
-    clientWidth: 800, clientHeight: 600,
-    style: { display: '' },
-    getContext() { return gl; },
-  };
-  global.document = { hidden: false };
-  global.window = {
-    devicePixelRatio: 1,
-    addEventListener() {},
-  };
-  global.performance = { now: () => 1000 };
-
-  let rafFn = null;
-  global.requestAnimationFrame = (fn) => { rafFn = fn; return 1; };
-
-  try {
-    const ng = new NoiseGradient(canvas);
-    assert.ok(ng.gl === gl, 'Should store WebGL context');
-    /* Simulate 3 frames (framesLeft starts at 3) */
-    if (rafFn) rafFn(1016);  /* frame 1 */
-    if (rafFn) rafFn(1032);  /* frame 2 */
-    if (rafFn) rafFn(1048);  /* frame 3 */
-    assert.ok(drawCalled >= 1, 'Should draw at least one frame');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.performance = prevPerf;
-  }
-});
-
-test('NoiseGradient hides canvas when WebGL is unavailable', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevPerf = global.performance;
-  const canvas = {
-    width: 0, height: 0,
-    clientWidth: 800, clientHeight: 600,
-    style: { display: '' },
-    getContext() { return null; },
-  };
-  global.document = { hidden: false };
-  global.window = { addEventListener() {} };
-  global.performance = { now: () => 0 };
-  global.requestAnimationFrame = () => 1;
-  try {
-    const ng = new NoiseGradient(canvas);
-    assert.equal(canvas.style.display, 'none', 'Should hide canvas when no WebGL');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.performance = prevPerf;
-  }
-});
-
-test('NoiseGradient destroy cancels animation frame', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevCAF = global.cancelAnimationFrame;
-  const prevPerf = global.performance;
-  let cancelledId = null;
-  const gl = {
-    VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632,
-    ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, FLOAT: 5126, TRIANGLE_STRIP: 5,
-    COMPILE_STATUS: 35713, LINK_STATUS: 35714,
-    createShader() { return {}; }, shaderSource() {}, compileShader() {},
-    getShaderParameter() { return true; }, getShaderInfoLog() { return ''; },
-    createProgram() { return {}; }, attachShader() {}, linkProgram() {},
-    getProgramParameter() { return true; }, getProgramInfoLog() { return ''; },
-    useProgram() {}, createBuffer() { return {}; }, bindBuffer() {},
-    bufferData() {}, getAttribLocation() { return 0; },
-    enableVertexAttribArray() {}, vertexAttribPointer() {},
-    getUniformLocation() { return {}; }, uniform1f() {}, uniform2f() {},
-    viewport() {}, drawArrays() {},
-  };
-  const canvas = {
-    width: 0, height: 0, clientWidth: 800, clientHeight: 600,
-    style: {}, getContext() { return gl; },
-  };
-  global.document = { hidden: false };
-  global.window = { devicePixelRatio: 1, addEventListener() {} };
-  global.performance = { now: () => 1000 };
-  global.requestAnimationFrame = () => 42;
-  global.cancelAnimationFrame = (id) => { cancelledId = id; };
-  try {
-    const ng = new NoiseGradient(canvas);
-    ng.destroy();
-    assert.equal(cancelledId, 42, 'Should cancel the animation frame');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.cancelAnimationFrame = prevCAF;
-    global.performance = prevPerf;
-  }
-});
-
-test('NoiseGradient destroy removes its resize listener and frees GL (no preserveDrawingBuffer)', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const prevCAF = global.cancelAnimationFrame;
-  const prevPerf = global.performance;
-
-  const ctxArgs = [];
-  const del = { program: 0, shader: 0, buffer: 0, lose: 0 };
-  const gl = {
-    VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632,
-    ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, FLOAT: 5126, TRIANGLE_STRIP: 5,
-    COMPILE_STATUS: 35713, LINK_STATUS: 35714,
-    createShader() { return {}; }, shaderSource() {}, compileShader() {},
-    getShaderParameter() { return true; }, getShaderInfoLog() { return ''; },
-    createProgram() { return {}; }, attachShader() {}, linkProgram() {},
-    getProgramParameter() { return true; }, getProgramInfoLog() { return ''; },
-    useProgram() {}, createBuffer() { return {}; }, bindBuffer() {},
-    bufferData() {}, getAttribLocation() { return 0; },
-    enableVertexAttribArray() {}, vertexAttribPointer() {},
-    getUniformLocation() { return {}; }, uniform1f() {}, uniform2f() {},
-    viewport() {}, drawArrays() {},
-    deleteProgram() { del.program++; }, deleteShader() { del.shader++; },
-    deleteBuffer() { del.buffer++; },
-    getExtension(name) {
-      return name === 'WEBGL_lose_context' ? { loseContext() { del.lose++; } } : null;
-    },
-  };
-  const canvas = {
-    width: 0, height: 0, clientWidth: 800, clientHeight: 600,
-    style: {}, getContext(kind, opts) { ctxArgs.push(opts); return gl; },
-  };
-  const trackedWin = [];
-  global.document = { hidden: false };
-  global.window = {
-    devicePixelRatio: 1,
-    addEventListener(type, fn, opts) { trackedWin.push({ type, fn, opts, removed: false }); },
-    removeEventListener(type, fn) {
-      const e = trackedWin.find(x => x.type === type && x.fn === fn && !x.removed);
-      if (e) e.removed = true;
-    },
-  };
-  global.performance = { now: () => 1000 };
-  global.requestAnimationFrame = () => 7;
-  let cancelled = null;
-  global.cancelAnimationFrame = (id) => { cancelled = id; };
-
-  try {
-    const ng = new NoiseGradient(canvas);
-    assert.ok(ctxArgs.length > 0, 'getContext should be called');
-    assert.ok(!ctxArgs.some(o => o && o.preserveDrawingBuffer === true),
-      'NoiseGradient must not request preserveDrawingBuffer');
-    assert.equal(trackedWin.filter(e => e.type === 'resize' && !e.removed).length, 1,
-      'should register exactly one resize listener');
-
-    ng.destroy();
-
-    assert.equal(cancelled, 7, 'destroy must cancel the animation frame');
-    assert.equal(trackedWin.filter(e => e.type === 'resize' && !e.removed).length, 0,
-      'destroy must remove the resize listener');
-    assert.ok(del.program >= 1, 'destroy must delete the GL program');
-    assert.ok(del.shader >= 2, 'destroy must delete both shaders');
-    assert.ok(del.buffer >= 1, 'destroy must delete the GL buffer');
-    assert.ok(del.lose >= 1, 'destroy must lose the WebGL context');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-    global.cancelAnimationFrame = prevCAF;
-    global.performance = prevPerf;
-  }
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
+  assert.match(css, /#field-canvas\s*\{[^}]*touch-action:\s*pan-y/,
+    'a vertical swipe over the hero must stay a page scroll on a phone');
 });
 
 /* ─── GlobeFallback2D tests ───────────────────────────────── */

@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════
    mnist-lab.js — draw a digit, watch the real LeNet-5 read it
 
-   The interactive counterpart to the homepage hero. The hero is a *player*:
-   it replays activations that were computed offline and baked into
-   data/cnn-activations.js, because the homepage must not pay for an ML
-   runtime. This page does the opposite — it runs the actual forward pass in
-   the browser, on whatever the visitor draws.
+   The interactive counterpart to the homepage hero. The hero shows one
+   convolution at a time over the name — at most it borrows conv1's six
+   kernels — because the homepage must not pay for an ML runtime. This page
+   does the opposite: it runs the actual forward pass in the browser, on
+   whatever the visitor draws.
 
    What that costs: data/lenet-weights.js (~61 KB source, ~44 KB gzip, int8)
    and js/lenet.js. Both arrive through a dynamic import from js/main.js that

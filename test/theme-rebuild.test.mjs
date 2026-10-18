@@ -2,7 +2,7 @@
    Theme-switch rebuild — fresh-canvas regression tests.
 
    When the user toggles light/dark, js/main.js destroys the
-   colour-baked WebGL surfaces (noise-gradient hero, Three.js globe)
+   colour-baked WebGL surfaces (the Three.js globe)
    and rebuilds them with the now-active palette. destroy() force-loses
    the WebGL context (renderer.forceContextLoss() / WEBGL_lose_context),
    which permanently kills that <canvas>'s context: reusing the same
@@ -61,11 +61,11 @@ test('freshCanvasForRebuild is a safe no-op when the canvas is null or detached'
 
 test('theme-change rebuilds obtain a fresh canvas before rebuilding the WebGL surfaces', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
-  /* The noise-gradient hero (home) and the Three.js globe (travel) are both
-     WebGL and both force-lose their context on destroy — each rebuild path
-     must swap in a fresh canvas first or it repaints onto a dead context. */
-  assert.ok(/freshCanvasForRebuild\(\s*noiseCanvas\s*\)/.test(src),
-    'noise-gradient rebuild must call freshCanvasForRebuild(noiseCanvas)');
+  /* The Three.js globe (travel) is WebGL and force-loses its context on
+     destroy — its rebuild path must swap in a fresh canvas first or it
+     repaints onto a dead context. (The homepage's WebGL noise gradient, the
+     other case this guarded, is gone; the hero is Canvas2D and recolours in
+     place.) */
   assert.ok(/freshCanvasForRebuild\(\s*globeCanvas\s*\)/.test(src),
     'globe rebuild must call freshCanvasForRebuild(globeCanvas)');
 });

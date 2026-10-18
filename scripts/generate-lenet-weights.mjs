@@ -13,8 +13,8 @@
 
    Result: ~59 KB of ESM source (~44 KB of actual payload), imported *only* by
    projects/mnist-lenet.html, and only after the visitor has drawn something.
-   The homepage still ships zero weights — it replays precomputed activations
-   from data/cnn-activations.js.
+   The homepage ships none of these — its hero borrows only conv1, from
+   data/hero-scan.js, and only when its Learned filter is chosen.
 
    The generator is deterministic and network-free: it reads two committed
    files and writes one. `test/lenet-weights.test.mjs` regenerates and fails

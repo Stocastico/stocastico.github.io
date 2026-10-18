@@ -8,12 +8,11 @@
    existing importers keep working unchanged.
 
    Used by `scripts/train-cnn.mjs` (trains on MNIST),
-   `scripts/generate-cnn-activations.mjs` (replays 10 forward passes and bakes
-   the activations into data/cnn-activations.js for the hero animation) and
    `scripts/generate-lenet-weights.mjs` (quantises the trained weights to int8
-   for the interactive page).
+   for the interactive page) and `scripts/generate-hero-scan.mjs` (conv1 only,
+   for the homepage hero's Learned filter).
 
-   The homepage still ships only precomputed activations, so it stays free of
+   The homepage ships at most conv1 (for its hero), so it stays free of
    any ML runtime; the weights reach the browser on
    projects/mnist-lenet.html alone.
 

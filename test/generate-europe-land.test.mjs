@@ -3,7 +3,7 @@
 
    The committed data/europe-land.json is what the travel page downloads, so
    the first test is the one that matters: regenerate from data/land-50m.json
-   and fail if the result differs. Same contract as the cnn-activations and
+   and fail if the result differs. Same contract as the lenet-weights and
    generate-cards guards — a generated artefact that stops matching its source
    is a bug even when nothing looks wrong.
 

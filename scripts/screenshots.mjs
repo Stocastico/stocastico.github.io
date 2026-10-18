@@ -89,10 +89,8 @@ async function main() {
     const page = await ctx.newPage();
     for (const shot of SHOTS) {
       await page.goto(base + shot.path, { waitUntil: 'load' });
-      /* nudge the hero into life (the CNN scene starts on first interaction) */
-      await page.mouse.move(640, 300);
-      await page.mouse.move(660, 320);
-      await page.waitForTimeout(shot.wait || 1400);
+      /* Long enough for the homepage hero's intro sweep (1.6 s) to land. */
+      await page.waitForTimeout(shot.wait || 1800);
       await scrollThrough(page);
       await settleReveal(page);
       /* `behavior: 'instant'`, and then wait for scrollY to actually reach 0.

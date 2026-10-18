@@ -568,18 +568,25 @@ describe('theme', () => {
    that shipped the bug). The property test above still holds the line. */
 
 describe('lifecycle: the page survives Back', () => {
+  /* The hero no longer animates on its own (it draws on demand), so "alive"
+     means: it still answers input. Pick whichever filter is not pressed and
+     require the canvas to change. A torn-down instance has lost its click
+     listeners, and the canvas stays as it was. */
   const heroIsAnimating = (page) => page.evaluate(async () => {
-    const c = document.getElementById('neural-canvas');
+    const c = document.getElementById('field-canvas');
     if (!c) return 'no-canvas';
     const ctx = c.getContext('2d');
     const hash = () => {
       const d = ctx.getImageData(0, 0, c.width, c.height).data;
       let h = 0;
-      for (let i = 3; i < d.length; i += 4 * 13) h = (h * 31 + d[i]) | 0;
+      for (let i = 0; i < d.length; i += 4 * 7) h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 3]) | 0;
       return h;
     };
     const before = hash();
-    await new Promise((r) => setTimeout(r, 900));
+    const next = document.querySelector('[data-filter][aria-pressed="false"]');
+    if (!next) return 'no-button';
+    next.click();
+    await new Promise((r) => setTimeout(r, 300));
     return before !== hash();
   });
 

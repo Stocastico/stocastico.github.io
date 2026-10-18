@@ -42,7 +42,7 @@ const BUDGETS = [
 /* Chunks that are legitimately large but lazily loaded. Listed so that a
    regression which drags one onto the critical path shows up as the entry
    chunk blowing its budget above, rather than being hidden here. */
-const LAZY_ALLOWED = ['globe-', 'lenet-weights-', 'cnn-hero-', 'cnn-samples-', 'mnist-lab-'];
+const LAZY_ALLOWED = ['globe-', 'lenet-weights-', 'receptive-field-', 'hero-scan-', 'cnn-samples-', 'mnist-lab-'];
 
 function assetsMatching({ prefix, ext }) {
   const dir = path.join(DIST, 'assets');
