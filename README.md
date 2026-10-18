@@ -121,6 +121,35 @@ every assertion in the repo.
 Full rationale, the layer boundaries, and how to decide where a new test belongs:
 **[`docs/TESTING.md`](docs/TESTING.md)**.
 
+## Previewing without publishing
+
+Nothing reaches the live site until it is merged into `main`, so you can look at any branch on
+your own machine first:
+
+```bash
+git fetch origin
+git checkout <branch>          # e.g. redesign/montaggio-design-system
+npm install                    # first time, or after package.json changes
+
+npm run dev                    # http://localhost:5173 — live reload as you edit
+```
+
+`npm run dev` serves the source files as they are and refreshes on every save, which is best for
+editing. To see **exactly what would be deployed**, build it and serve the result:
+
+```bash
+npm run build && npm run preview   # http://localhost:4173 — the built dist/, as GitHub Pages will serve it
+```
+
+**On your phone:** add `-- --host` to either command (`npm run dev -- --host`). Vite then prints a
+`Network:` address such as `http://192.168.1.20:5173`; open it on a phone connected to the same Wi-Fi.
+
+**Every page at once:** after `npm run build`, `npm run screenshots` captures every page in dark and
+light mode into `screenshots/` (gitignored), which is quicker than clicking through 21 pages.
+
+On a pull request, CI also runs both test suites against the branch (the **Browser tests** check)
+before anything can be merged.
+
 ## Deploying
 
 Push to `main`. `deploy.yml` runs both suites, refreshes the sitemap, feed and project JSON-LD, builds

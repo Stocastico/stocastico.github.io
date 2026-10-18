@@ -297,7 +297,8 @@ describe('hero: the receptive field', () => {
     return { h, ink };
   });
 
-  for (const [label, viewport] of [['desktop', VIEWPORTS.desktop], ['phone', { width: 390, height: 844 }]]) {
+  {
+    const [label, viewport] = ['desktop', VIEWPORTS.desktop];
     test(`${label}: the grid paints, the name stays the heading, the controls work`, async () => {
       const page = await newPage(browser, server, { viewport });
       try {
@@ -344,6 +345,33 @@ describe('hero: the receptive field', () => {
       } finally { await page.close(); }
     });
   }
+
+  /* A phone gets a still frame: the window parks at 70%, a touch is a scroll,
+     and the move/kernel controls are gone — but the filter chips still work. */
+  test('phone: a still frame at 70% whose filters still switch', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 390, height: 844 }, hasTouch: true });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+      await page.waitForTimeout(1900); // the intro sweep
+      assert.equal(await page.inputValue('#field-pos'), '700', 'the window should park at 70%');
+      assert.equal(await page.isVisible('#field-pos'), false, 'the range input should be hidden on a phone');
+      assert.equal(await page.isVisible('.field-kernel'), false, 'the kernel readout should be hidden on a phone');
+
+      const before = await canvasHash(page);
+      assert.ok(before.ink > 500, `the hero canvas is nearly blank (${before.ink} painted samples)`);
+      await page.tap('[data-filter="corners"]');
+      await page.waitForTimeout(150);
+      assert.notEqual((await canvasHash(page)).h, before.h, 'tapping a filter did not change the picture');
+
+      const box = await page.locator('#field-canvas').boundingBox();
+      await page.mouse.move(box.x + 10, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width - 10, box.y + box.height / 2, { steps: 4 });
+      await page.mouse.up();
+      assert.equal(await page.inputValue('#field-pos'), '700', 'a drag moved the window on a phone');
+    } finally { await page.close(); }
+  });
 
   test('without JavaScript the name is plain text and no dead controls show', async () => {
     const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });

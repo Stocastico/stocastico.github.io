@@ -1255,9 +1255,27 @@ body::before {
   text-decoration-color: rgb(var(--accent-rgb) / 0.45);
 }
 
+/* Phones get a still frame (js/receptive-field.js, PHONE_QUERY): the window
+   parks at 70% and a touch is a scroll, so the controls for moving it and the
+   kernel readout go. The filter chips stay — tapping one is the gesture a
+   phone does well, and it keeps the distinctive part interactive. */
 @media (max-width: 760px) {
   .hero-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  #field-canvas {
+    touch-action: auto;
+    cursor: default;
+  }
+
+  .field-readout,
+  .field-pos {
+    display: none;
+  }
+
+  .field-filters {
+    margin-bottom: 0.75rem;
   }
 }
 

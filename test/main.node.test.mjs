@@ -1210,7 +1210,7 @@ test('main.js reaches the hero through a dynamic import and recolours it in plac
    Stubs enough of a document for the renderer to rasterise the name into an
    offscreen canvas and draw a frame. The offscreen getImageData returns ink
    in a block, so the convolution has edges to find. */
-function fieldEnv(fn, { reduced = true } = {}) {
+function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   const prev = {
     document: global.document, window: global.window,
     getComputedStyle: global.getComputedStyle,
@@ -1267,7 +1267,8 @@ function fieldEnv(fn, { reduced = true } = {}) {
     querySelectorAll: (s) => (s === '[data-filter]' ? buttons : []), classList: { add() {} } };
 
   global.document = { createElement: () => (created++ === 0 ? Object.assign(offscreen(), { getContext: () => probe() }) : offscreen()), ...track('document') };
-  global.window = { devicePixelRatio: 2, matchMedia: () => ({ matches: reduced }), ...track('window') };
+  global.window = { devicePixelRatio: 2,
+    matchMedia: (q) => ({ matches: /max-width/.test(q) ? narrow : reduced }), ...track('window') };
   global.getComputedStyle = () => ({ fontFamily: 'monospace' });
   global.requestAnimationFrame = () => 1;
   global.cancelAnimationFrame = () => {};
@@ -1319,6 +1320,22 @@ test('ReceptiveField: under reduced motion there is no intro sweep, but the wind
     assert.equal(parts['#field-pos'].value, String(Math.round(rf.t * 1000)), 'the range input mirrors the window');
     rf.destroy();
   }, { reduced: true });
+});
+
+test('ReceptiveField on a phone: a still frame at 70%, and a drag does not move it', () => {
+  /* The hero is a picture on a phone, not an instrument: the window settles
+     at 70% of the name (filtered left of it, raw ink right of it) and stays
+     there. A finger on the hero is a scroll; the filter chips still work. */
+  fieldEnv(({ root, listeners }) => {
+    const rf = new ReceptiveField(root);
+    assert.equal(rf.t, 0.7);
+    const down = listeners.find((l) => l.on === 'canvas' && l.type === 'pointerdown');
+    if (down) down.fn({ pointerId: 1, clientX: 50, clientY: 10 });
+    assert.equal(rf.t, 0.7, 'a touch on the hero moved the window');
+    rf._select('vertical');
+    assert.match(root.querySelector('.field-caption').textContent, /Sobel/, 'filters still switch');
+    rf.destroy();
+  }, { reduced: true, narrow: true });
 });
 
 test('ReceptiveField: dragging is pan-y only, and destroy() releases everything (bfcache)', () => {

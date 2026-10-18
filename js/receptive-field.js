@@ -228,6 +228,17 @@ export function revealedColumns(t, cols) {
 const INTRO_TO = 0.62;
 const INTRO_MS = 1600;
 
+/* On a phone the hero is a picture, not an instrument. The window settles at
+   70% of the name — the filter's response to the left of it, the raw ink to
+   the right — and stays there: no drag (a finger on the hero is a scroll), no
+   range input, no kernel readout (css/styles.css hides both). The filter chips
+   still work, because a tap is the one gesture a phone does well. Matches the
+   CSS breakpoint that hides the readout. */
+const PHONE_QUERY = '(max-width: 760px)';
+const PHONE_AT = 0.7;
+const onPhone = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  && window.matchMedia(PHONE_QUERY).matches;
+
 export class ReceptiveField {
   /* root: the hero section. It must contain #field-canvas, the h1 the name is
      read from, and the .field-controls block (buttons, range, kernel). */
@@ -253,7 +264,8 @@ export class ReceptiveField {
     this.filter = FILTERS[0];
     this._learned = null;
     this._learnedIdx = 0;
-    this.t = prefersReducedMotion() ? INTRO_TO : 0;
+    this._stopAt = onPhone() ? PHONE_AT : INTRO_TO;
+    this.t = prefersReducedMotion() ? this._stopAt : 0;
     this.row = null;
 
     this._layout();
@@ -300,7 +312,7 @@ export class ReceptiveField {
       }, () => {});
     }
 
-    if (this.t < INTRO_TO) this._intro();
+    if (this.t < this._stopAt) this._intro();
   }
 
   _on(target, type, fn, opts) {
@@ -418,6 +430,7 @@ export class ReceptiveField {
   }
 
   _pointer(e) {
+    if (onPhone()) return;
     const r = this.canvas.getBoundingClientRect();
     this.t = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
     this.row = Math.min(this.rows - 1, Math.max(0, Math.floor((e.clientY - r.top) / this.cell)));
@@ -428,7 +441,7 @@ export class ReceptiveField {
     const t0 = performance.now();
     const step = (now) => {
       const p = Math.min(1, (now - t0) / INTRO_MS);
-      this.t = INTRO_TO * (1 - Math.pow(1 - p, 3));
+      this.t = this._stopAt * (1 - Math.pow(1 - p, 3));
       this._draw();
       this._frame = p < 1 ? requestAnimationFrame(step) : null;
     };
