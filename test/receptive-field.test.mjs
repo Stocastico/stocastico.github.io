@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  FILTERS, K, convolve, harris, normalise, respond, decodeLearned, fitFont, revealedColumns,
+  FILTERS, K, convolve, harris, normalise, respond, decodeLearned, fitFont, revealedColumns, stretchKeyword,
 } from '../js/receptive-field.js';
 import { HERO_SCAN } from '../data/hero-scan.js';
 import { deserializeModel } from '../scripts/lib/lenet.mjs';
@@ -151,4 +151,12 @@ test('revealedColumns: the window reveals every column up to its centre, clamped
   assert.equal(revealedColumns(1, 100), 100);
   assert.equal(revealedColumns(-3, 100), 0);
   assert.equal(revealedColumns(7, 100), 100);
+});
+
+test('stretchKeyword: percentages map to the nearest keyword the canvas font accepts', () => {
+  assert.equal(stretchKeyword('62%'), 'extra-condensed');
+  assert.equal(stretchKeyword('100%'), 'normal');
+  assert.equal(stretchKeyword('125%'), 'expanded');
+  assert.equal(stretchKeyword('normal'), 'normal', 'a keyword or junk falls back to normal');
+  assert.equal(stretchKeyword(''), 'normal');
 });

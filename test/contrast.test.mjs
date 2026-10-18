@@ -262,7 +262,9 @@ test('contrast: the small-text CSS uses the accent *text* tokens, not the brand 
   const SMALL_TEXT_RULES = [
     ['.project-tag', '--accent-text'],
     ['.tl-tag', '--accent-text'],
-    ['.section-tag', '--accent-text'],
+    /* A track label since #190: the colour is carried by its chip (a non-text
+       mark, 3:1 is enough), and the word itself is a text tier. */
+    ['.section-tag', '--text-muted'],
     ['.skill-panel-title', '--accent-text'],
     ['.project-card__year', '--accent-text'],
     ['.unesco-site', '--accent-text'],

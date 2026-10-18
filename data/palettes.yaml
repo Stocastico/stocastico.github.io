@@ -66,9 +66,119 @@
 # commands in the header above. There is no script: it is a one-line edit, and
 # a `rotate-palette` command that cycles the brand is the exact thing this pin
 # exists to prevent.
-active: forest
+active: montaggio
 
 palettes:
+
+  montaggio:
+    name: Montaggio
+    # The redesign's identity (#188, #190): an editing suite. A charcoal UI
+    # ground rather than near-black, and the SMPTE colour bars as the accent
+    # set — yellow and cyan are the two accents (the hero's positive and
+    # negative responses: two hues as far apart as the bars put them), and the
+    # four pins carry the remaining bars in SMPTE order, which is how the
+    # colour-bar strip at the top of every page is drawn from palette tokens
+    # alone: text, accent, accent2, lived, holiday, current, worktrip.
+    bg: '#202328'
+    bgAlt: '#2a2e35'
+    text: '#ece9e2'
+    textMuted: '#d8d6d0'
+    textFaint: '#d2d0ca'
+    accent: '#ddd23f'
+    accentHi: '#ebe36a'
+    accent2: '#3fc4cd'
+    accent2Hi: '#7fdbe1'
+    accentText: '#e2d85a'
+    accent2Text: '#6fd3da'
+    onAccent: '#16181b'
+    # Equal stops: the gradient-filled name and section titles are retired in
+    # this palette; the CSS still reads the pair, so it paints solid.
+    heroGradFrom: '#ece9e2'
+    heroGradTo: '#ece9e2'
+    mapBg: '#1a1c20'
+    themeColor: '#202328'
+    faviconBg: '#202328'
+    faviconFg: '#ddd23f'
+    pins:
+      lived: '#5cbf54'
+      current: '#e0574d'
+      worktrip: '#6d8cf0'
+      holiday: '#e17edc'
+    globe:
+      ocean: '#16181c'
+      land: '#2b2f36'
+      landEurope: '#3a3f47'
+      coast: '#3fc4cd'
+      coastBright: '#a9e9ee'
+      ambient: '#1d2025'
+      keyLight: '#3b414b'
+      rimLight: '#3fc4cd'
+      fillLight: '#ddd23f'
+      atmInner: '#3fc4cd'
+      atmShell: '#25414a'
+      atmHalo: '#ddd23f'
+      grid: '#4a6f78'
+      gridBright: '#7fdbe1'
+      stars: '#ece9e2'
+      fallback1: '#4b6a73'
+      fallback2: '#262a31'
+      fallback3: '#16181c'
+    # Unused since the WebGL hero went (#189); still required by the schema
+    # until the cleanup in #195.
+    noise:
+      dark: '#202328'
+      mid: '#2f3640'
+      bright: '#3fc4cd'
+    light:
+      name: Montaggio (Light)
+      bg: '#eceef1'
+      bgAlt: '#e1e4e9'
+      text: '#16181c'
+      textMuted: '#33373f'
+      textFaint: '#383d45'
+      # Yellow cannot hold 3:1 on a light ground and stay yellow; this is the
+      # bar's hue taken dark enough to work, which reads as olive. Honest.
+      accent: '#746a00'
+      accentHi: '#8a7e00'
+      accent2: '#00747d'
+      accent2Hi: '#008993'
+      accentText: '#544c00'
+      accent2Text: '#004e54'
+      onAccent: '#ffffff'
+      heroGradFrom: '#16181c'
+      heroGradTo: '#16181c'
+      mapBg: '#e3e6ea'
+      themeColor: '#eceef1'
+      faviconBg: '#eceef1'
+      faviconFg: '#746a00'
+      pins:
+        lived: '#1d6b19'
+        current: '#b8322a'
+        worktrip: '#2f52c4'
+        holiday: '#a03a9c'
+      globe:
+        ocean: '#dfe3e8'
+        land: '#c3c9d1'
+        landEurope: '#a9b1bb'
+        coast: '#00747d'
+        coastBright: '#005961'
+        ambient: '#e6e9ed'
+        keyLight: '#b8c0ca'
+        rimLight: '#00747d'
+        fillLight: '#746a00'
+        atmInner: '#3fc4cd'
+        atmShell: '#c4e4e7'
+        atmHalo: '#746a00'
+        grid: '#9aa7b0'
+        gridBright: '#00747d'
+        stars: '#59606a'
+        fallback1: '#7a8a94'
+        fallback2: '#cfd5dc'
+        fallback3: '#e6e9ed'
+      noise:
+        dark: '#eceef1'
+        mid: '#d3d8de'
+        bright: '#00747d'
 
   forest:
     name: Forest & Brass

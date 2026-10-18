@@ -204,6 +204,20 @@ export function fitFont(lines, cols, measure) {
   return size;
 }
 
+/* CSS font-stretch (a percentage, as getComputedStyle reports it) → the
+   keyword the canvas font shorthand accepts, which takes no percentages. */
+export function stretchKeyword(value) {
+  const pct = parseFloat(value);
+  if (!Number.isFinite(pct)) return 'normal';
+  const steps = [
+    [50, 'ultra-condensed'], [62.5, 'extra-condensed'], [75, 'condensed'], [87.5, 'semi-condensed'],
+    [100, 'normal'], [112.5, 'semi-expanded'], [125, 'expanded'], [150, 'extra-expanded'], [200, 'ultra-expanded'],
+  ];
+  let best = steps[0];
+  for (const st of steps) if (Math.abs(st[0] - pct) < Math.abs(best[0] - pct)) best = st;
+  return best[1];
+}
+
 /* How many columns a window at position t (0 → 1 across the grid) reveals. */
 export function revealedColumns(t, cols) {
   return Math.round(Math.min(1, Math.max(0, t)) * cols);
@@ -234,7 +248,7 @@ export class ReceptiveField {
     this._kernelEl = root.querySelector('.field-kernel');
     this._nextBtn = root.querySelector('.field-next');
     this._buttons = Array.from(root.querySelectorAll('[data-filter]'));
-    this._lines = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
+    this._words = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
 
     this.filter = FILTERS[0];
     this._learned = null;
@@ -275,6 +289,17 @@ export class ReceptiveField {
       this._ro.observe(this.root);
     }
 
+    /* The display face is a web font with font-display: swap, so the first
+       layout may have measured a fallback. Lay out again once it is in. */
+    if (document.fonts && typeof document.fonts.load === 'function') {
+      document.fonts.load(this._font(100)).then(() => {
+        if (!this.ctx) return;
+        this._layout();
+        this._compute();
+        this._draw();
+      }, () => {});
+    }
+
     if (this.t < INTRO_TO) this._intro();
   }
 
@@ -286,13 +311,23 @@ export class ReceptiveField {
   /* Grid size from the canvas width, then the name rasterised into it. */
   _layout() {
     const width = Math.max(200, this.canvas.clientWidth || this.root.clientWidth);
-    /* ~9px cells on a desktop, ~5px on a phone: big enough to read as
-       pixels, small enough that the letterforms survive. */
-    const target = width >= 900 ? 9 : width >= 600 ? 7 : 5;
+    /* ~7px cells on a desktop, ~5px on a phone: big enough to read as
+       pixels, small enough that a condensed stroke is several cells wide —
+       a 5×5 filter needs that much room to say anything about its inside. */
+    const target = width >= 900 ? 7 : width >= 600 ? 6 : 5;
     const cols = Math.round(width / target);
-    const family = getComputedStyle(this.root.querySelector('h1') || this.root).fontFamily;
+    /* One line where there is room for it, a word per line where there is
+       not: set condensed, the whole name runs as a banner across a desktop,
+       and on a phone two lines keep each letter tall enough to read in 5px
+       cells. */
+    this._lines = width >= 900 ? [this._words.join(' ')] : this._words;
+    /* Weight, width and family come from the <h1> itself, so the grid and
+       the no-JS text are the same type and a CSS change moves both. */
+    const cs = getComputedStyle(this.root.querySelector('h1') || this.root);
+    const head = `${cs.fontWeight || 800} ${stretchKeyword(cs.fontStretch)}`;
     const probe = document.createElement('canvas').getContext('2d');
-    const font = (s) => `800 ${s}px ${family}`;
+    const font = (s) => `${head} ${s}px ${cs.fontFamily}`;
+    this._font = font;
     const size = fitFont(this._lines, cols, (text, s) => { probe.font = font(s); return probe.measureText(text).width; });
     const lineH = Math.round(size * 0.94);
     const cap = Math.round(size * 0.76);
@@ -421,10 +456,10 @@ export class ReceptiveField {
         let fill = empty;
         if (x < sx) {
           const v = response[i];
-          /* Weak responses fade out rather than holding a floor: on thick
-             strokes a 5×5 filter answers faintly almost everywhere near the
-             ink, and painting all of it at 30% read as mud, not structure. */
-          if (Math.abs(v) >= 0.08) fill = rgba(v > 0 ? accent : accent2, Math.min(1, 0.12 + Math.abs(v) ** 0.9));
+          /* Weak responses fade out, strong ones saturate early: a low alpha
+             over the dark ground mixes yellow and cyan into olive and teal,
+             which reads as mud rather than as two signs. */
+          if (Math.abs(v) >= 0.1) fill = rgba(v > 0 ? accent : accent2, Math.min(1, Math.abs(v) * 2));
         } else if (grid[i] > 0.35) {
           fill = rgba(text, grid[i]);
         }
