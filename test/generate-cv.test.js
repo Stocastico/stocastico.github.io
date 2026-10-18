@@ -340,6 +340,7 @@ function evalCvJs(js) {
     CV_CAREER:    ctx.CV_CAREER,
     CV_EDUCATION: ctx.CV_EDUCATION,
     CV_SKILLS:    ctx.CV_SKILLS,
+    CV_PLACES:    ctx.CV_PLACES,
   };
 }
 
@@ -381,6 +382,24 @@ test('generateCvJs: strings with single quotes are escaped correctly', () => {
   }));
   assert.equal(CV_CAREER[0].year,    "it's 2020");
   assert.equal(CV_CAREER[0].company, "O'Corp");
+});
+
+// ─── places ───────────────────────────────────────────────────────────────────
+
+test('validateCv: places is optional, and each entry needs a year and a city', () => {
+  assert.deepEqual(validateCv({ ...minimalValid, places: [{ year: '2018 – present', city: 'San Sebastián' }] }), []);
+  const errors = validateCv({ ...minimalValid, places: [{ year: '2018 – present' }] });
+  assert.ok(errors.some((e) => /places\[0\]\.city/.test(e)), JSON.stringify(errors));
+  assert.ok(validateCv({ ...minimalValid, places: 'Berlin' }).some((e) => /places must be an array/.test(e)));
+});
+
+test('generateCvJs: emits CV_PLACES, empty when the YAML has none', () => {
+  const { CV_PLACES } = evalCvJs(generateCvJs({
+    ...minimalValid, skills: {}, places: [{ year: '2009 – 2015', city: 'Berlin' }],
+  }));
+  assert.equal(CV_PLACES.length, 1);
+  assert.equal(CV_PLACES[0].city, 'Berlin');
+  assert.equal(evalCvJs(generateCvJs({ ...minimalValid, skills: {} })).CV_PLACES.length, 0);
 });
 
 // ─── parseArgs ────────────────────────────────────────────────────────────────

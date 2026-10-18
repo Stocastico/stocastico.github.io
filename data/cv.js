@@ -117,6 +117,26 @@ export const CV_EDUCATION = [
   },
 ];
 
+/* ── Places lived ─────────────────────────────────────────── */
+export const CV_PLACES = [
+  {
+    year: '2000 – 2009',
+    city: 'Brescia',
+  },
+  {
+    year: '2009 – 2015',
+    city: 'Berlin',
+  },
+  {
+    year: '2015 – 2018',
+    city: 'Frankfurt',
+  },
+  {
+    year: '2018 – present',
+    city: 'San Sebastián',
+  },
+];
+
 /* ── Skills ───────────────────────────────────────────────── */
 export const CV_SKILLS = {
   technical:  [
@@ -203,4 +223,5 @@ if (typeof globalThis !== 'undefined') {
   globalThis.CV_CAREER = CV_CAREER;
   globalThis.CV_EDUCATION = CV_EDUCATION;
   globalThis.CV_SKILLS = CV_SKILLS;
+  globalThis.CV_PLACES = CV_PLACES;
 }

@@ -160,6 +160,21 @@ career:
       - Image Processing
       - Research
 
+# ── Places ───────────────────────────────────────────────────────────────────
+# Where you lived, which is not where the employer sat: NTT DATA was in Bilbao
+# and AGT in Darmstadt, while home stayed San Sebastián and Frankfurt. Drawn
+# as the "places" lane of the homepage career timeline (#191).
+# Required:  year, city
+places:
+  - year: "2000 – 2009"
+    city: "Brescia"
+  - year: "2009 – 2015"
+    city: "Berlin"
+  - year: "2015 – 2018"
+    city: "Frankfurt"
+  - year: "2018 – present"
+    city: "San Sebastián"
+
 # ── Education ─────────────────────────────────────────────────────────────────
 # Required:  year, degree, institution
 # Optional:  location, description

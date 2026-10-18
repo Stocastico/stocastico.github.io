@@ -36,6 +36,10 @@
          location: City, Country       # optional
          description: Thesis note.     # optional
 
+     places:                         # optional — where you lived, for the
+       - year: "2018 – present"      # homepage timeline's places lane
+         city: San Sebastián
+
      skills:
        technical:
          - name: Python · PyTorch
@@ -168,6 +172,20 @@ function validateCv(data) {
     });
   }
 
+  /* ── places ── */
+  if (data.places !== undefined) {
+    if (!Array.isArray(data.places)) {
+      errors.push('places must be an array');
+    } else {
+      data.places.forEach((e, idx) => {
+        const p = `places[${idx}]`;
+        if (typeof e !== 'object' || e === null) { errors.push(`${p} must be an object`); return; }
+        expectString(e.year, `${p}.year`);
+        expectString(e.city, `${p}.city`);
+      });
+    }
+  }
+
   /* ── skills ── */
   if (data.skills !== undefined) {
     const sk = data.skills;
@@ -279,12 +297,14 @@ function generateCvJs(data) {
   const career    = data.career    || [];
   const education = data.education || [];
   const skills    = data.skills    || {};
+  const places    = data.places    || [];
 
   const careerKeys = ['year', 'role', 'company', 'location', 'description', 'links', 'tags'];
   const eduKeys    = ['year', 'degree', 'institution', 'location', 'description', 'links', 'concurrent_with'];
 
   const careerBlock = career.map(e => jsAlignedObject(e, careerKeys, 2)).join(',\n');
   const eduBlock    = education.map(e => jsAlignedObject(e, eduKeys,  2)).join(',\n');
+  const placeBlock  = places.map(e => jsAlignedObject(e, ['year', 'city'], 2)).join(',\n');
 
   /* ── Skills serialisation ──
      Items are rendered at baseIndent=4 so they sit cleanly inside the
@@ -325,6 +345,10 @@ ${careerBlock ? careerBlock + ',\n' : ''}];
 export const CV_EDUCATION = [
 ${eduBlock ? eduBlock + ',\n' : ''}];
 
+/* ── Places lived ─────────────────────────────────────────── */
+export const CV_PLACES = [
+${placeBlock ? placeBlock + ',\n' : ''}];
+
 /* ── Skills ───────────────────────────────────────────────── */
 export const CV_SKILLS = {
   technical:  ${tech},
@@ -336,6 +360,7 @@ if (typeof globalThis !== 'undefined') {
   globalThis.CV_CAREER = CV_CAREER;
   globalThis.CV_EDUCATION = CV_EDUCATION;
   globalThis.CV_SKILLS = CV_SKILLS;
+  globalThis.CV_PLACES = CV_PLACES;
 }
 `;
 }
