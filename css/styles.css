@@ -2280,6 +2280,146 @@ a.edit-clip-body:focus-visible {
   }
 }
 
+/* ─── Career timeline: pinned and scrubbed (desktop) ────────
+   On a wide screen with motion allowed, the timeline stops being a picture
+   that fits and becomes one you travel through. .edit-pin is three screens
+   tall; inside it .edit-stage sticks to the viewport, and the vertical
+   scroll through the pin drives the tracks sideways — the edit is three
+   windows wide, so a one-year clip has ~115px and its name, not a coloured
+   stub. 2000 first, the present last, then the page lets go.
+
+   Pure CSS: position: sticky plus a view timeline on the pin, so the
+   compositor does the work and there is no scroll handler to tear down. The
+   tracks and the ruler move together; the lane names do not (they are opaque
+   and sit above, so the clips pass under them), and the playhead stays on the
+   right edge, where the present arrives at the end of the run.
+
+   Three ways back to the whole-edit layout, all of them the layout above:
+   below 1100px (phones scroll the edit inside its own box instead), under
+   reduced motion, and where scroll timelines are unsupported. A fourth is
+   keyboard focus: a clip translated out of the window would take focus while
+   invisible (WCAG 2.4.7), so the moment focus enters the edit it un-pins and
+   every clip is on screen again. */
+@media (min-width: 1100px) {
+  /* The section's opening screen is a title card: the name of the section,
+     very large, and one sentence. The edit gets the next screen to itself. */
+  .title-card {
+    min-height: calc(85vh - var(--nav-h));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 0;
+
+    .section-title {
+      font-size: clamp(5rem, 11vw, 12rem);
+      line-height: 0.88;
+    }
+
+    .section-subtitle {
+      margin-top: 1.5rem;
+      max-width: 42ch;
+      font-size: 1.35rem;
+    }
+  }
+}
+
+@media (min-width: 1100px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .edit-pin {
+      height: 300vh;
+      view-timeline: --edit-pin block;
+    }
+
+    .edit-stage {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding-top: var(--nav-h);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Big: the stage has the whole screen, and the run is the one place on
+       the site the career is the only thing to look at. Sized so the seven
+       rows (projects packs into three) fill most of a 900px window. */
+    .edit {
+      --clip-h: clamp(4rem, 9vh, 6rem);
+      --label-w: 9rem;
+      overflow-x: clip;
+
+      /* The ruler's row has no lane name to hide the years under, so this
+         covers that corner while they slide past it. */
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--label-w);
+        height: calc(0.5rem + 2.25rem);
+        background: var(--bg);
+        z-index: 2;
+      }
+    }
+
+    .edit-lane-name {
+      font-size: 0.95rem;
+    }
+
+    .edit-ruler {
+      height: 2.25rem;
+
+      span {
+        font-size: 0.8rem;
+      }
+    }
+
+    .edit-ruler,
+    .edit-track {
+      width: 300%;
+      animation: edit-scrub linear both;
+      animation-timeline: --edit-pin;
+      /* `contain` is exactly the stretch where the pin covers the viewport,
+         i.e. while the stage is stuck: the scrub starts as it pins and ends
+         as it lets go. */
+      animation-range: contain 0% contain 100%;
+    }
+
+    .edit-clip-title {
+      font-size: 1.05rem;
+    }
+
+    .edit-clip-meta {
+      font-size: 0.85rem;
+    }
+
+    /* Keyboard focus anywhere in the edit: back to the whole-edit layout. */
+    .edit-pin:has(:focus-visible) {
+      height: auto;
+
+      .edit-stage {
+        position: static;
+        height: auto;
+        padding-top: 0;
+      }
+
+      .edit-ruler,
+      .edit-track {
+        width: auto;
+        animation: none;
+      }
+    }
+  }
+}
+
+@keyframes edit-scrub {
+  to {
+    /* The tracks are 300% of their column: travel two thirds of their own
+       width and the last window — the present — ends up in view. */
+    translate: -66.667% 0;
+  }
+}
+
 /* ─── Projects Section ─────────────────────────────────────── */
 
 /* The facet toolbar sits between the page header and the grid. Left-aligned

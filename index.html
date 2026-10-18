@@ -326,14 +326,19 @@
   <!-- ═══════════════ CAREER ═══════════════ -->
   <section id="career" class="section section-alt" aria-label="Career">
     <div class="container container--wide">
-      <header class="section-header" data-animate>
+      <header class="section-header title-card" data-animate>
         <span class="section-tag">Career</span>
         <h2 class="section-title">The edit so far</h2>
         <p class="section-subtitle">Work, study, projects, papers and the cities they happened in, laid out on one timeline the way an editor lays out a cut. Each clip opens the work behind it; the <a href="cv.html" class="inline-link">CV</a> has the detail.</p>
       </header>
       <!-- Server-rendered by `npm run generate-cards` from data/cv.yaml,
            data/projects.js and data/publications.js
-           (scripts/lib/career-edit.mjs). No JavaScript draws or redraws it. -->
+           (scripts/lib/career-edit.mjs). No JavaScript draws or redraws it.
+           On a wide screen with motion allowed, .edit-pin is three screens
+           tall and .edit-stage sticks while the scroll drives the edit
+           sideways — see "Career timeline: pinned" in css/styles.css. -->
+      <div class="edit-pin">
+      <div class="edit-stage">
       <!-- generated:career-edit -->
       <div class="edit-scroll" role="region" aria-label="Career timeline, 2000 to 2026" tabindex="0">
         <div class="edit">
@@ -425,6 +430,8 @@
         </div>
       </div>
       <!-- /generated:career-edit -->
+      </div>
+      </div>
       <p class="edit-hint">Swipe sideways to move along the timeline.</p>
     </div>
   </section>

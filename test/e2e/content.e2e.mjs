@@ -420,3 +420,84 @@ describe('career timeline', () => {
     } finally { await page.close(); }
   });
 });
+
+/* ─── Career timeline, pinned and scrubbed (desktop) ─────────────────────
+   On a wide screen with motion allowed, the timeline section pins to the
+   viewport and the vertical scroll drives the edit sideways — three screens
+   of timeline, explored from 2000 to the present — and then lets go. Pure
+   CSS (position: sticky + a view timeline), so every claim here is about what
+   the browser resolved: what is on screen at each point of the scroll. */
+describe('career timeline: pinned horizontal scrub', () => {
+  const settle = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo({ top: to, behavior: 'instant' }), y);
+    await page.waitForTimeout(250);
+  };
+  const state = (page) => page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const track = document.querySelector('.edit-lane[data-lane="work"] .edit-track').getBoundingClientRect();
+    const win = document.querySelector('.edit').getBoundingClientRect();
+    const clips = [...document.querySelectorAll('.edit-lane[data-lane="work"] .edit-clip')]
+      .map((c) => c.getBoundingClientRect());
+    const first = clips.sort((a, b) => a.left - b.left)[0];
+    const last = clips[clips.length - 1];
+    const stage = document.querySelector('.edit-stage').getBoundingClientRect();
+    const inWin = (r) => r.right > win.left + 120 && r.left < win.right;
+    return { vw, trackW: track.width, winW: win.width, firstIn: inWin(first), lastIn: inWin(last), stageTop: stage.top };
+  });
+
+  test('pins, scrubs from 2000 to the present, and lets go', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const pin = await page.$eval('.edit-pin', (el) => ({ top: el.getBoundingClientRect().top + scrollY, h: el.offsetHeight }));
+      assert.ok(pin.h >= 2.5 * 900, `the pinned run is only ${pin.h}px — it should give the scrub ~3 screens`);
+
+      await settle(page, pin.top);
+      const start = await state(page);
+      assert.ok(start.trackW > 2.5 * start.winW, 'the edit should be ~3 windows wide while pinned');
+      assert.ok(start.firstIn && !start.lastIn, 'at the start the past is on screen and the present is not');
+
+      await settle(page, pin.top + (pin.h - 900) / 2);
+      const mid = await state(page);
+      assert.ok(Math.abs(mid.stageTop) <= 2, `the stage should be pinned mid-scrub (top ${mid.stageTop})`);
+
+      await settle(page, pin.top + pin.h - 900);
+      const end = await state(page);
+      assert.ok(end.lastIn && !end.firstIn, 'at the end the present is on screen and 2000 has gone by');
+
+      await settle(page, pin.top + pin.h + 200);
+      const after = await state(page);
+      assert.ok(after.stageTop < -100, 'after the run the stage scrolls away with the page');
+    } finally { await page.close(); }
+  });
+
+  test('reduced motion: no pin, the whole edit in one window', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const h = await page.$eval('.edit-pin', (el) => el.offsetHeight);
+      assert.ok(h < 900, `the timeline is still pinned under reduced motion (${h}px)`);
+      const s = await state(page);
+      assert.ok(s.firstIn && s.lastIn, 'the whole edit should be visible at once');
+    } finally { await page.close(); }
+  });
+
+  test('keyboard: focusing a clip un-pins the edit so the clip is on screen', async () => {
+    /* A clip translated out of the window would take focus while invisible
+       (WCAG 2.4.7). Tabbing into the edit switches it back to the whole-edit
+       layout, where every clip is in view. */
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const last = page.locator('.edit-lane[data-lane="projects"] .edit-clip a').last();
+      await last.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(300);
+      const box = await last.boundingBox();
+      const win = await page.locator('.edit').boundingBox();
+      assert.ok(box && box.x >= win.x && box.x + box.width <= win.x + win.width + 1,
+        'the focused clip is outside the visible edit');
+    } finally { await page.close(); }
+  });
+});
