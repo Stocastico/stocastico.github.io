@@ -30,8 +30,7 @@ forget to re-run its generator.
 **One palette drives every colour.** `data/palettes.yaml` has one `active:` key. `npm run generate-theme`
 rewrites the CSS custom properties, `js/theme.js`, the `<meta theme-color>` on every page, the inline
 favicon and the manifest. CSS reads `var(--*)`; the WebGL shaders and Canvas modules import `THEME`.
-The other palettes stay shipped as `:root[data-palette="…"]` blocks, so the navbar dots and the ⌘K
-palette let a visitor pick one; `active:` is what a first-time visitor sees, and it is pinned.
+There is one palette and one theme (dark): no picker, no light/dark toggle — see CLAUDE.md for why.
 
 **Push to `main` deploys.** `.github/workflows/deploy.yml` runs both test suites, builds, and publishes
 to Pages. There is no release step — the deploy is the release.
@@ -65,7 +64,7 @@ Edit the source on the left, run the command on the right. The drift tests will 
 | Homepage world map | `data/countries.yaml` | `generate-countries`, then `generate-world-map` |
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
-| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-theme-toggle`, `generate-favicons` |
+| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons` |
 | Contact address | `js/contact.js` | `generate-cards` |
 | A new project page | a Markdown file | `npm run new-project -- file.md` |
 | Adding any HTML page | — | `generate-analytics`, `generate-speculation-rules`, then `generate-csp-meta` **last** |
@@ -92,7 +91,7 @@ which is the authoritative reference for flags — this table is only a map.
 |---|---|
 | Build | `dev`, `build`, `preview` |
 | Content | `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
-| Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `generate-project-og` |
+| Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og` |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
 | ML pipeline | `train-cnn`, `generate-lenet-weights`, `generate-hero-scan` |
 | Maintenance | `check-links`, `screenshots`, `set-domain`, `generate-europe-land` |
@@ -144,8 +143,8 @@ npm run build && npm run preview   # http://localhost:4173 — the built dist/, 
 **On your phone:** add `-- --host` to either command (`npm run dev -- --host`). Vite then prints a
 `Network:` address such as `http://192.168.1.20:5173`; open it on a phone connected to the same Wi-Fi.
 
-**Every page at once:** after `npm run build`, `npm run screenshots` captures every page in dark and
-light mode into `screenshots/` (gitignored), which is quicker than clicking through 21 pages.
+**Several pages at once:** after `npm run build`, `npm run screenshots` captures the main pages at
+1440, 768 and 390px into `screenshots/` (gitignored), which is quicker than clicking through them.
 
 On a pull request, CI also runs both test suites against the branch (the **Browser tests** check)
 before anything can be merged.

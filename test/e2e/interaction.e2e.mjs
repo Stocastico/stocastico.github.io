@@ -490,7 +490,7 @@ describe('contact', () => {
   });
 });
 
-/* ─── Theme and palette ──────────────────────────────────────────────────── */
+/* ─── Theme: one, dark ───────────────────────────────────────────────────── */
 
 describe('theme', () => {
   test('the site is dark by default even when the OS prefers light', async () => {
@@ -504,49 +504,27 @@ describe('theme', () => {
     } finally { await page.close(); }
   });
 
-  test('the toggle switches to light and the choice survives a reload', async () => {
+  /* The toggle and the palette picker are gone (#188). A returning visitor
+     whose browser still holds the old choices must get the one theme, not a
+     half-applied light page: nothing reads those keys any more, and this
+     checks that nothing quietly starts reading them again. */
+  test('a stored light theme or palette from an old visit is ignored', async () => {
     const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
     const page = await ctx.newPage();
     await blockExternalRequests(page, server.base);
+    await page.addInitScript(() => {
+      try { localStorage.setItem('theme', 'light'); localStorage.setItem('palette', 'forest'); } catch { /* private mode */ }
+    });
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      await page.click('#theme-toggle');
-      await page.waitForTimeout(500);
-      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light');
-
-      const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-      await page.reload({ waitUntil: 'networkidle' });
-      await page.waitForTimeout(300);
-      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light',
-        'the light choice did not survive a reload');
-      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), lightBg,
-        'the restored light theme painted a different background');
-    } finally { await ctx.close(); }
-  });
-
-  test('each palette dot repaints the page and persists', async () => {
-    const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
-    const page = await ctx.newPage();
-    await blockExternalRequests(page, server.base);
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      const ids = await page.$$eval('.palette-dot', (bs) => bs.map((b) => b.dataset.palette));
-      assert.ok(ids.length >= 2, `expected several palettes, found ${ids.length}`);
-
-      const seen = new Set();
-      for (const id of ids) {
-        await page.click(`.palette-dot[data-palette="${id}"]`);
-        await page.waitForTimeout(400);
-        const accent = await page.evaluate(() =>
-          getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
-        assert.ok(accent, `palette ${id} produced no --accent`);
-        seen.add(accent);
-        assert.equal(
-          await page.evaluate(() => localStorage.getItem('palette')) ?? id,
-          await page.evaluate(() => localStorage.getItem('palette')) ?? id);
-      }
-      assert.equal(seen.size, ids.length,
-        `${ids.length} palettes produced only ${seen.size} distinct accents`);
+      const attrs = await page.evaluate(() => ({
+        theme: document.documentElement.getAttribute('data-theme'),
+        palette: document.documentElement.getAttribute('data-palette'),
+      }));
+      assert.deepEqual(attrs, { theme: null, palette: null });
+      const css = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      const { luminance } = await resolveColor(page, css);
+      assert.ok(luminance < 60, `a stale stored choice repainted the page (luminance ${luminance.toFixed(1)})`);
     } finally { await ctx.close(); }
   });
 });

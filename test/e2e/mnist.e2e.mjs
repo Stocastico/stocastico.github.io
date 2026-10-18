@@ -141,20 +141,6 @@ describe('mnist lab', () => {
     assert.deepEqual(failures, []);
   });
 
-  test('a prediction does not depend on the active theme', async () => {
-    /* The canvas strokes in the palette accent and the model reads the alpha
-       channel, so a theme switch must be a no-op for inference. */
-    const page = await openLab();
-    try {
-      const dark = await draw(page, DIGITS[3]);
-      await page.click('#theme-toggle');
-      await page.waitForTimeout(600);
-      const light = await draw(page, DIGITS[3]);
-      assert.equal(light.verdict, dark.verdict,
-        `the same digit read as ${dark.verdict} in dark and ${light.verdict} in light`);
-    } finally { await page.close(); }
-  });
-
   test('clearing resets the readout', async () => {
     const page = await openLab();
     try {

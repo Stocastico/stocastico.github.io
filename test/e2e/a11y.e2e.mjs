@@ -15,9 +15,8 @@
    for: a duplicated id, a control that lost its name, a list whose children
    stopped being list items, a heading rank skipped by a refactor.
 
-   Both themes are checked because they are different colour systems, not one
-   with a filter over it — a pairing that passes in dark can fail in light, and
-   light is the one nobody looks at.
+   It used to run every page in both themes; the site ships one theme since
+   the Montaggio redesign (#188), so it runs once.
    ───────────────────────────────────────────────────────────────────────────── */
 import assert from 'node:assert/strict';
 import test, { after, before, describe } from 'node:test';
@@ -47,18 +46,9 @@ after(async () => {
   await server?.close();
 });
 
-async function analyse(path, theme, viewport = VIEWPORTS.desktop) {
+async function analyse(path, viewport = VIEWPORTS.desktop) {
   const page = await newPage(browser, server, { viewport });
   try {
-    /* The site ignores prefers-color-scheme by design — light is a stored
-       choice, re-applied by the <head> bootstrap before first paint. Emulating
-       the media feature would silently test dark twice, which is exactly the
-       bug the screenshot harness had. */
-    if (theme === 'light') {
-      await page.addInitScript(() => {
-        try { localStorage.setItem('theme', 'light'); } catch { /* private mode */ }
-      });
-    }
     await page.goto(server.base + path, { waitUntil: 'networkidle' });
     /* Reveal first. Everything inside [data-animate] is opacity 0 until the
        scroll reveal runs, and axe skips what it considers hidden — so an
@@ -88,17 +78,15 @@ async function analyse(path, theme, viewport = VIEWPORTS.desktop) {
 }
 
 describe('a11y: axe-core finds no WCAG A/AA violations', () => {
-  for (const theme of ['dark', 'light']) {
-    test(`every page passes in ${theme} mode`, async () => {
-      const failures = [];
-      for (const path of allPages()) {
-        for (const v of await analyse(path, theme)) {
-          failures.push(`${path} [${v.impact}] ${v.id}: ${v.help}\n      ${v.nodes.join('\n      ')}`);
-        }
+  test('every page passes', async () => {
+    const failures = [];
+    for (const path of allPages()) {
+      for (const v of await analyse(path)) {
+        failures.push(`${path} [${v.impact}] ${v.id}: ${v.help}\n      ${v.nodes.join('\n      ')}`);
       }
-      assert.deepEqual(failures, [], `\n  ${failures.join('\n  ')}\n`);
-    });
-  }
+    }
+    assert.deepEqual(failures, [], `\n  ${failures.join('\n  ')}\n`);
+  });
 });
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -106,13 +94,11 @@ describe('a11y: axe-core finds no WCAG A/AA violations', () => {
 
    Everything above ran at 1440×900 and only at 1440×900, which left the two
    things most likely to break unaudited. The layout below 680px is a different
-   one — the nav collapses behind a burger, the ⌘K chip is display:none, the
-   theme controls move — and the open menu is the site's only hand-rolled focus
+   one — the nav collapses behind a burger, the ⌘K chip is display:none — and the open menu is the site's only hand-rolled focus
    trap. axe cannot see any of it in a viewport where the burger does not exist.
 
-   Dark only, and a smaller page set: this is about the mobile *layout*, and the
-   colour tokens it uses are the ones the pass above already measured in both
-   themes on every page. Opening the menu is the point, so it is opened.
+   A smaller page set: this is about the mobile *layout*, and the colour tokens
+   it uses are the ones the pass above already measured on every page. Opening the menu is the point, so it is opened.
    ───────────────────────────────────────────────────────────────────────────── */
 const MOBILE_PAGES = ['/index.html', '/cv.html', '/projects.html', '/travel.html', '/links.html'];
 
@@ -120,7 +106,7 @@ describe('a11y: the mobile layout passes too', () => {
   test('every main page passes at 390px', async () => {
     const failures = [];
     for (const path of MOBILE_PAGES) {
-      for (const v of await analyse(path, 'dark', VIEWPORTS.mobile)) {
+      for (const v of await analyse(path, VIEWPORTS.mobile)) {
         failures.push(`${path} [${v.impact}] ${v.id}: ${v.help}\n      ${v.nodes.join('\n      ')}`);
       }
     }
