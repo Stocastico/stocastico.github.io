@@ -57,7 +57,7 @@ Edit the source on the left, run the command on the right. The drift tests will 
 
 | To change | Edit | Then run |
 |---|---|---|
-| Career, education, skills | `data/cv.yaml` | `generate-cv`, then `generate-cards` |
+| Career, education, skills, places lived | `data/cv.yaml` | `generate-cv`, then `generate-cards` |
 | Projects | `data/projects.js` | `generate-cards`, `generate-llms`, `generate-feed` |
 | Publications | `data/publications.js` | `generate-cards` |
 | Globe pins and trips | `data/locations.yaml` | `generate-locations` |

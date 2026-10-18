@@ -2019,6 +2019,267 @@ body::before {
   }
 }
 
+/* ─── Career timeline: the CV as an edit (#191) ─────────────
+   Markup from scripts/lib/career-edit.mjs, baked into index.html. Every
+   position is a percentage of the ruler handed over as custom properties —
+   --clip-at, --clip-len, --clip-row (and --papers, --track-rows) — so this stylesheet owns every pixel
+   and the markup never needs to know how wide the screen is.
+
+   Each lane is a colour from the bars: work yellow, study white, projects
+   cyan, places green, papers magenta. Text on a filled clip is --on-accent,
+   the one token validated for text on an accent fill; personal projects are
+   outlined rather than filled, which is how the projects page badges them. */
+.edit-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  /* Where the edit is wider than the screen (phones), open on the present,
+     not on 2000: in a right-to-left box the scroll origin is the right edge.
+     Pure CSS, so it holds without JavaScript; the content flips back to
+     left-to-right just below. */
+  direction: rtl;
+}
+
+.edit-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.edit {
+  --clip-h: 2.6rem;
+  --label-w: 7.5rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--label-w) minmax(0, 1fr);
+  row-gap: 4px;
+  min-width: 980px;
+  padding: 0.5rem 1rem 1rem 0;
+  direction: ltr;
+}
+
+/* Lanes are a heading and a list in the DOM (so a screen reader reads five
+   labelled lists) and two cells of one grid row on screen. */
+.edit-lane {
+  display: contents;
+}
+
+.edit-ruler {
+  grid-column: 2;
+  position: relative;
+  height: 1.75rem;
+  border-bottom: 1px solid var(--border);
+
+  span {
+    position: absolute;
+    left: calc(var(--clip-at) * 1%);
+    bottom: 0.35rem;
+    padding-left: 0.3rem;
+    border-left: 1px solid var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1;
+    color: var(--text-faint);
+  }
+}
+
+.edit-lane-name {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0 0.75rem 0 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-muted);
+  /* Opaque, and pinned to the left edge while the clips scroll under it, so a
+     phone scrolled to 2024 still says which lane is which. --bg-card is
+     translucent and would let the clips show through. */
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-alt);
+  box-shadow: inset -1px 0 0 var(--border);
+
+  &::before {
+    content: '';
+    flex: none;
+    width: 0.6rem;
+    height: 0.6rem;
+    background: var(--lane);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}
+
+.edit-track {
+  grid-column: 2;
+  position: relative;
+  height: calc(var(--track-rows) * var(--clip-h) + (var(--track-rows) - 1) * 3px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: rgb(var(--shadow-rgb) / 0.22);
+}
+
+.edit-lane[data-lane='work'] { --lane: var(--accent); }
+.edit-lane[data-lane='study'] { --lane: var(--text); }
+.edit-lane[data-lane='projects'] { --lane: var(--accent2); }
+.edit-lane[data-lane='places'] { --lane: var(--pin-lived); }
+.edit-lane[data-lane='papers'] { --lane: var(--pin-holiday); }
+
+.edit-clip {
+  position: absolute;
+  left: calc(var(--clip-at) * 1%);
+  top: calc(var(--clip-row) * (var(--clip-h) + 3px));
+  width: calc(var(--clip-len) * 1% - 2px);
+  height: var(--clip-h);
+  container-type: inline-size;
+}
+
+/* A one-year clip is ~38px wide on a desktop: room for a colour, not a word.
+   Below that the label goes visually hidden — still read out, still in the
+   hover tooltip — rather than ending as "M…". The second line goes first. */
+@container (max-width: 120px) {
+  .edit-clip-meta {
+    display: none;
+  }
+}
+
+@container (max-width: 70px) {
+  .edit-clip-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.edit-clip-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: 0 0.5rem;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--on-accent);
+  background: var(--lane);
+  /* The splice: a darker left edge, the way an editor marks where a clip
+     begins. */
+  border-left: 3px solid rgb(var(--shadow-rgb) / 0.35);
+  text-decoration: none;
+}
+
+.edit-clip-title,
+.edit-clip-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-ui);
+  line-height: 1.2;
+}
+
+.edit-clip-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.edit-clip-meta {
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+a.edit-clip-body:hover {
+  outline: 2px solid var(--text);
+  outline-offset: -2px;
+}
+
+a.edit-clip-body:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+/* Personal projects: an outline in the lane colour, not a fill. */
+.edit-clip.is-personal .edit-clip-body {
+  color: var(--accent2-text);
+  background: transparent;
+  border: 1px solid var(--lane);
+  border-left-width: 3px;
+}
+
+/* Places carry a waveform, as an audio track does under the picture. The
+   bars only darken the fill a little, so the city name keeps its contrast. */
+.edit-lane[data-lane='places'] .edit-clip-body {
+  background-image: repeating-linear-gradient(90deg,
+    rgb(var(--shadow-rgb) / 0.14) 0 2px, transparent 2px 5px);
+}
+
+/* Papers: one mark per paper, grouped in the year they came out. */
+.edit-papers {
+  position: absolute;
+  left: calc(var(--clip-at) * 1%);
+  width: calc(var(--clip-len) * 1%);
+  height: 100%;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 20%;
+    bottom: 20%;
+    width: calc(var(--papers) * 5px - 2px);
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(90deg, var(--lane) 0 3px, transparent 3px 5px);
+  }
+}
+
+/* "Now": the right edge of the edit, where the latest clip ends. */
+.edit-playhead {
+  position: absolute;
+  top: 0.5rem;
+  bottom: 1rem;
+  right: 1rem;
+  width: 2px;
+  background: var(--pin-current);
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -5px;
+    border: 6px solid transparent;
+    border-top: 8px solid var(--pin-current);
+  }
+}
+
+.edit-hint {
+  display: none;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+@media (max-width: 760px) {
+  .edit {
+    --label-w: 5.5rem;
+    min-width: 900px;
+  }
+
+  .edit-hint {
+    display: block;
+  }
+}
+
 /* ─── Projects Section ─────────────────────────────────────── */
 
 /* The facet toolbar sits between the page header and the grid. Left-aligned

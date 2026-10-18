@@ -17,7 +17,7 @@
    truth about the data.
 
    Positions are percentages of the ruler written as custom properties
-   (--s start, --w width, --r row), so the stylesheet owns every pixel and the
+   (--clip-at start, --clip-len width, --clip-row row), so the stylesheet owns every pixel and the
    same markup works at any width. The edit's right edge is the end of the
    latest year anywhere in the data, not today: "present" is drawn to there.
    A date-dependent edge would make the committed HTML go stale on its own,
@@ -83,12 +83,12 @@ function rootUrl(url) {
 export function careerEditLines({ career, education, places, projects, publications }) {
   const { start, end } = timelineBounds({ career, education, places, projects, publications });
   const span = end - start;
-  const pos = ({ from, to }) => `--s: ${pct(((from - start) / span) * 100)}; --w: ${pct(((to - from) / span) * 100)}`;
+  const pos = ({ from, to }) => `--clip-at: ${pct(((from - start) / span) * 100)}; --clip-len: ${pct(((to - from) / span) * 100)}`;
 
   /* One clip per item; `body` is its visible content, `label` the full
      sentence it stands for (title tooltip + what a screen reader hears). */
   const clip = (item, row, { href, extra = '' } = {}) => {
-    const style = `${pos(item)}; --r: ${row}`;
+    const style = `${pos(item)}; --clip-row: ${row}`;
     const inner = `<span class="edit-clip-title">${escapeHtml(item.title)}</span>`
       + (item.meta ? `<span class="edit-clip-meta">${escapeHtml(item.meta)}</span>` : '')
       + `<span class="visually-hidden">, ${escapeHtml(item.years)}</span>`;
@@ -103,7 +103,7 @@ export function careerEditLines({ career, education, places, projects, publicati
     const lines = [
       `<div class="edit-lane" data-lane="${key}">`,
       `  <h3 class="edit-lane-name" id="edit-lane-${key}">${name}</h3>`,
-      `  <ol class="edit-track" aria-labelledby="edit-lane-${key}" style="--rows: ${rows.length}">`,
+      `  <ol class="edit-track" aria-labelledby="edit-lane-${key}" style="--track-rows: ${rows.length}">`,
     ];
     rows.forEach((row, r) => row.forEach((it) => lines.push(`    ${clip(it, r, opts.clip ? opts.clip(it) : {})}`)));
     lines.push('  </ol>', '</div>');
@@ -137,12 +137,12 @@ export function careerEditLines({ career, education, places, projects, publicati
   const byYear = new Map();
   for (const p of publications) byYear.set(Number(p.year), (byYear.get(Number(p.year)) || 0) + 1);
   const paperItems = [...byYear.entries()].sort((a, b) => a[0] - b[0]).map(([y, n]) =>
-    `    <li class="edit-papers" style="--s: ${pct(((y - start) / span) * 100)}; --w: ${pct((1 / span) * 100)}; --n: ${n}" data-papers="${n}">`
+    `    <li class="edit-papers" style="--clip-at: ${pct(((y - start) / span) * 100)}; --clip-len: ${pct((1 / span) * 100)}; --papers: ${n}" data-papers="${n}">`
     + `<span class="visually-hidden">${y}: ${n} ${n === 1 ? 'paper' : 'papers'}</span></li>`);
 
   const ruler = [];
   for (let y = start; y < end; y += 2) {
-    ruler.push(`    <span style="--s: ${pct(((y - start) / span) * 100)}">${y}</span>`);
+    ruler.push(`    <span style="--clip-at: ${pct(((y - start) / span) * 100)}">${y}</span>`);
   }
 
   return [
@@ -159,7 +159,7 @@ export function careerEditLines({ career, education, places, projects, publicati
     ...lane('places', 'Places', lived).map((l) => `  ${l}`),
     '  <div class="edit-lane" data-lane="papers">',
     '    <h3 class="edit-lane-name" id="edit-lane-papers"><a href="/publications.html">Papers</a></h3>',
-    '    <ol class="edit-track" aria-labelledby="edit-lane-papers" style="--rows: 1">',
+    '    <ol class="edit-track" aria-labelledby="edit-lane-papers" style="--track-rows: 1">',
     ...paperItems.map((l) => `  ${l}`),
     '    </ol>',
     '  </div>',

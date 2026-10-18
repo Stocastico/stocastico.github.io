@@ -67,7 +67,7 @@ test('careerEditLines: one paper tick per publication, grouped by year', () => {
 });
 
 test('careerEditLines: every clip sits inside the ruler', () => {
-  const pos = [...html.matchAll(/--s:\s*([\d.]+);\s*--w:\s*([\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  const pos = [...html.matchAll(/--clip-at:\s*([\d.]+);\s*--clip-len:\s*([\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
   assert.ok(pos.length > 20, `only ${pos.length} positioned clips`);
   for (const [s, w] of pos) {
     assert.ok(s >= 0 && w > 0 && s + w <= 100.001, `clip at ${s}% + ${w}% leaves the ruler`);

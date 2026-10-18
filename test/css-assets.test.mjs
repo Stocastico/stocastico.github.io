@@ -27,6 +27,11 @@ const RUNTIME_VARS = new Set([
   '--gloss-x',          // js/animations.js card tilt gloss
   '--gloss-y',
   '--project-hero-img', // inline style on project detail hero
+  '--clip-at',          // inline style from scripts/lib/career-edit.mjs (#191):
+  '--clip-len',         //   where each clip sits on the career timeline
+  '--clip-row',
+  '--papers',
+  '--track-rows',
 ]);
 
 test('css: every var(--x) in styles.css resolves to a definition', () => {

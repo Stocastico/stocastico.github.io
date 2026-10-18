@@ -384,3 +384,39 @@ describe('hero: the receptive field', () => {
   });
 });
 
+
+/* ─── Career timeline (#191) ─────────────────────────────────────────────
+   Two things only a browser can answer. On a desktop the whole edit must fit
+   — a timeline you have to scroll to see 2024 on a 1440px screen has lost
+   the one thing it is for, a career read at a glance. On a phone it cannot
+   fit, so it must open on the present: the scroller is direction: rtl for
+   exactly that, and a stylesheet change that dropped it would leave a phone
+   visitor looking at 2000 and four empty lanes. */
+describe('career timeline', () => {
+  test('desktop: the whole edit fits without scrolling', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const m = await page.$eval('.edit-scroll', (el) => ({ sw: el.scrollWidth, cw: el.clientWidth }));
+      assert.ok(m.sw <= m.cw + 1, `the timeline scrolls at 1440 (${m.sw} in ${m.cw})`);
+    } finally { await page.close(); }
+  });
+
+  test('phone: it opens on the present, with the lane names still in view', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 390, height: 844 } });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const r = await page.evaluate(() => {
+        const box = document.querySelector('.edit-scroll').getBoundingClientRect();
+        const latest = [...document.querySelectorAll('.edit-lane[data-lane="work"] .edit-clip')]
+          .map((c) => c.getBoundingClientRect())
+          .sort((a, b) => b.right - a.right)[0];
+        const name = document.querySelector('.edit-lane-name').getBoundingClientRect();
+        return { boxL: box.left, boxR: box.right, clipL: latest.left, clipR: latest.right, nameL: name.left };
+      });
+      assert.ok(r.clipR <= r.boxR + 1 && r.clipL >= r.boxL,
+        `the latest role is not in view on load (${Math.round(r.clipL)}–${Math.round(r.clipR)} in ${Math.round(r.boxL)}–${Math.round(r.boxR)})`);
+      assert.ok(Math.abs(r.nameL - r.boxL) <= 2, 'the lane names should be pinned to the left edge');
+    } finally { await page.close(); }
+  });
+});
