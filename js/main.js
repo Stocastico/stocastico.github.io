@@ -100,7 +100,6 @@ import {
 import {
   initCounters,
   animateCounter,
-  initTheme,
   initNavbar,
   initBackToTop,
   initCommandPalette,
@@ -531,29 +530,6 @@ export function initLifecycleCleanup(disposables) {
   window.addEventListener('pagehide', cleanup);
 }
 
-/* Swap a WebGL <canvas> for a pristine clone before a theme-switch rebuild.
-
-   The colour-baked WebGL surfaces (the Three.js globe) force
-   their context to be lost in destroy() (renderer.forceContextLoss() /
-   WEBGL_lose_context.loseContext()) so teardown frees the GPU resources
-   promptly. But a force-lost context is permanent for that node — getContext()
-   keeps returning the same dead context, so rebuilding the instance on the
-   *same* canvas paints onto a context that never restores and the surface goes
-   blank (the bug behind "the globe disappears in light mode").
-
-   Replacing the node with cloneNode(false) gives the rebuild a fresh canvas
-   that can acquire a live context, while preserving the id / classes / inline
-   attributes so CSS and the FOUC fade-in still apply. Returns the live canvas
-   (the clone when a swap happened, else the original), so callers must use the
-   returned reference for the rebuild. No-op (returns the input) when the node
-   is missing or detached. */
-export function freshCanvasForRebuild(canvas) {
-  if (!canvas || !canvas.parentNode || typeof canvas.cloneNode !== 'function') return canvas;
-  const clone = canvas.cloneNode(false);
-  canvas.parentNode.replaceChild(clone, canvas);
-  return clone;
-}
-
 /* Test surface — ES module exports.
    UI behaviours (js/ui.js) and DOM animations (js/animations.js) are
    re-exported here so the test suite can keep importing them from
@@ -573,7 +549,6 @@ export {
   renderCV,
   renderSkills,
   setFooterYear,
-  initTheme,
   initCardTilt,
   initNavbar,
   initMobileMenu,
@@ -648,7 +623,6 @@ if (typeof document !== 'undefined') {
   const _pushTeardown = (fn) => { if (typeof fn === 'function') _disposables.push({ destroy: fn }); };
 
   /* UI behaviours */
-  _pushTeardown(initTheme());
   _pushTeardown(initNavbar());
   _pushTeardown(initMobileMenu());
   initContactCopy();
@@ -697,7 +671,7 @@ if (typeof document !== 'undefined') {
      a different face, so on any JS-enabled visit the tab disagreed with the
      bookmark, the PWA icon and the OS icon. Worse, it imported the dark THEME
      statically rather than resolving getTheme(), and never listened for
-     `themechange`: light mode kept the dark square, and switching palette left
+     theme changes: light mode kept the dark square, and switching palette left
      it on the old accent. That is why the light variant's faviconBg/faviconFg
      existed in js/theme.js with no consumer at all.
 
@@ -717,20 +691,12 @@ if (typeof document !== 'undefined') {
      into is reserved by CSS, so the sooner it lands the shorter the moment the
      plain <h1> shows in its place. Reduced motion still gets the scene — only
      its intro sweep is skipped — because every other change it makes answers
-     something the visitor did.
-
-     A theme switch recolours in place (recolour()) rather than destroying and
-     rebuilding, so the chosen filter and window position survive it. */
+     something the visitor did. */
   const heroEl = document.getElementById('hero');
-  let fieldInstance = null;
   if (heroEl && document.getElementById('field-canvas')) {
     import('./receptive-field.js').then(({ ReceptiveField }) => {
-      fieldInstance = new ReceptiveField(heroEl, () => heroEl.classList.add('is-drawn'));
-      _disposables.push(fieldInstance);
+      _disposables.push(new ReceptiveField(heroEl, () => heroEl.classList.add('is-drawn')));
     });
-    const onThemeChange = () => { if (fieldInstance) fieldInstance.recolour(); };
-    window.addEventListener('themechange', onThemeChange);
-    _pushTeardown(() => window.removeEventListener('themechange', onThemeChange));
   }
 
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
@@ -838,28 +804,6 @@ if (typeof document !== 'undefined') {
   if (europeCanvas) {
     _lazyOnViewport(europeCanvas, buildEurope);
   }
-
-  /* Recolour the travel-page maps on a theme switch — only if already built
-     (don't pull Three.js early). Rebuild reuses the same lazy builders. */
-  const onMapThemeChange = () => {
-    if (globeInstance) {
-      try { globeInstance.destroy?.(); } catch (_) { /* ignore */ }
-      globeInstance = null;
-      /* Globe3D.destroy() calls renderer.forceContextLoss(); the WebGL
-         context can't be revived on the same node, so rebuild on a clone. */
-      globeCanvas = freshCanvasForRebuild(globeCanvas);
-      buildGlobe();
-    }
-    if (europeInstance) {
-      try { europeInstance.destroy?.(); } catch (_) { /* ignore */ }
-      europeInstance = null;
-      /* Canvas2D — swap for a clean buffer to match the globe rebuild path. */
-      europeCanvas = freshCanvasForRebuild(europeCanvas);
-      buildEurope();
-    }
-  };
-  window.addEventListener('themechange', onMapThemeChange);
-  _pushTeardown(() => window.removeEventListener('themechange', onMapThemeChange));
 
   /* UNESCO World Heritage accordion (travel page only) — 20 KB of tree that
      the other 20 pages have no use for. */

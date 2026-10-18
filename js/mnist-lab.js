@@ -85,18 +85,6 @@ export class MnistLab {
     this._setupControls();
 
     this._resolveInk();
-    this._onTheme = () => {
-      this.theme = getTheme();
-      this._resolveInk();
-      this._paintStrokeStyle();
-      this._retintStrokes();
-      /* Re-run so every canvas repaints in the new palette. The pixels the
-         model sees come from the alpha channel, so a colour change cannot
-         alter the prediction — this is purely cosmetic. */
-      if (this._hasResult) this._run({ animate: false });
-      else this._renderIdle();
-    };
-    window.addEventListener('themechange', this._onTheme);
 
     this._renderIdle();
   }
@@ -196,19 +184,6 @@ export class MnistLab {
     this.dctx.lineWidth = STROKE;
     this.dctx.lineCap = 'round';
     this.dctx.lineJoin = 'round';
-  }
-
-  /* Recolour ink already on the canvas after a palette switch. `source-in`
-     keeps the destination alpha and replaces only the colour, so the mask the
-     model reads comes through the operation bit-for-bit unchanged. */
-  _retintStrokes() {
-    if (!this.dctx || !this._dirty) return;
-    const ctx = this.dctx;
-    ctx.save();
-    ctx.globalCompositeOperation = 'source-in';
-    ctx.fillStyle = this.theme.accent;
-    ctx.fillRect(0, 0, DRAW, DRAW);
-    ctx.restore();
   }
 
   _scheduleLive() {
@@ -573,7 +548,6 @@ export class MnistLab {
       try { target.removeEventListener(type, fn, opts); } catch (_) { /* ignore */ }
     }
     this._listeners = [];
-    if (this._onTheme) window.removeEventListener('themechange', this._onTheme);
   }
 }
 

@@ -86,14 +86,11 @@ function okLightness(rgb) {
 }
 const lightnessStep = (a, b) => Math.abs(okLightness(a) - okLightness(b));
 
-/* Every variant that ships: each palette's dark body and its nested light. */
+/* Every variant that ships. Each palette used to carry a nested light variant
+   as well; the site is dark only since the Montaggio redesign (#188). If a
+   `light:` key ever comes back, generate-theme rejects it before this matters. */
 function variants() {
-  const out = [];
-  for (const [id, p] of Object.entries(palettes)) {
-    out.push({ name: `${id} (dark)`, p });
-    out.push({ name: `${id} (light)`, p: p.light });
-  }
-  return out;
+  return Object.entries(palettes).map(([id, p]) => ({ name: id, p }));
 }
 
 /* The derived surfaces, exactly as generate-theme.js composes them. */
@@ -428,13 +425,6 @@ test('contrast: dark backgrounds sit in a sane luminance band', () => {
     const pct = luminance(channels(p.bg)) * 100;
     assert.ok(pct >= 0.4 && pct <= 2.0,
       `${id} (dark) — background luminance ${pct.toFixed(2)}% is outside 0.40–2.00%`);
-  }
-});
-
-test('contrast: light backgrounds sit in a sane luminance band', () => {
-  for (const [id, p] of Object.entries(palettes)) {
-    const pct = luminance(channels(p.light.bg)) * 100;
-    assert.ok(pct >= 80, `${id} (light) — background luminance ${pct.toFixed(2)}% is below 80%`);
   }
 });
 

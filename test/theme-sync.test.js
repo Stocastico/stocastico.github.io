@@ -152,40 +152,24 @@ for (const rel of BRAND_PAGES) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   The navbar palette dots must agree with the active palette.
-
-   `generate-theme-toggle` bakes `aria-pressed="true"` onto the dot whose id
-   equals `active:` in data/palettes.yaml. Nothing re-ran it after a palette
-   change: the recipe everyone copied — echoed in README.md and CLAUDE.md —
-   was "generate-theme, then generate-favicons", written before the dots
-   existed.
-   So the palette rotated to crimson and all 21 pages went on claiming apricot
-   was the selected one, 42 lines of drift that no test could see.
-
-   It is only briefly visible (initTheme()'s syncDots() corrects the attribute
-   on load, and a no-JS visitor cannot operate the dots anyway), which is
-   precisely why it needed a test rather than an eye: this is a generated
-   artefact that stopped matching its source, and every other generated
-   artefact here is pinned against drift.
-
-   Guarded from the committed HTML rather than by calling the builder, for the
-   same reason the generate-cards tests read the shipped markup: comparing a
-   builder to itself passes whether or not the page was ever regenerated.
+   One theme, so no switch. The navbar used to carry a palette picker and a
+   light/dark toggle, injected into every page by generate-theme-toggle along
+   with a <head> bootstrap that re-applied a stored choice before paint. All of
+   it went with the Montaggio redesign (#188). A page that still carries any of
+   it has a control that does nothing — or, for the bootstrap, a script that
+   pins a data-theme no stylesheet answers any more — so this fails on it.
 ──────────────────────────────────────────────────────────────────────────────*/
-const DOT_RE = /<button[^>]*class="palette-dot"[^>]*data-palette="([a-z0-9-]+)"[^>]*aria-pressed="(true|false)"[^>]*>/g;
-
 for (const file of htmlFiles()) {
   const rel = path.relative(ROOT, file);
-  test(`theme-sync: ${rel} marks the active palette dot as pressed`, () => {
+  test(`theme-sync: ${rel} carries no theme or palette switch`, () => {
     const html = fs.readFileSync(file, 'utf8');
-    const dots = [...html.matchAll(DOT_RE)].map(m => ({ id: m[1], pressed: m[2] === 'true' }));
-    assert.ok(dots.length, `${rel}: no .palette-dot buttons found — run \`npm run generate-theme-toggle\``);
-
-    const pressed = dots.filter(d => d.pressed).map(d => d.id);
-    assert.deepEqual(pressed, [paletteId],
-      `${rel}: aria-pressed="true" is on [${pressed.join(', ') || 'nothing'}] but the active ` +
-      `palette is "${paletteId}". Run \`npm run generate-theme-toggle\` — it is step 2 ` +
-      'of the four-command recipe in the data/palettes.yaml header, and skipping it is ' +
-      'what put 42 lines of drift on 21 pages last time.');
+    for (const [what, re] of [
+      ['palette dots', /class="palette-dot"/],
+      ['a light/dark toggle', /id="theme-toggle"/],
+      ['the theme bootstrap script', /theme-bootstrap|localStorage\.getItem\('theme'\)/],
+      ['a data-theme / data-palette pin', /<html[^>]*data-(theme|palette)=/],
+    ]) {
+      assert.doesNotMatch(html, re, `${rel} still carries ${what}`);
+    }
   });
 }

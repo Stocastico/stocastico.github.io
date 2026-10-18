@@ -18,7 +18,6 @@ import {
   initContactCopy,
   renderCV,
   renderSkills,
-  initTheme,
   initCardTilt,
   initBackToTop,
   renderProjects,
@@ -1084,11 +1083,6 @@ test('renderSkills renders empty when skills has no entries', () => {
   }
 });
 
-/* ─── initTheme tests ─────────────────────────────────────── */
-
-test('initTheme is a no-op stub that does not throw', () => {
-  initTheme(); /* should simply return without error */
-});
 
 /* ─── initBackToTop tests ─────────────────────────────────── */
 
@@ -1196,14 +1190,14 @@ test('initCardTilt skips when prefers-reduced-motion is set', () => {
    chunk boundaries in test/hero-scan.test.mjs. What is left for this layer is
    the wiring and the renderer's DOM contract. */
 
-test('main.js reaches the hero through a dynamic import and recolours it in place', () => {
+test('main.js reaches the hero through a dynamic import', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
   assert.ok(/import\(['"]\.\/receptive-field\.js['"]\)[\s\S]{0,80}ReceptiveField/.test(src),
     'the hero should be loaded at its init site');
   assert.ok(!/cnn-hero|kernel-scan|noise-gradient|NoiseGradient/.test(src),
     'nothing may still reach for the retired hero modules');
-  assert.ok(/recolour\(\)/.test(src),
-    'a theme switch should recolour the hero rather than rebuild it (keeps the chosen filter)');
+  assert.ok(!/themechange|initTheme/.test(src),
+    'there is one theme (#188): nothing should listen for, or set up, a theme switch');
 });
 
 /* ─── ReceptiveField (the hero) ──────────────────────────────

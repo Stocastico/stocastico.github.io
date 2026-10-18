@@ -496,14 +496,6 @@ export class ReceptiveField {
     if (this._onReady) { const cb = this._onReady; this._onReady = null; cb(); }
   }
 
-  /* themechange: same filter, same window, the new palette. */
-  recolour() {
-    if (!this.ctx) return;
-    this._theme = getTheme();
-    this._renderKernel();
-    this._draw();
-  }
-
   destroy() {
     this._stopIntro();
     if (this._ro) { this._ro.disconnect(); this._ro = null; }
