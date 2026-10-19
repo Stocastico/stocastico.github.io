@@ -117,6 +117,10 @@
 
   --section-py: clamp(4.5rem, 8vw, 7rem);
   --container: 1180px;
+  /* The side gutter. --container is the width of the *content*: the navbar,
+     the hero and every .container start their text on the same vertical line
+     because each adds the gutter outside that width, never inside it. */
+  --gutter: clamp(1.25rem, 5vw, 3rem);
   --gap: var(--space-lg);
 
   /* Letter-spacing (tracking) scale — replaces a dozen ad-hoc em values.
@@ -137,10 +141,9 @@
   --tracking-widest: 0.12em;
 
   /* Radius */
-  --r-sm: 8px;
-  --r-md: 16px;
-  --r-lg: 24px;
-  --r-xl: 36px;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
 
   /* Shadow colour — used as rgb(var(--shadow-rgb) / <alpha>) in box-shadows */
   --shadow-rgb: 0 0 0;
@@ -280,7 +283,7 @@ body.menu-open {
 
 ::-webkit-scrollbar-thumb {
   background: var(--accent);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
 }
 
 img {
@@ -345,7 +348,7 @@ button:focus-visible {
   left: 0.5rem;
   z-index: 200;
   padding: 0.6rem 1rem;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--accent2);
   background: rgb(var(--bg-rgb) / 0.96);
   color: var(--text);
@@ -422,18 +425,31 @@ figcaption {
   text-wrap: pretty;
 }
 
-/* ─── 4. Layout Helpers ─────────────────────────────────── */
-.container {
-  max-width: var(--container);
-  margin-inline: auto;
-  padding-inline: clamp(1.25rem, 5vw, 3rem);
+/* Chrome is the UI face (#190). The body inherits the prose serif, so a piece
+   of chrome with no font-family of its own quietly becomes serif — the ⌘K
+   palette, the skip link, the contact labels and both map legends all had.
+   Listed here, in one place, rather than a line in each rule, so the next one
+   is an edit to this list; test/e2e/content.e2e.mjs measures the computed
+   face on every page and fails on chrome set in the serif. */
+.skip-link,
+.cmd-overlay,
+.hero-location,
+.contact-card,
+.wm-legend-item,
+.gl-item,
+.post-meta,
+.unesco-name {
+  font-family: var(--font-ui);
 }
 
-/* Wide container variant — allows content to use more horizontal space */
-.container--wide {
-  max-width: calc(var(--container) + 6rem);
+/* ─── 4. Layout Helpers ─────────────────────────────────── */
+/* The gutter sits outside --container, as it does on the navbar and the hero.
+   It used to sit inside, which put every section's text 48px right of the
+   name and the logo above it — two left edges on one page. */
+.container {
+  max-width: calc(var(--container) + 2 * var(--gutter));
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-inline: var(--gutter);
 }
 
 /* ─── Colour bars ───────────────────────────────────────────
@@ -473,7 +489,7 @@ body::before {
   height: var(--nav-h);
   display: flex;
   align-items: center;
-  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-inline: var(--gutter);
 
   /* Transparent bar; the blurred background fades in on scroll via the
      ::before pseudo-element (see #navbar.scrolled::before below). */
@@ -674,7 +690,7 @@ body::before {
    applies and now holds trivially. */
 #hero {
   position: relative;
-  padding: clamp(5.5rem, 12vh, 8rem) clamp(1.25rem, 5vw, 3rem) clamp(2.5rem, 6vh, 4rem);
+  padding: clamp(5.5rem, 12vh, 8rem) var(--gutter) clamp(2.5rem, 6vh, 4rem);
 }
 
 /* Same measure and left edge as every .container below it, so the name, the
@@ -895,7 +911,7 @@ body::before {
     /* 24px: small, and still the WCAG 2.5.8 minimum target. */
     min-height: 1.5rem;
     padding: 0.15rem 1.6rem 0.15rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--r-sm);
     cursor: pointer;
   }
 
@@ -928,7 +944,7 @@ body::before {
   align-items: center;
   gap: 0.5rem;
   padding: 0.8em 1.9em;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   /* Buttons are chrome too — a label you act on, not a sentence you read. */
   font-family: var(--font-ui);
   font-size: 0.875rem;
@@ -1168,7 +1184,7 @@ body::before {
 .wm-legend-swatch {
   width: 0.9rem;
   height: 0.9rem;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   display: inline-block;
 }
 
@@ -1415,8 +1431,8 @@ body::before {
 .sea-chart-cartouche {
   position: relative;
   margin: 0 auto;
-  padding: 2rem clamp(1.25rem, 5vw, 3rem) 0;
-  max-width: var(--container);
+  padding: 2rem var(--gutter) 0;
+  max-width: calc(var(--container) + 2 * var(--gutter));
 }
 
 .sea-chart-cartouche .section-title {
@@ -1734,7 +1750,7 @@ body::before {
   color: var(--text-muted);
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   transition: border-color var(--t-fast) var(--ease),
               background var(--t-fast) var(--ease),
@@ -1822,7 +1838,7 @@ body::before {
   font-size: 0.7rem;
   letter-spacing: var(--tracking-normal);
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   color: var(--text-muted);
   background: var(--bg);
   border: 1px solid var(--border);
@@ -1971,6 +1987,9 @@ body::before {
 }
 
 .stat-item {
+  /* One size, read by number and "+": the suffix is the number's sibling,
+     not its child, so it cannot size itself in em off it. */
+  --stat-size: 2.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
@@ -2001,16 +2020,20 @@ body::before {
 .stat-number {
   display: inline-block;
   font-family: var(--font-display);
-  font-size: 2rem;
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: var(--stat-size);
   letter-spacing: var(--tracking-display);
-  font-weight: 700;
   line-height: 1;
   color: var(--accent);
 }
 
 .stat-suffix {
+  font-family: var(--font-display);
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: calc(var(--stat-size) * 0.64);
   color: var(--accent2-text);
-  font-weight: 700;
 }
 
 .stat-label {
@@ -2049,7 +2072,7 @@ body::before {
   align-items: center;
   gap: 0.5rem;
   padding: 0.6em 1.4em;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--border);
   /* Same call as .btn — these are controls sitting at the end of a prose
      column, and the mono is what keeps them from reading as another
@@ -2137,8 +2160,6 @@ body::before {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--accent-text);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
   padding-top: 0;
 }
 
@@ -2729,11 +2750,8 @@ a.edit-clip-body:focus-visible {
     }
 
     .stat-item {
+      --stat-size: clamp(1.5rem, 3.4svh, 2rem);
       padding: 0.5rem 0.2rem;
-    }
-
-    .stat-number {
-      font-size: clamp(1.15rem, 2.6svh, 1.5rem);
     }
 
     .about-text-col {
@@ -3015,7 +3033,7 @@ a.edit-clip-body:focus-visible {
 
 .project-card__year {
   padding: 0.2em 0.5em;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: var(--bg);
   white-space: nowrap;
   font-family: var(--font-mono);
@@ -3029,7 +3047,7 @@ a.edit-clip-body:focus-visible {
    project is about, and this says who it was for. */
 .project-card__kind {
   padding: 0.2em 0.5em;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: var(--bg);
   white-space: nowrap;
   font-family: var(--font-ui);
@@ -3074,7 +3092,7 @@ a.edit-clip-body:focus-visible {
   font-size: 0.66rem;
   font-weight: 600;
   padding: 0.2em 0.6em;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent-text);
 }
@@ -3212,7 +3230,7 @@ a.edit-clip-body:focus-visible {
   padding: 0.45em 1em;
   font-size: 0.85rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--border);
   color: var(--accent-text);
   text-decoration: none;
@@ -3239,20 +3257,18 @@ a.edit-clip-body:focus-visible {
 }
 
 /* ─── 14. Contact Section ───────────────────────────────── */
+/* On the section's left edge, like every other section: it used to be a
+   centred 760px column under a left-aligned "Let's talk", the one place on
+   the page where the text changed axis. Size comes from the body, like every
+   other section intro — see the note on .section-subtitle. */
 .contact-wrap {
   max-width: 760px;
-  margin-inline: auto;
 }
 
-/* Size comes from the body, like every other section intro — see the note on
-   .section-subtitle. The centring stays: this one sits over a centred contact
-   grid, not under a left-aligned section header. */
 .contact-lead {
-  text-align: center;
   color: var(--text-muted);
   margin-bottom: 2.5rem;
   max-width: 60ch;
-  margin-inline: auto;
 }
 
 .contact-grid {
@@ -3740,7 +3756,7 @@ a.edit-clip-body:focus-visible {
   font-size: 0.7rem;
   font-weight: 600;
   padding: 0.2em 0.6em;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent-text);
 }
@@ -4202,7 +4218,7 @@ a.edit-clip-body:focus-visible {
   background: rgb(var(--bg-rgb) / 0.72);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm, 4px);
+  border-radius: var(--r-sm);
   padding: 0.45em 1.1em;
   z-index: 5;
   flex-wrap: wrap;
@@ -4297,12 +4313,24 @@ a.edit-clip-body:focus-visible {
   margin-bottom: 1rem;
 }
 
+/* Article headings take the display cut every other title on the site uses
+   (section titles, .post-title, .cv-role); they were the last serif heads. */
+.post h2,
+.mnist-lab__heading {
+  font-family: var(--font-display);
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: 1.9rem;
+  line-height: 1.05;
+}
+
 .post h2 {
-  font-size: 1.22rem;
-  margin: 2rem 0 0.75rem;
+  margin: 2.5rem 0 0.75rem;
 }
 
 .post h3 {
+  font-family: var(--font-ui);
+  font-weight: 700;
   font-size: 1.05rem;
   margin: 1.5rem 0 0.5rem;
   color: var(--text);
@@ -4330,7 +4358,7 @@ a.edit-clip-body:focus-visible {
 }
 
 .post code {
-  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-family: var(--font-mono);
   font-size: 0.88em;
   background: rgb(var(--text-rgb) / 0.07);
   border: 1px solid var(--border);
@@ -4600,9 +4628,8 @@ a.edit-clip-body:focus-visible {
 }
 
 .mnist-lab__heading {
-  /* Matches .post h2 — it is a section heading in the flow of the article,
+  /* Set with .post h2 — it is a section heading in the flow of the article,
      it just happens to introduce a widget rather than a paragraph. */
-  font-size: 1.22rem;
   margin: 0 0 0.75rem;
 }
 
@@ -4650,8 +4677,6 @@ a.edit-clip-body:focus-visible {
 .mnist-draw__hint {
   font-family: var(--font-ui);
   font-size: 0.72rem;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
   color: var(--text-faint);
   margin: 0;
 }
@@ -4711,8 +4736,6 @@ a.edit-clip-body:focus-visible {
 
 .mnist-preview__name {
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
 }
 
 .mnist-preview__detail {
@@ -4836,8 +4859,6 @@ a.edit-clip-body:focus-visible {
 
 .mnist-layer__name {
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
 }
 
 .mnist-layer__detail {
@@ -4982,9 +5003,9 @@ a.edit-clip-body:focus-visible {
   font-size: 0.68rem;
   color: var(--text-faint);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   padding: 0.1em 0.4em;
-  font-family: var(--font-prose);
+  font-family: var(--font-mono);
   flex-shrink: 0;
 }
 
@@ -5096,7 +5117,7 @@ a.edit-clip-body:focus-visible {
     color: var(--text-faint);
     background: transparent;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--r-sm);
     padding: 0.1em 0.45em;
     margin-left: 0.5rem;
     cursor: pointer;
@@ -5189,7 +5210,7 @@ a.edit-clip-body:focus-visible {
   color: var(--text);
   border: 1px solid var(--accent2);
   padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--r-md);
   font-size: 0.875rem;
   z-index: 10000;
   opacity: 0;

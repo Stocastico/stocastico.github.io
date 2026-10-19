@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import test, { after, before, describe } from 'node:test';
 
 import {
-  VIEWPORTS, blockExternalRequests, launchBrowser, newPage, scrollThrough, settleReveal, startServer,
+  VIEWPORTS, allPages, blockExternalRequests, launchBrowser, newPage, scrollThrough, settleReveal, startServer,
 } from './harness.mjs';
 
 let server, browser;
@@ -676,5 +676,48 @@ describe('slides', () => {
       const hs = await page.$$eval('.title-card', (els) => els.map((el) => el.getBoundingClientRect().height));
       for (const h of hs) assert.ok(h < 0.6 * 844, `a ${Math.round(h)}px title card on a phone`);
     } finally { await page.close(); }
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Type roles (#190): three faces, four roles. Archivo is display and chrome,
+   JetBrains Mono is data, Source Serif 4 is prose. The body inherits the
+   prose face, so any piece of chrome without its own font-family quietly
+   becomes serif — the ⌘K palette, the footer, the skip link, the contact
+   labels and the map legends all had, and the static suite cannot see an
+   inherited value. Asked of what the browser computed, on every page.
+   ───────────────────────────────────────────────────────────────────────────── */
+describe('type roles: chrome is never set in the prose face', () => {
+  const CHROME = [
+    'nav', '.site-footer', '.skip-link', '#cmd-overlay', 'button', 'select', 'label', '.btn',
+    '.cv-back-link', '.section-tag', '.hero-location', '.stat-item', '.contact-card',
+    '.wm-legend-item', '.gl-item', '.post-meta', '.unesco-name', '.post h2', '.post h3',
+  ].join(', ');
+  const FACES = ['Archivo', 'JetBrains Mono', 'Source Serif 4'];
+
+  test('chrome is Archivo or mono, code and keys are mono, and nothing asks for a face the site does not load', async () => {
+    const bad = [];
+    for (const path of allPages()) {
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + path);
+        const found = await page.evaluate(({ chrome, faces }) => {
+          const out = [];
+          for (const el of document.querySelectorAll('body *')) {
+            if (el.closest('svg')) continue;
+            const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+            if (!own) continue;
+            const face = getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '').trim();
+            const name = el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/)[0] : '');
+            if (!faces.includes(face)) out.push(`${name} asks for ${face}`);
+            else if (el.matches('code, kbd, pre') && face !== 'JetBrains Mono') out.push(`${name} is ${face}, not mono`);
+            else if (face === 'Source Serif 4' && el.closest(chrome)) out.push(`${name} is chrome set in the serif`);
+          }
+          return [...new Set(out)];
+        }, { chrome: CHROME, faces: FACES });
+        for (const f of found) bad.push(`${path}: ${f}`);
+      } finally { await page.close(); }
+    }
+    assert.deepEqual(bad, [], `\n  ${bad.join('\n  ')}\n`);
   });
 });

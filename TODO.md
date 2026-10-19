@@ -61,11 +61,17 @@ drafts, guarded by `test/sentence-case.test.mjs`), one card radius
 project titles in the condensed display face, and a "no signal" 404 (the
 last gradient text on the site).
 
-Left for a look with Stefano before calling the phase done:
-- the CV page: still large two-column cards with coloured left rules; it
-  reads fine, but it is the least "Montaggio" page left — a candidate for
-  the edit treatment, or for leaving alone.
-- `now.html` and the MNIST page were checked and need nothing obvious.
+Then, same day: the CV page became an edit decision list (one ruled row per
+job or degree, lane colour down the edge, the PhD overlap as an "Alongside …"
+line instead of a three-column block), and a whole-site consistency pass —
+one left edge (the gutter now sits outside `--container`, so sections line
+up with the logo and the hero), Contact on that edge instead of centred, one
+corner scale (4 / 8 / 12px, no pills), chrome in the UI face everywhere
+(guarded by a computed-font probe in the e2e suite), article headings in the
+display cut, no uppercase-tracked labels.
+
+Still to look at together:
+- copy (Stefano reads it on 20 Oct).
 - known traps still apply: navbar width at the burger breakpoint
   (1024/1025), the `aroundtheworld` table on phones.
 
@@ -79,14 +85,12 @@ site and projects — redrawn as Montaggio title cards and rendered by
 Chromium so they are finally set in the site's own faces; favicons checked
 (already current).
 
+Then: the favicon set redrawn as "SM" in Archivo condensed 800 (outlines,
+`scripts/lib/favicon-glyph.json`), the MNIST card regenerated from the model
+(`generate-mnist-og`), and CLAUDE.md / README re-read for things that no
+longer exist.
+
 Left:
-- The favicon set still draws "SM" in Georgia. It matches the palette, not
-  the type; an Archivo "SM" would match both. Stefano's call.
-- The MNIST page's hand-drawn social card (`img/projects/` — it pins its own
-  `og:image`) is still the old style.
-- Re-read `CLAUDE.md` and `README.md` end to end for paragraphs that describe
-  things that no longer exist (light theme, palette picker, gradient headings,
-  WebGL hero). Several were fixed in passing; a full read is still owed.
 - Close #188–#195 when the PR is merged.
 
 ## Test coverage — known gaps, deliberately left

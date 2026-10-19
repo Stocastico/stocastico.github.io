@@ -421,3 +421,13 @@ test('no gradient-filled text survives anywhere (Montaggio retired it)', () => {
   const hits = files.filter((f) => /background-clip:\s*text|text-fill-color:\s*transparent/.test(strip(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
   assert.deepEqual(hits, []);
 });
+
+test('no uppercase-tracked labels: chrome is sentence case (#190)', () => {
+  /* #190 took text-transform off .stat-label, .contact-label, .project-tag and
+     the rest; the MNIST lab's captions and the publication year kept theirs,
+     so one page still read "DRAW A DIGIT, 0–9" under a sentence-case site. */
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  const hits = [...css.matchAll(/([^{}]+)\{[^}]*text-transform:\s*uppercase/g)].map((m) => m[1].trim());
+  assert.deepEqual(hits, [], `uppercase labels: ${hits.join(', ')}`);
+});

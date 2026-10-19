@@ -29,7 +29,7 @@ forget to re-run its generator.
 
 **One palette drives every colour.** `data/palettes.yaml` has one `active:` key. `npm run generate-theme`
 rewrites the CSS custom properties, `js/theme.js`, the `<meta theme-color>` on every page, the inline
-favicon and the manifest. CSS reads `var(--*)`; the WebGL shaders and Canvas modules import `THEME`.
+favicon and the manifest. CSS reads `var(--*)`; the globe's shaders and the Canvas modules import `THEME`.
 There is one palette and one theme (dark): no picker, no light/dark toggle — see CLAUDE.md for why.
 
 **Push to `main` deploys.** `.github/workflows/deploy.yml` runs both test suites, builds, and publishes
@@ -57,14 +57,15 @@ Edit the source on the left, run the command on the right. The drift tests will 
 
 | To change | Edit | Then run |
 |---|---|---|
-| Career, education, skills, places lived | `data/cv.yaml` | `generate-cv`, then `generate-cards` and `generate-sea-chart` |
+| Career, education, skills, places lived, timeline clip names (`short:`) and work with no page yet (`timeline_projects:`) | `data/cv.yaml` | `generate-cv`, then `generate-cards` and `generate-sea-chart` |
 | Projects | `data/projects.js` | `generate-thumbs` (if a `bg` changed), `generate-cards`, `generate-llms`, `generate-feed` |
 | Publications | `data/publications.js` | `generate-cards` |
 | Globe pins and trips | `data/locations.yaml` | `generate-locations`, then `generate-sea-chart` |
 | Homepage world map | `data/countries.yaml` | `generate-countries`, then `generate-world-map` |
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
-| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons`, `generate-thumbs` |
+| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons`, `generate-thumbs`, then the social cards: `generate-og`, `generate-project-og`, `generate-mnist-og` |
+| The trained LeNet-5 | `npm run train-cnn` (slow) | `generate-lenet-weights`, `generate-hero-scan`, `generate-mnist-og` |
 | Contact address | `js/contact.js` | `generate-cards` |
 | A new project page | a Markdown file | `npm run new-project -- file.md` |
 | Adding any HTML page | — | `generate-analytics`, `generate-speculation-rules`, then `generate-csp-meta` **last** |
@@ -91,7 +92,7 @@ which is the authoritative reference for flags — this table is only a map.
 |---|---|
 | Build | `dev`, `build`, `preview` |
 | Content | `generate-thumbs`, `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-sea-chart`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
-| Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og` |
+| Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og`, `generate-mnist-og` (the cards render in headless Chromium) |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
 | ML pipeline | `train-cnn`, `generate-lenet-weights`, `generate-hero-scan` |
 | Maintenance | `check-links`, `screenshots`, `set-domain` |
@@ -104,7 +105,7 @@ all sit behind a main guard now, and `test/generator-main-guard.test.mjs` enforc
 ## Testing
 
 ```bash
-npm test           # 1,100+ assertions, ~3s, no browser
+npm test           # 1,200+ assertions, ~3s, no browser
 npm run test:e2e   # builds dist/, then drives real Chromium (~5 min)
 ```
 
