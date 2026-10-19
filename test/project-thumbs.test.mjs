@@ -92,3 +92,23 @@ test('card: personal projects carry the outlined strip class', () => {
   assert.match(projectCardHtml(personal), /class="project-card is-personal"/);
   assert.match(projectCardHtml(work), /class="project-card"/);
 });
+
+test('thumbs: a diagram painted in palette variables keeps its colours, not a one-colour silhouette', async () => {
+  /* rag-query.svg is drawn in var(--accent2) boxes with var(--text) labels.
+     Rendered as a stencil — its alpha as a mask over one flat accent — the
+     boxes became solid yellow slabs and every label vanished into them (the
+     review: "non si vede bene"). The thumbnail must carry the diagram's own
+     two inks: cyan box outlines and light label text. */
+  const { THEME } = await import('../js/theme.js');
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const near = (px, c, tol) => Math.abs(px[0] - c[0]) + Math.abs(px[1] - c[1]) + Math.abs(px[2] - c[2]) < tol;
+  const { data, info } = await sharp(path.join(THUMBS, 'rag-document-qa.webp')).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  let cyan = 0, light = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
+    const px = [data[i], data[i + 1], data[i + 2]];
+    if (near(px, hex(THEME.accent2), 60)) cyan++;
+    if (px[0] > 170 && px[1] > 170 && px[2] > 170) light++;
+  }
+  assert.ok(cyan > 40, `only ${cyan} pixels in the box colour (thin outlines; the stencil had 0)`);
+  assert.ok(light > 300, `only ${light} pixels light enough to be label text`);
+});

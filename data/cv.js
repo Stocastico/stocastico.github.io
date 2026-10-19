@@ -139,6 +139,14 @@ export const CV_PLACES = [
   },
 ];
 
+/* ── Timeline-only projects (no page yet) ─────────────────── */
+export const CV_TIMELINE_PROJECTS = [
+  {
+    year:  '2024 – present',
+    title: 'AI Production',
+  },
+];
+
 /* ── Skills ───────────────────────────────────────────────── */
 export const CV_SKILLS = {
   technical:  [
@@ -226,4 +234,5 @@ if (typeof globalThis !== 'undefined') {
   globalThis.CV_EDUCATION = CV_EDUCATION;
   globalThis.CV_SKILLS = CV_SKILLS;
   globalThis.CV_PLACES = CV_PLACES;
+  globalThis.CV_TIMELINE_PROJECTS = CV_TIMELINE_PROJECTS;
 }

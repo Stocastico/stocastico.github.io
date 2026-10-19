@@ -56,10 +56,14 @@ function latestYear(str) {
   return all ? Math.max(...all.map(Number)) : -Infinity;
 }
 
-export function timelineBounds({ career, education, places, projects, publications }) {
+export function timelineBounds({ career, education, places, projects, timelineProjects = [], publications }) {
+  /* Every year in the data counts, including personal projects the lane does
+     not draw: they are what tells the ruler that "present" reaches 2026 —
+     without them the edit would end in 2025 while the current role runs on. */
   const strs = [
     ...career.map((e) => e.year), ...education.map((e) => e.year),
     ...places.map((e) => e.year), ...projects.map((p) => p.year),
+    ...timelineProjects.map((p) => p.year),
     ...publications.map((p) => String(p.year)),
   ];
   const start = Math.min(...strs.map((s) => Number((String(s).match(/\d{4}/) || [Infinity])[0])));
@@ -80,8 +84,8 @@ function rootUrl(url) {
   return /^(https?:)?\//.test(url) ? url : `/${url}`;
 }
 
-export function careerEditLines({ career, education, places, projects, publications }) {
-  const { start, end } = timelineBounds({ career, education, places, projects, publications });
+export function careerEditLines({ career, education, places, projects, timelineProjects = [], publications }) {
+  const { start, end } = timelineBounds({ career, education, places, projects, timelineProjects, publications });
   const span = end - start;
   const pos = ({ from, to }) => `--clip-at: ${pct(((from - start) / span) * 100)}; --clip-len: ${pct(((to - from) / span) * 100)}`;
 
@@ -127,10 +131,18 @@ export function careerEditLines({ career, education, places, projects, publicati
     title: e.short || e.degree, meta: e.institution, label: `${e.degree}, ${e.institution}, ${e.year}`,
   })).filter(Boolean);
 
-  const work_projects = projects.map((p) => withSpan(p.year, {
-    title: p.short || shortTitle(p.title), meta: '', label: `${p.title}, ${p.year}`,
-    href: rootUrl(p.url), personal: p.kind === 'personal',
-  })).filter(Boolean);
+  /* Work only: the timeline is the career, and side projects have their own
+     page. Timeline-only projects (data/cv.yaml) are real work with no page
+     yet, so they are clips without a link. */
+  const work_projects = [
+    ...projects.filter((p) => p.kind === 'work').map((p) => withSpan(p.year, {
+      title: p.short || shortTitle(p.title), meta: '', label: `${p.title}, ${p.year}`,
+      href: rootUrl(p.url),
+    })),
+    ...timelineProjects.map((p) => withSpan(p.year, {
+      title: p.title, meta: '', label: `${p.title}, ${p.year}`,
+    })),
+  ].filter(Boolean).sort((a, b) => a.from - b.from);
 
   const lived = places.map((e) => withSpan(e.year, {
     title: e.city, meta: '', label: `${e.city}, ${e.year}`,
@@ -153,7 +165,7 @@ export function careerEditLines({ career, education, places, projects, publicati
     ...lane('work', 'Work', work, { clip: () => ({ href: '/cv.html' }) }).map((l) => `  ${l}`),
     ...lane('study', 'Study', study, { clip: () => ({ href: '/cv.html' }) }).map((l) => `  ${l}`),
     ...lane('projects', 'Projects', work_projects, {
-      clip: (it) => ({ href: it.href, extra: it.personal ? ' is-personal' : '' }),
+      clip: (it) => ({ href: it.href }),
     }).map((l) => `  ${l}`),
     ...lane('places', 'Places', lived).map((l) => `  ${l}`),
   ];

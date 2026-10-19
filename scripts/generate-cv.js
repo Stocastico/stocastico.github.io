@@ -41,6 +41,10 @@
        - year: "2018 – present"      # homepage timeline's places lane
          city: San Sebastián
 
+     timeline_projects:              # optional — work projects with no page
+       - year: "2024 – present"      # yet: a clip on the homepage timeline,
+         title: AI Production        # without a link
+
      skills:
        technical:
          - name: Python · PyTorch
@@ -189,6 +193,20 @@ function validateCv(data) {
     }
   }
 
+  /* ── timeline_projects ── */
+  if (data.timeline_projects !== undefined) {
+    if (!Array.isArray(data.timeline_projects)) {
+      errors.push('timeline_projects must be an array');
+    } else {
+      data.timeline_projects.forEach((e, idx) => {
+        const p = `timeline_projects[${idx}]`;
+        if (typeof e !== 'object' || e === null) { errors.push(`${p} must be an object`); return; }
+        expectString(e.year, `${p}.year`);
+        expectString(e.title, `${p}.title`);
+      });
+    }
+  }
+
   /* ── skills ── */
   if (data.skills !== undefined) {
     const sk = data.skills;
@@ -301,6 +319,7 @@ function generateCvJs(data) {
   const education = data.education || [];
   const skills    = data.skills    || {};
   const places    = data.places    || [];
+  const timelineProjects = data.timeline_projects || [];
 
   const careerKeys = ['year', 'role', 'company', 'short', 'location', 'description', 'links', 'tags'];
   const eduKeys    = ['year', 'degree', 'short', 'institution', 'location', 'description', 'links', 'concurrent_with'];
@@ -308,6 +327,7 @@ function generateCvJs(data) {
   const careerBlock = career.map(e => jsAlignedObject(e, careerKeys, 2)).join(',\n');
   const eduBlock    = education.map(e => jsAlignedObject(e, eduKeys,  2)).join(',\n');
   const placeBlock  = places.map(e => jsAlignedObject(e, ['year', 'city'], 2)).join(',\n');
+  const tlProjBlock = timelineProjects.map(e => jsAlignedObject(e, ['year', 'title'], 2)).join(',\n');
 
   /* ── Skills serialisation ──
      Items are rendered at baseIndent=4 so they sit cleanly inside the
@@ -352,6 +372,10 @@ ${eduBlock ? eduBlock + ',\n' : ''}];
 export const CV_PLACES = [
 ${placeBlock ? placeBlock + ',\n' : ''}];
 
+/* ── Timeline-only projects (no page yet) ─────────────────── */
+export const CV_TIMELINE_PROJECTS = [
+${tlProjBlock ? tlProjBlock + ',\n' : ''}];
+
 /* ── Skills ───────────────────────────────────────────────── */
 export const CV_SKILLS = {
   technical:  ${tech},
@@ -364,6 +388,7 @@ if (typeof globalThis !== 'undefined') {
   globalThis.CV_EDUCATION = CV_EDUCATION;
   globalThis.CV_SKILLS = CV_SKILLS;
   globalThis.CV_PLACES = CV_PLACES;
+  globalThis.CV_TIMELINE_PROJECTS = CV_TIMELINE_PROJECTS;
 }
 `;
 }

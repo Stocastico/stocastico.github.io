@@ -33,7 +33,7 @@ import { COUNTRIES } from '../data/countries.js';
 import { PROJECT_TAGS } from '../js/project-tags.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
-import { CV_CAREER, CV_EDUCATION, CV_SKILLS, CV_PLACES } from '../data/cv.js';
+import { CV_CAREER, CV_EDUCATION, CV_SKILLS, CV_PLACES, CV_TIMELINE_PROJECTS } from '../data/cv.js';
 import { careerEditLines } from './lib/career-edit.mjs';
 import { UNESCO } from '../data/unesco.js';
 import { LINKS } from '../data/links.js';
@@ -116,7 +116,7 @@ const TARGETS = {
     /* The career timeline (#191) — every role, degree, project, paper and
        place on one edit. Build-time only; see scripts/lib/career-edit.mjs. */
     'generated:career-edit': () => careerEditLines({
-      career: CV_CAREER, education: CV_EDUCATION, places: CV_PLACES,
+      career: CV_CAREER, education: CV_EDUCATION, places: CV_PLACES, timelineProjects: CV_TIMELINE_PROJECTS,
       projects: PROJECTS, publications: PUBLICATIONS,
     }),
     'generated:about-stats': () => aboutStatsLines({

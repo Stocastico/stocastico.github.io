@@ -176,6 +176,15 @@ places:
   - year: "2018 – present"
     city: "San Sebastián"
 
+# ── Timeline-only projects ───────────────────────────────────────────────────
+# Work projects that are real but have no write-up yet (and so no entry in
+# data/projects.js, which would put them on cards, the sitemap and the feed).
+# Each is a clip on the homepage timeline's projects lane, without a link.
+# When the project page exists, move it to data/projects.js and delete it here.
+timeline_projects:
+  - year: "2024 – present"
+    title: AI Production
+
 # ── Education ─────────────────────────────────────────────────────────────────
 # Required:  year, degree, institution
 # Optional:  location, description

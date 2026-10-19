@@ -476,6 +476,14 @@ describe('career timeline: pinned horizontal scrub', () => {
       const end = await state(page);
       assert.ok(end.lastIn && !end.firstIn, 'at the end the present is on screen and 2000 has gone by');
 
+      /* Every project name on screen is whole: a short: name, or a long one
+         wrapped onto a second line — never "Gaussian Sp…". */
+      const cut = await page.$$eval('.edit-lane[data-lane="projects"] .edit-clip-title', (els) => els
+        .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.right <= innerWidth; })
+        .filter((el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)
+        .map((el) => el.textContent));
+      assert.deepEqual(cut, [], `project names cut short: ${cut.join(', ')}`);
+
       await settle(page, pin.top + pin.h + 200);
       const after = await state(page);
       assert.ok(after.stageTop < -100, 'after the run the stage scrolls away with the page');

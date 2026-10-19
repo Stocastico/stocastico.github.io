@@ -2632,8 +2632,16 @@ a.edit-clip-body:focus-visible {
       animation-range: contain 0% contain 100%;
     }
 
+    /* A clip is ~100px tall here, so a name may take two lines instead of
+       ending in "…" — "Gaussian Splatting" in a one-year clip. */
     .edit-clip-title {
-      font-size: clamp(1rem, 1.3vw, 1.35rem);
+      font-size: clamp(0.95rem, 1.15vw, 1.25rem);
+      white-space: normal;
+      text-overflow: clip;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-height: 1.15;
     }
 
     .edit-clip-meta {

@@ -12,11 +12,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { spanOf, packRows, careerEditLines, timelineBounds } from '../scripts/lib/career-edit.mjs';
-import { CV_CAREER, CV_EDUCATION, CV_PLACES } from '../data/cv.js';
+import { CV_CAREER, CV_EDUCATION, CV_PLACES, CV_TIMELINE_PROJECTS } from '../data/cv.js';
 import { PROJECTS } from '../data/projects.js';
 import { PUBLICATIONS } from '../data/publications.js';
 
-const DATA = { career: CV_CAREER, education: CV_EDUCATION, places: CV_PLACES, projects: PROJECTS, publications: PUBLICATIONS };
+const DATA = { career: CV_CAREER, education: CV_EDUCATION, places: CV_PLACES, projects: PROJECTS, timelineProjects: CV_TIMELINE_PROJECTS, publications: PUBLICATIONS };
 
 test('spanOf: ranges, single years and "present"', () => {
   assert.deepEqual(spanOf('2018 – 2022', 2027), { from: 2018, to: 2022 });
@@ -55,9 +55,27 @@ test('careerEditLines: every role, degree, place and project is on the edit', ()
   for (const e of CV_CAREER) assert.ok(html.includes(e.company.replace(/&/g, '&amp;')), `missing role at ${e.company}`);
   for (const e of CV_EDUCATION) assert.ok(html.includes(e.degree), `missing ${e.degree}`);
   for (const p of CV_PLACES) assert.ok(html.includes(p.city), `missing ${p.city}`);
-  for (const p of PROJECTS) {
+  for (const p of PROJECTS.filter((x) => x.kind === 'work')) {
     const href = p.url.startsWith('/') ? p.url : `/${p.url}`;
     assert.ok(html.includes(`href="${href}"`), `missing project link ${href}`);
+  }
+});
+
+test('careerEditLines: work only — personal projects stay off the timeline', () => {
+  /* The timeline is the career; side projects live on projects.html. */
+  for (const p of PROJECTS.filter((x) => x.kind === 'personal')) {
+    const href = p.url.startsWith('/') ? p.url : `/${p.url}`;
+    assert.ok(!html.includes(`href="${href}"`), `personal project ${p.title} is on the timeline`);
+  }
+  assert.doesNotMatch(html, /is-personal/);
+});
+
+test('careerEditLines: timeline-only projects (no page yet) are clips without a link', () => {
+  assert.ok(CV_TIMELINE_PROJECTS.some((p) => p.title === 'AI Production'), 'AI Production is missing from data/cv.yaml');
+  for (const p of CV_TIMELINE_PROJECTS) {
+    const m = html.match(new RegExp(`<li class="edit-clip"[^>]*><(a|span) class="edit-clip-body"[^>]*><span class="edit-clip-title">${p.title}</span>`));
+    assert.ok(m, `${p.title} is not on the projects lane`);
+    assert.equal(m[1], 'span', `${p.title} has a link, but has no page yet`);
   }
 });
 
@@ -100,7 +118,7 @@ test('careerEditLines: a `short` name is what the clip shows; the full name stay
      as "Multi-mo…". `short` (data/cv.yaml, data/projects.js) is the visible
      text; the full name is still the tooltip and what a screen reader hears. */
   const shorts = [...CV_CAREER, ...CV_EDUCATION, ...PROJECTS].filter((e) => e.short);
-  for (const want of ['AGT', 'UFC', 'MLOps', 'RAG', 'Audience', 'MSc in Telecommunications Eng.']) {
+  for (const want of ['AGT', 'UFC', 'MLOps', 'RAG', 'Audience', 'MSc in Telecommunications Eng.', 'Gaussian Splatting', 'AR Geograph', 'BrandIA']) {
     assert.ok(shorts.some((e) => e.short === want), `no entry is shortened to "${want}"`);
   }
   for (const e of shorts) {

@@ -43,10 +43,9 @@ European pins now; see "Travel page: the nautical chart" in `CLAUDE.md`.
   Stefano's subtitle, "Selected work" with "Three projects, picked at random
   on every visit. The full list has the rest.", and "On paper" with "The core
   of my PhD. All of it is on the publications page and Scholar." No media
-  vocabulary in subtitles (an e2e test enforces it). Still truncated on the
-  full-screen timeline, with no `short:` yet: "How Brescia…", "Is tourism…",
-  "Draw a digit…", "3D reconstruction…", "Brand recognition…" — Stefano to
-  pick names.
+  vocabulary in subtitles (an e2e test enforces it). - "AI Production" is on the timeline as "2024 – present" — the start year
+  was assumed (Mediapro's); confirm it. Move it from `timeline_projects:` in
+  `data/cv.yaml` to `data/projects.js` once the write-up is cleared.
 - The copy written for the travel page: the cartouche intro (rewritten to
   mention the chart), "Further afield" as the globe's heading, "Route between
   homes" in the key, and the leg labels using the employer's full name

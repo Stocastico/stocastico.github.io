@@ -10,12 +10,15 @@
    `bg`, cropped to 16:9 with libvips' attention strategy, which keeps the
    busy part of a wide banner rather than its geometric centre.
 
-   Two of the `bg`s are SVG stencils (rag-query, mnist-lenet): diagrams whose
-   colours are `var(--…)`, which no rasteriser can resolve. Only their alpha
-   is meaningful — the detail page paints them through `mask-image` — so the
-   same is done here: the alpha is used as a mask for the palette accent over
-   the palette ground, and the whole diagram is fitted inside the frame rather
-   than cropped, because a cropped diagram is a picture of half an arrow.
+   Two of the `bg`s are SVGs (rag-query, mnist-lenet), and both are fitted
+   inside the frame rather than cropped, because a cropped diagram is a
+   picture of half an arrow. One painted in palette variables (rag-query) is
+   rendered in its real colours: `var(--…)` is resolved against THEME before
+   the rasteriser sees it, which no rasteriser could do on its own. It used
+   to go through the stencil path below like the other one, and its boxes
+   came out as solid accent slabs with every label lost inside them. A plain
+   stencil with no variables (mnist-lenet) is still only alpha — its alpha
+   masks a flat accent over the ground, as on its detail page.
 
    Drift guard: manifest.json maps each id to a hash of its source bytes and
    of the recipe (size, quality, palette colours for the stencils).
@@ -45,16 +48,42 @@ const ROOT = path.resolve(__dirname, '..');
 export const MANIFEST = 'data/thumbs-manifest.json';
 const QUALITY = 72;
 /* Bump when the recipe changes in a way the inputs below do not capture. */
-const RECIPE = 1;
+const RECIPE = 2;
 
 export function thumbJobs(projects) {
   return projects.filter((p) => p.bg).map((p) => {
     const source = path.join(ROOT, p.bg);
     const stencil = p.bg.endsWith('.svg');
-    const recipe = JSON.stringify({ RECIPE, THUMB_W, THUMB_H, QUALITY, ...(stencil ? { bg: THEME.bg, accent: THEME.accent } : {}) });
+    const recipe = JSON.stringify({ RECIPE, THUMB_W, THUMB_H, QUALITY, ...(stencil ? { palette: SVG_VARS() } : {}) });
     const hash = crypto.createHash('sha256').update(recipe).update(fs.readFileSync(source)).digest('hex').slice(0, 16);
     return { id: p.id, source, stencil, out: path.join(ROOT, 'public', thumbUrl(p).slice(1)), hash };
   });
+}
+
+/* The palette as the custom properties the diagrams use. `-rgb` variants are
+   space-separated channels, as in css/styles.css; `bg-card` is resolved over
+   the ground because a rasteriser has no page behind the SVG. */
+const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const mix = (a, b, t) => '#' + rgbOf(a).map((v, i) => Math.round(v * (1 - t) + rgbOf(b)[i] * t).toString(16).padStart(2, '0')).join('');
+export function SVG_VARS() {
+  return {
+    accent: THEME.accent, accent2: THEME.accent2, text: THEME.text, 'text-muted': THEME.textMuted,
+    'text-faint': THEME.textFaint, bg: THEME.bg, 'bg-card': mix(THEME.bg, THEME.text, 0.12),
+    'accent-rgb': rgbOf(THEME.accent).join(' '), 'accent2-rgb': rgbOf(THEME.accent2).join(' '),
+    'text-rgb': rgbOf(THEME.text).join(' '),
+  };
+}
+
+/** Resolve var(--x) and rgb(var(--x-rgb) / a) to literal colours. Throws on a
+    variable it does not know, so a new one cannot render as black. */
+export function resolveSvgVars(svg, vars = SVG_VARS()) {
+  const look = (name) => {
+    if (!(name in vars)) throw new Error(`generate-thumbs: no palette value for var(--${name})`);
+    return vars[name];
+  };
+  return svg
+    .replace(/rgb\(var\(--([a-z0-9-]+)\)\s*\/\s*([0-9.]+)\)/g, (_, n, a) => `rgba(${look(n).split(' ').join(',')},${a})`)
+    .replace(/var\(--([a-z0-9-]+)\)/g, (_, n) => look(n));
 }
 
 async function render(sharp, job) {
@@ -64,9 +93,22 @@ async function render(sharp, job) {
       .webp({ quality: QUALITY })
       .toBuffer();
   }
-  /* Fit the diagram inside an inset box, take its alpha, and use that as the
-     opacity of a flat accent layer over the ground. */
   const PAD = 0.08;
+  const fit = [Math.round(THUMB_W * (1 - 2 * PAD)), Math.round(THUMB_H * (1 - 2 * PAD))];
+  const svg = fs.readFileSync(job.source, 'utf8');
+  if (svg.includes('var(--')) {
+    /* Painted in palette variables: render it in those colours, fitted. */
+    const art = await sharp(Buffer.from(resolveSvgVars(svg)), { density: 192 })
+      .resize(fit[0], fit[1], { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+    return sharp({ create: { width: THUMB_W, height: THUMB_H, channels: 3, background: THEME.bg } })
+      .composite([{ input: art, gravity: 'center' }])
+      .webp({ quality: QUALITY })
+      .toBuffer();
+  }
+  /* A plain stencil: fit it inside an inset box, take its alpha, and use that
+     as the opacity of a flat accent layer over the ground. */
   const alpha = await sharp(job.source, { density: 192 })
     .resize(Math.round(THUMB_W * (1 - 2 * PAD)), Math.round(THUMB_H * (1 - 2 * PAD)), { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .ensureAlpha()
