@@ -40,7 +40,8 @@ let WebGLRenderer, Scene, PerspectiveCamera,
   CanvasTexture,
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
-  AdditiveBlending, NormalBlending, BackSide, DoubleSide;
+  AdditiveBlending, NormalBlending, BackSide, DoubleSide,
+  SRGBColorSpace;
 
 onChange((t) => {
   ({
@@ -55,6 +56,7 @@ onChange((t) => {
     Vector2, Vector3, QuadraticBezierCurve3,
     Raycaster, Color,
     AdditiveBlending, NormalBlending, BackSide, DoubleSide,
+    SRGBColorSpace,
   } = t);
 });
 
@@ -549,7 +551,13 @@ export class Globe3D {
        band + flat lat=-68 stroke that produced a spurious parallel circle. */
     rings.forEach(drawRing);
 
-    return new CT(cvs);
+    const tex = new CT(cvs);
+    /* Painted with palette hex, i.e. sRGB. Left untagged, three.js reads a
+       CanvasTexture as linear and sRGB-encodes it on output, lifting every
+       dark colour — the ocean rendered as pale slate. 'srgb' is the value of
+       THREE.SRGBColorSpace; the literal covers a test mock without it. */
+    tex.colorSpace = SRGBColorSpace || 'srgb';
+    return tex;
   }
 
   async _buildGlobe() {

@@ -84,19 +84,23 @@ palettes:
       current: '#e0574d'
       worktrip: '#6d8cf0'
       holiday: '#e17edc'
+    # The globe is drawn as the travel chart's companion (#193): the chart's
+    # sea and land, a cyan depth line hugging the coast and a pale coastline
+    # over it, no yellow halo. Europe is not singled out — the chart above it
+    # already is Europe.
     globe:
-      ocean: '#16181c'
-      land: '#2b2f36'
-      landEurope: '#3a3f47'
+      ocean: '#1a1c20'
+      land: '#3d4146'
+      landEurope: '#3d4146'
       coast: '#3fc4cd'
-      coastBright: '#a9e9ee'
+      coastBright: '#c9c7c1'
       ambient: '#1d2025'
       keyLight: '#3b414b'
       rimLight: '#3fc4cd'
       fillLight: '#ddd23f'
       atmInner: '#3fc4cd'
       atmShell: '#25414a'
-      atmHalo: '#ddd23f'
+      atmHalo: '#202328'
       grid: '#4a6f78'
       gridBright: '#7fdbe1'
       stars: '#ece9e2'

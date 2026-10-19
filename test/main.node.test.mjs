@@ -85,6 +85,20 @@ test('isEuropeanSecondaryPin hides the worktrips/holidays the travel chart draws
   assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 28.46718, lon: -16.25078 }), false); // Tenerife
 });
 
+test('globe texture is tagged sRGB, so three.js does not brighten the palette', () => {
+  /* The texture is painted with palette hex — sRGB values. Untagged, three.js
+     treats a CanvasTexture as linear and sRGB-encodes it on output, which
+     lifts every dark colour: the #16181c ocean rendered as a pale #50555d
+     slate and the globe sat on the page as a grey ball. */
+  const noop = () => {};
+  const ctx = new Proxy({}, { get: (_, k) => (k in _ctxProps ? _ctxProps[k] : noop), set: () => true });
+  const _ctxProps = {};
+  const cvs = { width: 0, height: 0, getContext: () => ctx };
+  class CT { constructor(canvas) { this.canvas = canvas; } }
+  const tex = Globe3D.prototype._buildGlobeTexture.call({}, [[[0, 0], [10, 0], [10, 10], [0, 0]]], cvs, CT);
+  assert.equal(tex.colorSpace, 'srgb');
+});
+
 test('isEuropeanSecondaryPin never hides homes or non-European pins', () => {
   /* Homes (lived/current) always stay on the globe, even in Europe. */
   assert.equal(isEuropeanSecondaryPin({ type: 'lived', lat: 43.31, lon: -1.98 }), false);   // San Sebastián

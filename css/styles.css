@@ -1603,14 +1603,15 @@ body::before {
   margin-top: 3.5rem;
 }
 
+/* Left-aligned like every other section header (see "Section headers" in
+   CLAUDE.md) — this one was the last centred title on the site. */
 .unesco .globe-header {
-  text-align: center;
   margin-bottom: 1.75rem;
 }
 
 .unesco .globe-intro {
-  max-width: 54ch;
-  margin-inline: auto;
+  max-width: 62ch;
+  margin-top: 0.75rem;
 }
 
 /* The running total, directly under the intro that states the 1,200+ goal.
@@ -1632,9 +1633,11 @@ body::before {
   margin-right: 0.15rem;
 }
 
+/* A ledger rather than a stack of cards: ruled rows, the count as a figure
+   in the margin, the way a chart's tables are set. */
 .unesco-accordion {
-  max-width: 660px;
-  margin-inline: auto;
+  max-width: 760px;
+  border-bottom: 1px solid var(--border);
 }
 
 .unesco-empty {
@@ -1643,11 +1646,7 @@ body::before {
 }
 
 .unesco-continent {
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg-card);
-  margin-bottom: 0.75rem;
-  overflow: hidden;
+  border-top: 1px solid var(--border);
 }
 
 .unesco-continent > summary,
@@ -1684,9 +1683,11 @@ body::before {
 }
 
 .unesco-continent > summary {
-  padding: 0.95rem 1.15rem;
+  padding: 1rem 0.25rem;
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-stretch: 62%;
   color: var(--text);
 }
 
@@ -1696,7 +1697,7 @@ body::before {
 }
 
 .unesco-countries {
-  padding: 0 1.15rem 0.6rem;
+  padding: 0 0.25rem 0.75rem 1.25rem;
 }
 
 .unesco-country {
@@ -1715,14 +1716,13 @@ body::before {
 
 .unesco-count {
   flex: none;
-  min-width: 1.5rem;
-  padding: 0.05rem 0.45rem;
-  border-radius: 999px;
-  background: var(--bg-card-hov);
+  min-width: 2ch;
   color: var(--text-muted);
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 400;
+  font-stretch: 100%;
+  text-align: right;
 }
 
 .unesco-sites {
@@ -4252,11 +4252,12 @@ a.edit-clip-body:focus-visible {
 .globe-scene {
   position: relative;
   height: clamp(340px, 58vw, 580px);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-md);
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 65%, rgb(var(--bg-alt-rgb) / 0.95) 0%, var(--bg) 68%);
+  /* The chart's sea, flat: the globe is the chart's companion, not a
+     glowing object on its own. */
+  background: var(--map-bg);
   border: 1px solid var(--border);
-  box-shadow: inset 0 0 60px rgb(var(--accent-rgb) / 0.035), var(--elev-4);
   contain: layout paint;
   /* isolate reflow + paint within the globe */
 }
@@ -4331,7 +4332,7 @@ a.edit-clip-body:focus-visible {
   background: rgb(var(--bg-rgb) / 0.72);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-sm, 4px);
   padding: 0.45em 1.1em;
   z-index: 5;
   flex-wrap: wrap;
