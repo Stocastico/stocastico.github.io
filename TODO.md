@@ -19,7 +19,7 @@ done and hides the items that are real.
 
 ## Redesign "Montaggio" (#188) — what is left
 
-**Where things stand.** Phases 1–4 are done on the branch
+**Where things stand.** Phases 1–5 are done on the branch
 `redesign/montaggio-design-system`, open as **draft PR #196**. Work continues
 on that branch; **nothing goes to `main`** and the PR is not merged until
 Stefano has tried it locally (`README.md` → "Previewing without publishing").
@@ -31,33 +31,22 @@ CLAUDE.md updated, small commits.
 Done: hero through a receptive field (#189), design system with one dark theme
 (#190), career timeline as an edit with pinned scrub and title card (#191),
 project cards as a media bin with generated thumbnails, plus title cards on
-Projects and Publications (#192). The reasoning for each is in `CLAUDE.md`.
+Projects and Publications (#192), travel page as a nautical chart with the
+globe and UNESCO list restyled around it (#193). The reasoning for each is in
+`CLAUDE.md`.
+
+**Decided** (19 Oct): the 2D Europe map is gone. The chart carries its
+European pins now; see "Travel page: the nautical chart" in `CLAUDE.md`.
 
 **Waiting on Stefano after the local test** (do not decide alone):
 - The copy written for the title cards: "The edit so far", "Selected work",
   "On paper", and "whole bin" in the Projects subtitle (the plainer "full list"
   is the safe alternative for recruiters).
-- The open question in #193 below: keep or drop the 2D Europe map.
-
-### Phase 5 — travel page as a nautical chart (#193)
-
-The "Atlas" style lives on this page only. Open the page on a full-bleed chart:
-- land filled from `data/land-50m.json`, projected at build time to a static
-  SVG by a new generator **with a drift guard** (same pattern as
-  `generate-world-map`; SVG rings, not open polylines — open polylines broke
-  the fill in the mock-up)
-- coastline halos as depth contours, sea names in italics, a small compass
-  rose (watch that no broad selector overrides its size, as happened in the
-  mock-up)
-- a dashed route in the hazard colour (`--pin-current`):
-  Brescia → Berlin → Frankfurt → San Sebastián, each leg labelled with
-  year + lab (take the data from `CV_PLACES`, do not retype it)
-- a cartouche holding the title and intro.
-
-Below it, the globe, the Europe map and the UNESCO accordion stay — restyled,
-not rewritten. Open question: is the 2D Europe map redundant once the chart
-exists? If it goes, `data/europe-land.json`, `js/europe-map.js`, their
-generator and their tests go with it.
+- The copy written for the travel page: the cartouche intro (rewritten to
+  mention the chart), "Further afield" as the globe's heading, "Route between
+  homes" in the key, and the leg labels using the employer's full name
+  ("Fraunhofer Heinrich Hertz Institut" wraps to two lines; a `short:` field
+  in `data/cv.yaml` would be the clean way to say "Fraunhofer HHI").
 
 ### Phase 6 — sub-pages in the new system (#194)
 
@@ -78,7 +67,7 @@ already seen:
 
 - Remove `heroGradFrom`/`heroGradTo` and the `noise` block from the schema in
   `data/palettes.yaml` + `scripts/generate-theme.js` (nothing reads them).
-- `refreshActiveTheme()` in `js/globe.js` and `js/europe-map.js` and their
+- `refreshActiveTheme()` in `js/globe.js` and its
   comments about "theme switch rebuilds" are vestigial: one theme, no switch.
 - `initCardTilt()` still tilts `.research-card, .contact-card, .pub-item`:
   decide whether the tilt survives at all (project cards dropped it), and with

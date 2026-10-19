@@ -55,8 +55,8 @@ reserved. None of it is covered by either licence here:
   `css/fonts.css`.
 - **Map data** — `data/countries-110m.json` and `data/land-50m.json` come from
   [world-atlas][wa] (ISC), built from [Natural Earth][ne], which is public
-  domain. The derived `data/europe-land.json` and the inline world-map SVG in
-  `index.html` inherit that status.
+  domain. The inline world-map SVG in `index.html` and the nautical chart in
+  `travel.html`, both derived from them, inherit that status.
 - **MNIST** — the training set is downloaded into `.cache/` at training time
   and is not part of this repository. The trained weights in
   `data/cnn-model.json` and everything generated from them are MIT, like the

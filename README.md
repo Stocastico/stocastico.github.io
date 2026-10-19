@@ -42,7 +42,7 @@ to Pages. There is no release step — the deploy is the release.
 ├── projects/           13 project detail pages
 ├── css/                styles.css (@layer, nesting, oklch) + self-hosted fonts.css
 ├── js/                 ESM. main.js orchestrates; ui.js, animations.js, globe.js,
-│                       receptive-field.js, mnist-lab.js, europe-map.js
+│                       receptive-field.js, mnist-lab.js
 │                       are the behaviours
 ├── data/               YAML sources of truth + their generated .js modules
 ├── scripts/            the generators (all support --help and --dry-run)
@@ -57,10 +57,10 @@ Edit the source on the left, run the command on the right. The drift tests will 
 
 | To change | Edit | Then run |
 |---|---|---|
-| Career, education, skills, places lived | `data/cv.yaml` | `generate-cv`, then `generate-cards` |
+| Career, education, skills, places lived | `data/cv.yaml` | `generate-cv`, then `generate-cards` and `generate-sea-chart` |
 | Projects | `data/projects.js` | `generate-thumbs` (if a `bg` changed), `generate-cards`, `generate-llms`, `generate-feed` |
 | Publications | `data/publications.js` | `generate-cards` |
-| Globe pins and trips | `data/locations.yaml` | `generate-locations` |
+| Globe pins and trips | `data/locations.yaml` | `generate-locations`, then `generate-sea-chart` |
 | Homepage world map | `data/countries.yaml` | `generate-countries`, then `generate-world-map` |
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
@@ -90,11 +90,11 @@ which is the authoritative reference for flags — this table is only a map.
 | Group | Scripts |
 |---|---|
 | Build | `dev`, `build`, `preview` |
-| Content | `generate-thumbs`, `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
+| Content | `generate-thumbs`, `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-sea-chart`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
 | Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og` |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
 | ML pipeline | `train-cnn`, `generate-lenet-weights`, `generate-hero-scan` |
-| Maintenance | `check-links`, `screenshots`, `set-domain`, `generate-europe-land` |
+| Maintenance | `check-links`, `screenshots`, `set-domain` |
 | Tests | `test`, `test:e2e`, `test:e2e:a11y`, `test:e2e:budget`, `test:contrast`, and a `test:*` shorthand per suite |
 
 A note that has bitten this repo twice: **a generator must never run when it is imported.** Two of them
