@@ -43,7 +43,7 @@ test('htmlToMarkdown refuses markup it cannot represent', () => {
 test('extractNowBody drops chrome and the lead, keeps the prose', () => {
   const body = extractNowBody(nowHtml);
   assert.match(body, /<p>\s*I am still very much affected/);
-  assert.doesNotMatch(body, /post-lead|Back to Home|post-title/);
+  assert.doesNotMatch(body, /post-lead|Back to home|post-title/i);
 });
 
 test('the committed archive holds the current page verbatim (drift guard)', () => {

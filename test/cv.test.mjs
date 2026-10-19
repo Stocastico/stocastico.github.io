@@ -110,28 +110,36 @@ test('renderCV: injects education degree, institution and year', () => {
   restore();
 });
 
-test('renderCV: career entries use tl-row--career class, education uses tl-row--education', () => {
+test('renderCV: each entry is an <li class="cv-entry"> tagged with its lane (work / study)', () => {
   const { els, restore } = setupDom(['cv-timeline']);
   renderCV(
     [{ year: '2023', role: 'Engineer', company: 'ACME', tags: [] }],
     [{ year: '2020', degree: 'MSc', institution: 'MIT' }],
   );
   const html = els['cv-timeline'].innerHTML;
-  assert.ok(html.includes('tl-row--career'), 'career row class present');
-  assert.ok(html.includes('tl-row--education'), 'education row class present');
+  assert.match(html, /<li class="cv-entry cv-entry--work"/, 'work entry');
+  assert.match(html, /<li class="cv-entry cv-entry--study"/, 'study entry');
   restore();
 });
 
-test('renderCV: career cards rendered in tl-left, education in tl-right', () => {
+test('renderCV: when (years, place) and what (role, organisation) are separate columns', () => {
+  const { els, restore } = setupDom(['cv-timeline']);
+  renderCV([{ year: '2023', role: 'Engineer', company: 'ACME', location: 'Bilbao', tags: [] }], []);
+  const html = els['cv-timeline'].innerHTML;
+  assert.match(html, /<div class="cv-when"><span class="cv-years">2023<\/span><span class="cv-where">Bilbao<\/span><\/div>/);
+  assert.match(html, /<div class="cv-what"><h3 class="cv-role">Engineer<\/h3><p class="cv-org">ACME<\/p>/);
+  restore();
+});
+
+test('renderCV: no inline layout styles and none of the old two-column timeline markup', () => {
   const { els, restore } = setupDom(['cv-timeline']);
   renderCV(
-    [{ year: '2023', role: 'Engineer', company: 'ACME', tags: [] }],
-    [{ year: '2020', degree: 'MSc', institution: 'MIT' }],
+    [{ year: '2022 – 2024', role: 'Manager', company: 'NTT DATA', tags: [] }],
+    [{ year: '2019 – 2024', degree: 'PhD', institution: 'UPV', concurrent_with: ['NTT DATA'] }],
   );
   const html = els['cv-timeline'].innerHTML;
-  // Career card content should be inside tl-left
-  assert.ok(html.includes('tl-left'), 'tl-left present');
-  assert.ok(html.includes('tl-right'), 'tl-right present');
+  assert.ok(!/style="/.test(html), 'no inline style');
+  assert.ok(!/tl-(row|left|right|spine|dot|empty|concurrent)/.test(html), 'old markup gone');
   restore();
 });
 
@@ -168,7 +176,7 @@ test('renderCV: handles empty arrays gracefully', () => {
 test('renderCV: omits tags div when tags array is empty', () => {
   const { els, restore } = setupDom(['cv-timeline']);
   renderCV([{ year: '2023', role: 'Dev', company: 'Co', tags: [] }], []);
-  assert.ok(!els['cv-timeline'].innerHTML.includes('tl-tags'), 'tl-tags absent for empty tags');
+  assert.ok(!els['cv-timeline'].innerHTML.includes('cv-tags'), 'cv-tags absent for empty tags');
   restore();
 });
 
@@ -181,8 +189,8 @@ test('renderCV: renders one row per entry', () => {
   const html = els['cv-timeline'].innerHTML;
   assert.ok(html.includes('Senior'), 'career entry present');
   assert.ok(html.includes('BSc'), 'education entry present');
-  const rowCount = (html.match(/tl-row /g) || []).length;
-  assert.strictEqual(rowCount, 2, 'exactly two timeline rows');
+  const rowCount = (html.match(/class="cv-entry /g) || []).length;
+  assert.strictEqual(rowCount, 2, 'exactly two entries');
   restore();
 });
 
@@ -199,7 +207,10 @@ test('renderCV: entries sorted by start year descending', () => {
   restore();
 });
 
-test('renderCV: concurrent_with entries rendered in tl-concurrent-block', () => {
+test('renderCV: a degree taken while employed is its own entry, saying alongside what', () => {
+  /* It used to be a three-column block spanning the jobs it overlapped, laid
+     out with inline grid placement. A plain list says the same thing in a
+     line and reads in order on every width. */
   const { els, restore } = setupDom(['cv-timeline']);
   renderCV(
     [
@@ -214,12 +225,10 @@ test('renderCV: concurrent_with entries rendered in tl-concurrent-block', () => 
     }],
   );
   const html = els['cv-timeline'].innerHTML;
-  assert.ok(html.includes('tl-concurrent-block'), 'concurrent block rendered');
-  assert.ok(html.includes('Manager'),    'NTT DATA entry present');
-  assert.ok(html.includes('Researcher'), 'Vicomtech entry present');
-  assert.ok(html.includes('PhD'),        'PhD entry present');
-  const standaloneRows = (html.match(/class="tl-row /g) || []).length;
-  assert.strictEqual(standaloneRows, 0, 'no standalone tl-rows when all career entries are concurrent');
+  assert.strictEqual((html.match(/class="cv-entry /g) || []).length, 3, 'three entries');
+  assert.match(html, /<p class="cv-alongside">Alongside NTT DATA and Vicomtech<\/p>/);
+  const order = ['Manager', 'PhD', 'Researcher'].map((t) => html.indexOf(t));
+  assert.deepStrictEqual([...order].sort((a, b) => a - b), order, 'sorted by start year, newest first');
   restore();
 });
 

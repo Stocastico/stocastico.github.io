@@ -1015,8 +1015,8 @@ test('renderCV renders merged career and education entries sorted by year', () =
     assert.match(timeline.innerHTML, /MSc CS/);
     assert.match(timeline.innerHTML, /MIT/);
     /* Career row should come before education row */
-    const careerIdx = timeline.innerHTML.indexOf('tl-row--career');
-    const eduIdx = timeline.innerHTML.indexOf('tl-row--education');
+    const careerIdx = timeline.innerHTML.indexOf('cv-entry--work');
+    const eduIdx = timeline.innerHTML.indexOf('cv-entry--study');
     assert.ok(careerIdx < eduIdx, 'Career (2020) should be before education (2018)');
   } finally {
     global.document = prevDoc;

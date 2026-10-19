@@ -404,7 +404,7 @@ test('every card surface shares one radius (--r-md)', () => {
      contact, CV and skill cards kept the old --r-lg, so one page set two
      shapes of card side by side (#194). */
   const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
-  for (const sel of ['.project-card', '.link-card', '.research-card', '.contact-card', '.tl-card-single', '.skill-panel', '.photo-card']) {
+  for (const sel of ['.project-card', '.link-card', '.research-card', '.contact-card', '.photo-card']) {
     const m = css.match(new RegExp(`^\\${sel} \\{([^}]*)\\}`, 'm'));
     assert.ok(m, `${sel} has no top-level rule`);
     assert.match(m[1], /border-radius:\s*var\(--r-md\)/, `${sel} does not use --r-md`);

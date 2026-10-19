@@ -154,15 +154,15 @@ test('contrast: body and muted text meet WCAG AA (4.5:1) on the page background'
       inside a `--bg-card` <details>, i.e. 0.17·text over (0.12·text over bg).
       In apricot/dark the browser paints that at rgb(82,77,72) where a lone card
       is rgb(49,44,41) — so even "text on a card" was the wrong surface for it.
-   2. **Tag chips add an accent tint.** `.tl-tag` and `.project-tag` sit on
-      `rgb(var(--accent-rgb) / 0.11)` over a card, which lightens the backdrop in
+   2. **Tag chips add an accent tint.** `.cv-tag` and `.project-tag` sit on
+      `rgb(var(--accent-rgb) / 0.12)` over a card, which lightens the backdrop in
       dark mode and darkens it in light.
 
    The mapping is per token rather than the cartesian product, deliberately.
    Requiring `textMuted` to survive a tag tint it never touches cost real chroma
    in the accents for nothing — the constraint has to match where the colour is
    actually painted, which is the whole lesson of this file. */
-const TINT_ALPHA = 0.11; /* .tl-tag / .project-tag chip fill */
+const TINT_ALPHA = 0.12; /* .cv-tag / .project-tag chip fill */
 
 function textSurfaces(p, token) {
   const s = surfaces(p);
@@ -258,7 +258,7 @@ test('contrast: the small-text CSS uses the accent *text* tokens, not the brand 
   const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
   const SMALL_TEXT_RULES = [
     ['.project-tag', '--accent-text'],
-    ['.tl-tag', '--accent-text'],
+    ['.cv-tag', '--accent-text'],
     /* A track label since #190: the colour is carried by its chip (a non-text
        mark, 3:1 is enough), and the word itself is a text tier. */
     ['.section-tag', '--text-muted'],

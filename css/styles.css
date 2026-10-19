@@ -17,7 +17,7 @@
    14. Contact Section
    15. Footer
    16. Scroll Reveal Animations
-   16c. Curriculum Vitae — Timeline
+   16c. Curriculum Vitae — Edit decision list
    16d. CV Page Layout
    17. Performance (content-visibility) — REMOVED, see the note at that mark
    18. Responsive
@@ -416,7 +416,7 @@ p,
 .post-lead,
 .project-card__desc,
 .link-card-desc,
-.tl-desc,
+.cv-desc,
 .pub-meta,
 figcaption {
   text-wrap: pretty;
@@ -3469,10 +3469,12 @@ a.edit-clip-body:focus-visible {
 }
 
 /* ─── 15. Footer ────────────────────────────────────────── */
+/* Chrome, so the UI face (#190) — it was the last chrome set in the prose serif. */
 .site-footer {
   padding-block: 2rem;
   border-top: 1px solid var(--border);
   text-align: center;
+  font-family: var(--font-ui);
   font-size: 0.8rem;
   color: var(--text-faint);
 }
@@ -3548,7 +3550,16 @@ a.edit-clip-body:focus-visible {
   }
 }
 
-/* ─── 16c. Curriculum Vitae — unified timeline ────────────── */
+/* ─── 16c. Curriculum Vitae — the edit decision list ───────── */
+
+/* The CV reads like an EDL: one ruled row per job or degree, newest first,
+   when and where in a narrow left column, what in a wide right one, and the
+   lane colour of the homepage timeline (#191) down the row's edge — work in
+   yellow, study in white. It used to be a glowing gradient spine with dots
+   and rounded cards, career on the left and education on the right; half of
+   every row was empty, and the one overlap (the PhD) needed a three-column
+   block laid out with inline grid rows. No cards, no glow, no radius: rules
+   and type, like the rest of the site since the redesign. */
 
 /* ── Header actions (PDF button + legend) ─────────────── */
 /* Left, not centre. The eyebrow and the <h1> directly above are left-aligned —
@@ -3574,510 +3585,240 @@ a.edit-clip-body:focus-visible {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  font-size: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 .cv-legend-item {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
+/* Square chips, the lane colours of .cv-entry below. */
 .cv-legend-dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
 }
 
-.cv-legend-dot--career {
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent-glow);
-}
+.cv-legend-dot--career { background: var(--accent); }
+.cv-legend-dot--education { background: var(--text); }
 
-.cv-legend-dot--education {
-  background: var(--accent2);
-  box-shadow: 0 0 6px var(--accent2-glow);
-}
-
-/* ── Unified timeline container ───────────────────────── */
-.cv-timeline {
-  position: relative;
-  padding: 2rem 0;
-
-  /* Vertical spine, aligned to the centre of the 52px spine column.
-     It used to run down the middle with career cards on the left and
-     education on the right — but there is one point in the history where
-     both sides are occupied (the PhD, which overlaps two jobs). Everywhere
-     else half the row was empty, so the spine sits on the left and cards
-     take the full width; the overlap is preserved by the concurrent block
-     below, which splits internally. */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 26px;
-    width: 2px;
-    transform: translateX(-50%);
-    background: linear-gradient(to bottom, var(--accent), var(--accent2) 70%, transparent);
-    box-shadow: 0 0 10px var(--accent-glow);
-    border-radius: 2px;
-  }
-}
-
-/* ── Timeline row — one per entry ─────────────────────── */
-.tl-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0;
-  align-items: start;
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-
-.tl-row>.tl-spine {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-/* Exactly one of these carries content on a plain row; the other is an empty
-   placeholder of zero height, so auto-placing both into column 2 costs
-   nothing (row-gap is 0) and stays correct if both are ever filled. */
-.tl-row>.tl-left,
-.tl-row>.tl-right {
-  grid-column: 2;
-}
-
-/* ── Concurrent block: education spans multiple career rows ── */
-.tl-concurrent-block {
-  display: grid;
-  /* spine | the concurrent career cards | the education card beside them */
-  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 1.5rem;
-  row-gap: 1.5rem;
-  align-items: start;
-  margin-bottom: 1.5rem;
-  position: relative;
-
-  /* Cell placement is set inline by renderCvTimeline() in js/main.js — the
-     row index depends on how many career entries the education overlaps. */
-
-  /* Dots inside concurrent block use career colour */
-  .tl-spine .tl-dot {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
-  }
-
-  /* Education card stretches to fill its full row span */
-  .tl-right {
-    align-self: stretch;
-
-    .tl-card-single {
-      height: 100%;
-      box-sizing: border-box;
-    }
-  }
-}
-
-/* ── Year marker on the spine ─────────────────────────── */
-.tl-spine {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 52px;
-  z-index: 2;
-}
-
-.tl-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--bg-alt);
-  flex-shrink: 0;
-}
-
-.tl-row--career .tl-dot {
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow);
-}
-
-.tl-row--education .tl-dot {
-  background: var(--accent2);
-  box-shadow: 0 0 8px var(--accent2-glow);
-}
-
-/* ── Card — sits on left or right side ────────────────── */
-.tl-card-single {
-  padding: 1.5rem 1.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  transition: border-color var(--t-med), background var(--t-med), box-shadow var(--t-med);
-
-  &:hover {
-    border-color: var(--border-hov);
-    background: var(--bg-card-hov);
-    box-shadow: var(--elev-2);
-  }
-}
-
-/* Every card hangs off the same spine now, so the accent bar is always on
-   the left edge — the colour still distinguishes career from education. */
-.tl-row--career .tl-card-single {
-  border-left: 3px solid var(--accent);
-}
-
-/* Education cards: right side — accent bar on left edge (toward spine) */
-.tl-row--education .tl-card-single {
-  border-left: 3px solid var(--accent2);
-}
-
-/* Both cells sit to the right of the spine now. */
-.tl-left,
-.tl-right {
-  text-align: left;
-}
-
-/* Empty side placeholder */
-.tl-empty {
-  /* intentionally blank — keeps grid structure */
-}
-
-/* ── Card typography ──────────────────────────────────── */
-
-.tl-year {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  margin-bottom: 0.4rem;
-}
-
-.tl-row--career .tl-year {
-  color: var(--accent-text);
-}
-
-.tl-row--education .tl-year {
-  color: var(--accent2-text);
-}
-
-.tl-title {
-  font-size: 0.98rem;
-  font-weight: 600;
-  color: var(--text);
-  margin: 0 0 0.3rem;
-  line-height: 1.35;
-}
-
-.tl-sub {
-  font-size: 0.80rem;
-  color: var(--text-muted);
-  margin-bottom: 0.65rem;
-  line-height: 1.4;
-}
-
-.tl-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-/* Header order is the same on both sides now: year first, location trailing. */
-
-.tl-location {
-  font-family: var(--font-ui);
-  color: var(--text-faint);
-  font-size: 0.7rem;
-  white-space: nowrap;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.tl-desc {
-  font-size: 0.80rem;
-  color: var(--text-muted);
-  line-height: 1.65;
-  margin: 0 0 0.75rem;
-}
-
-/* ── "Related work" — the CV's route into the project pages ────────────
-   Sits between the description and the tags: the tags say what the role was
-   about, these say what it produced, and the produced things are the more
-   interesting click. Deliberately styled as underlined text links rather than
-   as pills — .tl-tag right below is already a pill, and two pill rows on one
-   card make the clickable one indistinguishable from the decorative one. */
-.tl-links {
-  margin: 0 0 0.8rem;
-}
-
-.tl-links-label {
-  display: block;
-  font-family: var(--font-ui);
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--text-faint);
-  margin-bottom: 0.3rem;
-}
-
-.tl-links-list {
+/* ── The list ─────────────────────────────────────────── */
+.cv-edl {
   list-style: none;
-  margin: 0;
+  margin: 3rem 0 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.tl-link {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--accent-text);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-  text-decoration-color: rgb(var(--accent-rgb) / 0.4);
-  transition: color var(--t-fast) var(--ease),
-              text-decoration-color var(--t-fast) var(--ease);
-}
-
-.tl-link:hover,
-.tl-link:focus-visible {
-  color: var(--accent2-text);
-  text-decoration-color: currentColor;
-}
-
-.tl-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-/* Tags follow the card's text, which is left-aligned on both sides now. */
-
-.tl-tag {
-  font-family: var(--font-ui);
-  font-size: 0.64rem;
-  font-weight: 600;
-  padding: 0.2em 0.65em;
-  border-radius: 999px;
-  background: rgb(var(--accent-rgb) / 0.11);
-  color: var(--accent-text);
-  border: 1px solid rgb(var(--accent-rgb) / 0.22);
-  letter-spacing: var(--tracking-normal);
-}
-
-/* ── CV skills section ─────────────────────────────────── */
-
-.cv-skills-section {
-  margin-top: 4rem;
-  padding-top: 3rem;
   border-top: 1px solid var(--border);
 }
 
-.cv-skills-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
+.cv-entry {
+  --lane: var(--accent);
+  position: relative;
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: 2.5rem;
+  padding: 2rem 0 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 2rem;
+    bottom: 2rem;
+    width: 4px;
+    background: var(--lane);
+  }
 }
 
-.cv-skills-header h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
+.cv-entry--study { --lane: var(--text); }
+
+.cv-years {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.cv-where {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
   color: var(--text-muted);
-  font-size: 0.75rem;
+}
+
+.cv-role {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 800;
+  font-stretch: 62%;
+  line-height: 1.02;
+  color: var(--text);
+}
+
+.cv-org {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cv-alongside {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.cv-desc {
+  margin: 1rem 0 0;
+  max-width: 68ch;
+  font-family: var(--font-prose);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* "Related work" — a label and inline text links, not pills: the tags right
+   below are already chips, and two chip rows on one entry read as one. */
+.cv-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin-top: 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+
+.cv-links-label {
+  color: var(--text-muted);
+}
+
+.cv-links-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cv-link {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--t-fast);
+}
+
+.cv-link:hover,
+.cv-link:focus-visible {
+  color: var(--text);
+}
+
+.cv-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+/* The same chip as .project-tag. */
+.cv-tag {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2em 0.6em;
+  border-radius: 3px;
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--accent-text);
+}
+
+/* ── Skills ───────────────────────────────────────────── */
+/* Three ruled lists side by side, the same rules as the list above. */
+.cv-skills-section {
+  margin-top: 5rem;
 }
 
 .skill-panels {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.75rem;
-}
-
-.skill-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 1.75rem;
-  transition: border-color var(--t-med), box-shadow var(--t-med);
-}
-
-.skill-panel:hover {
-  border-color: var(--border-hov);
-  background: var(--bg-card-hov);
-  box-shadow: var(--elev-2);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
 }
 
 .skill-panel-title {
-  font-size: 0.68rem;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
   font-weight: 700;
   color: var(--accent-text);
-  margin: 0 0 1.25rem;
 }
 
-/* Horizontal progress bars */
-/* Skill + language pills — one row layout shared by all three panels.
-   Technical/Leadership show a tier word (Expert / Advanced) where a
-   percentage bar used to sit; the Languages panel says CEFR levels the
-   same way, which is why the two rule sets are deliberately joint. */
+/* One row layout shared by all three panels: Technical/Leadership say a
+   tier word (Expert / Advanced) where a percentage bar used to sit, and
+   Languages says CEFR levels the same way. */
 .lang-list,
 .skill-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  border-top: 1px solid var(--border);
 }
 
 .lang-item,
 .skill-item {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 0.9rem;
-  background: var(--bg);
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.lang-name {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* Skill names are long compound lines ("GenAI & LLMs (Agentic AI · …)"),
-   so they sit a step smaller and lighter than the one-word language names. */
+.lang-name,
 .skill-item-name {
-  font-size: 0.79rem;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
   font-weight: 500;
   color: var(--text);
 }
 
 .lang-prof,
 .skill-tier {
-  font-size: 0.72rem;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   color: var(--accent2-text);
-  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
-/* ── Responsive: single-column timeline on small screens ── */
+/* ── Phones: one column, when above what ──────────────── */
 @media (max-width: 760px) {
-  .cv-timeline::before {
-    left: 6px;
+  .cv-entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    padding-left: 1.1rem;
   }
 
-  .tl-row {
-    display: block;
-    padding-left: 2rem;
-    position: relative;
+  .cv-when {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    align-items: baseline;
   }
 
-  .tl-spine {
-    position: absolute;
-    left: 0;
-    top: 1.2rem;
-    width: auto;
-  }
-
-  .tl-dot {
-    width: 10px;
-    height: 10px;
-  }
-
-  .tl-left,
-  .tl-right {
-    padding: 0;
-    text-align: left;
-  }
-
-  .tl-left .tl-card-header {
-    flex-direction: row;
-  }
-
-  /* On phones, allow long location strings to wrap inside their card
-     instead of forcing horizontal overflow with `white-space: nowrap`. */
-  .tl-location {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .tl-left .tl-location {
-    text-align: right;
-  }
-
-  .tl-empty {
-    display: none;
-  }
-
-  /* On mobile, accent bar always on left */
-  .tl-row--career .tl-card-single {
-    border-right: none;
-    border-left: 3px solid var(--accent);
-  }
-
-  .tl-card-single {
-    padding: 1.1rem 1.25rem;
-  }
-
-  /* Concurrent blocks: collapse 3-column grid to a single stacked column so
-     career cards and the paired education card don't squeeze side-by-side
-     and double up vertical spine lines. */
-  .tl-concurrent-block {
-    display: block;
-    position: relative;
-  }
-
-  .tl-concurrent-block>.tl-left,
-  .tl-concurrent-block>.tl-right {
-    display: block;
-    padding: 0 0 0 2rem;
-    margin-bottom: 1.5rem;
-    text-align: left;
-    position: relative;
-  }
-
-  .tl-concurrent-block>.tl-right:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Hide per-pair inner spines — each card gets its own dot via ::before
-     anchored on the main timeline spine. */
-  .tl-concurrent-block>.tl-spine {
-    display: none;
-  }
-
-  .tl-concurrent-block>.tl-left::before,
-  .tl-concurrent-block>.tl-right::before {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 1.4rem;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid var(--bg-alt);
-    transform: translateX(-50%);
-    z-index: 2;
-  }
-
-  .tl-concurrent-block>.tl-left::before {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
-  }
-
-  .tl-concurrent-block>.tl-right::before {
-    background: var(--accent2);
-    box-shadow: 0 0 8px var(--accent2-glow);
+  .cv-where {
+    margin-top: 0;
   }
 }
 
@@ -4090,6 +3831,7 @@ a.edit-clip-body:focus-visible {
 
 .cv-back-link {
   display: inline-block;
+  font-family: var(--font-ui);
   /* Vertical padding to clear the 24px target minimum — see .unesco-site. */
   padding: 0.25rem 0;
   font-size: 0.82rem;
@@ -4320,7 +4062,7 @@ a.edit-clip-body:focus-visible {
     padding-block: 0.55rem;
   }
 
-  .tl-tag {
+  .cv-tag {
     padding: 0.35em 0.75em;
   }
 }
@@ -5478,32 +5220,18 @@ a.edit-clip-body:focus-visible {
    @layer components could restyle elements but would silently fail to repoint
    --text.
 
-   The load-bearing rule is the first one. Four headings — the hero name, every
-   section title, the travel-page titles — paint their letterforms from a
-   gradient by way of `background-clip: text` plus
-   `-webkit-text-fill-color: transparent`. Forced-colors mode overrides `color`,
-   but text-fill-color is not in the list of properties it forces, so the
-   letters stay transparent while the background they were painted from is gone:
-   the hero name and every section heading disappear. This is the identical
-   failure the print block already fixes for the identical reason — backgrounds
-   are not printed either — so it gets the identical fix. `forced-color-adjust`
-   is deliberately not used to opt out; the point is to co-operate with the
-   user's colours, not to insist on ours.
+   It used to open with a reset for gradient-filled headings, which
+   forced-colors left transparent (it overrides `color`, not
+   `-webkit-text-fill-color`). Gradient text is gone from the site (#194) and
+   test/e2e/a11y.e2e.mjs fails on any text painted with a transparent fill, so
+   the reset went with it.
 
-   The rest are smaller: a `currentColor`-driven glyph is fine, but anything
+   What remains: a `currentColor`-driven glyph is fine, but anything
    whose meaning came from a *fill* needs a shape or a border to survive, since
    forced-colors flattens the palette to the user's own. The world map's
    lived/visited distinction is the clearest case — two fills that become one
    colour — so it falls back to a stroke pattern rather than pretending. */
 @media (forced-colors: active) {
-  .hero-name,
-  .section-title,
-  .globe-title {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    color: CanvasText;
-  }
-
   /* Focus rings are drawn in an accent that no longer exists here. */
   a:focus-visible,
   button:focus-visible,
@@ -5620,17 +5348,6 @@ a.edit-clip-body:focus-visible {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
-  }
-
-  /* Gradient-filled headings paint from a background, and backgrounds are not
-     printed — so these came out as ghosts. The worst case was the CV, where
-     every job title disappeared. */
-  .hero-name,
-  .section-title,
-  .globe-title {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    color: #111;
   }
 
   /* The hero grid is not printed, so the name it stood in for has to be. */
