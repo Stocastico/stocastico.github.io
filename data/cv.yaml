@@ -182,7 +182,7 @@ places:
 # Each is a clip on the homepage timeline's projects lane, without a link.
 # When the project page exists, move it to data/projects.js and delete it here.
 timeline_projects:
-  - year: "2024 – present"
+  - year: "2026 – present"
     title: AI Production
 
 # ── Education ─────────────────────────────────────────────────────────────────

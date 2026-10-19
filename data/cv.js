@@ -142,7 +142,7 @@ export const CV_PLACES = [
 /* ── Timeline-only projects (no page yet) ─────────────────── */
 export const CV_TIMELINE_PROJECTS = [
   {
-    year:  '2024 – present',
+    year:  '2026 – present',
     title: 'AI Production',
   },
 ];
