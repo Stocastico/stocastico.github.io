@@ -29,8 +29,7 @@ It is worth being concrete about the starting point, because the gap between *ha
 
 This is not meant as a criticism of the client; it is just the way things were at that time in the organisation, which was growing its ML portfolio one project at a time. The point of the engagement was to put a platform underneath all of that, so the next model would be easier to ship and the existing ones would be easier to operate.
 
-## Target Architecture
-
+## Target architecture
 We designed the platform around the standard MLOps lifecycle: data, training, registry, serving, monitoring. We used Vertex AI as the glue between all of them, with the rest of GCP filling in the supporting infrastructure.
 
 !svg(drafts/diagrams/mlops-architecture.svg)
@@ -45,8 +44,7 @@ We designed the platform around the standard MLOps lifecycle: data, training, re
 
 **Cross-cutting concerns.** **Cloud Build** runs CI/CD on every commit (unit tests, integration tests, container builds, pipeline submissions in dev), and **[Terraform](https://www.terraform.io/)** describes all the GCP resources so environments (dev, staging, prod) are not snowflakes. **Cloud Scheduler** triggers the periodic retraining and batch-scoring runs. **IAM** and **KMS** handle access control and secrets uniformly across the platform.
 
-## What a Pipeline Actually Does
-
+## What a pipeline actually does
 Each model (churn, recommender, the rest) ended up as a Vertex AI Pipeline with broadly the same shape. The specifics differ (the recommender has a much larger training step and runs less often; the churn predictor scores in batch overnight) but the structure is shared.
 
 !svg(drafts/diagrams/mlops-pipeline.svg)
@@ -63,8 +61,7 @@ The pipeline runs on a schedule (typically weekly for churn, daily for the recom
 
 The full cycle runs without human intervention on the happy path; the human work is concentrated where it actually adds value: reviewing the model card before promotion, investigating drift alerts, deciding whether a borderline candidate is worth shipping.
 
-## Refactoring the Existing Models
-
+## Refactoring the existing models
 The architecture diagram was the "easy" part. The substantive work was rebuilding the existing models: code that had grown organically and was not written for containerised, parameterised pipeline execution, into something the platform could run.
 
 For each model we worked through the same pattern:

@@ -14,8 +14,7 @@ cleAR is a modular, interoperable software architecture for building multi-user 
 
 Despite the well-documented benefits of AR in learning (improved motivation, better concept assimilation, easier knowledge transfer), its adoption in classrooms remains remarkably limited. Two barriers stand out: the difficulty of implementing collaborative, multi-user scenarios and the challenge of integrating AR tools into existing school infrastructure and curricula. cleAR was designed to address both.
 
-## Design Objectives
-
+## Design objectives
 The architecture was built around six design objectives (DOs) derived from a systematic survey of 47 primary and secondary school teachers and an extensive review of the literature.
 
 !svg(drafts/diagrams/clear-design-objectives.svg)
@@ -41,8 +40,7 @@ cleAR is structured as four loosely coupled modules that can be composed indepen
 
 **Visual reporting module.** A code-free web interface for generating interactive dashboards and charts from stored xAPI data, built on [D3](https://d3js.org/) and [Seaborn](https://seaborn.pydata.org/). Visualisations are rendered client-side to preserve privacy, with export options to local storage, external databases, or the school LMS.
 
-## Proof-of-Concept Applications
-
+## Proof-of-concept applications
 Three proof-of-concept applications were developed to validate the architecture against the design objectives.
 
 **AR Cube**: a minimal multi-user app in which up to four users share a virtual cube and can manipulate its rotation and colour in real time across iOS, Android, Windows, and Linux. The core collaborative logic required fewer than 400 lines of code, demonstrating DO6. Average end-to-end latency was 205 ms on both Wi-Fi and 4G.

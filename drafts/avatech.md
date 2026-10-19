@@ -31,14 +31,12 @@ Among the recognizers delivered:
 
 The recognizers were designed as **modular components with adaptation and feedback mechanisms**: the researcher's corrections could be fed back into the models, allowing them to adapt to the often unusual acoustic and visual conditions of humanities field data (low-quality recordings, overlapping speech, non-standard camera placements).
 
-## Technical Context
-
+## Technical context
 The project ran during a period in which audio and video analysis was transitioning from hand-crafted features to learned representations (the pre-deep-learning era). The speech and speaker modules relied on MFCC features, GMM/HMM acoustic models, and clustering algorithms; the video modules used colour histograms, motion vectors, and SVM classifiers. Every recognizer had to run acceptably fast on a standard researcher laptop; no GPUs, no cloud.
 
 Making all of that **integrate cleanly into a tool users already knew and trusted** was as much of the work as the algorithms themselves. ELAN had an established user base and a very specific interaction model; any pre-annotations had to slot into that model without disrupting existing workflows.
 
-## Publications and Impact
-
+## Publications and impact
 The work produced several peer-reviewed papers, including:
 
 - *AVATecH: Audio/Video Technology for Humanities Research*: LREC Workshop on Language Technologies for Digital Humanities, Hissar, Bulgaria, **2011**.
@@ -48,6 +46,5 @@ The work produced several peer-reviewed papers, including:
 
 The recognizers shipped as part of **ELAN** and remained part of the tool's standard distribution for years. For a young engineer, seeing work that started as algorithm research end up in the daily workflow of humanities researchers in dozens of institutions was a lasting lesson: **the technical contribution matters only as much as its path into the hands of the people who need it**.
 
-## Personal Reflection
-
+## Personal reflection
 AVATecH shaped my approach to every project that followed. The constraints of the problem are the same ones I have met again and again, in AR for education and later in GenAI for enterprise: messy real-world data, domain experts who are not programmers, a tool ecosystem that already exists, and evaluation metrics that must reflect real usefulness rather than benchmark performance. The specific algorithms have aged (a modern version of almost every recognizer would be built on transformer-based models in a tenth of the code), but the engineering discipline of the project has not.

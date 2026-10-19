@@ -156,7 +156,7 @@ The brief was easy to state, but the implementation was very complex: produce re
   <img src="../img/projects/ufc-octagon-overhead.webp" alt="The octagon from above during a live event: two fighters mid-exchange in the centre of the cage, the referee circling, and cornermen, camera operators and the crowd ringing it on every side." width="768" height="512" loading="lazy" decoding="async" />
   <figcaption>Official UFC event photography.</figcaption>
 </figure>
-<h2>What We Measured</h2>
+<h2>What we measured</h2>
 <p>
 The output of the system was a continuous stream of statistics for each of the two fighters:
 </p>
@@ -170,14 +170,14 @@ The output of the system was a continuous stream of statistics for each of the t
 <p>
 All of this was published to the cloud, aggregated, and pushed to the consumer-facing UFC app and to broadcast graphics in near real time.
 </p>
-<h2>Hardware in the Truss</h2>
+<h2>Hardware in the truss</h2>
 <p>
 Coverage of a UFC octagon (with eight sides, fast lateral motion, and frequent occlusions when fighters clinched) was the first hard problem. We solved it with <strong>two <a href="https://www.stereolabs.com/" target="_blank" rel="noopener">Stereolabs ZED</a> RGB-D cameras</strong> mounted on the <strong>truss above the cage</strong>, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
 </p>
 <p>
 Both cameras were cabled to a <strong>GPU-equipped PC, also mounted on the truss</strong>, which performed all the perception work locally. Doing inference at the venue (rather than streaming raw footage to a remote machine) was a deliberate choice; it eliminated the network as a bottleneck, kept latency in the sub-second range, and meant the system kept working even when venue connectivity wobbled. The PC then streamed only the resulting statistics down to the cloud over a much narrower data path.
 </p>
-<h2>Sensor Fusion: Vision + Accelerometers</h2>
+<h2>Sensor fusion: vision + accelerometers</h2>
 <p>
 Pure vision could detect that a punch had been <em>thrown</em>, but not whether it had <em>connected</em>, and certainly not the punch <em>type</em> with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' <strong>gloves with accelerometers</strong>, providing a second, completely independent signal for every strike.
 </p>
@@ -195,7 +195,7 @@ We fused the two streams in real time:
   </div>
   <figcaption>System overview. The figures shown are illustrative, not data from a real bout.</figcaption>
 </figure>
-<h2>Cloud and Delivery</h2>
+<h2>Cloud and delivery</h2>
 <p>
 Once produced at the edge, the statistics were ingested through <strong>AWS</strong> services (<a href="https://aws.amazon.com/kinesis/" target="_blank" rel="noopener noreferrer">Kinesis</a> for ingestion, downstream services for processing, persistence, and fan-out; see <a href="https://www.youtube.com/watch?v=zHSEnKb69go" target="_blank" rel="noopener">AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture</a>). From there they were relayed to the UFC app and to broadcast partners.
 </p>

@@ -13,8 +13,7 @@ While working at **[NTT DATA](https://www.nttdata.com/global/en/)**, I designed 
 
 The solution was a **[Retrieval-Augmented Generation (RAG)](https://arxiv.org/abs/2005.11401)** pipeline, combining semantic search over a vector database with a large language model for answer synthesis.
 
-## Ingestion Pipeline
-
+## Ingestion pipeline
 The first stage processes all existing PDF documents and builds a searchable index. This runs offline and is re-triggered whenever documents are added or updated in SharePoint.
 
 !svg(drafts/diagrams/rag-ingestion.svg)
@@ -24,8 +23,7 @@ The first stage processes all existing PDF documents and builds a searchable ind
 3. **Embedding**: each chunk is passed through an embedding model, which maps it to a dense vector in a high-dimensional semantic space. Chunks with similar meaning end up close together in this space, regardless of exact wording.
 4. **Vector database**: the resulting vectors are stored and indexed for fast approximate nearest-neighbour lookup. Crucially, each vector record carries metadata: the source filename, the page number, and the original chunk text. The embedding encodes *what* the chunk means; the metadata records *where* it came from.
 
-## Query Pipeline
-
+## Query pipeline
 When a user submits a question, the system answers in real time through a two-stage process.
 
 !svg(drafts/diagrams/rag-query.svg)
@@ -35,14 +33,12 @@ When a user submits a question, the system answers in real time through a two-st
 3. **Answer generation**: the original question and the retrieved chunks are assembled into a prompt and sent to an LLM. The model synthesises a grounded answer from the provided context rather than relying on its training knowledge, which is essential in a domain where accuracy and traceability matter.
 4. **Citations**: because each retrieved chunk carries its source filename and page number in the metadata, the system can append precise references to every answer, letting the user verify the information directly in the original document.
 
-## What the User Sees
-
+## What the user sees
 From the employee's perspective, the interaction is a standard chat interface. They type a question in natural language, such as "What is the escalation procedure for tier-2 complaints?" or "Which products are covered under the cross-border exemption?", and receive a direct answer with one or more citations of the form *Document name, page N*. Clicking a citation opens the relevant page of the source PDF.
 
 No need to know which folder anything lives in; you just ask, and you get an answer with a pointer back to the source so you can verify it yourself.
 
-## Technical Notes
-
+## Technical notes
 - The same embedding model must be used for both ingestion and query time; any change to the model requires a full re-embedding of the corpus.
 - Chunk size and overlap are the main tuning parameters: too small and individual chunks lack context; too large and the retrieved chunks fill the LLM's context window, leaving little room for the answer.
 - Metadata fidelity during PDF parsing is the key engineering challenge: multi-column layouts, headers, footers, and scanned pages all require careful handling to ensure page numbers remain accurate.

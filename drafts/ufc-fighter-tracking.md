@@ -16,8 +16,7 @@ The brief was easy to state, but the implementation was very complex: produce re
 
 ![The octagon from above during a live event: two fighters mid-exchange in the centre of the cage, the referee circling, and cornermen, camera operators and the crowd ringing it on every side.](img/projects/ufc-octagon-overhead.webp "Official UFC event photography.")
 
-## What We Measured
-
+## What we measured
 The output of the system was a continuous stream of statistics for each of the two fighters:
 
 - **Position and speed**: every fighter's location inside the octagon, sampled many times per second.
@@ -28,14 +27,12 @@ The output of the system was a continuous stream of statistics for each of the t
 
 All of this was published to the cloud, aggregated, and pushed to the consumer-facing UFC app and to broadcast graphics in near real time.
 
-## Hardware in the Truss
-
+## Hardware in the truss
 Coverage of a UFC octagon (with eight sides, fast lateral motion, and frequent occlusions when fighters clinched) was the first hard problem. We solved it with **two [Stereolabs ZED](https://www.stereolabs.com/) RGB-D cameras** mounted on the **truss above the cage**, angled to give overlapping fields of view that covered the entire fighting surface. The depth channel was crucial: knowing the distance of each fighter from the camera let us resolve the ambiguities that single RGB streams suffered from, especially during ground exchanges.
 
 Both cameras were cabled to a **GPU-equipped PC, also mounted on the truss**, which performed all the perception work locally. Doing inference at the venue (rather than streaming raw footage to a remote machine) was a deliberate choice; it eliminated the network as a bottleneck, kept latency in the sub-second range, and meant the system kept working even when venue connectivity wobbled. The PC then streamed only the resulting statistics down to the cloud over a much narrower data path.
 
-## Sensor Fusion: Vision + Accelerometers
-
+## Sensor fusion: vision + accelerometers
 Pure vision could detect that a punch had been *thrown*, but not whether it had *connected*, and certainly not the punch *type* with the precision the UFC wanted. The fix was multi-modal: a parallel sensor team had instrumented the fighters' **gloves with accelerometers**, providing a second, completely independent signal for every strike.
 
 We fused the two streams in real time:
@@ -46,8 +43,7 @@ We fused the two streams in real time:
 
 ![System overview poster. Left, the rig in the truss above the octagon: two ZED RGB-D cameras flanking a GPU PC, their view cones covering the cage, with accelerometers in the gloves, and four claims — deployable in hours, portable worldwide, rugged enough for a live production, resilient to poor venue connectivity. Right, what was measured per fighter: position and speed, octagon control as a heat map, total movement per round and per fight, posture state as a standing-versus-ground timeline, and strike counts by type, attempted against landed. Along the bottom, five stages from the cage to the cloud: capture, on-truss perception, a statistics stream of 10 to 50 kilobytes per second rather than raw video, cloud ingest and aggregation on AWS, and consumers — the UFC mobile app and broadcast graphics.](img/projects/ufc-system-overview.webp "System overview. The figures shown are illustrative, not data from a real bout."){plate}
 
-## Cloud and Delivery
-
+## Cloud and delivery
 Once produced at the edge, the statistics were ingested through **AWS** services ([Kinesis](https://aws.amazon.com/kinesis/) for ingestion, downstream services for processing, persistence, and fan-out; see [AGT's separate AWS re:Invent 2017 talk on the Kinesis side of the architecture](https://www.youtube.com/watch?v=zHSEnKb69go)). From there they were relayed to the UFC app and to broadcast partners.
 
 This was a project where I was involved **end to end**:

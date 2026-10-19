@@ -15,8 +15,7 @@ How do you know whether an audience is actually paying attention? For a conferen
 
 This project, carried out at **Vicomtech** in **2020** and published at **ICAART 2020** (Sanz-Narrillos, Masneri, Zorrilla: *"A Multi-modal Audience Engagement Measurement System"*), proposed a different answer: combine two cheap, complementary sensing modalities (**computer vision** and **wireless signal strength**) and use each to cover the weaknesses of the other. The complete system was released as open source and is available on [GitHub](https://github.com/tv-vicomtech/AudienceEngagement).
 
-## The Two Modalities
-
+## The two modalities
 **Visual channel.** Standard RGB cameras feed a pipeline built on **[TensorFlow](https://www.tensorflow.org/)** and **[OpenCV](https://opencv.org/)**. For each frame the system runs, in sequence:
 
 1. Person detection: locating every individual in the frame.
@@ -42,8 +41,7 @@ The two channels cover different things. The visual channel is *precise but narr
 
 An engagement score is computed by weighting these primitives. The weights are not fixed: they can be tuned per venue and per event type, which matters because "engagement" looks very different at a conference talk (low movement, high attention share) than at a museum exhibit (moderate movement, high dwell time) or a product launch (high movement, variable attention).
 
-## System Architecture
-
+## System architecture
 The software stack was designed to be deployable on commodity hardware:
 
 - **Scanner nodes**: Raspberry Pi 3 / 4 units with wireless monitor-mode dongles, written in **[Go](https://go.dev/)** for efficiency on constrained hardware.
@@ -58,8 +56,7 @@ The deliberate choice of **Go for the wireless side** and **Python for the visio
 
 The system was validated in controlled deployments where ground truth (attendee counts, known positions, attention direction recorded manually) could be compared against the system's output. The paper reports the fusion of both modalities consistently outperforms either modality alone for the composite engagement metric, especially in scenarios where one of the channels degrades (poor lighting for vision, device-dense environments for wireless).
 
-## Why It Mattered
-
+## Why it mattered
 Three things made this project interesting beyond the engagement-metric angle:
 
 1. **Multi-modal sensor fusion done pragmatically.** Academic papers on multi-modal systems often fuse modalities that share a common machine-learning formulation. Here the channels had completely different statistical properties, completely different hardware requirements, and different failure modes. The fusion had to respect that asymmetry.

@@ -152,7 +152,7 @@ How do you know whether an audience is actually paying attention? For a conferen
 <p>
 This project, carried out at <strong>Vicomtech</strong> in <strong>2020</strong> and published at <strong>ICAART 2020</strong> (Sanz-Narrillos, Masneri, Zorrilla: <em>&quot;A Multi-modal Audience Engagement Measurement System&quot;</em>), proposed a different answer: combine two cheap, complementary sensing modalities (<strong>computer vision</strong> and <strong>wireless signal strength</strong>) and use each to cover the weaknesses of the other. The complete system was released as open source and is available on <a href="https://github.com/tv-vicomtech/AudienceEngagement" target="_blank" rel="noopener">GitHub</a>.
 </p>
-<h2>The Two Modalities</h2>
+<h2>The two modalities</h2>
 <p>
 <strong>Visual channel.</strong> Standard RGB cameras feed a pipeline built on <strong><a href="https://www.tensorflow.org/" target="_blank" rel="noopener noreferrer">TensorFlow</a></strong> and <strong><a href="https://opencv.org/" target="_blank" rel="noopener noreferrer">OpenCV</a></strong>. For each frame the system runs, in sequence:
 </p>
@@ -185,7 +185,7 @@ The two channels cover different things. The visual channel is <em>precise but n
 <p>
 An engagement score is computed by weighting these primitives. The weights are not fixed: they can be tuned per venue and per event type, which matters because &quot;engagement&quot; looks very different at a conference talk (low movement, high attention share) than at a museum exhibit (moderate movement, high dwell time) or a product launch (high movement, variable attention).
 </p>
-<h2>System Architecture</h2>
+<h2>System architecture</h2>
 <p>
 The software stack was designed to be deployable on commodity hardware:
 </p>
@@ -203,7 +203,7 @@ The deliberate choice of <strong>Go for the wireless side</strong> and <strong>P
 <p>
 The system was validated in controlled deployments where ground truth (attendee counts, known positions, attention direction recorded manually) could be compared against the system's output. The paper reports the fusion of both modalities consistently outperforms either modality alone for the composite engagement metric, especially in scenarios where one of the channels degrades (poor lighting for vision, device-dense environments for wireless).
 </p>
-<h2>Why It Mattered</h2>
+<h2>Why it mattered</h2>
 <p>
 Three things made this project interesting beyond the engagement-metric angle:
 </p>
