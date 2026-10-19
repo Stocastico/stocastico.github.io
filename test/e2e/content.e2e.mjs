@@ -316,60 +316,65 @@ describe('hero: the receptive field', () => {
         assert.equal(h1.count, 1);
         assert.equal(await page.isVisible('.field-controls'), true, 'the filter controls were not revealed');
 
-        await page.click('[data-filter="corners"]');
+        /* Only a dropdown: no kernel readout, no caption, no range input. */
+        for (const gone of ['.field-kernel', '.field-caption', '#field-pos', '.field-next', '[data-filter]']) {
+          assert.equal(await page.locator(gone).count(), 0, `${gone} is back in the hero`);
+        }
+        const options = await page.$$eval('#field-filter option', (os) => os.map((o) => o.value));
+        assert.ok(!options.includes('corners'), 'Corners is back in the menu');
+
+        await page.selectOption('#field-filter', 'vertical');
         await page.waitForTimeout(150);
-        assert.equal(await page.getAttribute('[data-filter="corners"]', 'aria-pressed'), 'true');
-        const corners = await canvasHash(page);
-        assert.notEqual(corners.h, first.h, 'choosing a filter did not change the picture');
+        const vertical = await canvasHash(page);
+        assert.notEqual(vertical.h, first.h, 'choosing a filter did not change the picture');
 
-        await page.click('[data-filter="learned"]');
+        await page.selectOption('#field-filter', 'learned');
         await page.waitForTimeout(400);
-        assert.equal(await page.isVisible('.field-next'), true, 'the learned filter offers the next kernel');
-        assert.match(await page.textContent('.field-caption'), /Filter \d of 6/);
+        assert.notEqual((await canvasHash(page)).h, vertical.h, 'the learned filter did not change the picture');
 
-        /* Keyboard path: the range input moves the window. */
+        /* Pointer path: a horizontal drag across the grid moves the window. */
         const before = await canvasHash(page);
-        await page.focus('#field-pos');
-        for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowLeft');
-        await page.waitForTimeout(100);
-        assert.notEqual((await canvasHash(page)).h, before.h, 'moving the range did not move the window');
-
-        /* Pointer path: a horizontal drag across the grid. */
         const box = await page.locator('#field-canvas').boundingBox();
-        await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.5);
+        await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.5);
         await page.mouse.down();
-        await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.5, { steps: 5 });
+        await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.5, { steps: 5 });
         await page.mouse.up();
-        const pos = Number(await page.inputValue('#field-pos'));
-        assert.ok(pos > 850, `dragging to 90% left the range at ${pos}`);
+        assert.notEqual((await canvasHash(page)).h, before.h, 'dragging did not move the window');
+
+        /* The link to the network sits at the bottom right of the hero. */
+        const geo = await page.evaluate(() => {
+          const hero = document.getElementById('hero').getBoundingClientRect();
+          const link = document.querySelector('.field-lenet a').getBoundingClientRect();
+          const copy = document.querySelector('.hero-content').getBoundingClientRect();
+          return { heroR: hero.right, heroB: hero.bottom, linkR: link.right, linkB: link.bottom, linkL: link.left, copyR: copy.right };
+        });
+        assert.ok(geo.linkL > geo.copyR, 'the CNN link is not to the right of the copy');
+        assert.ok(geo.heroB - geo.linkB < 120, `the CNN link sits ${Math.round(geo.heroB - geo.linkB)}px above the hero's bottom`);
       } finally { await page.close(); }
     });
   }
 
   /* A phone gets a still frame: the window parks at 70%, a touch is a scroll,
      and the move/kernel controls are gone — but the filter chips still work. */
-  test('phone: a still frame at 70% whose filters still switch', async () => {
+  test('phone: a still frame whose filter still switches, and a drag does not move it', async () => {
     const page = await newPage(browser, server, { viewport: { width: 390, height: 844 }, hasTouch: true });
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
       await page.waitForTimeout(1900); // the intro sweep
-      assert.equal(await page.inputValue('#field-pos'), '700', 'the window should park at 70%');
-      assert.equal(await page.isVisible('#field-pos'), false, 'the range input should be hidden on a phone');
-      assert.equal(await page.isVisible('.field-kernel'), false, 'the kernel readout should be hidden on a phone');
 
       const before = await canvasHash(page);
       assert.ok(before.ink > 500, `the hero canvas is nearly blank (${before.ink} painted samples)`);
-      await page.tap('[data-filter="corners"]');
-      await page.waitForTimeout(150);
-      assert.notEqual((await canvasHash(page)).h, before.h, 'tapping a filter did not change the picture');
-
       const box = await page.locator('#field-canvas').boundingBox();
       await page.mouse.move(box.x + 10, box.y + box.height / 2);
       await page.mouse.down();
       await page.mouse.move(box.x + box.width - 10, box.y + box.height / 2, { steps: 4 });
       await page.mouse.up();
-      assert.equal(await page.inputValue('#field-pos'), '700', 'a drag moved the window on a phone');
+      assert.equal((await canvasHash(page)).h, before.h, 'a drag moved the window on a phone');
+
+      await page.selectOption('#field-filter', 'horizontal');
+      await page.waitForTimeout(150);
+      assert.notEqual((await canvasHash(page)).h, before.h, 'choosing a filter did not change the picture');
     } finally { await page.close(); }
   });
 
@@ -379,7 +384,8 @@ describe('hero: the receptive field', () => {
     try {
       await page.goto(server.base + '/index.html');
       assert.equal(await page.isVisible('#hero h1'), true, 'the name is hidden with JS off');
-      assert.equal(await page.isVisible('.field-controls'), false, 'filter buttons showed with nothing to drive them');
+      assert.equal(await page.isVisible('.field-controls'), false, 'the filter menu showed with nothing to drive it');
+      assert.equal(await page.isVisible('.field-lenet a'), true, 'the link to the network is a plain link and needs no JS');
     } finally { await ctx.close(); }
   });
 });

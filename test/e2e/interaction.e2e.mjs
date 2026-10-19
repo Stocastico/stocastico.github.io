@@ -547,8 +547,8 @@ describe('theme', () => {
 
 describe('lifecycle: the page survives Back', () => {
   /* The hero no longer animates on its own (it draws on demand), so "alive"
-     means: it still answers input. Pick whichever filter is not pressed and
-     require the canvas to change. A torn-down instance has lost its click
+     means: it still answers input. Switch the filter menu to another value
+     and require the canvas to change. A torn-down instance has lost its click
      listeners, and the canvas stays as it was. */
   const heroIsAnimating = (page) => page.evaluate(async () => {
     const c = document.getElementById('field-canvas');
@@ -561,9 +561,10 @@ describe('lifecycle: the page survives Back', () => {
       return h;
     };
     const before = hash();
-    const next = document.querySelector('[data-filter][aria-pressed="false"]');
-    if (!next) return 'no-button';
-    next.click();
+    const picker = document.getElementById('field-filter');
+    if (!picker) return 'no-picker';
+    picker.value = picker.value === 'vertical' ? 'horizontal' : 'vertical';
+    picker.dispatchEvent(new Event('change', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 300));
     return before !== hash();
   });

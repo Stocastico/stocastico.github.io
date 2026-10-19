@@ -5,9 +5,12 @@
    and a 5×5 window — one receptive field — sits over it. Every column the
    window has passed shows that filter's response instead of the ink: one
    accent where it is positive, the other where it is negative, nothing where
-   the filter has nothing to say. The visitor chooses the filter (a row of
-   real <button aria-pressed>) and moves the window (drag, or the range input
-   underneath, which is also the keyboard path).
+   the filter has nothing to say. The visitor chooses the filter from one
+   native <select> and moves the window by dragging. That is all the chrome
+   there is: the kernel readout, the per-filter captions and the range input
+   were cut (#188 review) — the hero is a picture you can tune, not an
+   explainer, and the MNIST page is where the explaining happens. Harris
+   corners went with them: on a condensed face it lit up as speckle.
 
    It replaced three renderers (cnn-hero.js, kernel-scan.js, the WebGL noise
    gradient) and their breakpoint swap. One scene now serves every viewport,
@@ -23,12 +26,11 @@
 
    · **The response is computed once per filter**, over the whole grid, and
      the window only decides how much of it is shown. A grid is ~150×40
-     cells, so even the Harris detector is a few hundred thousand operations:
-     well under a frame.
+     cells, so a 5×5 pass is ~150k multiply-adds: well under a frame.
 
    · **The learned filter is the real one.** Its kernels are conv1 of the
      LeNet-5 behind projects/mnist-lenet.html (data/hero-scan.js, int8), and
-     the module is imported only when that button is pressed.
+     the module is imported only when that option is chosen.
      test/receptive-field.test.mjs holds it to the committed model.
 
    The <h1> stays in the DOM as real text; the canvas is aria-hidden
@@ -65,35 +67,25 @@ export const FILTERS = [
       0, -1, -2, -1, 0,
       0, 0, -1, 0, 0,
     ],
-    caption: 'A Laplacian: it outlines every stroke, whatever its direction.',
   },
   {
     id: 'vertical',
     label: 'Vertical',
     kernel: SOBEL_X,
-    caption: 'Sobel along x: vertical strokes, one colour where the ink starts and the other where it ends.',
   },
   {
     id: 'horizontal',
     label: 'Horizontal',
     kernel: transpose(SOBEL_X),
-    caption: 'Sobel along y: the same question asked of horizontal strokes.',
   },
   {
     id: 'diagonal',
     label: 'Diagonal',
     kernel: Array.from({ length: K * K }, (_, i) => (i % K) - Math.floor(i / K)),
-    caption: 'A gradient along the diagonal: strokes leaning one way answer positive, the other way negative.',
-  },
-  {
-    id: 'corners',
-    label: 'Corners',
-    caption: 'Harris: not one kernel but a comparison of gradients inside the window. Positive at corners, negative along straight edges.',
   },
   {
     id: 'learned',
     label: 'Learned',
-    caption: 'A filter nobody designed: conv1 of my LeNet-5, learned from MNIST digits.',
   },
 ];
 
@@ -121,39 +113,6 @@ export function convolve(grid, w, h, kernel) {
   return out;
 }
 
-/* Harris corner response, with the structure tensor summed over the same
-   5×5 window the other filters use. det − k·trace²: positive where the
-   gradient turns (a corner), negative where it runs one way (an edge),
-   zero where there is no gradient at all. */
-export function harris(grid, w, h, k = 0.05) {
-  const sx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
-  const g3 = (x, y, kern) => {
-    let a = 0;
-    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
-      const xx = x + i, yy = y + j;
-      if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
-      a += kern[(j + 1) * 3 + (i + 1)] * grid[yy * w + xx];
-    }
-    return a;
-  };
-  const sy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
-  const xx = new Float32Array(w * h), yy = new Float32Array(w * h), xy = new Float32Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const gx = g3(x, y, sx), gy = g3(x, y, sy), i = y * w + x;
-    xx[i] = gx * gx; yy[i] = gy * gy; xy[i] = gx * gy;
-  }
-  const box = new Array(K * K).fill(1);
-  const a = convolve(xx, w, h, box), b = convolve(yy, w, h, box), c = convolve(xy, w, h, box);
-  const out = new Float32Array(w * h);
-  for (let i = 0; i < out.length; i++) {
-    const tr = a[i] + b[i];
-    const r = a[i] * b[i] - c[i] * c[i] - k * tr * tr;
-    /* Float noise on a flat patch is not a feature. */
-    out[i] = Math.abs(r) < 1e-9 ? 0 : r;
-  }
-  return out;
-}
-
 /* Scale into [-1, 1] by the largest magnitude, sign preserved. */
 export function normalise(arr) {
   let m = 0;
@@ -167,7 +126,6 @@ export function normalise(arr) {
 /* The normalised response of one filter. `learned` is the kernel to use
    when the filter is the learned one (it lives in a lazily imported module). */
 export function respond(grid, w, h, filter, learned) {
-  if (filter.id === 'corners') return normalise(harris(grid, w, h));
   const kernel = filter.id === 'learned' ? learned : filter.kernel;
   return normalise(convolve(grid, w, h, kernel));
 }
@@ -231,9 +189,8 @@ const INTRO_MS = 1600;
 /* On a phone the hero is a picture, not an instrument. The window settles at
    70% of the name — the filter's response to the left of it, the raw ink to
    the right — and stays there: no drag (a finger on the hero is a scroll), no
-   range input, no kernel readout (css/styles.css hides both). The filter chips
-   still work, because a tap is the one gesture a phone does well. Matches the
-   CSS breakpoint that hides the readout. */
+   and the filter menu still works. Matches the CSS breakpoint below which
+   the canvas gives up its drag cursor. */
 const PHONE_QUERY = '(max-width: 760px)';
 const PHONE_AT = 0.7;
 const onPhone = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -241,7 +198,8 @@ const onPhone = () => typeof window !== 'undefined' && typeof window.matchMedia 
 
 export class ReceptiveField {
   /* root: the hero section. It must contain #field-canvas, the h1 the name is
-     read from, and the .field-controls block (buttons, range, kernel). */
+     read from, and the .field-controls block holding the #field-filter
+     <select>. */
   constructor(root, onReady) {
     this.root = root;
     this.canvas = root.querySelector('#field-canvas');
@@ -254,11 +212,7 @@ export class ReceptiveField {
     this._theme = getTheme();
     this._onReady = typeof onReady === 'function' ? onReady : null;
     this._controls = root.querySelector('.field-controls');
-    this._range = root.querySelector('#field-pos');
-    this._caption = root.querySelector('.field-caption');
-    this._kernelEl = root.querySelector('.field-kernel');
-    this._nextBtn = root.querySelector('.field-next');
-    this._buttons = Array.from(root.querySelectorAll('[data-filter]'));
+    this._picker = root.querySelector('#field-filter');
     this._words = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
 
     this.filter = FILTERS[0];
@@ -272,9 +226,7 @@ export class ReceptiveField {
     this._select(this.filter.id);
     if (this._controls) this._controls.hidden = false;
 
-    for (const b of this._buttons) this._on(b, 'click', () => this._select(b.dataset.filter));
-    if (this._nextBtn) this._on(this._nextBtn, 'click', () => this._nextLearned());
-    if (this._range) this._on(this._range, 'input', () => { this._stopIntro(); this.t = this._range.value / 1000; this._draw(); });
+    if (this._picker) this._on(this._picker, 'change', (e) => this._select(e.target.value));
 
     /* Horizontal drags steer the window; vertical ones stay a page scroll
        (touch-action: pan-y on the canvas), so the hero never steals the
@@ -389,44 +341,9 @@ export class ReceptiveField {
       });
     }
     this.filter = f;
-    for (const b of this._buttons) b.setAttribute('aria-pressed', String(b.dataset.filter === id));
-    if (this._nextBtn) this._nextBtn.hidden = id !== 'learned';
+    if (this._picker && this._picker.value !== id) this._picker.value = id;
     this._compute();
-    this._renderKernel();
     this._draw();
-  }
-
-  _nextLearned() {
-    if (!this._learned) return;
-    this._learnedIdx = (this._learnedIdx + 1) % this._learned.length;
-    this._compute();
-    this._renderKernel();
-    this._draw();
-  }
-
-  _renderKernel() {
-    const f = this.filter;
-    if (this._caption) {
-      this._caption.textContent = f.id === 'learned'
-        ? `${f.caption} Filter ${this._learnedIdx + 1} of ${this._learned.length}.`
-        : f.caption;
-    }
-    if (!this._kernelEl) return;
-    const k = f.id === 'learned' ? this._learned[this._learnedIdx] : f.kernel;
-    if (!k) { this._kernelEl.hidden = true; return; }
-    this._kernelEl.hidden = false;
-    const max = Math.max(...Array.from(k, Math.abs)) || 1;
-    const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/^(-?)0\./, '$1.'));
-    const { accent, accent2 } = this._theme;
-    const cells = Array.from(k, (v) => {
-      /* Capped well below opaque: the numbers sit on the tint in the
-         page's text colour, and a full-strength accent behind them fails
-         4.5:1 (axe caught the centre weight of the Laplacian). */
-      const a = (Math.abs(v) / max) * 0.38;
-      const bg = v > 0 ? rgba(accent, a) : v < 0 ? rgba(accent2, a) : 'transparent';
-      return `<span style="background:${bg}">${fmt(v)}</span>`;
-    });
-    this._kernelEl.innerHTML = cells.join('');
   }
 
   _pointer(e) {
@@ -492,7 +409,6 @@ export class ReceptiveField {
     const half = (K - 1) / 2;
     ctx.strokeRect((sx - half - 0.5) * cell - gap / 2, (this.row - half) * cell - gap / 2, K * cell, K * cell);
 
-    if (this._range) this._range.value = String(Math.round(this.t * 1000));
     if (this._onReady) { const cb = this._onReady; this._onReady = null; cb(); }
   }
 

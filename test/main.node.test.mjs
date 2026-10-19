@@ -1266,14 +1266,13 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   const canvas = { width: 0, height: 0, clientWidth: 1200, style: {},
     getContext: () => ctx, setPointerCapture() {},
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1200, height: 500 }), ...track('canvas') };
-  const buttons = FILTERS.map((f) => el({ dataset: { filter: f.id } }));
+  const picker = el({ value: 'edges', ...track('picker') });
   const parts = {
     '#field-canvas': canvas, h1: el({ textContent: 'Stefano Masneri' }),
-    '.field-controls': el({ hidden: true }), '#field-pos': el({ value: '0' }),
-    '.field-caption': el(), '.field-kernel': el(), '.field-next': el({ hidden: true }),
+    '.field-controls': el({ hidden: true }), '#field-filter': picker,
   };
   const root = { clientWidth: 1200, querySelector: (s) => parts[s] || null,
-    querySelectorAll: (s) => (s === '[data-filter]' ? buttons : []), classList: { add() {} } };
+    querySelectorAll: () => [], classList: { add() {} } };
 
   global.document = { createElement: () => (created++ === 0 ? Object.assign(offscreen(), { getContext: () => probe() }) : offscreen()), ...track('document') };
   global.window = { devicePixelRatio: 2,
@@ -1285,7 +1284,7 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   const observers = [];
   global.ResizeObserver = class { constructor() { observers.push(this); } observe() {} disconnect() { this.disconnected = true; } };
   try {
-    return fn({ root, parts, buttons, canvas, listeners, observers, drawn });
+    return fn({ root, parts, picker, canvas, listeners, observers, drawn });
   } finally {
     for (const [k, v] of Object.entries(prev)) {
       if (v === undefined) delete global[k]; else global[k] = v;
@@ -1302,21 +1301,23 @@ test('ReceptiveField draws the name, reveals its controls and reports its first 
     assert.ok(drawn.fillRect >= rf.cols * rf.rows, 'every cell is painted');
     assert.ok(drawn.strokeRect >= 1, 'the window is drawn');
     assert.equal(ready, 1, 'onReady fires once, after the first frame');
-    assert.ok(parts['.field-caption'].textContent.length > 10, 'the caption names the filter');
-    assert.equal(parts['.field-kernel'].innerHTML.split('<span').length - 1, 25, 'the kernel shows 25 weights');
+    assert.equal(rf.filter.id, 'edges');
     rf.destroy();
   });
 });
 
-test('ReceptiveField: choosing a filter updates aria-pressed and the caption', () => {
-  fieldEnv(({ root, parts, buttons }) => {
+test('ReceptiveField: the dropdown chooses the filter', () => {
+  /* One native <select>, nothing else: no caption, no kernel readout, no
+     range input. The hero is a picture you can tune, not an explainer. */
+  fieldEnv(({ root, picker, listeners, drawn }) => {
     const rf = new ReceptiveField(root);
-    const corners = buttons.find((b) => b.dataset.filter === 'corners');
-    rf._select('corners');
-    assert.equal(corners.attrs['aria-pressed'], 'true');
-    assert.ok(buttons.filter((b) => b !== corners).every((b) => b.attrs['aria-pressed'] === 'false'));
-    assert.match(parts['.field-caption'].textContent, /Harris/);
-    assert.equal(parts['.field-kernel'].hidden, true, 'Harris is not one kernel, so no kernel is shown');
+    const change = listeners.find((l) => l.on === 'picker' && l.type === 'change');
+    assert.ok(change, 'the dropdown is wired');
+    const before = drawn.fillRect;
+    picker.value = 'vertical';
+    change.fn({ target: picker });
+    assert.equal(rf.filter.id, 'vertical');
+    assert.ok(drawn.fillRect > before, 'choosing a filter redraws');
     rf.destroy();
   });
 });
@@ -1326,7 +1327,6 @@ test('ReceptiveField: under reduced motion there is no intro sweep, but the wind
     const rf = new ReceptiveField(root);
     assert.equal(rf._frame, null, 'no animation frame requested');
     assert.ok(rf.t > 0.5, 'the window starts part-way across, so the effect is visible at once');
-    assert.equal(parts['#field-pos'].value, String(Math.round(rf.t * 1000)), 'the range input mirrors the window');
     rf.destroy();
   }, { reduced: true });
 });
@@ -1342,7 +1342,7 @@ test('ReceptiveField on a phone: a still frame at 70%, and a drag does not move 
     if (down) down.fn({ pointerId: 1, clientX: 50, clientY: 10 });
     assert.equal(rf.t, 0.7, 'a touch on the hero moved the window');
     rf._select('vertical');
-    assert.match(root.querySelector('.field-caption').textContent, /Sobel/, 'filters still switch');
+    assert.equal(rf.filter.id, 'vertical', 'filters still switch');
     rf.destroy();
   }, { reduced: true, narrow: true });
 });

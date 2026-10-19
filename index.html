@@ -204,30 +204,24 @@
         </div>
       </div>
 
-      <!-- Revealed by js/receptive-field.js; without JavaScript there is no
-           filter to choose, so the controls stay hidden. -->
-      <div class="field-controls" hidden>
-        <div class="field-filters" role="group" aria-label="Filter">
-          <button type="button" data-filter="edges" aria-pressed="true">Edges</button>
-          <button type="button" data-filter="vertical" aria-pressed="false">Vertical</button>
-          <button type="button" data-filter="horizontal" aria-pressed="false">Horizontal</button>
-          <button type="button" data-filter="diagonal" aria-pressed="false">Diagonal</button>
-          <button type="button" data-filter="corners" aria-pressed="false">Corners</button>
-          <button type="button" data-filter="learned" aria-pressed="false">Learned</button>
+      <div class="hero-aside">
+        <!-- Revealed by js/receptive-field.js; without JavaScript there is no
+             filter to choose, so the menu stays hidden. The link below is a
+             plain link and shows either way. -->
+        <div class="field-controls" hidden>
+          <label class="field-picker">
+            <span>Filter</span>
+            <select id="field-filter">
+              <option value="edges" selected>Edges</option>
+              <option value="vertical">Vertical</option>
+              <option value="horizontal">Horizontal</option>
+              <option value="diagonal">Diagonal</option>
+              <option value="learned">Learned</option>
+            </select>
+          </label>
         </div>
-        <div class="field-readout">
-          <div class="field-kernel" aria-hidden="true"></div>
-          <div>
-            <p class="field-caption" aria-live="polite"></p>
-            <button type="button" class="field-next" hidden>Next learned filter</button>
-          </div>
-        </div>
-        <label class="field-pos">
-          <span>Move the window</span>
-          <input type="range" id="field-pos" min="0" max="1000" step="1" value="620">
-        </label>
         <p class="field-lenet">
-          <a href="projects/mnist-lenet.html">Draw a digit for the network those filters came from</a>
+          <a href="projects/mnist-lenet.html">Draw a digit for the network those filters came from <span aria-hidden="true">&rarr;</span></a>
         </p>
       </div>
     </div>

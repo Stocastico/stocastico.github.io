@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  FILTERS, K, convolve, harris, normalise, respond, decodeLearned, fitFont, revealedColumns, stretchKeyword,
+  FILTERS, K, convolve, normalise, respond, decodeLearned, fitFont, revealedColumns, stretchKeyword,
 } from '../js/receptive-field.js';
 import { HERO_SCAN } from '../data/hero-scan.js';
 import { deserializeModel } from '../scripts/lib/lenet.mjs';
@@ -40,7 +40,8 @@ test('FILTERS: unique ids, 5×5 kernels, a label on every one', () => {
     assert.ok(f.label && f.label.length > 0, `${f.id} has no label`);
     if (f.kernel) assert.equal(f.kernel.length, K * K, `${f.id} is not 5×5`);
   }
-  assert.ok(FILTERS.some((f) => f.id === 'corners'), 'corner detector missing');
+  /* Corners (Harris) was dropped: on a condensed face it lit up as noise. */
+  assert.ok(!FILTERS.some((f) => f.id === 'corners'), 'the corner detector is back');
   assert.ok(FILTERS.some((f) => f.id === 'learned'), 'learned filter missing');
 });
 
@@ -88,22 +89,6 @@ test('horizontal edges: the transpose of vertical', () => {
   const v = FILTERS.find((f) => f.id === 'vertical').kernel;
   const hk = FILTERS.find((f) => f.id === 'horizontal').kernel;
   for (let y = 0; y < K; y++) for (let x = 0; x < K; x++) assert.equal(hk[y * K + x], v[x * K + y]);
-});
-
-test('harris: a corner scores positive, a straight edge negative, flat zero', () => {
-  const w = 30, h = 30;
-  /* A filled square: four corners, four edges, a flat interior. */
-  const g = grid(w, h, (x, y) => x >= 8 && x < 22 && y >= 8 && y < 22);
-  const r = harris(g, w, h);
-  let corner = -Infinity; for (const [x, y] of [[8, 8], [21, 8], [8, 21], [21, 21]]) corner = Math.max(corner, at(r, w, x, y));
-  assert.ok(corner > 0, `corner response ${corner}`);
-  assert.ok(at(r, w, 15, 8) < 0, `edge response ${at(r, w, 15, 8)}`);
-  assert.equal(at(r, w, 15, 15), 0);
-  assert.equal(at(r, w, 2, 2), 0);
-  /* The strongest response anywhere sits at a corner, not mid-edge. */
-  let best = 0, bx = 0, by = 0;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (at(r, w, x, y) > best) { best = at(r, w, x, y); bx = x; by = y; }
-  assert.ok((bx < 12 || bx > 18) && (by < 12 || by > 18), `peak at ${bx},${by}`);
 });
 
 test('normalise: maps into [-1, 1] with the largest magnitude at exactly 1', () => {
