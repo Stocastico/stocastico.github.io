@@ -43,6 +43,7 @@
     "generate-countries": "node scripts/generate-countries.js",
     "generate-world-map": "node scripts/generate-world-map.js",
     "generate-sea-chart": "node scripts/generate-sea-chart.mjs",
+    "generate-mnist-og": "node scripts/generate-mnist-og.mjs",
     "generate-unesco": "node scripts/generate-unesco.js",
     "generate-links": "node scripts/generate-links.js",
     "generate-cards": "node scripts/generate-cards.mjs",
