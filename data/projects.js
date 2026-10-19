@@ -7,6 +7,7 @@
      id:          'my-project',               // kebab-case, used as HTML anchor
      kind:        'work',                     // REQUIRED — 'work' | 'personal'
      title:       'My Project Title',         // short title (one line)
+     short:       'Project',                  // optional — the name on the homepage timeline
      year:        '2024',                     // project year (string)
      tags:        ['Computer Vision'],        // 1–2 labels from PROJECT_TAGS below
      bg:          'img/projects/my-bg.jpg',    // detail-page hero + og:image
@@ -148,6 +149,7 @@ export const PROJECTS = [
             id: "rag-document-qa",
             kind: "work",
             title: "RAG Document Assistant for Financial Services",
+            short: "RAG",
             year: "2023",
             tags: ["LLMs & MLOps"],
             bg: "img/projects/rag-query.svg",
@@ -158,6 +160,7 @@ export const PROJECTS = [
             id: "mlops-vertex-media",
             kind: "work",
             title: "MLOps Platform on GCP for a Spanish Media Group",
+            short: "MLOps",
             year: "2022 – 2023",
             tags: ["LLMs & MLOps"],
             bg: "img/projects/mlops-bg.webp",
@@ -178,6 +181,7 @@ export const PROJECTS = [
             id: "audience-engagement",
             kind: "work",
             title: "Multi-modal Audience Engagement Measurement System",
+            short: "Audience",
             year: "2020",
             tags: ["Computer Vision","Media & Live Events"],
             bg: "img/projects/audience-engagement-bg.webp",
@@ -188,6 +192,7 @@ export const PROJECTS = [
             id: "ufc-fighter-tracking",
             kind: "work",
             title: "UFC Fighter Tracking: Multi-Modal Sensing in the Octagon",
+            short: "UFC",
             year: "2017",
             tags: ["Computer Vision","Media & Live Events"],
             bg: "img/projects/ufc-octagon-bg.webp",

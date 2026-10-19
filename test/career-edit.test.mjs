@@ -94,3 +94,19 @@ test('careerEditLines: the edit carries its total row count, for the full-screen
   assert.ok(m, 'the .edit element has no --edit-rows');
   assert.equal(Number(m[1]), total);
 });
+
+test('careerEditLines: a `short` name is what the clip shows; the full name stays in its label', () => {
+  /* Clips are ~140px wide on the full-screen edit, so the long names ended
+     as "Multi-mo…". `short` (data/cv.yaml, data/projects.js) is the visible
+     text; the full name is still the tooltip and what a screen reader hears. */
+  const shorts = [...CV_CAREER, ...CV_EDUCATION, ...PROJECTS].filter((e) => e.short);
+  for (const want of ['AGT', 'UFC', 'MLOps', 'RAG', 'Audience', 'MSc in Telecommunications Eng.']) {
+    assert.ok(shorts.some((e) => e.short === want), `no entry is shortened to "${want}"`);
+  }
+  for (const e of shorts) {
+    const full = e.company || e.degree || e.title;
+    const m = html.match(new RegExp(`title="([^"]*)"><span class="edit-clip-title">${e.short.replace(/[.]/g, '\\.')}</span>`));
+    assert.ok(m, `the clip for ${full} does not show "${e.short}"`);
+    assert.ok(m[1].includes(full.replace(/&/g, '&amp;')), `the clip for "${e.short}" lost its full name`);
+  }
+});

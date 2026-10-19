@@ -49,6 +49,7 @@ export const CV_CAREER = [
     year:        '2017 – 2018',
     role:        'Senior Data Scientist',
     company:     'AGT International',
+    short:       'AGT',
     location:    'Darmstadt, DE',
     description: 'Product owner for the video analytics department. Built computer vision and deep learning algorithms for sports video — including instrumenting a UFC octagon with multi-modal sensors to track fighters. Handled technology transfer, productisation and patenting of internal research software.',
     links:       [
@@ -106,6 +107,7 @@ export const CV_EDUCATION = [
   {
     year:        '2005 – 2008',
     degree:      'MSc in Telecommunications Engineering',
+    short:       'MSc in Telecommunications Eng.',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
   },

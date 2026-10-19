@@ -19,6 +19,7 @@
        - year: "2020 – present"
          role: My Role
          company: Acme Corp
+         short: Acme                  # optional — the name on the homepage timeline
          location: City, Country       # optional
          description: >               # optional — folded block scalar
            One or two sentences.      # or plain quoted string on one line
@@ -151,6 +152,7 @@ function validateCv(data) {
       expectString(e.year,    `${p}.year`);
       expectString(e.role,    `${p}.role`);
       expectString(e.company, `${p}.company`);
+      if (e.short !== undefined) expectString(e.short, `${p}.short`);
       if (e.tags !== undefined) {
         expect(Array.isArray(e.tags), `${p}.tags must be an array`);
       }
@@ -168,6 +170,7 @@ function validateCv(data) {
       expectString(e.year,        `${p}.year`);
       expectString(e.degree,      `${p}.degree`);
       expectString(e.institution, `${p}.institution`);
+      if (e.short !== undefined) expectString(e.short, `${p}.short`);
       expectLinks(e.links, p);
     });
   }
@@ -299,8 +302,8 @@ function generateCvJs(data) {
   const skills    = data.skills    || {};
   const places    = data.places    || [];
 
-  const careerKeys = ['year', 'role', 'company', 'location', 'description', 'links', 'tags'];
-  const eduKeys    = ['year', 'degree', 'institution', 'location', 'description', 'links', 'concurrent_with'];
+  const careerKeys = ['year', 'role', 'company', 'short', 'location', 'description', 'links', 'tags'];
+  const eduKeys    = ['year', 'degree', 'short', 'institution', 'location', 'description', 'links', 'concurrent_with'];
 
   const careerBlock = career.map(e => jsAlignedObject(e, careerKeys, 2)).join(',\n');
   const eduBlock    = education.map(e => jsAlignedObject(e, eduKeys,  2)).join(',\n');

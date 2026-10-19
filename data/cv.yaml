@@ -94,6 +94,7 @@ career:
   - year: "2017 – 2018"
     role: Senior Data Scientist
     company: AGT International
+    short: AGT
     location: "Darmstadt, DE"
     description: >
       Product owner for the video analytics department. Built computer vision
@@ -201,6 +202,7 @@ education:
 
   - year: "2005 – 2008"
     degree: "MSc in Telecommunications Engineering"
+    short: "MSc in Telecommunications Eng."
     institution: "Università degli Studi di Brescia"
     location: "Brescia, IT"
 

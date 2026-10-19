@@ -120,15 +120,15 @@ export function careerEditLines({ career, education, places, projects, publicati
   };
 
   const work = career.map((e) => withSpan(e.year, {
-    title: e.company, meta: e.role, label: `${e.role}, ${e.company}, ${e.year}`,
+    title: e.short || e.company, meta: e.role, label: `${e.role}, ${e.company}, ${e.year}`,
   })).filter(Boolean);
 
   const study = education.map((e) => withSpan(e.year, {
-    title: e.degree, meta: e.institution, label: `${e.degree}, ${e.institution}, ${e.year}`,
+    title: e.short || e.degree, meta: e.institution, label: `${e.degree}, ${e.institution}, ${e.year}`,
   })).filter(Boolean);
 
   const work_projects = projects.map((p) => withSpan(p.year, {
-    title: shortTitle(p.title), meta: '', label: `${p.title}, ${p.year}`,
+    title: p.short || shortTitle(p.title), meta: '', label: `${p.title}, ${p.year}`,
     href: rootUrl(p.url), personal: p.kind === 'personal',
   })).filter(Boolean);
 
