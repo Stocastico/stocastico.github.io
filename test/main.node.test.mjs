@@ -1589,12 +1589,13 @@ test('renderProjects never puts the project bg image on the card', () => {
       description: 'A project with a background image.',
       url: 'projects/with-bg.html',
     }]);
-    /* `bg` belongs to the project's detail page (hero + og:image), not to the
-       card: behind the body copy it was either illegible or distracting, and
-       it made the listing pages fetch imagery nobody could see. */
+    /* The card shows a small thumbnail made from `bg` at build time
+       (scripts/generate-thumbs.mjs) — never the full-size hero, and never as
+       a background behind the body copy, where it was illegible. */
     assert.doesNotMatch(grid.innerHTML, /--card-bg/);
     assert.doesNotMatch(grid.innerHTML, /project-card--has-bg/);
     assert.doesNotMatch(grid.innerHTML, /with-bg-hero\.jpg/);
+    assert.match(grid.innerHTML, /src="\/img\/thumbs\/with-bg\.webp"/);
     assert.doesNotMatch(grid.innerHTML, /project-card__overlay/);
     /* …but the card itself still renders. */
     assert.match(grid.innerHTML, /Project With BG/);

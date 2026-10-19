@@ -2492,67 +2492,135 @@ a.edit-clip-body:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-height: 260px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
   isolation: isolate;
-  transition: transform 0.25s var(--ease-spring), border-color 0.25s ease, background 0.25s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
+/* A bin does not lift or tilt its clips; it outlines the one under the
+   pointer. The frame brightens instead (below). */
 .project-card:hover {
-  transform: translateY(-5px);
   border-color: var(--accent);
   background: var(--bg-card-hov);
-  box-shadow: var(--elev-3);
 }
 
-/* Cards carry no background artwork: see projectCardHtml() in
-   js/render-cards.js. The project's image lives on its detail page, where it
-   gets the room to actually be seen. */
-.project-card__body {
-  padding: 1.2rem 1.4rem 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* ─── The frame (#192) ─────────────────────────────────────────
+   16:9, like a clip in an editor's bin: the picture, the year where the
+   clip's duration would sit, and a strip in the projects-lane colour of the
+   career timeline along the bottom. See projectCardHtml() in
+   js/render-cards.js for where the thumbnail comes from. */
+.project-card__thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--bg);
+  overflow: hidden;
+
+  & img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Dimmed at rest so a white diagram does not glare out of a dark page;
+       full strength under the pointer, like the selected clip in a bin. */
+    filter: brightness(0.82) saturate(0.85);
+    transition: filter 0.2s ease;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 4px;
+    background: var(--accent2);
+  }
 }
 
-/* The card's mono metadata line: year, plus the personal-project badge when
-   there is one. A row rather than two stacked spans so the badge reads as a
-   qualifier on the year, not as a second heading. */
+.project-card:hover .project-card__thumb img,
+.project-card:focus-visible .project-card__thumb img {
+  filter: none;
+}
+
+/* Personal projects: the strip is an outline, as a personal clip is on the
+   career timeline. */
+.project-card.is-personal .project-card__thumb::after {
+  height: 6px;
+  background: var(--bg);
+  border: 1px solid var(--accent2);
+  border-bottom: 0;
+}
+
+/* No picture: the test card. The SMPTE bars in the palette's broadcast order
+   (the same seven tokens as the strip across the top of every page), with the
+   reverse-order castellations underneath. Pure CSS, nothing to fetch. */
+.project-card__thumb--bars {
+  background:
+    linear-gradient(90deg,
+      var(--pin-worktrip) 0 14.286%, var(--bg) 14.286% 28.571%,
+      var(--pin-holiday) 28.571% 42.857%, var(--bg) 42.857% 57.143%,
+      var(--accent2) 57.143% 71.429%, var(--bg) 71.429% 85.714%,
+      var(--text) 85.714% 100%) bottom / 100% 22% no-repeat,
+    linear-gradient(90deg,
+      var(--text) 0 14.286%, var(--accent) 14.286% 28.571%,
+      var(--accent2) 28.571% 42.857%, var(--pin-lived) 42.857% 57.143%,
+      var(--pin-holiday) 57.143% 71.429%, var(--pin-current) 71.429% 85.714%,
+      var(--pin-worktrip) 85.714% 100%);
+  filter: brightness(0.82) saturate(0.85);
+  transition: filter 0.2s ease;
+}
+
+.project-card:hover .project-card__thumb--bars,
+.project-card:focus-visible .project-card__thumb--bars {
+  filter: none;
+}
+
+/* Year bottom-right, where a bin prints a clip's duration; the personal badge
+   beside it. Both sit on a solid chip, never straight on the picture, so
+   their contrast does not depend on the image. */
 .project-card__meta {
+  position: absolute;
+  right: 0.5rem;
+  bottom: calc(0.5rem + 4px);
+  z-index: 1;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.35rem;
 }
 
 .project-card__year {
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+  background: var(--bg);
+  white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--accent-text);
   letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
 }
 
 /* Deliberately NOT accent-tinted like .project-tag: the tags say what a
-   project is about, and this says who it was for. Giving it the accent fill
-   would put it in the tag row's visual family and it would be read as another
-   topic. Outlined and muted instead — present, subordinate, unmistakably not
-   a tag. */
+   project is about, and this says who it was for. */
 .project-card__kind {
-  font-family: var(--font-ui);
-  font-size: 0.62rem;
-  font-weight: 600;
-  padding: 0.15em 0.55em;
-  border: 1px solid var(--border);
+  padding: 0.2em 0.5em;
   border-radius: 3px;
-  color: var(--text-muted);
+  background: var(--bg);
   white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.project-card__body {
+  padding: 1rem 1.2rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .project-card__title {
@@ -2738,14 +2806,11 @@ a.edit-clip-body:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-card {
+  .project-card,
+  .project-card__thumb img,
+  .project-card__thumb--bars {
     transition: none;
   }
-
-  .project-card:hover {
-    transform: none;
-  }
-
 }
 
 /* ─── 14. Contact Section ───────────────────────────────── */

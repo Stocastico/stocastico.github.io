@@ -1,7 +1,7 @@
 {
   "name": "stocastico-github-io",
   "version": "1.0.0",
-  "description": "Personal website of Stefano Masneri \u2014 AI Engineer",
+  "description": "Personal website of Stefano Masneri — AI Engineer",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -80,7 +80,9 @@
     "test:e2e:interaction": "npm run build && node --test test/e2e/interaction.e2e.mjs",
     "test:e2e:mnist": "npm run build && node --test test/e2e/mnist.e2e.mjs",
     "test:e2e:a11y": "npm run build && node --test test/e2e/a11y.e2e.mjs",
-    "test:e2e:budget": "npm run build && node --test test/e2e/budget.e2e.mjs"
+    "test:e2e:budget": "npm run build && node --test test/e2e/budget.e2e.mjs",
+    "generate-thumbs": "node scripts/generate-thumbs.mjs",
+    "test:thumbs": "node --test test/project-thumbs.test.mjs"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

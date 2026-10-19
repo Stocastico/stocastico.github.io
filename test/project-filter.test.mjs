@@ -134,7 +134,7 @@ test('project-filter: projects.html ships the chips server-rendered', () => {
 });
 
 test('project-filter: every card in projects.html carries its facets in data-tags', () => {
-  const cards = [...projectsHtml.matchAll(/<a [^>]*class="project-card"[^>]*>/g)]
+  const cards = [...projectsHtml.matchAll(/<a [^>]*class="project-card(?: is-personal)?"[^>]*>/g)]
     .map(m => m[0]);
   assert.equal(cards.length, PROJECTS.length,
     `expected ${PROJECTS.length} cards in projects.html, found ${cards.length}`);

@@ -184,7 +184,7 @@ export function initCardTilt() {
 
   const teardowns = [];
 
-  Array.from(document.querySelectorAll('.research-card, .project-card, .contact-card, .pub-item'))
+  Array.from(document.querySelectorAll('.research-card, .contact-card, .pub-item'))
     .forEach((card) => {
       let targetRX = 0, targetRY = 0, targetZ = 0;
       let currentRX = 0, currentRY = 0, currentZ = 0;
