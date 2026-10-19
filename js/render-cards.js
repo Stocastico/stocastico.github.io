@@ -59,8 +59,10 @@ export function assertProjectKinds(projects) {
    was illegible: faint enough not to fight the text meant faint enough to be
    invisible. A frame above the text has neither problem.)
 
-   The URL is root-absolute so copyReferencedImages() in vite.config.js ships
-   it: that plugin copies what the built HTML names with an /img/ URL. A
+   The files live in public/img/thumbs/, which Vite copies verbatim, so the
+   URL below is served exactly as written — by the static HTML and by the
+   homepage's client-side reshuffle alike. (Under img/ the build hashed the
+   srcs in the HTML but could not see the same URLs built in JS.) A
    project without `bg` gets the colour bars instead — the test card a bin
    shows for a clip with no picture — drawn by CSS from palette tokens. */
 export const THUMB_W = 640;
@@ -99,9 +101,13 @@ export function projectCardHtml(project, i = 0, { level = 3 } = {}) {
   const src = thumbUrl(project);
   /* alt="" — the title directly below says what the picture is of, so a
      description would be heard twice. */
+  /* With no picture, the bars carry a slate with the clip's file name — what a
+     bin shows for media it cannot preview, and what keeps two bg-less cards
+     side by side from being two identical frames. aria-hidden: it is the id,
+     and the title below already says it properly. */
   const picture = src
     ? '<img src="' + escapeHtml(src) + '" width="' + THUMB_W + '" height="' + THUMB_H + '" loading="lazy" decoding="async" alt="">'
-    : '';
+    : '<span class="project-card__slate" aria-hidden="true">' + escapeHtml(project.id || '') + '</span>';
   const thumbHtml = '<div class="project-card__thumb' + (src ? '' : ' project-card__thumb--bars') + '">' +
       picture +
       '<div class="project-card__meta">' +

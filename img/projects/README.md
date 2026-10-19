@@ -2,7 +2,7 @@ Source images for the project detail pages.
 
 Not thumbnails, and no fixed aspect ratio. The 16:9 frames on the project
 cards are made from the `bg` images below by `npm run generate-thumbs` and live
-in `img/thumbs/` (the reasoning is in `js/render-cards.js`). What is in here is:
+in `public/img/thumbs/` (the reasoning is in `js/render-cards.js`). What is in here is:
 
 * **Hero banners** — the `bg` field of an entry in `data/projects.js`, painted
   full-bleed behind a scrim by `.project-hero`. Wide, and large enough not to

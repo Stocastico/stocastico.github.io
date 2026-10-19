@@ -1120,7 +1120,8 @@ body::before {
 }
 
 /* The paragraph under a section title. Five classes across the site play this
-   exact role — .section-subtitle, .publications-intro, .links-intro,
+   exact role — .section-subtitle, .publications-intro (gone since the
+   homepage section opened on a title card), .links-intro,
    .travel-intro and .globe-intro — because each section grew its own as it was
    written, and they had drifted to three different sizes: 16.8px here and on
    .contact-lead, 15px for the three that set colour and max-width but no
@@ -1916,12 +1917,6 @@ body::before {
 }
 
 /* ─── 11. Publications Section ──────────────────────────── */
-.publications-intro {
-  color: var(--text-muted);
-  margin-bottom: 2rem;
-  max-width: 60ch;
-}
-
 .publications-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2557,7 +2552,10 @@ a.edit-clip-body:focus-visible {
 /* No picture: the test card. The SMPTE bars in the palette's broadcast order
    (the same seven tokens as the strip across the top of every page), with the
    reverse-order castellations underneath. Pure CSS, nothing to fetch. */
-.project-card__thumb--bars {
+.project-card__thumb--bars::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   background:
     linear-gradient(90deg,
       var(--pin-worktrip) 0 14.286%, var(--bg) 14.286% 28.571%,
@@ -2573,8 +2571,21 @@ a.edit-clip-body:focus-visible {
   transition: filter 0.2s ease;
 }
 
-.project-card:hover .project-card__thumb--bars,
-.project-card:focus-visible .project-card__thumb--bars {
+.project-card__slate {
+  position: absolute;
+  left: 50%;
+  top: 39%;
+  translate: -50% -50%;
+  padding: 0.35em 0.8em;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.project-card:hover .project-card__thumb--bars::before,
+.project-card:focus-visible .project-card__thumb--bars::before {
   filter: none;
 }
 
@@ -2808,7 +2819,7 @@ a.edit-clip-body:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .project-card,
   .project-card__thumb img,
-  .project-card__thumb--bars {
+  .project-card__thumb--bars::before {
     transition: none;
   }
 }

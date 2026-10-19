@@ -58,13 +58,13 @@ Edit the source on the left, run the command on the right. The drift tests will 
 | To change | Edit | Then run |
 |---|---|---|
 | Career, education, skills, places lived | `data/cv.yaml` | `generate-cv`, then `generate-cards` |
-| Projects | `data/projects.js` | `generate-cards`, `generate-llms`, `generate-feed` |
+| Projects | `data/projects.js` | `generate-thumbs` (if a `bg` changed), `generate-cards`, `generate-llms`, `generate-feed` |
 | Publications | `data/publications.js` | `generate-cards` |
 | Globe pins and trips | `data/locations.yaml` | `generate-locations` |
 | Homepage world map | `data/countries.yaml` | `generate-countries`, then `generate-world-map` |
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
-| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons` |
+| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons`, `generate-thumbs` |
 | Contact address | `js/contact.js` | `generate-cards` |
 | A new project page | a Markdown file | `npm run new-project -- file.md` |
 | Adding any HTML page | — | `generate-analytics`, `generate-speculation-rules`, then `generate-csp-meta` **last** |
@@ -90,7 +90,7 @@ which is the authoritative reference for flags — this table is only a map.
 | Group | Scripts |
 |---|---|
 | Build | `dev`, `build`, `preview` |
-| Content | `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
+| Content | `generate-thumbs`, `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
 | Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og` |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
 | ML pipeline | `train-cnn`, `generate-lenet-weights`, `generate-hero-scan` |

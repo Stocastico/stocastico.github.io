@@ -2,8 +2,8 @@
 /* ============================================================
    generate-thumbs.mjs
    --------------------------------------------------------------
-   data/projects.js (each entry's `bg`)  ->  img/thumbs/<id>.webp
-                                          + img/thumbs/manifest.json
+   data/projects.js (each entry's `bg`)  ->  public/img/thumbs/<id>.webp
+                                          + data/thumbs-manifest.json (drift guard, not deployed)
 
    The media-bin frames on the project cards (#192 — see the note above
    THUMB_W in js/render-cards.js). One 640×360 WebP per project that has a
@@ -38,7 +38,11 @@ import { THEME } from '../js/theme.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-export const MANIFEST = 'img/thumbs/manifest.json';
+/* In public/, not img/: Vite copies public/ verbatim, so the file is served at
+   exactly the URL the card names. Under img/ the build hashed the <img> srcs
+   in the HTML but not the identical URLs js/main.js builds when it reshuffles
+   the homepage cards, so the client-rendered frames pointed at nothing. */
+export const MANIFEST = 'data/thumbs-manifest.json';
 const QUALITY = 72;
 /* Bump when the recipe changes in a way the inputs below do not capture. */
 const RECIPE = 1;
@@ -49,7 +53,7 @@ export function thumbJobs(projects) {
     const stencil = p.bg.endsWith('.svg');
     const recipe = JSON.stringify({ RECIPE, THUMB_W, THUMB_H, QUALITY, ...(stencil ? { bg: THEME.bg, accent: THEME.accent } : {}) });
     const hash = crypto.createHash('sha256').update(recipe).update(fs.readFileSync(source)).digest('hex').slice(0, 16);
-    return { id: p.id, source, stencil, out: path.join(ROOT, thumbUrl(p).slice(1)), hash };
+    return { id: p.id, source, stencil, out: path.join(ROOT, 'public', thumbUrl(p).slice(1)), hash };
   });
 }
 
@@ -89,13 +93,13 @@ async function main() {
   const dry = args.includes('--dry-run');
   const { default: sharp } = await import('sharp');
   const jobs = thumbJobs(PROJECTS);
-  const dir = path.join(ROOT, 'img/thumbs');
+  const dir = path.join(ROOT, 'public/img/thumbs');
   if (!dry) fs.mkdirSync(dir, { recursive: true });
 
   const keep = new Set(jobs.map((j) => path.basename(j.out)));
   for (const f of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
     if (f.endsWith('.webp') && !keep.has(f)) {
-      console.log(`remove  img/thumbs/${f}`);
+      console.log(`remove  public/img/thumbs/${f}`);
       if (!dry) fs.unlinkSync(path.join(dir, f));
     }
   }

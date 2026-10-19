@@ -25,7 +25,7 @@ import { projectCardHtml, THUMB_W, THUMB_H, thumbUrl } from '../js/render-cards.
 import { thumbJobs, MANIFEST } from '../scripts/generate-thumbs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const THUMBS = path.join(ROOT, 'img/thumbs');
+const THUMBS = path.join(ROOT, 'public/img/thumbs');
 
 test('thumbs: the frame is 16:9', () => {
   assert.equal(THUMB_W * 9, THUMB_H * 16);
@@ -35,7 +35,7 @@ test('thumbs: every project with a bg has a thumbnail of the promised size, and 
   const withBg = PROJECTS.filter((p) => p.bg);
   assert.ok(withBg.length >= 10, `only ${withBg.length} projects carry a bg`);
   for (const p of withBg) {
-    const file = path.join(ROOT, thumbUrl(p).slice(1));
+    const file = path.join(ROOT, 'public', thumbUrl(p).slice(1));
     assert.ok(fs.existsSync(file), `missing ${path.relative(ROOT, file)} — run \`npm run generate-thumbs\``);
     const meta = await sharp(file).metadata();
     assert.equal(meta.format, 'webp');
@@ -65,7 +65,7 @@ test('card: a project with a bg opens on its thumbnail', () => {
   assert.match(attrs, new RegExp(`width="${THUMB_W}" height="${THUMB_H}"`), 'reserve the box: width + height');
   assert.match(attrs, /loading="lazy"/);
   assert.match(attrs, /alt=""/, 'decorative: the title right below says what it is');
-  assert.ok(thumbUrl(p).startsWith('/img/'), 'root-absolute, so copyReferencedImages() ships it');
+  assert.ok(thumbUrl(p).startsWith('/img/thumbs/'), 'root-absolute, served from public/ as named');
   assert.doesNotMatch(html, new RegExp(p.bg.replace(/[.]/g, '\\.')), 'never the full-size hero');
 });
 
@@ -75,6 +75,7 @@ test('card: a project without a bg gets the colour bars, not an empty frame', ()
   const html = projectCardHtml(p);
   assert.match(html, /<div class="project-card__thumb project-card__thumb--bars">/);
   assert.doesNotMatch(html, /<img /);
+  assert.match(html, new RegExp(`<span class="project-card__slate" aria-hidden="true">${p.id}</span>`), "the slate names the clip");
 });
 
 test('card: the year sits in the frame where a clip shows its duration, still inside the link text', () => {

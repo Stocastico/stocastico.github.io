@@ -501,3 +501,70 @@ describe('career timeline: pinned horizontal scrub', () => {
     } finally { await page.close(); }
   });
 });
+
+/* ─── Projects as a media bin (#192) ────────────────────────────────────
+   Every card opens on a 16:9 frame. The thumbnails are served from public/ at
+   the URL the card names — a missing one is a broken-image icon on the
+   portfolio page that no static test can see. The homepage is checked after
+   the client-side reshuffle too: it builds the same URLs in JS, which is what
+   broke when the files sat under img/ and the build hashed only the HTML. */
+describe('projects: the media bin', () => {
+  test('every frame is 16:9 and painted: a loaded thumbnail or the colour bars', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/projects.html', { waitUntil: 'networkidle' });
+      await page.$$eval('.project-card__thumb img', (imgs) => imgs.forEach((i) => { i.loading = 'eager'; }));
+      await page.waitForFunction(() => [...document.querySelectorAll('.project-card__thumb img')].every((i) => i.complete));
+      const frames = await page.$$eval('#projects-grid .project-card__thumb', (els) => els.map((el) => {
+        const r = el.getBoundingClientRect();
+        const img = el.querySelector('img');
+        return {
+          ratio: r.width / r.height,
+          img: img ? img.naturalWidth : null,
+          bars: getComputedStyle(el, '::before').backgroundImage.includes('gradient'),
+        };
+      }));
+      assert.ok(frames.length >= 15, `only ${frames.length} frames`);
+      for (const [i, f] of frames.entries()) {
+        assert.ok(Math.abs(f.ratio - 16 / 9) < 0.02, `frame ${i} is ${f.ratio.toFixed(3)}:1`);
+        assert.ok(f.img === null ? f.bars : f.img > 0, `frame ${i} painted nothing (img ${f.img}, bars ${f.bars})`);
+      }
+      assert.ok(frames.some((f) => f.img === null), 'expected at least one colour-bars frame');
+    } finally { await page.close(); }
+  });
+
+  test('homepage: the reshuffled cards load their thumbnails as well', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.$$eval('#projects-grid img', (imgs) => imgs.forEach((i) => { i.loading = 'eager'; }));
+      await page.waitForFunction(() => [...document.querySelectorAll('#projects-grid img')].every((i) => i.complete));
+      const widths = await page.$$eval('#projects-grid img', (imgs) => imgs.map((i) => [i.getAttribute('src'), i.naturalWidth]));
+      assert.equal(widths.length, 3);
+      for (const [src, w] of widths) assert.ok(w > 0, `${src} did not load`);
+    } finally { await page.close(); }
+  });
+});
+
+describe('title cards', () => {
+  test('desktop: Career, Projects and Publications each open on a screen of their own', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const vh = await page.evaluate(() => innerHeight);
+      for (const id of ['career', 'projects', 'publications']) {
+        const h = await page.$eval(`#${id} .title-card`, (el) => el.getBoundingClientRect().height);
+        assert.ok(h >= 0.7 * vh, `#${id}'s title card is ${Math.round(h)}px of a ${vh}px screen`);
+      }
+    } finally { await page.close(); }
+  });
+
+  test('phone: no title card takes a screen', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 390, height: 844 } });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const hs = await page.$$eval('.title-card', (els) => els.map((el) => el.getBoundingClientRect().height));
+      for (const h of hs) assert.ok(h < 0.6 * 844, `a ${Math.round(h)}px title card on a phone`);
+    } finally { await page.close(); }
+  });
+});
