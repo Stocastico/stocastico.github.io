@@ -576,7 +576,7 @@ describe('slides', () => {
     return m === 'none' ? 1 : parseFloat(m);
   });
 
-  for (const viewport of [VIEWPORTS.desktop, { width: 1280, height: 800 }, { width: 1100, height: 760 }]) {
+  for (const viewport of [{ width: 1920, height: 1080 }, VIEWPORTS.desktop, { width: 1440, height: 720 }, { width: 1280, height: 640 }, { width: 1100, height: 640 }]) {
     test(`desktop ${viewport.width}×${viewport.height}: About holds for a couple of screens, all of it in view`, async () => {
       const page = await newPage(browser, server, { viewport });
       try {
@@ -608,6 +608,9 @@ describe('slides', () => {
         assert.equal(held.out.length, 0, `About moved while held: ${held.out.join(', ')}`);
         assert.ok(await progress(page, '#about') > p0 + 0.2, 'the progress bar did not advance while held');
         if (viewport.width >= 1440) assert.ok(first.textW >= 640, `the text column is only ${Math.round(first.textW)}px wide`);
+        /* An external display: the bio widens with it rather than sitting in a
+           1180px strip in the middle of a 1920px screen. */
+        if (viewport.width >= 1900) assert.ok(first.textW >= 1000, `the text column is only ${Math.round(first.textW)}px wide on a ${viewport.width}px display`);
 
         await go(page, top + h + 50);
         assert.ok((await look()).stage < -50, 'About never lets go');
