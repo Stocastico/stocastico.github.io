@@ -2531,32 +2531,38 @@ a.edit-clip-body:focus-visible {
    invisible (WCAG 2.4.7), so the moment focus enters the edit it un-pins and
    every clip is on screen again. */
 @media (min-width: 1100px) {
-  /* The section's opening screen is a title card: the name of the section,
-     very large, and one sentence. The edit gets the next screen to itself. */
+  /* The section's opening screen is a title card, the way a deck opens a
+     section: the name, very large, and one line under it — nothing else on
+     the screen. Exactly one viewport under the navbar, so when the card
+     reaches the top, what follows it is still below the fold. The one-line
+     subtitle is a copy constraint as much as a style: the measure is lifted
+     here, and test/e2e/content.e2e.mjs fails on a second line at 1100px. */
   .title-card {
-    min-height: calc(85vh - var(--nav-h));
+    min-height: calc(100svh - var(--nav-h));
     display: flex;
     flex-direction: column;
     justify-content: center;
     margin-bottom: 0;
 
     .section-title {
-      font-size: clamp(5rem, 11vw, 12rem);
+      font-size: clamp(5.5rem, 13vw, 14rem);
       line-height: 0.88;
     }
 
     .section-subtitle {
-      margin-top: 1.5rem;
-      max-width: 42ch;
-      font-size: 1.35rem;
+      margin-top: 1.75rem;
+      max-width: none;
+      font-size: clamp(1.15rem, 1.6vw, 1.5rem);
     }
   }
 }
 
 @media (min-width: 1100px) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
+    /* Full bleed: out of the container to the viewport's edges. */
     .edit-pin {
       height: 300vh;
+      margin-inline: calc(50% - 50vw);
       view-timeline: --edit-pin block;
     }
 
@@ -2567,15 +2573,23 @@ a.edit-clip-body:focus-visible {
       padding-top: var(--nav-h);
       display: flex;
       flex-direction: column;
-      justify-content: center;
     }
 
-    /* Big: the stage has the whole screen, and the run is the one place on
-       the site the career is the only thing to look at. Sized so the seven
-       rows (projects packs into three) fill most of a 900px window. */
+    .edit-scroll {
+      flex: 1;
+      min-height: 0;
+      border: 0;
+    }
+
+    /* The whole screen, edge to edge and top to bottom: while it is pinned
+       the career is the only thing to look at. A row's height is the screen
+       under the navbar divided by the edit's real row count (--edit-rows,
+       written by the generator), less the ruler, padding and gaps. */
     .edit {
-      --clip-h: clamp(4rem, 9vh, 6rem);
-      --label-w: 9rem;
+      --label-w: clamp(10rem, 12vw, 14rem);
+      --clip-h: calc((100svh - var(--nav-h) - 5.5rem - var(--edit-rows, 7) * 5px) / var(--edit-rows, 7));
+      height: 100%;
+      padding: 0.75rem 0 1.25rem;
       overflow-x: clip;
 
       /* The ruler's row has no lane name to hide the years under, so this
@@ -2586,22 +2600,42 @@ a.edit-clip-body:focus-visible {
         top: 0;
         left: 0;
         width: var(--label-w);
-        height: calc(0.5rem + 2.25rem);
+        height: calc(0.75rem + 2.5rem);
         background: var(--bg);
         z-index: 2;
       }
     }
 
+    /* Bold: lane names in the display face, as large as a track header on
+       a full-screen timeline would be. */
     .edit-lane-name {
-      font-size: 0.95rem;
+      padding-left: clamp(1.25rem, 3vw, 3rem);
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 1.9vw, 1.9rem);
+      font-weight: 800;
+      font-stretch: 62%;
+      color: var(--text);
+      background: var(--bg);
+
+      &::before {
+        width: 0.8rem;
+        height: 0.8rem;
+      }
     }
 
     .edit-ruler {
-      height: 2.25rem;
+      height: 2.5rem;
 
       span {
-        font-size: 0.8rem;
+        font-size: 0.95rem;
+        color: var(--text-muted);
       }
+    }
+
+    .edit-playhead {
+      top: 0.75rem;
+      bottom: 1.25rem;
+      right: 0.75rem;
     }
 
     .edit-ruler,
@@ -2616,11 +2650,11 @@ a.edit-clip-body:focus-visible {
     }
 
     .edit-clip-title {
-      font-size: 1.05rem;
+      font-size: clamp(1rem, 1.3vw, 1.35rem);
     }
 
     .edit-clip-meta {
-      font-size: 0.85rem;
+      font-size: clamp(0.8rem, 0.95vw, 0.95rem);
     }
 
     /* Keyboard focus anywhere in the edit: back to the whole-edit layout. */

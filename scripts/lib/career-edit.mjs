@@ -98,8 +98,12 @@ export function careerEditLines({ career, education, places, projects, publicati
     return `<li class="edit-clip${extra}" style="${style}">${body}</li>`;
   };
 
+  /* Every lane's row count, summed: the full-screen layout divides the
+     screen height by it (--edit-rows on .edit). */
+  let totalRows = 1; // the papers lane, which is always one row
   const lane = (key, name, items, opts = {}) => {
     const rows = packRows(items);
+    totalRows += rows.length;
     const lines = [
       `<div class="edit-lane" data-lane="${key}">`,
       `  <h3 class="edit-lane-name" id="edit-lane-${key}">${name}</h3>`,
@@ -145,18 +149,22 @@ export function careerEditLines({ career, education, places, projects, publicati
     ruler.push(`    <span style="--clip-at: ${pct(((y - start) / span) * 100)}">${y}</span>`);
   }
 
-  return [
-    `<div class="edit-scroll" role="region" aria-label="Career timeline, ${start} to ${end - 1}" tabindex="0">`,
-    `  <div class="edit">`,
-    `  <div class="edit-ruler" aria-hidden="true">`,
-    ...ruler,
-    '  </div>',
+  const lanes = [
     ...lane('work', 'Work', work, { clip: () => ({ href: '/cv.html' }) }).map((l) => `  ${l}`),
     ...lane('study', 'Study', study, { clip: () => ({ href: '/cv.html' }) }).map((l) => `  ${l}`),
     ...lane('projects', 'Projects', work_projects, {
       clip: (it) => ({ href: it.href, extra: it.personal ? ' is-personal' : '' }),
     }).map((l) => `  ${l}`),
     ...lane('places', 'Places', lived).map((l) => `  ${l}`),
+  ];
+
+  return [
+    `<div class="edit-scroll" role="region" aria-label="Career timeline, ${start} to ${end - 1}" tabindex="0">`,
+    `  <div class="edit" style="--edit-rows: ${totalRows}">`,
+    `  <div class="edit-ruler" aria-hidden="true">`,
+    ...ruler,
+    '  </div>',
+    ...lanes,
     '  <div class="edit-lane" data-lane="papers">',
     '    <h3 class="edit-lane-name" id="edit-lane-papers"><a href="/publications.html">Papers</a></h3>',
     '    <ol class="edit-track" aria-labelledby="edit-lane-papers" style="--track-rows: 1">',

@@ -39,9 +39,11 @@ globe and UNESCO list restyled around it (#193). The reasoning for each is in
 European pins now; see "Travel page: the nautical chart" in `CLAUDE.md`.
 
 **Waiting on Stefano after the local test** (do not decide alone):
-- The copy written for the title cards: "The edit so far", "Selected work",
-  "On paper", and "whole bin" in the Projects subtitle (the plainer "full list"
-  is the safe alternative for recruiters).
+- The title-card copy after the review: "The story so far" (Stefano's),
+  "Selected work", "On paper", and the three one-line subtitles rewritten to
+  fit one line — including "whole bin" in Projects (the plainer "full list" is
+  the safe alternative for recruiters) and "Scholar" for Google Scholar in
+  Publications. The e2e test fails if a subtitle wraps at 1100px.
 - The copy written for the travel page: the cartouche intro (rewritten to
   mention the chart), "Further afield" as the globe's heading, "Route between
   homes" in the key, and the leg labels using the employer's full name

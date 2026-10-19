@@ -84,3 +84,13 @@ test('careerEditLines: lanes are labelled headings, clips are list items', () =>
   assert.ok(/class="edit-scroll"[^>]*tabindex="0"/.test(html), 'the scroller must be focusable');
   assert.ok(/class="edit-scroll"[^>]*role="region"[^>]*aria-label="[^"]+"/.test(html), 'and named');
 });
+
+test('careerEditLines: the edit carries its total row count, for the full-screen layout', () => {
+  /* The pinned desktop layout divides the screen height by this number to
+     size a row, so it must be the real sum of every lane's rows — a guessed
+     constant overflows the screen the day projects pack into a fourth row. */
+  const total = [...html.matchAll(/--track-rows: (\d+)/g)].reduce((a, m) => a + Number(m[1]), 0);
+  const m = html.match(/<div class="edit" style="--edit-rows: (\d+)">/);
+  assert.ok(m, 'the .edit element has no --edit-rows');
+  assert.equal(Number(m[1]), total);
+});

@@ -467,6 +467,17 @@ describe('career timeline: pinned horizontal scrub', () => {
       const mid = await state(page);
       assert.ok(Math.abs(mid.stageTop) <= 2, `the stage should be pinned mid-scrub (top ${mid.stageTop})`);
 
+      /* Bold, not boxed: mid-run the edit is the whole screen — edge to edge,
+         and most of the height under the navbar. */
+      const fill = await page.evaluate(() => {
+        const r = document.querySelector('.edit').getBoundingClientRect();
+        const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68;
+        return { l: r.left, r: r.right, h: r.height, vw: document.documentElement.clientWidth, avail: innerHeight - nav };
+      });
+      assert.ok(fill.l <= 1 && fill.r >= fill.vw - 1,
+        `the edit spans ${Math.round(fill.l)}–${Math.round(fill.r)} of a ${fill.vw}px screen`);
+      assert.ok(fill.h >= 0.8 * fill.avail, `the edit is ${Math.round(fill.h)}px of ${Math.round(fill.avail)}px`);
+
       await settle(page, pin.top + pin.h - 900);
       const end = await state(page);
       assert.ok(end.lastIn && !end.firstIn, 'at the end the present is on screen and 2000 has gone by');
@@ -553,17 +564,41 @@ describe('projects: the media bin', () => {
 });
 
 describe('title cards', () => {
-  test('desktop: Career, Projects and Publications each open on a screen of their own', async () => {
-    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      const vh = await page.evaluate(() => innerHeight);
-      for (const id of ['career', 'projects', 'publications']) {
-        const h = await page.$eval(`#${id} .title-card`, (el) => el.getBoundingClientRect().height);
-        assert.ok(h >= 0.7 * vh, `#${id}'s title card is ${Math.round(h)}px of a ${vh}px screen`);
-      }
-    } finally { await page.close(); }
-  });
+  /* Section openers, the way a deck opens a section: the title and one line
+     of subtitle on a screen of their own, and nothing of what follows until
+     you scroll on. Checked at two desktop widths because "one line" is the
+     claim most likely to break at the narrow end. */
+  for (const viewport of [VIEWPORTS.desktop, { width: 1100, height: 800 }]) {
+    test(`desktop ${viewport.width}: Career, Projects and Publications open on a slide`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' });
+        assert.equal((await page.textContent('#career .title-card .section-title')).trim(), 'The story so far');
+        for (const id of ['career', 'projects', 'publications']) {
+          /* Bring it on screen first and let the reveal finish: mid-reveal the
+             card is still translated, and aligning to that box overshoots. */
+          await page.$eval(`#${id} .title-card`, (el) => el.scrollIntoView({ block: 'start' }));
+          await page.waitForFunction((sid) => document.querySelector(`#${sid} .title-card`).classList.contains('visible'), id);
+          await page.waitForTimeout(900);
+          await page.$eval(`#${id} .title-card`, (el) => window.scrollTo(0, el.getBoundingClientRect().top + scrollY
+            - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68)));
+          await page.waitForTimeout(300);
+          const r = await page.evaluate((sid) => {
+            const card = document.querySelector(`#${sid} .title-card`);
+            const sub = card.querySelector('.section-subtitle').getBoundingClientRect();
+            const lh = parseFloat(getComputedStyle(card.querySelector('.section-subtitle')).lineHeight);
+            /* The first thing after the card inside the section. */
+            let next = card.nextElementSibling;
+            while (next && !next.getBoundingClientRect().height) next = next.nextElementSibling;
+            return { subH: sub.height, lh, nextTop: next ? next.getBoundingClientRect().top : Infinity, vh: innerHeight };
+          }, id);
+          assert.ok(r.subH < r.lh * 1.5, `#${id}'s subtitle runs to ${Math.round(r.subH / r.lh)} lines`);
+          assert.ok(r.nextTop >= r.vh - 1, `#${id}: what follows the title card is already on screen (${Math.round(r.nextTop)} < ${r.vh})`);
+        }
+      } finally { await page.close(); }
+    });
+  }
 
   test('phone: no title card takes a screen', async () => {
     const page = await newPage(browser, server, { viewport: { width: 390, height: 844 } });

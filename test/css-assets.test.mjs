@@ -32,6 +32,7 @@ const RUNTIME_VARS = new Set([
   '--clip-row',
   '--papers',
   '--track-rows',
+  '--edit-rows',
 ]);
 
 test('css: every var(--x) in styles.css resolves to a definition', () => {
