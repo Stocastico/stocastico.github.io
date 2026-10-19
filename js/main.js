@@ -13,7 +13,6 @@
      js/animations.js     — scroll reveals, card tilt, parallax
      js/receptive-field.js — the hero: the name through a 5×5 filter
      js/globe.js          — 3D globe (Three.js)
-     js/europe-map.js     — 2D Canvas Europe map
 
    Content lives in separate, easy-to-edit files:
 
@@ -39,11 +38,11 @@
    of Three.js back into every page. Tests import the THREE mock hook
    (__setThreeForTests) directly from ./three-context.js.
 
-   europe-map.js follows the same rule for the same reason, even though it has
-   no Three.js in it: it was statically imported here, which put its chunk in
-   the eager graph of all 21 pages when exactly one has a #europe-canvas. Any
-   module that serves a single page belongs behind a dynamic import at its
-   init site, not up here. */
+   The (since deleted) 2D Europe map taught the same rule without any Three.js
+   in it: it was statically imported here, which put its chunk in the eager
+   graph of all 21 pages when exactly one had a canvas for it. Any module that
+   serves a single page belongs behind a dynamic import at its init site, not
+   up here. */
 
 /* Nothing is imported here. Every data module is loaded with a dynamic
    import() at the DOM gate that needs it, further down.
@@ -55,7 +54,7 @@
    UNESCO world-heritage tree, the 49-entry blogroll, every travel pin, the
    full CV, all 37 publications and all 14 projects.
 
-   This is the same mistake CLAUDE.md already records for europe-map.js —
+   This is the same mistake CLAUDE.md records for the old 2D Europe map —
    "shipped 10 KB to the twenty pages with no #europe-canvas" — learned for
    code and never applied to data. Every renderer already gated on a DOM id, so
    the fix is only moving the import inside the gate that was there all along.
@@ -701,14 +700,13 @@ if (typeof document !== 'undefined') {
 
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
      canvas is about to enter the viewport. The maps live in the #places
-     section near the bottom of the page — eagerly building them costs a
-     coastline fetch (Europe map) and a Globe scene with stars/grids/pins,
-     neither of which the user sees until they scroll there. */
+     section near the bottom of the page — eagerly building the globe costs a
+     Three.js download and a scene with stars/grids/pins the user does not
+     see until they scroll there. */
   /* The observer is registered for teardown, not just disconnected on hit.
      It used to be the one observer in this file with no path to
      _pushTeardown: it disconnects itself when the canvas arrives, but a
-     visitor who never scrolls that far leaves it live, and travel.html builds
-     two of them. That is the leak the pagehide rule exists to prevent —
+     visitor who never scrolls that far leaves it live. That is the leak the pagehide rule exists to prevent —
      "any new init that adds a document/window listener or observer must
      return a teardown and be _pushTeardown-ed" — and this one had quietly
      opted out. Disconnecting twice is a no-op, so the self-disconnect on hit
@@ -743,7 +741,7 @@ if (typeof document !== 'undefined') {
        viewport — so Three.js downloads lazily, on scroll, not on load. */
     /* data/locations.js comes down here rather than at the top of the file:
        28 KB of pins that only travel.html has a canvas for. Importing it also
-       sets globalThis.LOCATIONS, which is how EuropeMap2D and Globe3D read it
+       sets globalThis.LOCATIONS, which is how Globe3D reads it
        from their constructor bodies. */
     return Promise.all([
       import('./globe.js'),
@@ -772,37 +770,6 @@ if (typeof document !== 'undefined') {
   };
   if (globeCanvas) {
     _lazyOnViewport(globeCanvas, buildGlobe);
-  }
-
-  /* 2D Europe Map — Canvas-based representation of European locations.
-
-     Dynamically imported, like the globe above and for the same reason: a
-     static `import './europe-map.js'` put its chunk in the eager module graph
-     of *every* page, so all twenty pages without a #europe-canvas were
-     downloading, parsing and executing 10 KB for a map they do not have. Only
-     travel.html has the canvas, and only when it nears the viewport. */
-  let europeCanvas = document.getElementById('europe-canvas');
-  let europeInstance = null;
-  let europeBuildToken = 0;
-  const buildEurope = () => {
-    const token = ++europeBuildToken;
-    /* locations.js alongside the map for the same reason as the globe — and it
-       must resolve before the constructor runs, which reads globalThis. */
-    return Promise.all([
-      import('./europe-map.js'),
-      import('../data/locations.js'),
-    ]).then(([{ EuropeMap2D }]) => {
-      /* A newer build superseded this one (a theme switch landed while the
-         import was in flight) — same guard the globe uses. */
-      if (token !== europeBuildToken) return;
-      europeInstance = new EuropeMap2D(europeCanvas);
-      _disposables.push(europeInstance);
-    }).catch((err) => {
-      if (typeof console !== 'undefined') console.warn('Europe map build skipped:', err);
-    });
-  };
-  if (europeCanvas) {
-    _lazyOnViewport(europeCanvas, buildEurope);
   }
 
   /* UNESCO World Heritage accordion (travel page only) — 20 KB of tree that

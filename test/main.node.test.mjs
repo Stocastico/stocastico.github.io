@@ -75,13 +75,14 @@ test('formatIsoDate gracefully handles invalid values', () => {
   assert.equal(formatIsoDate(undefined), '');
 });
 
-test('isEuropeanSecondaryPin hides European worktrips/holidays incl. Iceland & Canaries', () => {
-  /* Mainland European secondary pins live on the 2D map, not the globe. */
+test('isEuropeanSecondaryPin hides the worktrips/holidays the travel chart draws', () => {
+  /* Pins inside the nautical chart's frame live on the chart, not the globe. */
   assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 38.70622, lon: 1.43341 }), true); // Formentera
   assert.equal(isEuropeanSecondaryPin({ type: 'worktrip', lat: 49.87277, lon: 8.65118 }), true); // Darmstadt
-  /* Iceland (~-22°E) and the Canaries (~28.5°N) are now inside the bounds. */
-  assert.equal(isEuropeanSecondaryPin({ type: 'worktrip', lat: 64.14598, lon: -21.94224 }), true); // Reykjavik
-  assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 28.46718, lon: -16.25078 }), true); // Tenerife
+  /* Iceland and the Canaries fall outside the chart, so the globe keeps them —
+     they used to be hidden when the bounds were the old 2D map's. */
+  assert.equal(isEuropeanSecondaryPin({ type: 'worktrip', lat: 64.14598, lon: -21.94224 }), false); // Reykjavik
+  assert.equal(isEuropeanSecondaryPin({ type: 'holiday', lat: 28.46718, lon: -16.25078 }), false); // Tenerife
 });
 
 test('isEuropeanSecondaryPin never hides homes or non-European pins', () => {
@@ -2676,8 +2677,8 @@ test('main.js loads no data module statically', () => {
      also fetched the UNESCO tree, the blogroll, every travel pin, the CV, 37
      publications and 14 projects.
 
-     This is the rule CLAUDE.md already states for europe-map.js, which shipped
-     10 KB to the twenty pages with no #europe-canvas. Same rule, same file,
+     This is the rule CLAUDE.md already states for the old 2D Europe map, which
+     shipped 10 KB to the twenty pages with no #europe-canvas. Same rule, same file,
      applied to data instead of code. Each renderer already gated on a DOM id,
      so the import belongs inside that gate.
 

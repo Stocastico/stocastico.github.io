@@ -27,6 +27,17 @@ export function getTopoJSON() {
   return window._topoPromise;
 }
 
+/* The travel page's nautical chart frame (#193), in degrees.
+
+   One frame, two readers. scripts/generate-sea-chart.mjs projects it to the
+   chart's viewBox, and js/globe.js hides the European worktrips and holidays
+   inside it — because the chart draws them, and a globe at that zoom can only
+   pile seventy pins on one continent. Sharing the numbers is what guarantees
+   no pin falls between the two views. The ratio is ~16:9 in Mercator (35°–60°N
+   is 38° of stretched latitude against 68° of longitude), and the frame is
+   centred on the route's longitude so a phone's centred crop keeps all of it. */
+export const CHART_BOUNDS = { minLon: -28.5, maxLon: 39.5, minLat: 35, maxLat: 60 };
+
 /* A LOCATIONS entry the maps can actually place.
 
    Replaces the `_skip` flag the old runtime geocoder set on a failed lookup.
@@ -35,11 +46,9 @@ export function getTopoJSON() {
    this one a position" — and an entry without one must be skipped rather than
    projected to NaN.
 
-   Lives here rather than in globe.js because js/europe-map.js needs it too, and
-   globe.js already imports EUROPE_BOUNDS from europe-map.js: importing back the
-   other way would be a cycle, and would pull the 540 KB Three.js chunk into the
-   Europe map's. utils.js has no dependencies, which is why it is the right
-   home. */
+   Lives here rather than in globe.js so that nothing which only needs this
+   check has to import the module that pulls the 540 KB Three.js chunk.
+   utils.js has no dependencies, which is why it is the right home. */
 export function hasCoords(item) {
   return !!item
     && typeof item.lat === 'number' && Number.isFinite(item.lat)

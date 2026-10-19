@@ -12,9 +12,9 @@ import {
   hasWebGLSupport,
   getTopoJSON,
   hasCoords,
+  CHART_BOUNDS,
 } from './utils.js';
 import { getTheme, int, rgba } from './theme.js';
-import { EUROPE_BOUNDS } from './europe-map.js';
 
 /* Active palette. The travel page hosts a single globe instance at a time, so
    the resolved theme is held in this module-level binding (named THEME so the
@@ -145,14 +145,15 @@ const GLOBE_CONTINENTS = [
   [[-38,174],[-37,175],[-37,176],[-39,176],[-41,175],[-40,172],[-38,174]],
 ];
 
-/* European worktrips/holidays are shown only on the 2D Europe map, not on the
-   globe — this keeps the globe focused on homes (lived/current) and the trip
-   arcs. Uses the 2D map's exact bounds (EUROPE_BOUNDS) so the two views can't
-   drift and no globe-hidden pin ever falls outside the map and vanishes. */
+/* European worktrips/holidays are shown only on the travel page's nautical
+   chart, not on the globe — this keeps the globe focused on homes
+   (lived/current) and the trip arcs. Uses the chart's exact frame
+   (CHART_BOUNDS) so the two views can't drift and no globe-hidden pin ever
+   falls outside the chart and vanishes. */
 export function isEuropeanSecondaryPin(loc) {
   return (loc.type === 'worktrip' || loc.type === 'holiday') &&
-         loc.lat >= EUROPE_BOUNDS.minLat && loc.lat <= EUROPE_BOUNDS.maxLat &&
-         loc.lon >= EUROPE_BOUNDS.minLon && loc.lon <= EUROPE_BOUNDS.maxLon;
+         loc.lat >= CHART_BOUNDS.minLat && loc.lat <= CHART_BOUNDS.maxLat &&
+         loc.lon >= CHART_BOUNDS.minLon && loc.lon <= CHART_BOUNDS.maxLon;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -681,7 +682,7 @@ export class Globe3D {
            Coordinates are baked at build time now, so the equivalent guard is
            simply "did the build give this one a position". */
         if (!hasCoords(loc)) return false;
-        /* Hide European worktrips and holidays on globe — show only on 2D map */
+        /* Hide European worktrips and holidays on globe — the chart shows them */
         if (isEuropeanSecondaryPin(loc)) return false;
         return true;
       })
@@ -1141,7 +1142,7 @@ export class GlobeFallback2D {
     this._points.length = 0;
     (LOCATIONS.pins || []).forEach((p) => {
       if (!hasCoords(p)) return;
-      /* Match Globe3D: European worktrips/holidays live on the 2D map only. */
+      /* Match Globe3D: European worktrips/holidays live on the chart only. */
       if (isEuropeanSecondaryPin(p)) return;
       this._points.push({ lat: p.lat, lon: p.lon, type: p.type });
     });

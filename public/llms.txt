@@ -11,7 +11,7 @@ All content is written by Stefano Masneri unless a page says otherwise. Every pa
 - [Projects](https://stefanomasneri.com/projects.html): Projects and portfolio of Stefano Masneri, Senior AI Engineer. AR, Computer Vision, LLMs and more.
 - [Publications](https://stefanomasneri.com/publications.html): Full list of peer-reviewed publications by Stefano Masneri — augmented reality for education, computer vision, multimedia analysis, and media technology.
 - [Now](https://stefanomasneri.com/now.html): A now page: what Stefano Masneri is focused on at the moment — work, reading, hobbies and life in Gipuzkoa, San Sebastián.
-- [Travel](https://stefanomasneri.com/travel.html): Travel and places: an interactive 3D globe, a 2D map of Europe, and the UNESCO World Heritage sites Stefano Masneri has visited around the world.
+- [Travel](https://stefanomasneri.com/travel.html): Travel and places: a nautical chart of the route from Brescia to San Sebastián, an interactive 3D globe, and the UNESCO World Heritage sites Stefano Masneri has visited around the world.
 - [Links](https://stefanomasneri.com/links.html): A small, curated blogroll: the high-quality websites and technical blogs Stefano Masneri reads and recommends, grouped by topic.
 
 ## Projects
