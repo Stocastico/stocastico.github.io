@@ -341,15 +341,10 @@ describe('hero: the receptive field', () => {
         await page.mouse.up();
         assert.notEqual((await canvasHash(page)).h, before.h, 'dragging did not move the window');
 
-        /* The link to the network sits at the bottom right of the hero. */
-        const geo = await page.evaluate(() => {
-          const hero = document.getElementById('hero').getBoundingClientRect();
-          const link = document.querySelector('.field-lenet a').getBoundingClientRect();
-          const copy = document.querySelector('.hero-content').getBoundingClientRect();
-          return { heroR: hero.right, heroB: hero.bottom, linkR: link.right, linkB: link.bottom, linkL: link.left, copyR: copy.right };
-        });
-        assert.ok(geo.linkL > geo.copyR, 'the CNN link is not to the right of the copy');
-        assert.ok(geo.heroB - geo.linkB < 120, `the CNN link sits ${Math.round(geo.heroB - geo.linkB)}px above the hero's bottom`);
+        /* A small menu, and no link out of the hero (cut in review). */
+        const menu = await page.locator('#field-filter').boundingBox();
+        assert.ok(menu.height <= 30, `the filter menu is ${Math.round(menu.height)}px tall`);
+        assert.equal(await page.locator('#hero a[href*="mnist-lenet"]').count(), 0, 'the hero links to the CNN page again');
       } finally { await page.close(); }
     });
   }
@@ -385,7 +380,6 @@ describe('hero: the receptive field', () => {
       await page.goto(server.base + '/index.html');
       assert.equal(await page.isVisible('#hero h1'), true, 'the name is hidden with JS off');
       assert.equal(await page.isVisible('.field-controls'), false, 'the filter menu showed with nothing to drive it');
-      assert.equal(await page.isVisible('.field-lenet a'), true, 'the link to the network is a plain link and needs no JS');
     } finally { await ctx.close(); }
   });
 });
@@ -563,42 +557,106 @@ describe('projects: the media bin', () => {
   });
 });
 
-describe('title cards', () => {
-  /* Section openers, the way a deck opens a section: the title and one line
-     of subtitle on a screen of their own, and nothing of what follows until
-     you scroll on. Checked at two desktop widths because "one line" is the
-     claim most likely to break at the narrow end. */
-  for (const viewport of [VIEWPORTS.desktop, { width: 1100, height: 800 }]) {
-    test(`desktop ${viewport.width}: Career, Projects and Publications open on a slide`, async () => {
+/* ─── Slides: About and the title cards hold while you scroll ────────────
+   On a desktop the homepage reads like a deck. About is one screen that
+   stays put for a couple of scrolls, with a bar under the navbar filling as
+   you go; each title card (Career, Projects, Publications) is a screen with
+   the title and one line of subtitle that stays put for one scroll. Then the
+   page moves on. Pure CSS — a sticky stage in a taller pin, and a view
+   timeline for the bar — so everything here asks what the browser resolved. */
+describe('slides', () => {
+  const nav = (page) => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68);
+  const pinTop = (page, sel) => page.$eval(sel, (el) => el.getBoundingClientRect().top + scrollY);
+  const go = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo({ top: to, behavior: 'instant' }), y);
+    await page.waitForTimeout(350);
+  };
+  const progress = (page, sel) => page.$eval(`${sel} .slide-progress`, (el) => {
+    const m = getComputedStyle(el).scale;
+    return m === 'none' ? 1 : parseFloat(m);
+  });
+
+  for (const viewport of [VIEWPORTS.desktop, { width: 1280, height: 800 }, { width: 1100, height: 760 }]) {
+    test(`desktop ${viewport.width}×${viewport.height}: About holds for a couple of screens, all of it in view`, async () => {
       const page = await newPage(browser, server, { viewport });
       try {
         await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-        await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' });
+        const vh = viewport.height;
+        const navH = await nav(page);
+        const pin = '#about .slide-pin';
+        const h = await page.$eval(pin, (el) => el.offsetHeight);
+        assert.ok(h >= 2.4 * vh, `About holds for only ${Math.round(h / vh * 10) / 10} screens`);
+
+        const top = await pinTop(page, pin);
+        const look = () => page.evaluate((n) => {
+          const parts = ['.section-title', '.photo-card', '.about-text-col p:last-of-type', '.social-links', '.stats-row']
+            .map((q) => [q, document.querySelector(`#about ${q}`).getBoundingClientRect()]);
+          return { stage: document.querySelector('#about .slide-stage').getBoundingClientRect().top,
+            out: parts.filter(([, r]) => r.top < n - 1 || r.bottom > innerHeight + 1).map(([q, r]) => `${q} ${Math.round(r.top)}–${Math.round(r.bottom)}`),
+            textW: document.querySelector('#about .about-text-col').getBoundingClientRect().width };
+        }, navH);
+
+        await go(page, top + 10);
+        await page.waitForTimeout(900); // the reveal
+        const first = await look();
+        assert.equal(first.out.length, 0, `not all of About fits on the screen: ${first.out.join(', ')}`);
+        const p0 = await progress(page, '#about');
+
+        await go(page, top + vh);
+        const held = await look();
+        assert.ok(Math.abs(held.stage) <= 1, `About did not hold (stage at ${held.stage})`);
+        assert.equal(held.out.length, 0, `About moved while held: ${held.out.join(', ')}`);
+        assert.ok(await progress(page, '#about') > p0 + 0.2, 'the progress bar did not advance while held');
+        if (viewport.width >= 1440) assert.ok(first.textW >= 640, `the text column is only ${Math.round(first.textW)}px wide`);
+
+        await go(page, top + h + 50);
+        assert.ok((await look()).stage < -50, 'About never lets go');
+      } finally { await page.close(); }
+    });
+  }
+
+  for (const viewport of [VIEWPORTS.desktop, { width: 1100, height: 800 }]) {
+    test(`desktop ${viewport.width}: Career, Projects and Publications open on a title card that holds for a scroll`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        const vh = viewport.height;
         assert.equal((await page.textContent('#career .title-card .section-title')).trim(), 'The story so far');
+        assert.equal((await page.textContent('#career .title-card .section-subtitle')).replace(/\s+/g, ' ').trim(),
+          'Work, study and the cities they happened in. More details in my CV.');
         for (const id of ['career', 'projects', 'publications']) {
-          /* Bring it on screen first and let the reveal finish: mid-reveal the
-             card is still translated, and aligning to that box overshoots. */
-          await page.$eval(`#${id} .title-card`, (el) => el.scrollIntoView({ block: 'start' }));
-          await page.waitForFunction((sid) => document.querySelector(`#${sid} .title-card`).classList.contains('visible'), id);
-          await page.waitForTimeout(900);
-          await page.$eval(`#${id} .title-card`, (el) => window.scrollTo(0, el.getBoundingClientRect().top + scrollY
-            - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68)));
-          await page.waitForTimeout(300);
-          const r = await page.evaluate((sid) => {
-            const card = document.querySelector(`#${sid} .title-card`);
-            const sub = card.querySelector('.section-subtitle').getBoundingClientRect();
-            const lh = parseFloat(getComputedStyle(card.querySelector('.section-subtitle')).lineHeight);
-            /* The first thing after the card inside the section. */
-            let next = card.nextElementSibling;
+          const pin = `#${id} .slide-pin--title`;
+          const top = await pinTop(page, pin);
+          await go(page, top + 10);
+          await page.waitForTimeout(900); // the reveal
+          await go(page, top + vh * 0.6);
+          const r = await page.evaluate((sel) => {
+            const pinEl = document.querySelector(sel);
+            const card = pinEl.querySelector('.title-card');
+            const sub = card.querySelector('.section-subtitle');
+            let next = pinEl.nextElementSibling;
             while (next && !next.getBoundingClientRect().height) next = next.nextElementSibling;
-            return { subH: sub.height, lh, nextTop: next ? next.getBoundingClientRect().top : Infinity, vh: innerHeight };
-          }, id);
+            return { cardTop: card.getBoundingClientRect().top, subH: sub.getBoundingClientRect().height,
+              lh: parseFloat(getComputedStyle(sub).lineHeight), subText: sub.textContent,
+              nextTop: next ? next.getBoundingClientRect().top : Infinity };
+          }, pin);
+          assert.ok(Math.abs(r.cardTop) <= 1, `#${id}'s title card did not hold (top ${Math.round(r.cardTop)})`);
+          assert.ok(r.nextTop >= vh - 1, `#${id}: what follows the title card is on screen while it holds`);
           assert.ok(r.subH < r.lh * 1.5, `#${id}'s subtitle runs to ${Math.round(r.subH / r.lh)} lines`);
-          assert.ok(r.nextTop >= r.vh - 1, `#${id}: what follows the title card is already on screen (${Math.round(r.nextTop)} < ${r.vh})`);
+          assert.doesNotMatch(r.subText, /\b(bin|clips?|edit|cut|reel|footage)\b/i, `#${id}'s subtitle talks media again`);
         }
       } finally { await page.close(); }
     });
   }
+
+  test('reduced motion: nothing holds', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const hs = await page.$$eval('.slide-pin', (els) => els.map((el) => el.offsetHeight));
+      for (const h of hs) assert.ok(h <= 900 * 1.2, `a ${h}px pin under reduced motion`);
+    } finally { await page.close(); }
+  });
 
   test('phone: no title card takes a screen', async () => {
     const page = await newPage(browser, server, { viewport: { width: 390, height: 844 } });

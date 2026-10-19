@@ -856,18 +856,15 @@ body::before {
   flex-wrap: wrap;
 }
 
-/* ── Filter menu and the link to the network ─────────────────
-   One native <select>, top right under the grid, and the link to the MNIST
-   page at the bottom right of the hero. Nothing else: the kernel readout,
-   the captions and the range input were cut in review — the hero is a
-   picture you can tune, not an explainer. */
+/* ── Filter menu ───────────────────────────────────────────
+   One small native <select>, top right under the grid. Nothing else: the
+   kernel readout, the captions, the range input and the link to the MNIST
+   page were all cut in review — the hero is a picture you can tune, not an
+   explainer. */
 .hero-aside {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.5rem;
-  align-self: stretch;
 }
 
 .field-controls[hidden] {
@@ -879,7 +876,7 @@ body::before {
   align-items: center;
   gap: 0.6rem;
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
 
   & select {
@@ -892,32 +889,21 @@ body::before {
     background-image:
       linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
       linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-    background-position: right 0.85rem center, right 0.55rem center;
+    background-position: right 0.7rem center, right 0.4rem center;
     background-size: 0.3rem 0.3rem;
     background-repeat: no-repeat;
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
-    min-height: 2.25rem;
-    padding: 0.35rem 1.9rem 0.35rem 0.75rem;
+    /* 24px: small, and still the WCAG 2.5.8 minimum target. */
+    min-height: 1.5rem;
+    padding: 0.15rem 1.6rem 0.15rem 0.5rem;
+    border-radius: 4px;
     cursor: pointer;
   }
 
   & select:hover {
     border-color: var(--text-faint);
   }
-}
-
-.field-lenet {
-  margin: 0;
-  font-size: 0.9rem;
-  text-align: right;
-}
-
-.field-lenet a {
-  color: var(--accent-text);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  text-decoration-color: rgb(var(--accent-rgb) / 0.45);
 }
 
 /* Phones get a still frame (js/receptive-field.js, PHONE_QUERY): the window
@@ -930,10 +916,6 @@ body::before {
 
   .hero-aside {
     align-items: flex-start;
-  }
-
-  .field-lenet {
-    text-align: left;
   }
 
   #field-canvas {
@@ -2533,12 +2515,13 @@ a.edit-clip-body:focus-visible {
 @media (min-width: 1100px) {
   /* The section's opening screen is a title card, the way a deck opens a
      section: the name, very large, and one line under it — nothing else on
-     the screen. Exactly one viewport under the navbar, so when the card
-     reaches the top, what follows it is still below the fold. The one-line
+     the screen. Exactly one viewport (its top padding clears the navbar), so
+     what follows is below the fold; see "Slides" below for how it holds. The one-line
      subtitle is a copy constraint as much as a style: the measure is lifted
      here, and test/e2e/content.e2e.mjs fails on a second line at 1100px. */
   .title-card {
-    min-height: calc(100svh - var(--nav-h));
+    min-height: 100svh;
+    padding-top: var(--nav-h);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -2673,6 +2656,139 @@ a.edit-clip-body:focus-visible {
         animation: none;
       }
     }
+  }
+}
+
+/* ─── Slides: About and the title cards hold while you scroll ───────────
+   On a desktop the homepage reads like a deck: About is one screen that
+   stays put for a couple of scrolls, each title card for one, and a bar
+   under the navbar fills as you go so a held screen does not read as a stuck
+   page. Then the page moves on.
+
+   The pattern is the timeline's pin, without the scrub: a .slide-pin taller
+   than the screen, a .slide-stage inside it that is sticky and exactly one
+   screen tall, and a view timeline on the pin for .slide-progress. Pure CSS,
+   nothing to tear down. Gated like the timeline (≥1100px, motion allowed)
+   and on height too: About has to fit on one screen to be held, and below
+   ~760px tall it does not. Focus is not a problem here as it is for the
+   timeline — a held stage is on screen, not translated off it. */
+.slide-progress {
+  display: none;
+}
+
+@media (min-width: 1100px) and (min-height: 760px) and (prefers-reduced-motion: no-preference) {
+  .slide-pin--title {
+    height: 200svh;
+    view-timeline: --slide block;
+  }
+
+  .slide-pin--about {
+    height: 260svh;
+    view-timeline: --slide block;
+  }
+
+  .slide-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+  }
+
+  #about.section--slide {
+    padding-block: 0;
+  }
+
+  .slide-pin--about .slide-stage {
+    padding-top: var(--nav-h);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* About on one screen: the header across the top, the photo with the
+     three stats under it on the left, and a wide text column on the right —
+     wide enough that the whole bio fits without scrolling. */
+  .slide-pin--about .container {
+    display: grid;
+    grid-template-columns: minmax(200px, 250px) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    column-gap: clamp(2rem, 4vw, 4rem);
+    width: 100%;
+
+    .section-header {
+      grid-column: 1 / -1;
+      margin-bottom: clamp(1rem, 3vh, 2rem);
+    }
+
+    .section-title {
+      font-size: clamp(3.5rem, 7vh, 5.5rem);
+    }
+
+    .about-top {
+      display: contents;
+    }
+
+    .about-photo-col {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .stats-row {
+      grid-column: 1;
+      grid-row: 3;
+      align-self: start;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
+    .stat-item {
+      padding: 0.6rem 0.25rem;
+    }
+
+    .stat-number {
+      font-size: 1.5rem;
+    }
+
+    .about-text-col {
+      grid-column: 2;
+      grid-row: 2 / 4;
+    }
+
+    .about-text-col p {
+      max-width: 82ch;
+      margin-bottom: 0.8rem;
+    }
+
+    .about-text-col p.about-lead {
+      margin-bottom: 1.1rem;
+    }
+
+    .social-links {
+      margin-top: 1.25rem;
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    .slide-progress {
+      display: block;
+      position: absolute;
+      top: var(--nav-h);
+      left: calc(50% - 50vw);
+      width: 100vw;
+      height: 3px;
+      background: var(--accent);
+      transform-origin: left;
+      scale: 0 1;
+      animation: slide-fill linear both;
+      animation-timeline: --slide;
+      /* `contain`: exactly while the stage is held. */
+      animation-range: contain 0% contain 100%;
+    }
+  }
+}
+
+@keyframes slide-fill {
+  to {
+    scale: 1 1;
   }
 }
 

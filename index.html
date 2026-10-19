@@ -206,8 +206,7 @@
 
       <div class="hero-aside">
         <!-- Revealed by js/receptive-field.js; without JavaScript there is no
-             filter to choose, so the menu stays hidden. The link below is a
-             plain link and shows either way. -->
+             filter to choose, so the menu stays hidden. -->
         <div class="field-controls" hidden>
           <label class="field-picker">
             <span>Filter</span>
@@ -220,15 +219,17 @@
             </select>
           </label>
         </div>
-        <p class="field-lenet">
-          <a href="projects/mnist-lenet.html">Draw a digit for the network those filters came from <span aria-hidden="true">&rarr;</span></a>
-        </p>
       </div>
     </div>
   </section>
 
   <!-- ═══════════════ ABOUT ═══════════════ -->
-  <section id="about" class="section" aria-label="About me">
+  <section id="about" class="section section--slide" aria-label="About me">
+    <!-- A slide (see "Slides" in css/styles.css): on a desktop the stage
+         holds for a couple of screens while the bar under the navbar fills. -->
+    <div class="slide-pin slide-pin--about">
+    <div class="slide-stage">
+    <div class="slide-progress" aria-hidden="true"></div>
     <div class="container">
       <header class="section-header" data-animate>
         <span class="section-tag">About</span>
@@ -315,16 +316,21 @@
       </div>
 
     </div>
+    </div><!-- /.slide-stage -->
+    </div><!-- /.slide-pin -->
   </section>
 
   <!-- ═══════════════ CAREER ═══════════════ -->
   <section id="career" class="section section-alt" aria-label="Career">
     <div class="container container--wide">
-      <header class="section-header title-card" data-animate>
+      <div class="slide-pin slide-pin--title">
+      <header class="section-header title-card slide-stage" data-animate>
+        <div class="slide-progress" aria-hidden="true"></div>
         <span class="section-tag">Career</span>
         <h2 class="section-title">The story so far</h2>
-        <p class="section-subtitle">Work, study, projects and papers since 2000. The <a href="cv.html" class="inline-link">CV</a> has the detail.</p>
+        <p class="section-subtitle">Work, study and the cities they happened in. More details in my <a href="cv.html" class="inline-link">CV</a>.</p>
       </header>
+      </div>
       <!-- Server-rendered by `npm run generate-cards` from data/cv.yaml,
            data/projects.js and data/publications.js
            (scripts/lib/career-edit.mjs). No JavaScript draws or redraws it.
@@ -433,11 +439,14 @@
   <!-- ═══════════════ PROJECTS ═══════════════ -->
   <section id="projects" class="section" aria-label="Projects">
     <div class="container">
-      <header class="section-header title-card" data-animate>
+      <div class="slide-pin slide-pin--title">
+      <header class="section-header title-card slide-stage" data-animate>
+        <div class="slide-progress" aria-hidden="true"></div>
         <span class="section-tag">Projects</span>
         <h2 class="section-title">Selected work</h2>
-        <p class="section-subtitle">Three clips from the bin, a new three on every visit. The <a href="projects.html" class="inline-link">whole bin</a> has the rest.</p>
+        <p class="section-subtitle">Three projects, picked at random on every visit. The <a href="projects.html" class="inline-link">full list</a> has the rest.</p>
       </header>
+      </div>
       <!-- Server-rendered by `npm run generate-cards` (newest 3 of the
            kind: 'work' entries in data/projects.js), then re-shuffled by
            renderProjects() in main.js — which applies the same filter, so the
@@ -456,11 +465,14 @@
   <!-- ═══════════════ PUBLICATIONS ═══════════════ -->
   <section id="publications" class="section section-alt" aria-label="Publications">
     <div class="container">
-      <header class="section-header title-card" data-animate>
+      <div class="slide-pin slide-pin--title">
+      <header class="section-header title-card slide-stage" data-animate>
+        <div class="slide-progress" aria-hidden="true"></div>
         <span class="section-tag">Publications</span>
         <h2 class="section-title">On paper</h2>
         <p class="section-subtitle">The core of my PhD. All of it is on the <a href="publications.html" class="inline-link">publications page</a> and <a href="https://scholar.google.com/citations?user=AvJA648AAAAJ&hl=en" class="inline-link" target="_blank" rel="noopener">Scholar</a>.</p>
       </header>
+      </div>
       <!-- Server-rendered by `npm run generate-cards` (data: data/publications.js),
            then re-hydrated by renderPublications() in main.js. -->
       <div class="publications-list" id="publications-list" role="list">
