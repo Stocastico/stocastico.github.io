@@ -71,10 +71,6 @@ palettes:
     accentText: '#e2d85a'
     accent2Text: '#6fd3da'
     onAccent: '#16181b'
-    # Equal stops: the gradient-filled name and section titles are retired in
-    # this palette; the CSS still reads the pair, so it paints solid.
-    heroGradFrom: '#ece9e2'
-    heroGradTo: '#ece9e2'
     mapBg: '#1a1c20'
     themeColor: '#202328'
     faviconBg: '#202328'
@@ -107,9 +103,3 @@ palettes:
       fallback1: '#4b6a73'
       fallback2: '#262a31'
       fallback3: '#16181c'
-    # Unused since the WebGL hero went (#189); still required by the schema
-    # until the cleanup in #195.
-    noise:
-      dark: '#202328'
-      mid: '#2f3640'
-      bright: '#3fc4cd'

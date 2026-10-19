@@ -73,7 +73,6 @@ const REQUIRED_KEYS = [
   'bg', 'bgAlt',
   'text', 'textMuted', 'textFaint',
   'accent', 'accentHi', 'accent2', 'accent2Hi', 'accentText', 'accent2Text', 'onAccent',
-  'heroGradFrom', 'heroGradTo',
   'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
 ];
 const REQUIRED_PINS  = ['lived', 'current', 'worktrip', 'holiday'];
@@ -84,7 +83,6 @@ const REQUIRED_GLOBE = [
   'grid', 'gridBright', 'stars',
   'fallback1', 'fallback2', 'fallback3',
 ];
-const REQUIRED_NOISE = ['dark', 'mid', 'bright'];
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
@@ -260,8 +258,6 @@ function validatePaletteBody(p, ctx, errors) {
   else for (const k of REQUIRED_PINS) checkHex(p.pins, k, `${ctx}.pins`);
   if (typeof p.globe !== 'object' || p.globe === null) errors.push(`${ctx}.globe must be a mapping`);
   else for (const k of REQUIRED_GLOBE) checkHex(p.globe, k, `${ctx}.globe`);
-  if (typeof p.noise !== 'object' || p.noise === null) errors.push(`${ctx}.noise must be a mapping`);
-  else for (const k of REQUIRED_NOISE) checkHex(p.noise, k, `${ctx}.noise`);
 }
 
 // ─── css/styles.css :root block ───────────────────────────────────────────────
@@ -310,8 +306,6 @@ function cssVarLines(p, indent) {
     `${I}--text-muted: ${ok(p.textMuted)};`,
     `${I}--text-faint: ${ok(p.textFaint)};`,
     ``,
-    `${I}--hero-grad-from: ${ok(p.heroGradFrom)};`,
-    `${I}--hero-grad-to: ${ok(p.heroGradTo)};`,
     `${I}--map-bg: ${ok(p.mapBg)};`,
     ``,
     `${I}--pin-lived: ${ok(p.pins.lived)};`,
@@ -364,12 +358,11 @@ function themeObjectBody(p, id, name) {
   const flat = [
     'bg', 'bgAlt', 'text', 'textMuted', 'textFaint',
     'accent', 'accentHi', 'accent2', 'accent2Hi', 'accentText', 'accent2Text', 'onAccent',
-    'heroGradFrom', 'heroGradTo', 'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
+    'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
   ];
   const flatLines = flat.map(k => `  ${k}: ${q(p[k])},`).join('\n');
   const pinLines  = REQUIRED_PINS.map(k => `    ${k}: ${q(p.pins[k])},`).join('\n');
   const globeLines = REQUIRED_GLOBE.map(k => `    ${k}: ${q(p.globe[k])},`).join('\n');
-  const noiseLines = REQUIRED_NOISE.map(k => `    ${k}: ${q(p.noise[k])},`).join('\n');
   return `{
   id: '${id}',
   name: '${name}',
@@ -379,9 +372,6 @@ ${pinLines}
   },
   globe: {
 ${globeLines}
-  },
-  noise: {
-${noiseLines}
   },
 }`;
 }

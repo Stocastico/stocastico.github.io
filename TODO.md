@@ -70,20 +70,22 @@ Left for a look with Stefano before calling the phase done:
 
 ### Phase 7 — cleanup and docs (#195)
 
-- Remove `heroGradFrom`/`heroGradTo` and the `noise` block from the schema in
-  `data/palettes.yaml` + `scripts/generate-theme.js` (nothing reads them).
-- `refreshActiveTheme()` in `js/globe.js` and its
-  comments about "theme switch rebuilds" are vestigial: one theme, no switch.
-- `initCardTilt()` still tilts `.research-card, .contact-card, .pub-item`:
-  decide whether the tilt survives at all (project cards dropped it), and with
-  it the card-flip code in `js/animations.js`.
-- Re-measure the gzip budgets in `test/e2e/budget.e2e.mjs` and lower them if
-  the redesign shrank the bundle.
-- Check that the OG card (`img/og/og-montaggio.png`), the favicons and the
-  project OG cards are regenerated from the final palette.
+Done on 19 Oct: `heroGradFrom`/`heroGradTo` and `noise` out of the palette
+schema; the vestigial `refreshActiveTheme()` out of the globe; the card
+tilt (and its gloss, and the render wait that existed only for it) gone;
+the shared JS budget lowered 20 → 14 KB (10.7 KB now); the social cards —
+site and projects — redrawn as Montaggio title cards and rendered by
+Chromium so they are finally set in the site's own faces; favicons checked
+(already current).
+
+Left:
+- The favicon set still draws "SM" in Georgia. It matches the palette, not
+  the type; an Archivo "SM" would match both. Stefano's call.
+- The MNIST page's hand-drawn social card (`img/projects/` — it pins its own
+  `og:image`) is still the old style.
 - Re-read `CLAUDE.md` and `README.md` end to end for paragraphs that describe
   things that no longer exist (light theme, palette picker, gradient headings,
-  WebGL hero).
+  WebGL hero). Several were fixed in passing; a full read is still owed.
 - Close #188–#195 when the PR is merged.
 
 ## Test coverage — known gaps, deliberately left

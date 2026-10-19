@@ -27,8 +27,6 @@ export const THEME = {
   accentText: '#e2d85a',
   accent2Text: '#6fd3da',
   onAccent: '#16181b',
-  heroGradFrom: '#ece9e2',
-  heroGradTo: '#ece9e2',
   mapBg: '#1a1c20',
   themeColor: '#202328',
   faviconBg: '#202328',
@@ -58,11 +56,6 @@ export const THEME = {
     fallback1: '#4b6a73',
     fallback2: '#262a31',
     fallback3: '#16181c',
-  },
-  noise: {
-    dark: '#202328',
-    mid: '#2f3640',
-    bright: '#3fc4cd',
   },
 };
 

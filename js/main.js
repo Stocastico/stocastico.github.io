@@ -10,7 +10,7 @@
 
      js/ui.js             — navbar, command palette, mobile menu,
                             counters, toast, back-to-top
-     js/animations.js     — scroll reveals, card tilt, parallax
+     js/animations.js     — scroll reveals
      js/receptive-field.js — the hero: the name through a 5×5 filter
      js/globe.js          — 3D globe (Three.js)
 
@@ -87,10 +87,9 @@ import {
    loading-strategy note at the top. The hero serves one page, so it follows
    the same rule even though it is small. */
 
-/* DOM animations: scroll reveal, card tilt, parallax (extracted) */
+/* DOM animations: scroll reveal (extracted) */
 import {
   initScrollReveal,
-  initCardTilt,
   revealNewContent,
 } from './animations.js';
 
@@ -548,7 +547,6 @@ export {
   renderCV,
   renderSkills,
   setFooterYear,
-  initCardTilt,
   initNavbar,
   initMobileMenu,
   initBackToTop,
@@ -577,36 +575,32 @@ if (typeof document !== 'undefined') {
      load-bearing — which is what lets them wait for a dynamic import(). The
      element check comes first so a page without the section never fetches the
      data at all. */
-  /* Renders that replace server-rendered nodes are collected here so
-     enhancements that bind listeners to those nodes (card tilt) can wait for
-     the final DOM — binding before a re-render leaves the fresh nodes inert. */
-  const _renderSettled = [];
   const pubList = document.getElementById('publications-list');
   if (pubList) {
-    _renderSettled.push(import('../data/publications.js').then(({ PUBLICATIONS }) => {
+    import('../data/publications.js').then(({ PUBLICATIONS }) => {
       renderPublications(PUBLICATIONS);
       revealNewContent(pubList);
-    }));
+    });
   }
   const projGrid = document.getElementById('projects-grid');
   if (projGrid) {
-    _renderSettled.push(import('../data/projects.js').then(({ PROJECTS }) => {
+    import('../data/projects.js').then(({ PROJECTS }) => {
       renderProjects(PROJECTS);
       revealNewContent(projGrid);
       /* After the re-render, so the chips filter the cards that are actually
          on the page rather than the ones generate-cards baked in. */
       initProjectFilter();
-    }));
+    });
   }
   const cvTimeline = document.getElementById('cv-timeline');
   const cvSkills = document.getElementById('cv-skills');
   if (cvTimeline || cvSkills) {
-    _renderSettled.push(import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
+    import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
       renderCV(CV_CAREER, CV_EDUCATION);
       renderSkills(CV_SKILLS);
       revealNewContent(cvTimeline);
       revealNewContent(cvSkills);
-    }));
+    });
   }
   setFooterYear();
 
@@ -637,24 +631,6 @@ if (typeof document !== 'undefined') {
   /* The reading-progress bar used to be initialised here. It is a
      scroll-progress timeline in css/styles.css now — off the main thread, and
      with nothing to tear down on pagehide. */
-
-  /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
-     not compete with content rendering on the main thread. requestIdleCallback
-     fires within milliseconds on a quiet page; the 2 s timeout guarantees it
-     still initialises on heavily loaded devices.
-     It also waits for _renderSettled: the renderers above replace the
-     server-rendered cards, and on a slow network the idle deadline used to
-     beat the data chunks — tilt then bound to nodes about to be discarded and
-     the fresh cards never got it. allSettled (not all) so one failed chunk
-     doesn't cost the static cards their tilt too.                             */
-  const whenIdle = typeof requestIdleCallback !== 'undefined'
-    ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
-    : (fn) => setTimeout(fn, 0);
-  Promise.allSettled(_renderSettled).then(() => {
-    whenIdle(() => {
-      _pushTeardown(initCardTilt());
-    });
-  });
 
   /* The favicon is static markup now — nothing to initialise.
 

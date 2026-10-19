@@ -16,14 +16,9 @@ import {
 } from './utils.js';
 import { getTheme, int, rgba } from './theme.js';
 
-/* Active palette. The travel page hosts a single globe instance at a time, so
-   the resolved theme is held in this module-level binding (named THEME so the
-   render code reads it unchanged) and refreshed at each construction. A theme
-   switch rebuilds the globe (js/main.js), which re-runs refreshActiveTheme().
-   The static *.PIN_COLORS / TT_COLOR below keep their load-time (dark) values
-   for back-compat; instances recompute their own colours from the live THEME. */
-let THEME = getTheme();
-function refreshActiveTheme() { THEME = getTheme(); }
+/* The palette. One theme since #188, so it is read once at module load; the
+   old per-construction refresh existed for a theme switch that is gone. */
+const THEME = getTheme();
 
 /* THREE bindings — declared without an initial value; the onChange callback
    fires immediately on registration with the active THREE namespace and again
@@ -195,8 +190,7 @@ export class Globe3D {
       return;
     }
 
-    /* Resolve the active palette for this instance (dark/light). */
-    refreshActiveTheme();
+    /* Pin colours from the palette. */
     this.PIN_COLORS = {
       lived:    int(THEME.pins.lived),
       current:  int(THEME.pins.current),
@@ -1096,8 +1090,7 @@ export class GlobeFallback2D {
   };
 
   constructor(canvasEl) {
-    /* Resolve the active palette for this instance (dark/light). */
-    refreshActiveTheme();
+    /* Pin colours from the palette. */
     this.PIN_COLORS = {
       lived:    THEME.pins.lived,
       current:  THEME.pins.current,

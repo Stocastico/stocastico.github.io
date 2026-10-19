@@ -25,7 +25,6 @@ function paletteBody(overrides = {}) {
     accent: '#c8a44d', accentHi: '#dcb968',
     accent2: '#6db088', accent2Hi: '#9bd4b0',
     accentText: '#dcb968', accent2Text: '#9bd4b0', onAccent: '#1a1408',
-    heroGradFrom: '#e6d4a4', heroGradTo: '#6db088',
     mapBg: '#08100c', themeColor: '#0a120e', faviconBg: '#0a120e', faviconFg: '#c8a44d',
     pins: { lived: '#6db088', current: '#e8c468', worktrip: '#4a9e8f', holiday: '#d98e54' },
     globe: {
@@ -36,7 +35,6 @@ function paletteBody(overrides = {}) {
       grid: '#3f8f72', gridBright: '#6dd0a8', stars: '#e8eee5',
       fallback1: '#46785a', fallback2: '#163424', fallback3: '#08140d',
     },
-    noise: { dark: '#0a120e', mid: '#2c5e42', bright: '#7a9e4a' },
     ...overrides,
   };
 }
@@ -183,7 +181,13 @@ test('generateThemeJs: emits a THEME object plus int/rgba/glvec helpers', () => 
   assert.match(js, /export function glvec\(/);
   assert.match(js, /pins: \{/);
   assert.match(js, /globe: \{/);
-  assert.match(js, /noise: \{/);
+  /* heroGradFrom/To and the noise block fed the gradient headings and the
+     WebGL hero; both are gone (#189, #190), and the keys went with them (#195). */
+  assert.doesNotMatch(js, /noise: \{|heroGrad/);
+});
+
+test('generateCssBlock: no --hero-grad-* vars (nothing reads them since #190)', () => {
+  assert.doesNotMatch(generateCssBlock(samplePalette()), /--hero-grad/);
 });
 
 test('generateThemeJs: getTheme() returns the one theme, whatever the document says', () => {

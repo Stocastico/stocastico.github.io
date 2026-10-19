@@ -76,8 +76,6 @@
   --text-muted: oklch(87.598% 0.0084 91.492);
   --text-faint: oklch(85.749% 0.0085 91.494);
 
-  --hero-grad-from: oklch(93.441% 0.0099 87.473);
-  --hero-grad-to: oklch(93.441% 0.0099 87.473);
   --map-bg: oklch(22.604% 0.0083 264.395);
 
   --pin-lived: oklch(72.098% 0.1729 142.194);
@@ -2107,29 +2105,6 @@ body::before {
 }
 
 .research-card:hover::before {
-  opacity: 1;
-}
-
-/* ─── 3-D card tilt — specular gloss layer ───────────────── */
-.tilt-ready {
-  will-change: transform;
-}
-
-.tilt-ready::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle at var(--gloss-x, 50%) var(--gloss-y, 50%),
-      rgb(var(--text-rgb) / 0.09) 0%,
-      transparent 58%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--t-med);
-  z-index: 2;
-}
-
-.tilt-ready:hover::after {
   opacity: 1;
 }
 

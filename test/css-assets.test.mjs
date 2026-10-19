@@ -24,8 +24,6 @@ const ROOT = path.resolve(__dirname, '..');
    inline style="" attribute — so they legitimately have no :root definition. */
 const RUNTIME_VARS = new Set([
   '--pct',              // js/main.js skill bars
-  '--gloss-x',          // js/animations.js card tilt gloss
-  '--gloss-y',
   '--project-hero-img', // inline style on project detail hero
   '--clip-at',          // inline style from scripts/lib/career-edit.mjs (#191):
   '--clip-len',         //   where each clip sits on the career timeline

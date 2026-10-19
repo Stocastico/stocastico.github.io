@@ -18,7 +18,6 @@ import {
   initContactCopy,
   renderCV,
   renderSkills,
-  initCardTilt,
   initBackToTop,
   renderProjects,
   homepageProjects,
@@ -1144,55 +1143,17 @@ test('initBackToTop does nothing when button is missing', () => {
   }
 });
 
-/* ─── initCardTilt tests ──────────────────────────────────── */
-
-test('initCardTilt adds tilt-ready class to cards', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  const prevRAF = global.requestAnimationFrame;
-  const card = {
-    classList: makeClassList(),
-    style: { setProperty() {}, transform: '', transition: '' },
-    addEventListener() {},
-    getBoundingClientRect() { return { left: 0, top: 0, width: 200, height: 100 }; },
-  };
-  global.document = {
-    querySelectorAll() { return [card]; },
-  };
-  global.window = {
-    matchMedia() { return { matches: false }; },
-  };
-  global.requestAnimationFrame = () => 1;
-  try {
-    initCardTilt();
-    assert.ok(card.classList.contains('tilt-ready'));
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-    global.requestAnimationFrame = prevRAF;
-  }
-});
-
-test('initCardTilt skips when prefers-reduced-motion is set', () => {
-  const prevDoc = global.document;
-  const prevWin = global.window;
-  let queryCalled = false;
-  global.document = {
-    querySelectorAll() { queryCalled = true; return []; },
-  };
-  global.window = {
-    matchMedia(q) {
-      if (q === '(prefers-reduced-motion: reduce)') return { matches: true };
-      return { matches: false };
-    },
-  };
-  try {
-    initCardTilt();
-    assert.ok(!queryCalled, 'Should skip card setup when reduced motion is preferred');
-  } finally {
-    global.document = prevDoc;
-    global.window = prevWin;
-  }
+/* ─── No card tilts ─────────────────────────────────────────────────────
+   The 3-D tilt with its specular gloss went in #195. Project cards had already
+   dropped it for the Montaggio frame (they brighten instead); keeping it on
+   publication and contact cards alone made two kinds of card on one page. */
+test('no card tilts: initCardTilt and the .tilt-ready gloss are gone', () => {
+  const anim = fs.readFileSync(path.join(ROOT, 'js', 'animations.js'), 'utf8');
+  const main = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
+  assert.doesNotMatch(anim, /initCardTilt/);
+  assert.doesNotMatch(main, /initCardTilt/);
+  assert.doesNotMatch(css, /\.tilt-ready/);
 });
 
 /* initScroll3D is gone, and so is the hero parallax it once drove (later a
