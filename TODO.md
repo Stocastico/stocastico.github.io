@@ -17,19 +17,86 @@ it is built on that framing.
 **A stale TODO costs more than an empty one**: it invites work that is already
 done and hides the items that are real.
 
+## Redesign "Montaggio" (#188) — what is left
+
+**Where things stand.** Phases 1–4 are done on the branch
+`redesign/montaggio-design-system`, open as **draft PR #196**. Work continues
+on that branch; **nothing goes to `main`** and the PR is not merged until
+Stefano has tried it locally (`README.md` → "Previewing without publishing").
+After each phase: push to the branch and update the PR #196 description.
+Working rules for every phase: tests first (red/green), `npm test` +
+`npm run test:e2e` green, `npm run screenshots` checked at 390/768/1440,
+CLAUDE.md updated, small commits.
+
+Done: hero through a receptive field (#189), design system with one dark theme
+(#190), career timeline as an edit with pinned scrub and title card (#191),
+project cards as a media bin with generated thumbnails, plus title cards on
+Projects and Publications (#192). The reasoning for each is in `CLAUDE.md`.
+
+**Waiting on Stefano after the local test** (do not decide alone):
+- The copy written for the title cards: "The edit so far", "Selected work",
+  "On paper", and "whole bin" in the Projects subtitle (the plainer "full list"
+  is the safe alternative for recruiters).
+- The open question in #193 below: keep or drop the 2D Europe map.
+
+### Phase 5 — travel page as a nautical chart (#193)
+
+The "Atlas" style lives on this page only. Open the page on a full-bleed chart:
+- land filled from `data/land-50m.json`, projected at build time to a static
+  SVG by a new generator **with a drift guard** (same pattern as
+  `generate-world-map`; SVG rings, not open polylines — open polylines broke
+  the fill in the mock-up)
+- coastline halos as depth contours, sea names in italics, a small compass
+  rose (watch that no broad selector overrides its size, as happened in the
+  mock-up)
+- a dashed route in the hazard colour (`--pin-current`):
+  Brescia → Berlin → Frankfurt → San Sebastián, each leg labelled with
+  year + lab (take the data from `CV_PLACES`, do not retype it)
+- a cartouche holding the title and intro.
+
+Below it, the globe, the Europe map and the UNESCO accordion stay — restyled,
+not rewritten. Open question: is the 2D Europe map redundant once the chart
+exists? If it goes, `data/europe-land.json`, `js/europe-map.js`, their
+generator and their tests go with it.
+
+### Phase 6 — sub-pages in the new system (#194)
+
+`cv.html`, `publications.html`, `links.html`, `now.html`, the project detail
+pages (title, hero, inline diagrams), the MNIST page and `404.html`. One theme
+only now — the issue says "both themes", which is out of date. Leftovers
+already seen:
+- section titles still in title case ("Where I've Been" on the homepage)
+- publication cards with the old large radius (project cards use `--r-md`)
+- the "All" filter chip on `projects.html` still has the old yellow→cyan
+  gradient
+- `404.html`: the `.error-code` gradient lives in its inline stylesheet (see
+  the forced-colors note in `CLAUDE.md`)
+- known traps: navbar width at the burger breakpoint (1024/1025), the
+  `aroundtheworld` table on phones.
+
+### Phase 7 — cleanup and docs (#195)
+
+- Remove `heroGradFrom`/`heroGradTo` and the `noise` block from the schema in
+  `data/palettes.yaml` + `scripts/generate-theme.js` (nothing reads them).
+- `refreshActiveTheme()` in `js/globe.js` and `js/europe-map.js` and their
+  comments about "theme switch rebuilds" are vestigial: one theme, no switch.
+- `initCardTilt()` still tilts `.research-card, .contact-card, .pub-item`:
+  decide whether the tilt survives at all (project cards dropped it), and with
+  it the card-flip code in `js/animations.js`.
+- Re-measure the gzip budgets in `test/e2e/budget.e2e.mjs` and lower them if
+  the redesign shrank the bundle.
+- Check that the OG card (`img/og/og-montaggio.png`), the favicons and the
+  project OG cards are regenerated from the final palette.
+- Re-read `CLAUDE.md` and `README.md` end to end for paragraphs that describe
+  things that no longer exist (light theme, palette picker, gradient headings,
+  WebGL hero).
+- Close #188–#195 when the PR is merged.
+
 ## Test coverage — known gaps, deliberately left
 
 Written down after a sweep that mutated every generated artefact and ran the
 whole suite against each. Everything that could be closed cheaply was closed;
 these are what is left, with the reason.
-
-- **`js/cnn-hero.js` (691 lines) has no unit coverage.** Only its *loading* is
-  asserted (`test/cnn-activations.test.mjs` checks `js/main.js` imports it
-  dynamically and gates on `supportsCnnHero()`), plus whatever the homepage
-  reveal tests happen to exercise. The projection maths — `_view()`,
-  `_project()`, the turntable, the signed depth parallax — is pure and testable
-  in principle; nothing tests it. A regression there degrades the hero's sense
-  of depth without failing anything or throwing.
 
 - **The dev/analysis scripts still run at import time.** `train-cnn.mjs`, the
   `eval-*` and `diagnose-*` pair, `screenshots.mjs` and `ingest-digit-capture.mjs`
@@ -107,11 +174,6 @@ these are what is left, with the reason.
   swappable in one line (`js/contact.js`), not that the string is hidden — base64
   in an attribute named `data-email-user` stopped nobody. Full reasoning in
   `CLAUDE.md`.
-- Globe land texture (2048×1024) is rebuilt per construction / theme switch
-  rather than cached across instances. Considered and skipped: the colours are
-  theme-dependent and the rebuild path is the one behind past "blank globe
-  after theme switch" bugs — not worth the GL-lifetime risk for a cost only
-  paid on a manual (infrequent) theme toggle.
 - `public/feed.xml` is checked by shape, not bytes — entry count, every project
   present, RFC 3339 dates, https-only, the `/now` date in sync, and (since the
   date policy changed) that project dates come from `data/projects.js` rather
