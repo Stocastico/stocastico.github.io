@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 import { PROJECTS } from '../data/projects.js';
-import { svgFor, ownedProjects } from '../scripts/generate-project-og.mjs';
+import { htmlFor, ownedProjects, PAD } from '../scripts/generate-project-og.mjs';
 
 const require = createRequire(import.meta.url);
 const { parseYaml } = require('../scripts/lib/yaml.js');
@@ -127,16 +127,16 @@ test('project-og: the declared og:image:width/height match the file', () => {
    The two hand-drawn cards in img/projects/ are frozen in an amber palette the
    site rotated away from several cycles ago; these must not join them. */
 test('project-og: cards are drawn in the active palette', () => {
-  const svg = svgFor(owned[0], ACTIVE);
+  const html = htmlFor(owned[0], ACTIVE);
   for (const colour of [ACTIVE.bg, ACTIVE.accent, ACTIVE.accent2]) {
-    assert.ok(svg.includes(colour),
+    assert.ok(html.includes(colour),
       `the card template does not use ${colour} from the active "${palettes.active}" palette`);
   }
 });
 
 test('project-og: the card template reads no hard-coded colour', () => {
   const src = fs.readFileSync(path.join(ROOT, 'scripts', 'generate-project-og.mjs'), 'utf8');
-  const body = src.slice(src.indexOf('export function svgFor'), src.indexOf('export function ownedProjects'));
+  const body = src.slice(src.indexOf('export function htmlFor'), src.indexOf('export function ownedProjects'));
   const hex = body.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
   assert.deepEqual(hex, [],
     'generate-project-og.mjs has a literal colour in the card template — '
@@ -158,15 +158,17 @@ test('project-og: the card template reads no hard-coded colour', () => {
    renderer does with the font — which is the part an estimate can never
    promise. */
 const CANVAS = 1200;
-const PAD = 84;
 const INK = 100;          // safely above the brightest background, far below text
+/* The colour-bar strip runs edge to edge along the top on purpose; the
+   margins are measured below it. */
+const STRIP = 20;
 
 async function marginInk(file) {
   const sharpLib = require('sharp');
   const { data, info } = await sharpLib(file).removeAlpha().raw()
     .toBuffer({ resolveWithObject: true });
   const worst = { left: 0, right: 0 };
-  for (let y = 0; y < info.height; y += 1) {
+  for (let y = STRIP; y < info.height; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
       const i = (y * info.width + x) * 3;
       const lum = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
@@ -188,40 +190,27 @@ for (const project of owned) {
   });
 }
 
-/* The pixel check above can only see a card that has been rendered. This one
-   catches the same bug in the template before anyone regenerates: it is the
-   wrapper's own arithmetic, so it does not prove a line fits, but it does
-   prove the wrapper believes it does. A card whose committed PNG is stale
-   would otherwise pass the pixel check while the template had already broken. */
-test('project-og: the wrapper never emits a line it thinks is too wide', () => {
-  const over = [];
-  for (const project of owned) {
-    const svg = svgFor(project, ACTIVE);
-    for (const block of svg.matchAll(/<text class="(mono|serif)"[^>]*font-size="(\d+)"[^>]*>([\s\S]*?)<\/text>/g)) {
-      const [, face, size, inner] = block;
-      const advance = face === 'mono' ? 0.6 : 0.545;
-      for (const t of inner.matchAll(/<tspan[^>]*>([\s\S]*?)<\/tspan>/g)) {
-        const width = t[1].length * Number(size) * advance;
-        if (PAD + width > CANVAS - PAD + 1) {
-          over.push(`${project.id}: "${t[1].slice(0, 44)}…" ≈ ${Math.round(width)}px in a ${CANVAS - PAD * 2}px box`);
-        }
-      }
-    }
-  }
-  assert.deepEqual(over, [], `the wrapper emitted an over-wide line:\n  ${over.join('\n  ')}`);
+/* The cut is the browser's now: line-clamp on the title (three lines) and
+   the description (two). Before #195 a hand-written wrapper estimated widths
+   from character counts of a font that was not even the one being drawn. */
+test('project-og: the template clamps the title and the description', () => {
+  const html = htmlFor(owned[0], ACTIVE);
+  assert.match(html, /\.title \{[^}]*-webkit-line-clamp: 3/);
+  assert.match(html, /\.desc \{[^}]*-webkit-line-clamp: 2/);
+  assert.match(html, /@font-face \{ font-family: 'Archivo'/, 'the card does not embed the display face');
 });
 
 test('project-og: every card carries its title, year and facets', () => {
   for (const project of owned) {
-    const svg = svgFor(project, ACTIVE);
-    const flat = svg.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-    assert.ok(flat.includes(String(project.year).toUpperCase()),
+    const html = htmlFor(project, ACTIVE);
+    const flat = html.replace(/<style>[\s\S]*?<\/style>/, '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+    assert.ok(flat.includes(String(project.year)),
       `${project.id}: the year is missing from its card`);
     for (const tag of project.tags) {
-      assert.ok(flat.includes(tag.toUpperCase().replace(/&/g, '&amp;')),
+      assert.ok(flat.includes(tag.replace(/&/g, '&amp;')),
         `${project.id}: facet "${tag}" is missing from its card`);
     }
-    /* The title is wrapped across tspans, so compare word by word. */
+    /* Compare word by word, as the old wrapped title had to be. */
     for (const word of project.title.split(/\s+/)) {
       assert.ok(flat.includes(word.replace(/&/g, '&amp;')),
         `${project.id}: the word "${word}" is missing from its card title`);
