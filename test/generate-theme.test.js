@@ -224,7 +224,11 @@ test('faviconDataUri: URL-encodes both fills into an SVG data URI', () => {
   assert.match(uri, /^data:image\/svg\+xml,/);
   assert.match(uri, /fill='%230a120e'/);
   assert.match(uri, /fill='%23c8a44d'/);
-  assert.match(uri, /%3ESM%3C\/text%3E/);
+  /* "SM" as Archivo outlines, not text: an SVG favicon is its own document
+     and cannot load the site's web fonts, so <text font-family=…> fell back
+     to Georgia and the icon never matched the type (#195). */
+  assert.match(uri, /%3Cpath /);
+  assert.doesNotMatch(uri, /%3Ctext|font-family|Georgia/);
 });
 
 // ─── rewriteHtml ─────────────────────────────────────────────────────────────
@@ -265,16 +269,12 @@ test('rewriteHtml: is idempotent', () => {
 
 // ─── rewriteFaviconSvg ───────────────────────────────────────────────────────
 
-test('rewriteFaviconSvg: rewrites the rect and text fills', () => {
-  const svg = [
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">',
-    '  <rect width="64" height="64" rx="12" fill="#080c14"/>',
-    '  <text x="50%" y="56%" fill="#00d4ff">SM</text>',
-    '</svg>',
-  ].join('\n');
-  const out = rewriteFaviconSvg(svg, samplePalette());
+test('rewriteFaviconSvg: writes the whole icon from the palette, replacing an old text favicon', () => {
+  const old = '<svg viewBox="0 0 64 64"><rect fill="#080c14"/><text fill="#00d4ff">SM</text></svg>';
+  const out = rewriteFaviconSvg(old, samplePalette());
   assert.match(out, /<rect[^>]*fill="#0a120e"/);
-  assert.match(out, /<text[^>]*fill="#c8a44d"/);
+  assert.match(out, /<path fill="#c8a44d" d="M/);
+  assert.doesNotMatch(out, /<text/);
 });
 
 // ─── spliceCssBlock ──────────────────────────────────────────────────────────

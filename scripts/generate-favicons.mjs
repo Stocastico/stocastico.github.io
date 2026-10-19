@@ -81,11 +81,14 @@ async function renderPng(svg, size) {
 function buildMaskableSvg(svgBuffer) {
   const svgText = svgBuffer.toString('utf8');
   const bg = (svgText.match(/<rect[^>]*fill="([^"]+)"/) || [])[1] || '#0a120e';
-  const fg = (svgText.match(/<text[^>]*fill="([^"]+)"/) || [])[1] || '#c8a44d';
+  /* The glyph is the favicon's own "SM" outline (Archivo, baked as a path —
+     an SVG cannot load web fonts), scaled to 75% about the centre. */
+  const glyph = svgText.match(/<path\b[^>]*\/>/);
+  if (!glyph) throw new Error('public/favicon.svg has no <path> glyph — run `npm run generate-theme` first');
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
     `<rect width="64" height="64" fill="${bg}"/>` +
-    `<text x="50%" y="56%" text-anchor="middle" font-size="24" fill="${fg}" font-family="Georgia,serif">SM</text>` +
+    `<g transform="translate(8 8) scale(0.75)">${glyph[0]}</g>` +
     `</svg>`,
   );
 }

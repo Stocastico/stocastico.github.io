@@ -423,13 +423,24 @@ export function glvec(hex) {
 
 // ─── HTML / favicon rewriting ─────────────────────────────────────────────────
 
+/* "SM" as Archivo outlines (width 62, weight 800 — the display cut), baked
+   once by tools/extract-favicon-glyph.py. An SVG favicon is its own document
+   and cannot load the site's web fonts, so <text font-family=…> only ever
+   rendered in a fallback (Georgia) and the icon never matched the type. */
+const FAVICON_GLYPH = JSON.parse(fs.readFileSync(path.join(__dirname, 'lib', 'favicon-glyph.json'), 'utf8'));
+
+/** The favicon as an SVG document: the ground and the two letters. */
+function faviconSvg(bgHex, fgHex) {
+  const n = FAVICON_GLYPH.viewBox;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}">`
+    + `<rect width="${n}" height="${n}" rx="8" fill="${bgHex}"/>`
+    + `<path fill="${fgHex}" d="${FAVICON_GLYPH.d}"/></svg>`;
+}
+
 function faviconDataUri(bgHex, fgHex) {
-  const bg = bgHex.slice(1);
-  const fg = fgHex.slice(1);
-  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E` +
-         `%3Crect width='64' height='64' rx='12' fill='%23${bg}'/%3E` +
-         `%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23${fg}' ` +
-         `font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E`;
+  return 'data:image/svg+xml,' + faviconSvg(bgHex, fgHex)
+    .replace(/"/g, "'")
+    .replace(/%/g, '%25').replace(/#/g, '%23').replace(/</g, '%3C').replace(/>/g, '%3E');
 }
 
 /** Apply the theme-colour / favicon / nav-gradient / OG-image rewrites to an
@@ -479,11 +490,10 @@ function rewriteHtml(text, p, id) {
   return out;
 }
 
-/** public/favicon.svg — rect fill = faviconBg, text fill = faviconFg. */
-function rewriteFaviconSvg(text, p) {
-  return text
-    .replace(/(<rect\b[^>]*\bfill=")#[0-9a-fA-F]{6}(")/, `$1${p.faviconBg}$2`)
-    .replace(/(<text\b[^>]*\bfill=")#[0-9a-fA-F]{6}(")/, `$1${p.faviconFg}$2`);
+/** public/favicon.svg — written whole from the palette and the glyph, so
+ *  the file is a pure function of both (theme-sync compares it). */
+function rewriteFaviconSvg(_text, p) {
+  return faviconSvg(p.faviconBg, p.faviconFg) + '\n';
 }
 
 /** public/manifest.webmanifest — PWA chrome colours. theme_color drives the

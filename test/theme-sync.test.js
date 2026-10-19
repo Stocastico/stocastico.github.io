@@ -80,6 +80,12 @@ test('theme-sync: public/favicon.svg matches the active palette', () => {
     'public/favicon.svg is out of sync — run `npm run generate-theme`.');
 });
 
+test('theme-sync: the favicon draws "SM" as outlines, in no font', () => {
+  const text = fs.readFileSync(path.join(ROOT, 'public/favicon.svg'), 'utf8');
+  assert.match(text, /<path /);
+  assert.doesNotMatch(text, /<text|font-family/);
+});
+
 test('theme-sync: public/manifest.webmanifest matches the active palette', () => {
   const manifestPath = path.join(ROOT, 'public/manifest.webmanifest');
   if (!fs.existsSync(manifestPath)) return; // tolerated — covered elsewhere if absent
