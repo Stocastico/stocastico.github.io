@@ -66,68 +66,54 @@
   <link rel="alternate" type="application/atom+xml" title="Stefano Masneri — projects &amp; now" href="/feed.xml" />
   <link rel="stylesheet" href="/css/styles.css" />
   <style>
+    /* "No signal": the colour bars a monitor shows when there is no picture —
+       the same seven palette tokens as the strip at the top of every page and
+       the card frames with no thumbnail — with the slate naming what is
+       missing. Left-aligned like every section header (CLAUDE.md). */
     .error-page {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: 2rem;
+      padding: calc(var(--nav-h) + 2rem) clamp(1.25rem, 5vw, 3rem) 3rem;
+      max-width: var(--container);
+      margin-inline: auto;
+    }
+
+    .error-bars {
+      position: relative;
+      aspect-ratio: 16 / 5;
+      max-height: 40vh;
+      border-radius: var(--r-md);
+      overflow: hidden;
+      background: linear-gradient(90deg,
+        var(--text) 0 14.286%, var(--accent) 0 28.571%, var(--accent2) 0 42.857%,
+        var(--pin-lived) 0 57.143%, var(--pin-holiday) 0 71.429%,
+        var(--pin-current) 0 85.714%, var(--pin-worktrip) 0 100%);
+      margin-bottom: 2.5rem;
     }
 
     .error-code {
-      font-family: var(--font-display);
-      font-size: clamp(6rem, 20vw, 12rem);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -50% -50%;
+      padding: 0.35em 0.8em;
+      font-family: var(--font-mono);
+      font-size: clamp(1.25rem, 3vw, 2rem);
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-      margin-bottom: 1rem;
-    }
-
-    /* The gradient above paints the digits from a background, and two media
-       throw that background away: forced colours (Windows High Contrast) and
-       print. Neither repaints -webkit-text-fill-color, so without these two
-       rules the "404" is simply not there — the page's largest element,
-       missing, on the page a lost visitor lands on.
-
-       css/styles.css carries the same pair for .hero-name / .section-title /
-       .globe-title, and this rule cannot live there: .error-code is defined in
-       the inline stylesheet below, which comes after the stylesheet link, so
-       at equal specificity the local declaration wins. The reset has to sit
-       beside the rule it is resetting.
-
-       (Written "inline stylesheet" rather than naming the element: the tag in
-       test/html-quality.test.mjs's balance check is matched by regex, so the
-       literal element name inside a CSS comment reads as an unclosed open tag
-       and fails it. Caught by that test, which is the point of it.)
-
-       test/e2e/a11y.e2e.mjs finds gradient text by
-       measuring the rendered page rather than by listing selectors, so a
-       fourth one added anywhere — including in another page's inline style —
-       is caught without anyone remembering this note. */
-    @media (forced-colors: active) {
-      .error-code {
-        background: none;
-        -webkit-text-fill-color: currentColor;
-        color: CanvasText;
-      }
-    }
-
-    @media print {
-      .error-code {
-        background: none;
-        -webkit-text-fill-color: currentColor;
-        color: #111;
-      }
+      color: var(--text);
+      background: var(--bg);
+      border-radius: 4px;
     }
 
     .error-title {
       font-family: var(--font-display);
-      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      font-size: clamp(2.75rem, 6.5vw, 5.25rem);
+      font-weight: 800;
+      font-stretch: 62%;
+      line-height: 0.95;
+      letter-spacing: var(--tracking-display);
       color: var(--text);
       margin-bottom: 1rem;
     }
@@ -135,9 +121,13 @@
     .error-desc {
       color: var(--text-muted);
       font-size: 1.05rem;
-      max-width: 440px;
-      margin-bottom: 2.5rem;
+      max-width: 44ch;
+      margin-bottom: 2rem;
       line-height: 1.6;
+    }
+
+    .error-page .btn {
+      align-self: flex-start;
     }
   </style>
 </head>
@@ -180,12 +170,12 @@
   </nav>
 
   <main id="error-content" class="error-page">
-    <div class="error-code">404</div>
+    <div class="error-bars" aria-hidden="true"><span class="error-code">404</span></div>
     <h1 class="error-title">Page not found</h1>
     <p class="error-desc">
       The page you're looking for doesn't exist or has been moved.
     </p>
-    <a href="/" class="btn btn-primary">Back to Home</a>
+    <a href="/" class="btn btn-primary">Back to home</a>
   </main>
 
   <!-- Wires the mobile menu + theme toggle; all other inits no-op when their

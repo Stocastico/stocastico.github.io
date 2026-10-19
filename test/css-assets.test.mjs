@@ -400,3 +400,26 @@ test('assets: project hero images are large enough to be stretched across a hero
     'these hero images will be visibly upscaled by background-size: cover:\n  '
     + tooSmall.join('\n  '));
 });
+
+test('every card surface shares one radius (--r-md)', () => {
+  /* Project and link cards moved to --r-md in the redesign while publication,
+     contact, CV and skill cards kept the old --r-lg, so one page set two
+     shapes of card side by side (#194). */
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
+  for (const sel of ['.project-card', '.link-card', '.research-card', '.contact-card', '.tl-card-single', '.skill-panel', '.photo-card']) {
+    const m = css.match(new RegExp(`^\\${sel} \\{([^}]*)\\}`, 'm'));
+    assert.ok(m, `${sel} has no top-level rule`);
+    assert.match(m[1], /border-radius:\s*var\(--r-md\)/, `${sel} does not use --r-md`);
+  }
+});
+
+test('no gradient-filled text survives anywhere (Montaggio retired it)', () => {
+  /* background-clip: text paints letterforms from a background, which forced
+     colours and print both discard — the reason every gradient heading needed
+     a reset. The redesign retired them; the 404 was the last one (#194). */
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
+  const files = ['css/styles.css', ...fs.readdirSync(ROOT).filter((f) => f.endsWith('.html')),
+    ...fs.readdirSync(path.join(ROOT, 'projects')).filter((f) => f.endsWith('.html')).map((f) => `projects/${f}`)];
+  const hits = files.filter((f) => /background-clip:\s*text|text-fill-color:\s*transparent/.test(strip(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+  assert.deepEqual(hits, []);
+});

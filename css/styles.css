@@ -1764,8 +1764,8 @@ body::before {
      crimson/dark — the one element on the page whose text sits on a filled
      accent, failing AA in two of six variants. */
   color: var(--on-accent);
-  background: linear-gradient(to right, var(--accent), var(--accent2));
-  border-color: transparent;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 /* De-emphasised by size and by tabular figures, NOT by opacity.
@@ -1926,7 +1926,7 @@ body::before {
 }
 
 .photo-card {
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   overflow: hidden;
   border: 1px solid var(--border);
   background: var(--bg-card);
@@ -2079,7 +2079,7 @@ body::before {
 .research-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   cursor: pointer;
   transition: border-color var(--t-med),
     background var(--t-med),
@@ -3193,23 +3193,26 @@ a.edit-clip-body:focus-visible {
   margin: 0 0 0.5rem;
 }
 
+/* The display face at its narrowest, like every other page title (#194):
+   these were the last titles set at normal width and weight 700. */
 .project-hero .project-detail__title {
   font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 700;
+  font-size: clamp(2.4rem, 5.5vw, 4.25rem);
+  font-weight: 800;
+  font-stretch: 62%;
   letter-spacing: var(--tracking-display);
   color: var(--text);
   margin: 0;
-  line-height: 1.2;
+  line-height: 0.95;
+  text-wrap: balance;
 }
 
+/* A year is data: the mono, as on the timeline and the card frames. */
 .project-hero .project-detail__year {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--accent-text);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
   margin: 0;
 }
 
@@ -3286,7 +3289,7 @@ a.edit-clip-body:focus-visible {
 .contact-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   padding: 1.75rem;
   display: flex;
   align-items: center;
@@ -3736,7 +3739,7 @@ a.edit-clip-body:focus-visible {
   padding: 1.5rem 1.75rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   transition: border-color var(--t-med), background var(--t-med), box-shadow var(--t-med);
 
   &:hover {
@@ -3924,7 +3927,7 @@ a.edit-clip-body:focus-visible {
 .skill-panel {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   padding: 1.75rem;
   transition: border-color var(--t-med), box-shadow var(--t-med);
 }

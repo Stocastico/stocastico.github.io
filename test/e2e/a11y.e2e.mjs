@@ -197,26 +197,41 @@ const RECHECK = () => [...document.querySelectorAll('[data-fc-probe]')]
   .map((el) => `${el.className || el.tagName.toLowerCase()}: "${el.textContent.trim().slice(0, 40)}"`);
 
 describe('a11y: forced colours', () => {
-  test('no gradient-clipped text stays invisible', async () => {
-    const invisible = [];
-    let probed = 0;
+  /* Since the redesign retired gradient text (#190, and the 404 last, #194)
+     the invariant is stronger than "survives forced colours": no page paints
+     text with a transparent fill at all. A static test forbids the CSS; this
+     measures the rendered page, which also catches a fill set by script or by
+     a page's own inline style. The canary below keeps the probe honest — with
+     nothing on the site to find, a broken probe would pass forever. */
+  test('the probe still sees transparent text when there is some (canary)', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(() => {
+        const el = document.createElement('p');
+        el.textContent = 'canary';
+        el.style.cssText = 'background: linear-gradient(red, blue); -webkit-background-clip: text; -webkit-text-fill-color: transparent';
+        document.body.append(el);
+      });
+      assert.deepEqual(await page.evaluate(PROBE), ['p']);
+    } finally { await page.close(); }
+  });
+
+  test('no page paints its text transparent (no gradient text survives)', async () => {
+    const hits = [];
     for (const path of allPages()) {
       const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
       try {
         await page.goto(server.base + path, { waitUntil: 'domcontentloaded' });
-        probed += (await page.evaluate(PROBE)).length;
+        for (const hit of await page.evaluate(PROBE)) hits.push(`${path} → ${hit}`);
+        /* And if one ever comes back, forced colours must still show it. */
         await page.emulateMedia({ forcedColors: 'active' });
-        for (const hit of await page.evaluate(RECHECK)) invisible.push(`${path} → ${hit}`);
+        for (const hit of await page.evaluate(RECHECK)) hits.push(`${path} (forced colours) → ${hit}`);
       } finally { await page.close(); }
     }
-    /* If this drops to zero the probe has stopped finding anything — either
-       the gradient headings are gone (fine, delete this test) or the selector
-       walk broke (not fine, and it would otherwise pass silently). */
-    assert.ok(probed > 0,
-      'found no gradient-clipped text at all — the probe is no longer measuring anything');
-    assert.deepEqual(invisible, [],
-      '\n  these paint their text from a background that forced-colors removes, '
-      + 'without resetting -webkit-text-fill-color:\n  ' + invisible.join('\n  ') + '\n');
+    assert.deepEqual(hits, [],
+      '\n  these paint their text from a background (forced colours and print both remove it):\n  '
+      + hits.join('\n  ') + '\n');
   });
 
   test('the world map still distinguishes lived from visited', async () => {

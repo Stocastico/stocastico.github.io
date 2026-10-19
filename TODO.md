@@ -54,18 +54,19 @@ European pins now; see "Travel page: the nautical chart" in `CLAUDE.md`.
 
 ### Phase 6 — sub-pages in the new system (#194)
 
-`cv.html`, `publications.html`, `links.html`, `now.html`, the project detail
-pages (title, hero, inline diagrams), the MNIST page and `404.html`. One theme
-only now — the issue says "both themes", which is out of date. Leftovers
-already seen:
-- section titles still in title case ("Where I've Been" on the homepage)
-- publication cards with the old large radius (project cards use `--r-md`)
-- the "All" filter chip on `projects.html` still has the old yellow→cyan
-  gradient
-- `404.html`: the `.error-code` gradient lives in its inline stylesheet (see
-  the forced-colors note in `CLAUDE.md`)
-- known traps: navbar width at the burger breakpoint (1024/1025), the
-  `aroundtheworld` table on phones.
+Done on 19 Oct: headings in sentence case everywhere (incl. the project
+drafts, guarded by `test/sentence-case.test.mjs`), one card radius
+(`--r-md`), the filter chips' active state solid instead of a gradient,
+project titles in the condensed display face, and a "no signal" 404 (the
+last gradient text on the site).
+
+Left for a look with Stefano before calling the phase done:
+- the CV page: still large two-column cards with coloured left rules; it
+  reads fine, but it is the least "Montaggio" page left — a candidate for
+  the edit treatment, or for leaving alone.
+- `now.html` and the MNIST page were checked and need nothing obvious.
+- known traps still apply: navbar width at the burger breakpoint
+  (1024/1025), the `aroundtheworld` table on phones.
 
 ### Phase 7 — cleanup and docs (#195)
 
