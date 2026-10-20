@@ -16,7 +16,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const nowHtml = fs.readFileSync(path.join(ROOT, 'now.html'), 'utf8');
 
 test('nowDate parses the "Last updated" line to ISO', () => {
-  assert.equal(nowDate(nowHtml), '2026-08-17');
+  /* Fixtures, not the live page: the page is rewritten every few months, and
+     a test pinned to its current date or opening line breaks on every update. */
+  assert.equal(nowDate('<p class="post-meta">Last updated 17 August 2026 &middot; X</p>'), '2026-08-17');
   assert.equal(nowDate('<p class="post-meta">Last updated 3 January 2027 &middot; X</p>'), '2027-01-03');
 });
 
@@ -41,9 +43,15 @@ test('htmlToMarkdown refuses markup it cannot represent', () => {
 });
 
 test('extractNowBody drops chrome and the lead, keeps the prose', () => {
-  const body = extractNowBody(nowHtml);
-  assert.match(body, /<p>\s*I am still very much affected/);
-  assert.doesNotMatch(body, /post-lead|Back to home|post-title/i);
+  const page = '<main id="now-content" class="post">'
+    + '<p class="post-back-row"><a href="index.html" class="cv-back-link">&larr; Back to home</a></p>'
+    + '<p class="post-meta">Last updated 17 August 2026 &middot; X</p><h1 class="post-title">Now</h1>'
+    + '<div class="post-lead">A snapshot.</div>\n    <p>\n      First paragraph.\n    </p>\n  </main>';
+  const body = extractNowBody(page);
+  assert.match(body, /<p>\s*First paragraph/);
+  assert.doesNotMatch(body, /post-lead|Back to home|post-title|snapshot/i);
+  /* And the live page still yields prose. */
+  assert.match(extractNowBody(nowHtml), /<p>/);
 });
 
 test('the committed archive holds the current page verbatim (drift guard)', () => {
