@@ -4792,6 +4792,15 @@ a.edit-clip-body:focus-visible {
   height: auto;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
+  /* Raster figures are mostly plots from papers, on white: at full
+     brightness they glare out of a dark page. Dimmed a little, as the card
+     thumbnails are (#192), and back to full under the pointer for reading. */
+  filter: brightness(0.88);
+  transition: filter var(--t-med);
+}
+
+.post figure img:hover {
+  filter: none;
 }
 
 .post figure figcaption {
@@ -5658,6 +5667,11 @@ a.edit-clip-body:focus-visible {
 
      The general form: anything whose visibility waits on an animation having
      finished needs a print reset, because printing neither scrolls nor waits. */
+  /* Figures are dimmed on screen against the dark page; paper is white. */
+  .post figure img {
+    filter: none;
+  }
+
   .tagline-word,
   .tagline-sep {
     opacity: 1 !important;
