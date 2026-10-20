@@ -748,6 +748,15 @@ if (typeof document !== 'undefined') {
     _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
+  /* Travel chart tooltips (travel page only): a few hundred bytes the other
+     pages never fetch. */
+  const seaChart = document.querySelector('.sea-chart-svg');
+  if (seaChart) {
+    import('./sea-chart.js').then(({ initSeaChartTips }) => {
+      _disposables.push(initSeaChartTips(seaChart));
+    });
+  }
+
   /* UNESCO World Heritage accordion (travel page only) — 20 KB of tree that
      the other 20 pages have no use for. */
   const unescoAccordion = document.getElementById('unesco-accordion');

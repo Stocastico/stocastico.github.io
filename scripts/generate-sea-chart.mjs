@@ -260,6 +260,21 @@ export function chartPorts() {
     });
 }
 
+/** The multi-city trips that stay inside the frame, in the order travelled.
+    A trip that leaves it (Morocco has two cities in it, Iceland none) stays
+    on the globe only: half a route on the chart would be a wrong one. */
+export function chartTours() {
+  return (LOCATIONS.trips || [])
+    .filter((t) => t.cities.length > 1 && t.cities.every(inFrame))
+    .map((t) => ({
+      name: t.name,
+      cities: t.cities.map((c) => {
+        const [x, y] = project(c.lon, c.lat);
+        return { name: c.name, x, y };
+      }),
+    }));
+}
+
 /* ─── Furniture ──────────────────────────────────────────────────────────── */
 
 /* Sea names, placed by hand: where a cartographer would letter them is a
@@ -375,10 +390,12 @@ export function buildSeaChart(topo = JSON.parse(fs.readFileSync(LAND, 'utf8'))) 
   const homes = chartHomes();
   const legs = chartLegs();
   const ports = chartPorts();
+  const tours = chartTours();
 
   const desc = `A nautical chart of Europe. The route runs ${homes.map((h) => h.city).join(' to ')}: `
     + legs.map((l) => `${l.to.city} in ${l.year}`).join(', ')
-    + `. ${ports.length} other places visited for work or on holiday are marked along the way.`;
+    + `. ${ports.length} other places visited for work or on holiday are marked along the way, `
+    + `and ${tours.length} tours are drawn as routes: ${tours.map((t) => t.name).join(', ')}.`;
 
   const route = `M${homes.map((h) => `${fmt(h.x)} ${fmt(h.y)}`).join('L')}`;
 
@@ -390,12 +407,20 @@ export function buildSeaChart(topo = JSON.parse(fs.readFileSync(LAND, 'utf8'))) 
     /* A 3.5px mark is too small to find with a pointer; the transparent
        ring around it is what the tooltip actually hangs on. */
     const hit = `<circle class="sea-chart-hit" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="11"/>`;
-    return `  <g class="sea-chart-port sea-chart-port--${p.type}"><title>${esc(p.name)}${info}</title>${hit}${shape}</g>`;
+    return `  <g class="sea-chart-port sea-chart-port--${p.type}" data-tip="${esc(p.name)}${info}">${hit}${shape}</g>`;
   });
 
+  /* Tours: one thin line through the cities and a small mark on each stop.
+     The tooltip names the tour and its route; each stop names itself. */
+  const tourLines = tours.map((t) => [
+    `  <g class="sea-chart-tour" data-tip="${esc(t.name)} — ${esc(t.cities.map((c) => c.name.split(',')[0]).join(' → '))}">`,
+    `    <path class="sea-chart-tour-line" d="M${t.cities.map((c) => `${fmt(c.x)} ${fmt(c.y)}`).join('L')}"/>`,
+    ...t.cities.map((c) => `    <circle class="sea-chart-tour-stop" cx="${fmt(c.x)}" cy="${fmt(c.y)}" r="2.5" data-tip="${esc(c.name)} — ${esc(t.name)}"/>`),
+    '  </g>',
+  ].join('\n'));
+
   const homeLines = homes.map((h) => [
-    `  <g class="sea-chart-home${h.current ? ' sea-chart-home--current' : ''}" data-city="${esc(h.city)}">`,
-    `    <title>${esc(h.city)} — home, ${esc(h.years)}</title>`,
+    `  <g class="sea-chart-home${h.current ? ' sea-chart-home--current' : ''}" data-city="${esc(h.city)}" data-tip="${esc(h.city)} — home, ${esc(h.years)}">`,
     `    <circle class="sea-chart-home-ring" cx="${fmt(h.x)}" cy="${fmt(h.y)}" r="11"/>`,
     `    <circle class="sea-chart-home-dot" cx="${fmt(h.x)}" cy="${fmt(h.y)}" r="5"/>`,
     `    ${homeLabel(h)}`,
@@ -432,6 +457,9 @@ export function buildSeaChart(topo = JSON.parse(fs.readFileSync(LAND, 'utf8'))) 
     ...seaLines,
     '</g>',
     ...compass(),
+    '<g class="sea-chart-tours">',
+    ...tourLines,
+    '</g>',
     '<g class="sea-chart-ports">',
     ...portLines,
     '</g>',

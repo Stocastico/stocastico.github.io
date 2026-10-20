@@ -849,3 +849,74 @@ describe('contact: the address wraps only at the @', () => {
     });
   }
 });
+
+/* The travel chart (#193 review): never cropped on a desktop, so what shows
+   does not depend on the window's shape; and a mark names itself the moment
+   the pointer is on it. */
+describe('travel chart', () => {
+  for (const viewport of [VIEWPORTS.desktop, { width: 1920, height: 1080 }, { width: 1280, height: 640 }]) {
+    test(`${viewport.width}×${viewport.height}: the whole chart is drawn, nothing cropped`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/travel.html', { waitUntil: 'networkidle' });
+        const r = await page.$eval('.sea-chart-svg', (el) => {
+          const vb = el.viewBox.baseVal;
+          const b = el.getBoundingClientRect();
+          return { box: b.width / b.height, vb: vb.width / vb.height };
+        });
+        assert.ok(Math.abs(r.box - r.vb) < 0.01, `frame ${r.box.toFixed(3)}:1 against a ${r.vb.toFixed(3)}:1 chart — it crops`);
+      } finally { await page.close(); }
+    });
+  }
+
+  test('hovering a port shows its name at once', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/travel.html', { waitUntil: 'networkidle' });
+      const port = page.locator('.sea-chart-port').first();
+      const name = await port.getAttribute('data-tip');
+      await port.hover();
+      await page.waitForTimeout(100);
+      const tip = await page.$eval('.sea-chart-tip', (el) => ({ text: el.textContent, shown: getComputedStyle(el).visibility === 'visible' && !el.hidden }));
+      assert.ok(tip.shown, 'no tooltip on hover');
+      assert.equal(tip.text, name);
+      assert.notEqual(await port.evaluate((el) => getComputedStyle(el).cursor), 'help');
+    } finally { await page.close(); }
+  });
+});
+
+/* Title cards (#191 review): as large as the window allows, and "story"
+   readable — Archivo's r–y pair pulls the y under the r's arm at this size. */
+describe('title cards: size and the r–y pair', () => {
+  for (const viewport of [VIEWPORTS.desktop, { width: 1920, height: 1080 }]) {
+    test(`${viewport.width}: "The story so far" spans the room to the right gutter, and its r and y do not touch`, async () => {
+      const page = await newPage(browser, server, { viewport, reducedMotion: 'reduce' });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        const r = await page.$eval('#career .title-card .section-title', (h) => {
+          const range = document.createRange();
+          range.selectNodeContents(h);
+          const text = range.getBoundingClientRect();
+          const fs = parseFloat(getComputedStyle(h).fontSize);
+          /* Character boxes of "r" and "y" in "story", wherever they sit. */
+          const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
+          const chars = [];
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            for (let i = 0; i < n.length; i++) {
+              const cr = document.createRange(); cr.setStart(n, i); cr.setEnd(n, i + 1);
+              chars.push([n.data[i], cr.getBoundingClientRect()]);
+            }
+          }
+          const s = chars.map(([c]) => c).join('');
+          const at = s.indexOf('story') + 3;
+          return { left: text.left, right: text.right, fs, gap: chars[at + 1][1].left - chars[at][1].right };
+        });
+        const gutter = viewport.width >= 1440 ? 48 : 0;
+        const room = viewport.width - r.left - gutter;
+        assert.ok(r.right <= viewport.width - gutter + 1, `the title runs past the gutter (${Math.round(r.right)})`);
+        assert.ok(r.right - r.left >= 0.9 * room, `the title fills ${Math.round((r.right - r.left) / room * 100)}% of the room`);
+        assert.ok(r.gap >= 0.05 * r.fs, `r and y are ${r.gap.toFixed(1)}px apart at ${Math.round(r.fs)}px`);
+      } finally { await page.close(); }
+    });
+  }
+});

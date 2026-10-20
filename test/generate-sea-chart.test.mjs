@@ -93,7 +93,36 @@ test('the legs carry no year and no employer: the chart is about places, not job
 
 test('every home names itself on hover, like the ports do', () => {
   for (const p of CV_PLACES) {
-    assert.match(svg, new RegExp(`data-city="${p.city}">\\s*<title>${p.city}`), `${p.city} has no tooltip`);
+    assert.match(svg, new RegExp(`data-city="${p.city}" data-tip="${p.city}`), `${p.city} has no tooltip`);
+  }
+});
+
+test('marks carry data-tip, not a native <title>: that one shows after a second, under a "?" cursor', () => {
+  /* Review of #193: hovering a port showed the help cursor and, a second
+     later, the browser's own tooltip — which read as "a question mark instead
+     of the place". js/sea-chart.js shows data-tip at once. The only <title>
+     left is the chart's own accessible name. */
+  assert.equal((svg.match(/<title\b/g) || []).length, 1);
+});
+
+const inFrame = (c) => c.lat >= CHART_BOUNDS.minLat && c.lat <= CHART_BOUNDS.maxLat
+  && c.lon >= CHART_BOUNDS.minLon && c.lon <= CHART_BOUNDS.maxLon;
+
+test('every European tour is drawn as a route through its cities, in order', () => {
+  /* The globe draws every multi-city trip; the chart showed none, so a
+     Sicily or a Galicia tour was invisible exactly where it would read best. */
+  const tours = LOCATIONS.trips.filter((t) => t.cities.every(inFrame));
+  assert.ok(tours.length >= 8, `only ${tours.length} European tours`);
+  for (const t of tours) {
+    const m = svg.match(new RegExp(`<g class="sea-chart-tour" data-tip="${t.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"]*">\\s*<path class="sea-chart-tour-line" d="M([^"]+)"`));
+    assert.ok(m, `${t.name} is not on the chart`);
+    assert.equal(m[1].split('L').length, t.cities.length, `${t.name}'s route skips a city`);
+  }
+});
+
+test('a tour that leaves the frame is not drawn half', () => {
+  for (const t of LOCATIONS.trips.filter((x) => !x.cities.every(inFrame))) {
+    assert.ok(!svg.includes(`data-tip="${t.name}`), `${t.name} is drawn though it leaves the chart`);
   }
 });
 
@@ -104,7 +133,7 @@ test('every pin inside the frame is on the chart exactly once, none outside it',
     && (p.type === 'worktrip' || p.type === 'holiday'));
   assert.equal(ports.length, inFrame.length);
   for (const p of inFrame) {
-    const n = svg.split(`<title>${p.name}`).length - 1;
+    const n = svg.split(`data-tip="${p.name}`).length - 1;
     assert.equal(n, 1, `${p.name} drawn ${n} times`);
   }
   for (const p of ports) {

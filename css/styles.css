@@ -1252,8 +1252,11 @@ body::before {
 
 .sea-chart-frame {
   position: relative;
+  /* The chart's own proportion, and no height cap: a cap made the SVG slice
+     off its top and bottom by an amount that depended on the window's shape,
+     so a wide screen lost Andalusia and Sicily (review of #193). Below the
+     fold on a wide screen is fine; cropped differently per window is not. */
   aspect-ratio: 1632 / 1014;
-  max-height: calc(100svh - var(--nav-h));
   width: 100%;
   overflow: hidden;
 }
@@ -1377,9 +1380,53 @@ body::before {
   stroke: none;
 }
 
-.sea-chart-port,
-.sea-chart-home {
-  cursor: help;
+/* European tours: a thin line through the stops, in the holiday colour the
+   ports use, under the ports and homes. */
+.sea-chart-tour-line {
+  fill: none;
+  stroke: var(--pin-holiday);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.sea-chart-tour-stop {
+  fill: var(--pin-holiday);
+  stroke: var(--map-bg);
+  stroke-width: 1;
+}
+
+.sea-chart-tour:hover .sea-chart-tour-line {
+  stroke-width: 3;
+  opacity: 1;
+}
+
+/* js/sea-chart.js: the name beside the pointer, the moment it is on a mark
+   (a native <title> waits a second and shows a "?" cursor meanwhile). */
+.sea-chart-tip {
+  position: absolute;
+  z-index: 3;
+  transform: translate(14px, -50%);
+  max-width: 22rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+
+  &.is-left {
+    transform: translate(calc(-100% - 14px), -50%);
+  }
+
+  &[hidden] {
+    display: none;
+  }
 }
 
 .sea-chart-port:hover > :not(.sea-chart-hit) {
@@ -2514,19 +2561,26 @@ a.edit-clip-body:focus-visible {
     flex-direction: column;
     justify-content: center;
     margin-bottom: 0;
-    /* Sized off the column, not the window: "The story so far", the longest
-       of the three, fills the content width, and the shorter two
-       take the same size so the three cards read as one series. 18.5 leaves it
-       a little short of the right edge. */
-    container-type: inline-size;
+
+    /* As large as the window allows: the title may run past the 1180px
+       column to the right gutter, so a wide screen gets a wider title rather
+       than the same one in more empty space. --title-room is that width;
+       5.45 is "The story so far"'s advance in ems at this cut, and the other
+       two titles take the same size so the three read as one series. */
+    --title-room: calc(100vw - max(var(--gutter), (100vw - var(--container)) / 2) - var(--gutter));
 
     .section-title {
-      font-size: clamp(5.5rem, 18.5cqi, 16rem);
+      width: max-content;
+      font-size: clamp(5.5rem, calc(var(--title-room) / 5.45), 24rem);
       line-height: 0.88;
-      /* Archivo's r–y kerning pair closes "story" until the r's arm touches
-         the y at this size (review of #191); unkerned, the pair opens and
-         nothing else in the three titles changes visibly. */
       font-kerning: none;
+    }
+
+    /* Archivo's r–y pair pulls the y under the r's arm at this size, and
+       turning kerning off only halves it (review of #191). One span in
+       "story" holds the two apart; nothing else in the titles needs it. */
+    .kern-ry {
+      margin-left: 0.06em;
     }
 
     .section-subtitle {

@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const exe = fs.readdirSync('/opt/pw-browsers').filter(d=>d.startsWith('chromium-')).map(d=>`/opt/pw-browsers/${d}/chrome-linux/chrome`).find(fs.existsSync);
+const b = await chromium.launch({ executablePath: exe });
+const p = await b.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 });
+await p.goto('http://localhost:4199/index.html', { waitUntil: 'networkidle' });
+const top = await p.$eval('#contact .pan-pin', (el) => el.getBoundingClientRect().top + scrollY);
+await p.evaluate((y) => scrollTo({ top: y, behavior: 'instant' }), top); await p.waitForTimeout(1500);
+const el = await p.$('.world-map'); await el.screenshot({ path: process.argv[2] });
+await b.close();
