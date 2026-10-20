@@ -3190,6 +3190,14 @@ a.edit-clip-body:focus-visible {
   }
 }
 
+/* Until then js/masonry.js packs them: 4px implicit rows, each card spanning
+   its own height plus the gap, so the row gap goes to zero. Only once the
+   script has measured (.is-packed) — without it the grid above stands. */
+.projects-grid.is-packed {
+  grid-auto-rows: 4px;
+  row-gap: 0;
+}
+
 /* .project-card declares `display: flex` below, and an author declaration beats
    the UA stylesheet's `[hidden] { display: none }` on origin — so the facet
    filter would set the attribute and change nothing on screen without this.

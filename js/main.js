@@ -591,6 +591,11 @@ if (typeof document !== 'undefined') {
          on the page rather than the ones generate-cards baked in. */
       initProjectFilter();
     });
+    /* Pack the cards under each other (a few hundred bytes, only where
+       there are cards). Observes the grid, so it follows the re-render. */
+    import('./masonry.js').then(({ initMasonry }) => {
+      _disposables.push(initMasonry(projGrid));
+    });
   }
   const cvTimeline = document.getElementById('cv-timeline');
   const cvSkills = document.getElementById('cv-skills');

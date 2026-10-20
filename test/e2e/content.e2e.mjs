@@ -565,6 +565,59 @@ describe('projects: the media bin', () => {
   });
 });
 
+/* ─── Projects: packed, in order ─────────────────────────────────────────
+   The cards keep their own heights, and each one starts just under the card
+   above it in its column instead of where the grid row starts — no hole
+   under a short card. Order is still the document's: the first cards fill
+   the top row left to right. */
+describe('projects: the cards pack under each other', () => {
+  for (const [name, vp] of [['desktop', VIEWPORTS.desktop], ['tablet', VIEWPORTS.tablet]]) {
+    test(`${name}: no gap under a short card, chronology kept`, async () => {
+      const page = await newPage(browser, server, { viewport: vp });
+      try {
+        await page.goto(server.base + '/projects.html', { waitUntil: 'networkidle' });
+        await page.$$eval('#projects-grid img', (imgs) => imgs.forEach((i) => { i.loading = 'eager'; }));
+        await page.waitForFunction(() => [...document.querySelectorAll('#projects-grid img')].every((i) => i.complete));
+        /* Layout settles as thumbnails decode and the observer re-measures;
+           give it up to 3 s to have no holes before asserting on what's left. */
+        await page.waitForFunction(() => {
+          const grid = document.getElementById('projects-grid');
+          const gap = parseFloat(getComputedStyle(grid).columnGap);
+          const cols = new Map();
+          for (const c of grid.children) {
+            if (c.hidden) continue;
+            const r = c.getBoundingClientRect();
+            const k = Math.round(r.left);
+            cols.set(k, [...(cols.get(k) || []), r]);
+          }
+          return [...cols.values()].every((rs) => rs.sort((a, b) => a.top - b.top)
+            .every((r, i) => i === 0 || r.top - rs[i - 1].bottom <= gap + 6));
+        }, null, { timeout: 3000 }).catch(() => {});
+        const { cards, gap } = await page.$eval('#projects-grid', (grid) => ({
+          gap: parseFloat(getComputedStyle(grid).columnGap),
+          cards: [...grid.children].filter((c) => !c.hidden).map((c) => {
+            const r = c.getBoundingClientRect();
+            return { left: Math.round(r.left), top: r.top, bottom: r.bottom };
+          }),
+        }));
+        const cols = [...new Set(cards.map((c) => c.left))].sort((a, b) => a - b);
+        assert.ok(cols.length >= 2, `only ${cols.length} column(s)`);
+        /* The first row is the first cards, left to right. */
+        for (let i = 0; i < cols.length; i++) {
+          assert.equal(cards[i].left, cols[i], `card ${i} is not in column ${i}`);
+        }
+        for (const col of cols) {
+          const inCol = cards.filter((c) => c.left === col).sort((a, b) => a.top - b.top);
+          for (let i = 1; i < inCol.length; i++) {
+            const hole = inCol[i].top - inCol[i - 1].bottom;
+            assert.ok(hole <= gap + 6, `a ${Math.round(hole)}px hole above a card in column at ${col}px (gap ${gap}px)`);
+          }
+        }
+      } finally { await page.close(); }
+    });
+  }
+});
+
 /* ─── Slides: About and the title cards hold while you scroll ────────────
    On a desktop the homepage reads like a deck. About is one screen that
    stays put for a couple of scrolls, with a bar under the navbar filling as
