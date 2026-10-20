@@ -166,7 +166,7 @@ export const PROJECTS = [
             short: "MLOps",
             year: "2022 – 2023",
             tags: ["LLMs & MLOps"],
-            bg: "img/projects/mlops-bg.webp",
+            bg: "img/projects/mlops-architecture.svg",
             description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models (churn prediction, article recommendation and more) and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection.",
             url: "projects/mlops-vertex-media.html",
         },

@@ -112,3 +112,22 @@ test('thumbs: a diagram painted in palette variables keeps its colours, not a on
   assert.ok(cyan > 40, `only ${cyan} pixels in the box colour (thin outlines; the stencil had 0)`);
   assert.ok(light > 300, `only ${light} pixels light enough to be label text`);
 });
+
+test('the MLOps card shows its own architecture diagram, not the stock image', () => {
+  /* Review of #192: the generic render the page shipped with said nothing
+     about the project; the write-up's own diagram says what it was. */
+  const p = PROJECTS.find((x) => x.id === 'mlops-vertex-media');
+  assert.equal(p.bg, 'img/projects/mlops-architecture.svg');
+});
+
+test('every SVG bg is a stencil: no full-frame background rect', () => {
+  /* The detail-page hero paints an SVG bg through mask-image, so only its
+     alpha counts: a diagram with a ground rect becomes one solid slab. */
+  for (const p of PROJECTS.filter((x) => x.bg && x.bg.endsWith('.svg'))) {
+    const svg = fs.readFileSync(path.join(ROOT, p.bg), 'utf8');
+    const vb = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
+    assert.ok(vb, `${p.bg} has no viewBox`);
+    const full = new RegExp(`<rect(?![^>]*\\bx=)(?![^>]*\\by=)[^>]*width="${vb[1]}"[^>]*height="${vb[2]}"`);
+    assert.doesNotMatch(svg, full, `${p.bg} has a background rect`);
+  }
+});

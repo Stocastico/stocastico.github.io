@@ -71,6 +71,9 @@ export function SVG_VARS() {
     'text-faint': THEME.textFaint, bg: THEME.bg, 'bg-card': mix(THEME.bg, THEME.text, 0.12),
     'accent-rgb': rgbOf(THEME.accent).join(' '), 'accent2-rgb': rgbOf(THEME.accent2).join(' '),
     'text-rgb': rgbOf(THEME.text).join(' '),
+    'accent-text': THEME.accentText, 'accent2-text': THEME.accent2Text,
+    /* --border is text at 20% (the generated :root); over the ground. */
+    border: mix(THEME.bg, THEME.text, 0.2),
   };
 }
 

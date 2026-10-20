@@ -251,7 +251,7 @@ test('project: imageSize reads PNG and WebP dimensions, returns null when missin
      heroes were finally replaced (issue #170). Update them; do not reach for a
      looser assertion, because the point of the test is the exact pair. */
   assert.deepEqual(imageSize('img/projects/rag-document-qa-og.png'), { width: 1200, height: 630 });
-  assert.deepEqual(imageSize('img/projects/mlops-bg.webp'), { width: 1600, height: 840 });
+  assert.deepEqual(imageSize('img/projects/inevent-bg.webp'), { width: 1153, height: 682 });
   assert.deepEqual(imageSize('img/projects/avatech-bg.webp'), { width: 1381, height: 506 });
   assert.equal(imageSize('img/projects/__does_not_exist__.webp'), null);
 });
@@ -503,9 +503,9 @@ test('project: validateProjectFrontmatter accepts the real vocabulary labels', (
 // ─── body images ──────────────────────────────────────────────────────────────
 
 test('project: markdownToHtml wraps an image in a figure with lazy loading', () => {
-  const html = markdownToHtml('![A diagram](img/projects/mlops-bg.webp)');
+  const html = markdownToHtml('![A diagram](img/projects/inevent-bg.webp)');
   assert.match(html, /<figure>/);
-  assert.match(html, /src="\.\.\/img\/projects\/mlops-bg\.webp"/);
+  assert.match(html, /src="\.\.\/img\/projects\/inevent-bg\.webp"/);
   assert.match(html, /alt="A diagram"/);
   assert.match(html, /loading="lazy"/);
   assert.match(html, /decoding="async"/);
@@ -517,9 +517,9 @@ test('project: markdownToHtml wraps an image in a figure with lazy loading', () 
    off the file rather than declared in the Markdown, because a number a human
    retypes is a number that goes stale when the image is re-exported. */
 test('project: markdownToHtml reads intrinsic width/height off the image file', () => {
-  const html = markdownToHtml('![MLOps](img/projects/mlops-bg.webp)');
-  assert.match(html, /width="1600" height="840"/,
-    'expected the real dimensions of img/projects/mlops-bg.webp');
+  const html = markdownToHtml('![MLOps](img/projects/inevent-bg.webp)');
+  assert.match(html, /width="1153" height="682"/,
+    'expected the real dimensions of img/projects/inevent-bg.webp');
 });
 
 test('project: markdownToHtml omits dimensions it cannot read', () => {
@@ -534,13 +534,13 @@ test('project: markdownToHtml omits dimensions it cannot read', () => {
    with no consumer on any project page, because there was no Markdown syntax
    that could produce one. */
 test('project: markdownToHtml turns a quoted title into a figcaption', () => {
-  const html = markdownToHtml('![Alt text](img/projects/mlops-bg.webp "The **pipeline** as deployed")');
+  const html = markdownToHtml('![Alt text](img/projects/inevent-bg.webp "The **pipeline** as deployed")');
   assert.match(html, /<figcaption>The <strong>pipeline<\/strong> as deployed<\/figcaption>/);
   assert.match(html, /alt="Alt text"/, 'the caption must not displace the alt text');
 });
 
 test('project: markdownToHtml emits no figcaption when none is given', () => {
-  assert.doesNotMatch(markdownToHtml('![A](img/projects/mlops-bg.webp)'), /figcaption/);
+  assert.doesNotMatch(markdownToHtml('![A](img/projects/inevent-bg.webp)'), /figcaption/);
 });
 
 /* `{plate}` — the one figure modifier, for a published figure that is baked on
@@ -550,29 +550,29 @@ test('project: markdownToHtml emits no figcaption when none is given', () => {
    first time that happens — which no parity test would catch, since parity
    compares text and a class is not text. */
 test('project: markdownToHtml marks a {plate} figure', () => {
-  const html = markdownToHtml('![A chart](img/projects/mlops-bg.webp){plate}');
+  const html = markdownToHtml('![A chart](img/projects/inevent-bg.webp){plate}');
   assert.match(html, /<figure class="figure-plate">/);
   assert.match(html, /alt="A chart"/, 'the modifier must not leak into the alt text');
   assert.doesNotMatch(html, /\{plate\}/, 'the modifier must not survive into the page');
-  assert.match(html, /width="1600" height="840"/, 'dimensions still read off the file');
+  assert.match(html, /width="1153" height="682"/, 'dimensions still read off the file');
 });
 
 test('project: markdownToHtml accepts {plate} alongside a caption', () => {
-  const html = markdownToHtml('![Alt](img/projects/mlops-bg.webp "From the paper"){plate}');
+  const html = markdownToHtml('![Alt](img/projects/inevent-bg.webp "From the paper"){plate}');
   assert.match(html, /<figure class="figure-plate">/);
   assert.match(html, /<figcaption>From the paper<\/figcaption>/);
 });
 
 test('project: markdownToHtml rejects an unknown figure modifier', () => {
   assert.throws(
-    () => markdownToHtml('![A](img/projects/mlops-bg.webp){sparkle}'),
+    () => markdownToHtml('![A](img/projects/inevent-bg.webp){sparkle}'),
     /sparkle/,
     'an unknown modifier must fail loudly, not render as literal text',
   );
 });
 
 test('project: a plain figure keeps no class attribute', () => {
-  assert.doesNotMatch(markdownToHtml('![A](img/projects/mlops-bg.webp)'), /<figure class=/);
+  assert.doesNotMatch(markdownToHtml('![A](img/projects/inevent-bg.webp)'), /<figure class=/);
 });
 
 // ─── the scaffold cannot silently lose site-wide chrome ───────────────────────
