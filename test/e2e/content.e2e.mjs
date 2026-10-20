@@ -548,7 +548,6 @@ describe('projects: the media bin', () => {
         assert.ok(Math.abs(f.ratio - 16 / 9) < 0.02, `frame ${i} is ${f.ratio.toFixed(3)}:1`);
         assert.ok(f.img === null ? f.bars : f.img > 0, `frame ${i} painted nothing (img ${f.img}, bars ${f.bars})`);
       }
-      assert.ok(frames.some((f) => f.img === null), 'expected at least one colour-bars frame');
     } finally { await page.close(); }
   });
 

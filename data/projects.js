@@ -77,6 +77,9 @@ export const PROJECTS = [
                it and no English detail page sits in between. */
             url: "/brescia-dataviz/",
             lang: "it",
+            /* The card frame only (no detail page reads it): one of the
+               piece's own maps, captured by tools/capture-dataviz-thumbs.mjs. */
+            thumb: "drafts/thumbs/brescia-dataviz.png",
             updated: "2026-09-17",
         },
     {
@@ -94,6 +97,7 @@ export const PROJECTS = [
                the card, and generate-sitemap skips any url outside projects/. */
             url: "/donostia-dataviz/",
             lang: "es",
+            thumb: "drafts/thumbs/donostia-dataviz.png",
         },
     {
             id: "mnist-lenet",

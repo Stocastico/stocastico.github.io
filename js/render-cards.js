@@ -69,7 +69,7 @@ export const THUMB_W = 640;
 export const THUMB_H = 360;
 
 export function thumbUrl(project) {
-  return project && project.bg ? '/img/thumbs/' + project.id + '.webp' : null;
+  return project && (project.bg || project.thumb) ? '/img/thumbs/' + project.id + '.webp' : null;
 }
 
 /* One project card. `i` only drives the staggered reveal delay. */

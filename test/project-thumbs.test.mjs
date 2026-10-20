@@ -31,8 +31,8 @@ test('thumbs: the frame is 16:9', () => {
   assert.equal(THUMB_W * 9, THUMB_H * 16);
 });
 
-test('thumbs: every project with a bg has a thumbnail of the promised size, and nothing else does', async () => {
-  const withBg = PROJECTS.filter((p) => p.bg);
+test('thumbs: every project with a bg or thumb has a thumbnail of the promised size, and nothing else does', async () => {
+  const withBg = PROJECTS.filter((p) => p.bg || p.thumb);
   assert.ok(withBg.length >= 10, `only ${withBg.length} projects carry a bg`);
   for (const p of withBg) {
     const file = path.join(ROOT, 'public', thumbUrl(p).slice(1));
@@ -46,6 +46,21 @@ test('thumbs: every project with a bg has a thumbnail of the promised size, and 
   const expected = new Set(withBg.map((p) => `${p.id}.webp`));
   const stray = fs.readdirSync(THUMBS).filter((f) => f.endsWith('.webp') && !expected.has(f));
   assert.deepEqual(stray, [], 'thumbnails for projects that no longer exist (or lost their bg)');
+});
+
+/* The two off-site dataviz pieces have no detail page and so no `bg`; they
+   used to open on the colour bars, two identical frames side by side. Each
+   now carries a `thumb` — one of its own maps, captured by
+   tools/capture-dataviz-thumbs.mjs into drafts/thumbs/ — which feeds the
+   card frame and nothing else. */
+test('thumbs: every project has a picture of its own, off-site ones included', () => {
+  const bare = PROJECTS.filter((p) => !thumbUrl(p)).map((p) => p.id);
+  assert.deepEqual(bare, [], 'projects whose card opens on the colour bars');
+  for (const p of PROJECTS.filter((x) => x.thumb)) {
+    assert.match(p.thumb, /^drafts\/thumbs\/[a-z0-9-]+\.png$/, `${p.id}: thumb sources live in drafts/thumbs/`);
+    assert.ok(fs.existsSync(path.join(ROOT, p.thumb)), `${p.id}: ${p.thumb} is missing`);
+    assert.ok(!p.bg, `${p.id}: a thumb is for a project with no bg; a bg already makes the frame`);
+  }
 });
 
 test('thumbs: the manifest matches the sources (drift guard)', () => {
@@ -69,9 +84,10 @@ test('card: a project with a bg opens on its thumbnail', () => {
   assert.doesNotMatch(html, new RegExp(p.bg.replace(/[.]/g, '\\.')), 'never the full-size hero');
 });
 
-test('card: a project without a bg gets the colour bars, not an empty frame', () => {
-  const p = PROJECTS.find((x) => !x.bg);
-  assert.ok(p, 'fixture: expected at least one bg-less project');
+test('card: a project without a picture gets the colour bars, not an empty frame', () => {
+  /* A fixture: every real project has a picture now, but the fallback stays
+     for the next one that arrives without. */
+  const p = { id: 'no-picture', kind: 'work', title: 'No picture', year: '2026', tags: [], description: 'x', url: '/x/' };
   const html = projectCardHtml(p);
   assert.match(html, /<div class="project-card__thumb project-card__thumb--bars">/);
   assert.doesNotMatch(html, /<img /);

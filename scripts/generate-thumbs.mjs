@@ -51,12 +51,16 @@ const QUALITY = 72;
 const RECIPE = 2;
 
 export function thumbJobs(projects) {
-  return projects.filter((p) => p.bg).map((p) => {
-    const source = path.join(ROOT, p.bg);
-    const stencil = p.bg.endsWith('.svg');
-    const recipe = JSON.stringify({ RECIPE, THUMB_W, THUMB_H, QUALITY, ...(stencil ? { palette: SVG_VARS() } : {}) });
+  return projects.filter((p) => p.bg || p.thumb).map((p) => {
+    /* `thumb` (drafts/thumbs/, an off-site piece's map on a transparent
+       ground) is fitted onto the card's ground like a diagram; `bg` is
+       cropped or stencilled as below. */
+    const map = !!p.thumb;
+    const source = path.join(ROOT, p.thumb || p.bg);
+    const stencil = !map && p.bg.endsWith('.svg');
+    const recipe = JSON.stringify({ RECIPE, THUMB_W, THUMB_H, QUALITY, ...(stencil ? { palette: SVG_VARS() } : {}), ...(map ? { map, bg: THEME.bg } : {}) });
     const hash = crypto.createHash('sha256').update(recipe).update(fs.readFileSync(source)).digest('hex').slice(0, 16);
-    return { id: p.id, source, stencil, out: path.join(ROOT, 'public', thumbUrl(p).slice(1)), hash };
+    return { id: p.id, source, stencil, map, out: path.join(ROOT, 'public', thumbUrl(p).slice(1)), hash };
   });
 }
 
@@ -90,6 +94,18 @@ export function resolveSvgVars(svg, vars = SVG_VARS()) {
 }
 
 async function render(sharp, job) {
+  if (job.map) {
+    /* A map on a transparent ground: fitted whole, centred on the ground. */
+    const PAD = 0.06;
+    const art = await sharp(job.source)
+      .resize(Math.round(THUMB_W * (1 - 2 * PAD)), Math.round(THUMB_H * (1 - 2 * PAD)), { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+    return sharp({ create: { width: THUMB_W, height: THUMB_H, channels: 3, background: THEME.bg } })
+      .composite([{ input: art, gravity: 'center' }])
+      .webp({ quality: QUALITY })
+      .toBuffer();
+  }
   if (!job.stencil) {
     return sharp(job.source)
       .resize(THUMB_W, THUMB_H, { fit: 'cover', position: sharp.strategy.attention })
