@@ -570,7 +570,13 @@ describe('projects: the media bin', () => {
    under a short card. Order is still the document's: the first cards fill
    the top row left to right. */
 describe('projects: the cards pack under each other', () => {
-  for (const [name, vp] of [['desktop', VIEWPORTS.desktop], ['tablet', VIEWPORTS.tablet]]) {
+  /* Several widths, because which card ends up next to which depends on how
+     each description wraps, and the first version's holes appeared only for
+     some combinations of heights (in CI's newer Chromium, not locally). */
+  for (const [name, vp] of [
+    ['desktop', VIEWPORTS.desktop], ['laptop', VIEWPORTS.laptop], ['tablet', VIEWPORTS.tablet],
+    ['1100', { width: 1100, height: 800 }], ['1920', { width: 1920, height: 1080 }],
+  ]) {
     test(`${name}: no gap under a short card, chronology kept`, async () => {
       const page = await newPage(browser, server, { viewport: vp });
       try {
