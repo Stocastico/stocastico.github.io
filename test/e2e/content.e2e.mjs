@@ -571,8 +571,13 @@ describe('projects: the media bin', () => {
    the top row left to right. */
 describe('projects: the cards pack under each other', () => {
   /* Several widths, because which card ends up next to which depends on how
-     each description wraps, and the first version's holes appeared only for
-     some combinations of heights (in CI's newer Chromium, not locally). */
+     each description wraps.
+
+     Positions are layout boxes (offsetLeft/Top/Height), never
+     getBoundingClientRect: [data-animate] cards sit translated 30px down
+     until the reveal reaches them, so a revealed card above an unrevealed
+     one read as a 24 + 30 = 54px hole. That failed CI twice (55 and 57px)
+     on a layout that had none, depending on how far the reveal had got. */
   for (const [name, vp] of [
     ['desktop', VIEWPORTS.desktop], ['laptop', VIEWPORTS.laptop], ['tablet', VIEWPORTS.tablet],
     ['1100', { width: 1100, height: 800 }], ['1920', { width: 1920, height: 1080 }],
@@ -591,8 +596,8 @@ describe('projects: the cards pack under each other', () => {
           const cols = new Map();
           for (const c of grid.children) {
             if (c.hidden) continue;
-            const r = c.getBoundingClientRect();
-            const k = Math.round(r.left);
+            const r = { top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight };
+            const k = c.offsetLeft;
             cols.set(k, [...(cols.get(k) || []), r]);
           }
           return [...cols.values()].every((rs) => rs.sort((a, b) => a.top - b.top)
@@ -601,8 +606,7 @@ describe('projects: the cards pack under each other', () => {
         const { cards, gap } = await page.$eval('#projects-grid', (grid) => ({
           gap: parseFloat(getComputedStyle(grid).columnGap),
           cards: [...grid.children].filter((c) => !c.hidden).map((c) => {
-            const r = c.getBoundingClientRect();
-            return { left: Math.round(r.left), top: r.top, bottom: r.bottom };
+            return { left: c.offsetLeft, top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight };
           }),
         }));
         const cols = [...new Set(cards.map((c) => c.left))].sort((a, b) => a - b);
