@@ -143,7 +143,7 @@ export const CV_PLACES = [
 export const CV_TIMELINE_PROJECTS = [
   {
     year:  '2026 – present',
-    title: 'AI Production',
+    title: 'AI Production Studio',
   },
 ];
 

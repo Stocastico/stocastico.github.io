@@ -183,7 +183,7 @@ places:
 # When the project page exists, move it to data/projects.js and delete it here.
 timeline_projects:
   - year: "2026 – present"
-    title: AI Production
+    title: AI Production Studio
 
 # ── Education ─────────────────────────────────────────────────────────────────
 # Required:  year, degree, institution

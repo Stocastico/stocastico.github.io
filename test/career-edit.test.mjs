@@ -71,7 +71,7 @@ test('careerEditLines: work only — personal projects stay off the timeline', (
 });
 
 test('careerEditLines: timeline-only projects (no page yet) are clips without a link', () => {
-  assert.ok(CV_TIMELINE_PROJECTS.some((p) => p.title === 'AI Production'), 'AI Production is missing from data/cv.yaml');
+  assert.ok(CV_TIMELINE_PROJECTS.some((p) => p.title === 'AI Production Studio'), 'AI Production Studio is missing from data/cv.yaml');
   for (const p of CV_TIMELINE_PROJECTS) {
     const m = html.match(new RegExp(`<li class="edit-clip"[^>]*><(a|span) class="edit-clip-body"[^>]*><span class="edit-clip-title">${p.title}</span>`));
     assert.ok(m, `${p.title} is not on the projects lane`);
@@ -118,7 +118,10 @@ test('careerEditLines: a `short` name is what the clip shows; the full name stay
      as "Multi-mo…". `short` (data/cv.yaml, data/projects.js) is the visible
      text; the full name is still the tooltip and what a screen reader hears. */
   const shorts = [...CV_CAREER, ...CV_EDUCATION, ...PROJECTS].filter((e) => e.short);
-  for (const want of ['AGT', 'UFC', 'MLOps', 'RAG', 'Audience', 'MSc in Telecommunications Eng.', 'Gaussian Splatting', 'AR Geograph', 'BrandIA']) {
+  /* Two lines fit on the full-screen edit, so the names were lengthened
+     again in the review of #191. */
+  for (const want of ['AGT', 'UFC fighter tracking', 'MLOps on GCP', 'RAG for banking', 'Audience engagement',
+    'MSc in Telecommunications Eng.', 'Gaussian Splatting', 'AR Geography', 'BrandIA', 'Software for neuroscience']) {
     assert.ok(shorts.some((e) => e.short === want), `no entry is shortened to "${want}"`);
   }
   for (const e of shorts) {
@@ -127,4 +130,17 @@ test('careerEditLines: a `short` name is what the clip shows; the full name stay
     assert.ok(m, `the clip for ${full} does not show "${e.short}"`);
     assert.ok(m[1].includes(full.replace(/&/g, '&amp;')), `the clip for "${e.short}" lost its full name`);
   }
+});
+
+test('no project clip repeats the name of the job above it', () => {
+  /* The MPI project's clip read "MPI for Brain Research", the same words as
+     the work clip over it (review of #191): a label has to say what the
+     project was, not where. */
+  const html = careerEditLines(DATA).join('\n');
+  const titles = (lane) => {
+    const block = html.split(`data-lane="${lane}"`)[1].split('data-lane=')[0];
+    return [...block.matchAll(/<span class="edit-clip-title">([^<]+)<\/span>/g)].map((m) => m[1].trim());
+  };
+  const work = new Set(titles('work'));
+  for (const t of titles('projects')) assert.ok(!work.has(t), `the project clip "${t}" says the same as a work clip`);
 });

@@ -721,3 +721,97 @@ describe('type roles: chrome is never set in the prose face', () => {
     assert.deepEqual(bad, [], `\n  ${bad.join('\n  ')}\n`);
   });
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Pans (review of #188): two section changes on the homepage move sideways
+   instead of down. The project cards hold full screen and "On paper" pushes
+   them off to the left from the right; the same between Places and Contact.
+   Pure CSS — a sticky panel on the way out, a sticky stage on the way in,
+   both driven by one view timeline — so everything here asks where the
+   browser put things. The move has to be horizontal: both sides keep their
+   vertical position while it runs.
+   ───────────────────────────────────────────────────────────────────────────── */
+describe('pans', () => {
+  const PAIRS = [
+    { name: 'projects → publications', from: '#projects .pan-from', pin: '#publications .slide-pin--title', stage: '#publications .slide-stage', anchor: '#publications' },
+    { name: 'places → contact', from: '#places .pan-from', pin: '#contact .pan-pin', stage: '#contact .pan-stage', anchor: '#contact' },
+  ];
+  const go = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo({ top: to, behavior: 'instant' }), y);
+    await page.waitForTimeout(350);
+  };
+  const boxes = (page, p) => page.evaluate(({ from, stage }) => {
+    const r = (q) => { const b = document.querySelector(q).getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top }; };
+    return { from: r(from), stage: r(stage) };
+  }, p);
+
+  for (const viewport of [VIEWPORTS.desktop, { width: 1920, height: 1080 }, { width: 1100, height: 700 }]) {
+    for (const p of PAIRS) {
+      test(`desktop ${viewport.width}×${viewport.height}: ${p.name} moves sideways`, async () => {
+        const page = await newPage(browser, server, { viewport });
+        try {
+          await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+          const vw = viewport.width;
+          const top = await page.$eval(p.pin, (el) => el.getBoundingClientRect().top + scrollY);
+          await go(page, top - 200);
+          await page.waitForTimeout(900); // the reveal
+          await go(page, top);
+          const a = await boxes(page, p);
+          assert.ok(a.from.left >= -1 && a.from.right <= vw + 1, `${p.from} not on screen at the start (${Math.round(a.from.left)})`);
+          assert.ok(a.stage.left >= vw - 1, `${p.stage} already on screen at the start (${Math.round(a.stage.left)})`);
+
+          await go(page, top + viewport.height * 0.6);
+          const b = await boxes(page, p);
+          assert.ok(b.from.left < -20 && b.stage.left < vw - 20 && b.stage.left > 20, `no sideways move midway: from ${Math.round(b.from.left)}, stage ${Math.round(b.stage.left)}`);
+          assert.ok(Math.abs(b.from.top - a.from.top) <= 2, `${p.from} moved vertically during the pan (${Math.round(a.from.top)} → ${Math.round(b.from.top)})`);
+          assert.ok(Math.abs(b.stage.top) <= 1, `${p.stage} is not pinned during the pan (top ${Math.round(b.stage.top)})`);
+
+          await go(page, top + viewport.height * 1.5);
+          const c = await boxes(page, p);
+          assert.ok(Math.abs(c.stage.left) <= 1, `${p.stage} did not arrive (left ${Math.round(c.stage.left)})`);
+          assert.ok(c.from.right <= 1, `${p.from} is still on screen after the pan`);
+        } finally { await page.close(); }
+      });
+    }
+  }
+
+  test('a nav jump to Publications or Contact lands on the arrived screen, not mid-pan', async () => {
+    for (const p of PAIRS) {
+      /* A fresh page each time: a second hash on the same document is a
+         smooth scroll, and this asks where the jump lands, not how. */
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + '/index.html' + p.anchor, { waitUntil: 'networkidle' });
+        await page.waitForTimeout(1000);
+        const { stage } = await boxes(page, p);
+        assert.ok(Math.abs(stage.left) <= 3 && Math.abs(stage.top) <= 1, `${p.anchor}: stage at ${Math.round(stage.left)}, ${Math.round(stage.top)}`);
+      } finally { await page.close(); }
+    }
+  });
+
+  test('reduced motion: no pan, everything in the normal flow', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const r = await page.evaluate(() => [...document.querySelectorAll('.pan-runway')].map((el) => el.offsetHeight));
+      assert.ok(r.length === 2 && r.every((h) => h === 0), `runways under reduced motion: ${r}`);
+      for (const p of PAIRS) assert.equal(await page.$eval(p.stage, (el) => getComputedStyle(el).position), 'static', `${p.stage} still sticky`);
+    } finally { await page.close(); }
+  });
+
+  test('keyboard: focusing a project card or a contact card cancels the pan, so focus is never off screen', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      for (const q of ['#projects-grid .project-card', '#contact .contact-copy']) {
+        await page.focus(q);
+        await page.keyboard.press('Shift+Tab');
+        await page.waitForTimeout(1000); // html scrolls smoothly to focus
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(1000);
+        const r = await page.$eval(q, (el) => { const b = el.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, bt: b.bottom }; });
+        assert.ok(r.l >= 0 && r.r <= 1440 && r.t >= 0 && r.bt <= 900, `${q} focused off screen at ${Math.round(r.l)},${Math.round(r.t)}`);
+      }
+    } finally { await page.close(); }
+  });
+});
