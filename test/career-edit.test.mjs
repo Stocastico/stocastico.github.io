@@ -108,7 +108,7 @@ test('careerEditLines: the edit carries its total row count, for the full-screen
      size a row, so it must be the real sum of every lane's rows — a guessed
      constant overflows the screen the day projects pack into a fourth row. */
   const total = [...html.matchAll(/--track-rows: (\d+)/g)].reduce((a, m) => a + Number(m[1]), 0);
-  const m = html.match(/<div class="edit" style="--edit-rows: (\d+)">/);
+  const m = html.match(/<div class="edit" style="--edit-rows: (\d+);/);
   assert.ok(m, 'the .edit element has no --edit-rows');
   assert.equal(Number(m[1]), total);
 });
@@ -143,4 +143,18 @@ test('no project clip repeats the name of the job above it', () => {
   };
   const work = new Set(titles('work'));
   for (const t of titles('projects')) assert.ok(!work.has(t), `the project clip "${t}" says the same as a work clip`);
+});
+
+test('the edit ends in a short empty stretch after the present, with the playhead on the present', () => {
+  /* The edit used to end flush with the present and the playhead sat on the
+     window's edge, so the scrub stopped and the page dropped away with no
+     sign the timeline had ended (review of #191). Now the ruler runs a year
+     past the present, empty, and the red line marks where the clips stop. */
+  const html = careerEditLines(DATA).join('\n');
+  const now = Number(html.match(/class="edit" style="[^"]*--now-at: ([\d.]+)/)[1]);
+  assert.ok(now < 98 && now > 90, `the present is at ${now}% of the ruler`);
+  for (const m of html.matchAll(/--clip-at: ([\d.]+); --clip-len: ([\d.]+)/g)) {
+    assert.ok(Number(m[1]) + Number(m[2]) <= now + 0.01, `a clip runs past the present (${m[1]} + ${m[2]})`);
+  }
+  assert.doesNotMatch(html, /edit-playhead/, 'the fixed playhead at the window edge is back');
 });

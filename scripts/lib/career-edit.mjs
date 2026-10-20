@@ -86,7 +86,12 @@ function rootUrl(url) {
 
 export function careerEditLines({ career, education, places, projects, timelineProjects = [], publications }) {
   const { start, end } = timelineBounds({ career, education, places, projects, timelineProjects, publications });
-  const span = end - start;
+  /* The ruler runs TAIL years past the present, empty: when the scrub stops
+     there, the clips visibly end before the window does, at the red line,
+     instead of the page simply dropping away at the last clip's edge. */
+  const TAIL = 1;
+  const span = end - start + TAIL;
+  const nowAt = pct(((end - start) / span) * 100);
   const pos = ({ from, to }) => `--clip-at: ${pct(((from - start) / span) * 100)}; --clip-len: ${pct(((to - from) / span) * 100)}`;
 
   /* One clip per item; `body` is its visible content, `label` the full
@@ -172,7 +177,7 @@ export function careerEditLines({ career, education, places, projects, timelineP
 
   return [
     `<div class="edit-scroll" role="region" aria-label="Career timeline, ${start} to ${end - 1}" tabindex="0">`,
-    `  <div class="edit" style="--edit-rows: ${totalRows}">`,
+    `  <div class="edit" style="--edit-rows: ${totalRows}; --now-at: ${nowAt}">`,
     `  <div class="edit-ruler" aria-hidden="true">`,
     ...ruler,
     '  </div>',
@@ -183,7 +188,6 @@ export function careerEditLines({ career, education, places, projects, timelineP
     ...paperItems.map((l) => `  ${l}`),
     '    </ol>',
     '  </div>',
-    '  <div class="edit-playhead" aria-hidden="true"></div>',
     '  </div>',
     '</div>',
   ];

@@ -31,6 +31,7 @@ const RUNTIME_VARS = new Set([
   '--papers',
   '--track-rows',
   '--edit-rows',
+  '--now-at',           //   and where the present is on it
 ]);
 
 test('css: every var(--x) in styles.css resolves to a definition', () => {
