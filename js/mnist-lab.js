@@ -87,6 +87,11 @@ export class MnistLab {
     this._resolveInk();
 
     this._renderIdle();
+    /* Arrive on a working network rather than ten empty bars and a blank
+       band of layers: one committed test digit, run at once, not announced
+       (a screen reader should not hear about a digit nobody drew). */
+    this.loadExample({ quiet: true });
+    this._preloaded = this._dirty;
   }
 
   /* Pick, for each accent, whichever shade contrasts more against the current
@@ -127,6 +132,13 @@ export class MnistLab {
 
     const down = (e) => {
       if (e.button !== undefined && e.button !== 0) return;
+      /* The digit shown on arrival is ours, not the visitor's: the first
+         stroke starts on a clean canvas instead of drawing over it. */
+      if (this._preloaded) {
+        this._preloaded = false;
+        this.dctx.clearRect(0, 0, DRAW, DRAW);
+        this._hasResult = false;
+      }
       this._drawing = true;
       this._last = pos(e);
       /* A tap with no movement should still leave a dot. */
@@ -205,6 +217,7 @@ export class MnistLab {
   }
 
   clear() {
+    this._preloaded = false;
     this.dctx.clearRect(0, 0, DRAW, DRAW);
     this._dirty = false;
     this._hasResult = false;
@@ -220,8 +233,9 @@ export class MnistLab {
   /* Draw one of the ten committed MNIST test digits onto the canvas, so the
      page is usable without a pointer and so there is always a reference for
      what a "well-formed" digit looks like. */
-  loadExample() {
+  loadExample({ quiet = false } = {}) {
     if (!this.samples.length) return;
+    this._preloaded = false;
     this._sampleCursor = (this._sampleCursor + 1) % this.samples.length;
     const sample = this.samples[this._sampleCursor];
     const pixels = decodeBase64(sample.pixels);
@@ -251,8 +265,8 @@ export class MnistLab {
     this.dctx.imageSmoothingEnabled = true;
     this._dirty = true;
     this._hasResult = false;
-    this._run({ animate: true });
-    this._say(`Loaded MNIST test digit ${sample.digit}.`);
+    this._run({ animate: !quiet });
+    if (!quiet) this._say(`Loaded MNIST test digit ${sample.digit}.`);
   }
 
   /* ── Inference ─────────────────────────────────────────────────────────── */
