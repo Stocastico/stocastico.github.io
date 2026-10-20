@@ -617,6 +617,39 @@ describe('projects: the cards pack under each other', () => {
   }
 });
 
+/* ─── /now: the standing intro is not the update ─────────────────────────
+   The lead says what the page is ("what I'd tell you over a coffee") and
+   stays the same; the paragraphs after it are the update and change. They
+   used to be set in the same serif a shade apart, which read as one text.
+   The lead is a note in the UI face, the update is the prose. */
+describe('now: the intro reads differently from the update', () => {
+  test('lead in the UI face, update in the prose face and at full colour', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
+      const r = await page.evaluate(() => {
+        const cs = (el) => getComputedStyle(el);
+        const lead = document.querySelector('#now-content .post-lead');
+        const body = document.querySelector('#now-content .post-lead ~ p');
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--text)';
+        document.body.appendChild(probe);
+        const text = cs(probe).color;
+        probe.remove();
+        return {
+          leadFont: cs(lead).fontFamily, bodyFont: cs(body).fontFamily,
+          bodyColor: cs(body).color, text,
+          leadSize: parseFloat(cs(lead).fontSize), bodySize: parseFloat(cs(body).fontSize),
+        };
+      });
+      assert.notEqual(r.leadFont, r.bodyFont, 'lead and update share a face');
+      assert.match(r.bodyFont, /Source Serif/);
+      assert.equal(r.bodyColor, r.text, 'the update is set at full text colour');
+      assert.ok(r.bodySize > r.leadSize, `update ${r.bodySize}px is not larger than the lead ${r.leadSize}px`);
+    } finally { await page.close(); }
+  });
+});
+
 /* ─── Slides: About and the title cards hold while you scroll ────────────
    On a desktop the homepage reads like a deck. About is one screen that
    stays put for a couple of scrolls, with a bar under the navbar filling as
