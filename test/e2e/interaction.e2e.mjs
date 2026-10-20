@@ -666,3 +666,37 @@ describe('lifecycle: the page survives Back', () => {
     } finally { await page.close(); }
   });
 });
+
+/* The cut between pages (review of #188): a same-site navigation runs a
+   cross-document view transition — the old page wipes off over the colour
+   bars and the new one wipes in — and none under reduced motion. Asked of
+   the browser through `pagereveal`, whose event carries the transition. */
+describe('page transition: the cut', () => {
+  const navigate = async (reducedMotion) => {
+    const page = await newPage(browser, server, { viewport: { width: 1440, height: 900 }, reducedMotion });
+    await page.addInitScript(() => {
+      /* How long the transition runs, not whether one exists: the opt-in
+         holds under reduced motion too (see css/styles.css), so the
+         question there is whether it takes any time. */
+      window.addEventListener('pagereveal', (e) => {
+        if (!e.viewTransition) { window.__cut = 0; return; }
+        const t0 = performance.now();
+        e.viewTransition.finished.then(() => { window.__cut = performance.now() - t0; });
+      });
+    });
+    await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
+    await Promise.all([page.waitForURL('**/cv.html'), page.click('nav a[href$="cv.html"]')]);
+    await page.waitForTimeout(800);
+    const cut = await page.evaluate(() => window.__cut);
+    await page.close();
+    return cut;
+  };
+  test('a navigation between pages is a cut', async () => {
+    const ms = await navigate('no-preference');
+    assert.ok(ms > 300, `the cut ran ${ms} ms`);
+  });
+  test('reduced motion: no cut', async () => {
+    const ms = await navigate('reduce');
+    assert.ok(ms < 100, `the cut ran ${ms} ms under reduced motion`);
+  });
+});

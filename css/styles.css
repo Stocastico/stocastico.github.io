@@ -479,6 +479,49 @@ body::before {
     var(--pin-worktrip) 85.714% 100%);
 }
 
+/* ─── The cut between pages ────────────────────────────────
+   A same-origin navigation is a cross-document view transition: the old
+   page wipes off to the left, the colour bars show full screen for a beat,
+   the new page wipes in from the right — the bars an edit shows between
+   two clips. ~0.4 s end to end, so it reads as a cut rather than a wait.
+   Pure CSS; a browser without cross-document transitions just navigates.
+
+   Under reduced motion the transition still exists but takes no time: the
+   opt-in cannot be withdrawn by a media query (Chromium honours a
+   @view-transition nested in @media (prefers-reduced-motion) either way —
+   measured), and the UA default would otherwise cross-fade for 0.25 s. */
+@view-transition { navigation: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition {
+    background: linear-gradient(90deg,
+      var(--text) 0 14.286%,
+      var(--accent) 14.286% 28.571%,
+      var(--accent2) 28.571% 42.857%,
+      var(--pin-lived) 42.857% 57.143%,
+      var(--pin-holiday) 57.143% 71.429%,
+      var(--pin-current) 71.429% 85.714%,
+      var(--pin-worktrip) 85.714% 100%);
+  }
+  ::view-transition-old(root) {
+    animation: cut-out 200ms cubic-bezier(0.7, 0, 0.3, 1) both;
+  }
+  ::view-transition-new(root) {
+    animation: cut-in 220ms cubic-bezier(0.7, 0, 0.3, 1) 180ms both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
+
+@keyframes cut-out { to { clip-path: inset(0 100% 0 0); } }
+@keyframes cut-in { from { clip-path: inset(0 0 0 100%); } }
+
 /* ─── 5. Navigation ─────────────────────────────────────── */
 #navbar {
   position: fixed;
