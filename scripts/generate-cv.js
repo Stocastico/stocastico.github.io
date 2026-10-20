@@ -19,6 +19,7 @@
        - year: "2020 – present"
          role: My Role
          company: Acme Corp
+         short: Acme                  # optional — the name on the homepage timeline
          location: City, Country       # optional
          description: >               # optional — folded block scalar
            One or two sentences.      # or plain quoted string on one line
@@ -35,6 +36,14 @@
          institution: Some University
          location: City, Country       # optional
          description: Thesis note.     # optional
+
+     places:                         # optional — where you lived, for the
+       - year: "2018 – present"      # homepage timeline's places lane
+         city: San Sebastián
+
+     timeline_projects:              # optional — work projects with no page
+       - year: "2024 – present"      # yet: a clip on the homepage timeline,
+         title: AI Production        # without a link
 
      skills:
        technical:
@@ -147,6 +156,7 @@ function validateCv(data) {
       expectString(e.year,    `${p}.year`);
       expectString(e.role,    `${p}.role`);
       expectString(e.company, `${p}.company`);
+      if (e.short !== undefined) expectString(e.short, `${p}.short`);
       if (e.tags !== undefined) {
         expect(Array.isArray(e.tags), `${p}.tags must be an array`);
       }
@@ -164,8 +174,37 @@ function validateCv(data) {
       expectString(e.year,        `${p}.year`);
       expectString(e.degree,      `${p}.degree`);
       expectString(e.institution, `${p}.institution`);
+      if (e.short !== undefined) expectString(e.short, `${p}.short`);
       expectLinks(e.links, p);
     });
+  }
+
+  /* ── places ── */
+  if (data.places !== undefined) {
+    if (!Array.isArray(data.places)) {
+      errors.push('places must be an array');
+    } else {
+      data.places.forEach((e, idx) => {
+        const p = `places[${idx}]`;
+        if (typeof e !== 'object' || e === null) { errors.push(`${p} must be an object`); return; }
+        expectString(e.year, `${p}.year`);
+        expectString(e.city, `${p}.city`);
+      });
+    }
+  }
+
+  /* ── timeline_projects ── */
+  if (data.timeline_projects !== undefined) {
+    if (!Array.isArray(data.timeline_projects)) {
+      errors.push('timeline_projects must be an array');
+    } else {
+      data.timeline_projects.forEach((e, idx) => {
+        const p = `timeline_projects[${idx}]`;
+        if (typeof e !== 'object' || e === null) { errors.push(`${p} must be an object`); return; }
+        expectString(e.year, `${p}.year`);
+        expectString(e.title, `${p}.title`);
+      });
+    }
   }
 
   /* ── skills ── */
@@ -279,12 +318,16 @@ function generateCvJs(data) {
   const career    = data.career    || [];
   const education = data.education || [];
   const skills    = data.skills    || {};
+  const places    = data.places    || [];
+  const timelineProjects = data.timeline_projects || [];
 
-  const careerKeys = ['year', 'role', 'company', 'location', 'description', 'links', 'tags'];
-  const eduKeys    = ['year', 'degree', 'institution', 'location', 'description', 'links', 'concurrent_with'];
+  const careerKeys = ['year', 'role', 'company', 'short', 'location', 'description', 'links', 'tags'];
+  const eduKeys    = ['year', 'degree', 'short', 'institution', 'location', 'description', 'links', 'concurrent_with'];
 
   const careerBlock = career.map(e => jsAlignedObject(e, careerKeys, 2)).join(',\n');
   const eduBlock    = education.map(e => jsAlignedObject(e, eduKeys,  2)).join(',\n');
+  const placeBlock  = places.map(e => jsAlignedObject(e, ['year', 'city'], 2)).join(',\n');
+  const tlProjBlock = timelineProjects.map(e => jsAlignedObject(e, ['year', 'title'], 2)).join(',\n');
 
   /* ── Skills serialisation ──
      Items are rendered at baseIndent=4 so they sit cleanly inside the
@@ -325,6 +368,14 @@ ${careerBlock ? careerBlock + ',\n' : ''}];
 export const CV_EDUCATION = [
 ${eduBlock ? eduBlock + ',\n' : ''}];
 
+/* ── Places lived ─────────────────────────────────────────── */
+export const CV_PLACES = [
+${placeBlock ? placeBlock + ',\n' : ''}];
+
+/* ── Timeline-only projects (no page yet) ─────────────────── */
+export const CV_TIMELINE_PROJECTS = [
+${tlProjBlock ? tlProjBlock + ',\n' : ''}];
+
 /* ── Skills ───────────────────────────────────────────────── */
 export const CV_SKILLS = {
   technical:  ${tech},
@@ -336,6 +387,8 @@ if (typeof globalThis !== 'undefined') {
   globalThis.CV_CAREER = CV_CAREER;
   globalThis.CV_EDUCATION = CV_EDUCATION;
   globalThis.CV_SKILLS = CV_SKILLS;
+  globalThis.CV_PLACES = CV_PLACES;
+  globalThis.CV_TIMELINE_PROJECTS = CV_TIMELINE_PROJECTS;
 }
 `;
 }

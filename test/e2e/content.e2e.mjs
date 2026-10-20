@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import test, { after, before, describe } from 'node:test';
 
 import {
-  VIEWPORTS, blockExternalRequests, launchBrowser, newPage, scrollThrough, settleReveal, startServer,
+  VIEWPORTS, allPages, blockExternalRequests, launchBrowser, newPage, scrollThrough, settleReveal, startServer,
 } from './harness.mjs';
 
 let server, browser;
@@ -208,11 +208,11 @@ describe('content: the sections that carry the substance are populated', () => {
 });
 
 /* ─── Scroll-driven animations ────────────────────────────────────────────
-   The reading-progress bar and the hero parallax used to be JavaScript: a
-   scroll listener, a rAF, and — for the bar — a document height memoised
+   The reading-progress bar (and once the hero parallax) used to be JavaScript:
+   a scroll listener, a rAF, and — for the bar — a document height memoised
    behind a resize listener, a load listener and a ResizeObserver, because
    reading scrollHeight per scroll event forces a synchronous layout. Both are
-   CSS scroll-progress timelines now.
+   CSS scroll-progress timelines now (the parallax has since been removed).
 
    That move is only safe if the effects actually still happen, and nothing in
    the static suite can tell: `animation-timeline: scroll(root block)` is a
@@ -262,82 +262,11 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
     } finally { await page.close(); }
   });
 
-  /* The keyframe is `translate: 0 var(--hero-drift)` over a 0→100dvh range, so
-     the copy should have moved that fraction of the scroll. Read the fraction
-     off the element rather than hard-coding it: this used to assert a literal
-     0.28 — "the ratio the JS used" — which made the number look like the
-     invariant when the real one is the test below it. 0.28 was in fact the bug. */
-  test('the hero copy parallaxes by the drift the stylesheet declares', async () => {
-    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-
-      const translateY = () => page.evaluate(() => {
-        const t = getComputedStyle(document.querySelector('.hero-content')).translate;
-        const parts = String(t).split(/\s+/);
-        return parts.length > 1 ? parseFloat(parts[1]) : 0;
-      });
-
-      assert.equal(await translateY(), 0, 'the hero copy should start unmoved');
-
-      /* A custom property is not resolved at computed-value time, so this comes
-         back as the authored token ("20dvh") and the number in front of it is
-         the percentage of the range. */
-      const rate = await page.evaluate(() => parseFloat(
-        getComputedStyle(document.querySelector('.hero-content'))
-          .getPropertyValue('--hero-drift')) / 100);
-      assert.ok(rate > 0, 'the stylesheet should declare a non-zero --hero-drift');
-
-      const at = await scrollTo(page, 300);
-      const y = await translateY();
-      const expected = at * rate;
-      assert.ok(Math.abs(y - expected) < 1,
-        `hero translated ${y}px at ${at}px of scroll, expected about ${expected}px`);
-    } finally { await page.close(); }
-  });
-
-  /* The invariant that actually matters, and the one nothing was asserting.
-
-     #hero clips (overflow: hidden) and the copy inside it is vertically centred
-     and drifting *down*, so the drift is bounded by the space underneath — and
-     28dvh was past that bound on any window shorter than about 1100px. A
-     visitor on a 650px-tall laptop window, a few hundred pixels down the page,
-     got the "draw it a digit" aside cut in half and then the Download CV button
-     after it. Every static assertion in the repo was green, because the markup
-     was perfect; the pixels were not.
-
-     Short viewport, several scroll positions, and the question asked of the
-     elements rather than of the effect: is the bottom of this still inside the
-     box that clips it. */
-  test('nothing in the hero is clipped by the hero at any scroll position', async () => {
-    const page = await newPage(browser, server, { viewport: { width: 1440, height: 650 } });
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      /* The aside is revealed only once a hero scene has painted. */
-      await page.waitForSelector('.hero-cnn-link:not([hidden])', { timeout: 8000 }).catch(() => {});
-
-      for (const to of [0, 150, 300, 450, 600]) {
-        await scrollTo(page, to);
-        const spill = await page.evaluate(() => {
-          const heroBottom = document.getElementById('hero').getBoundingClientRect().bottom;
-          return ['.hero-actions', '.hero-cnn-link', '.hero-tagline', '.hero-location']
-            .map((sel) => {
-              const el = document.querySelector(sel);
-              if (!el || el.hidden || getComputedStyle(el).display === 'none') return null;
-              const over = el.getBoundingClientRect().bottom - heroBottom;
-              return over > 1 ? `${sel} hangs ${Math.round(over)}px below the hero` : null;
-            })
-            .filter(Boolean);
-        });
-        assert.deepEqual(spill, [], `at ${to}px of scroll: ${spill.join('; ')}`);
-      }
-    } finally { await page.close(); }
-  });
-
-  /* Both effects are decoration, so reduced motion drops them entirely. This
-     is a media query in the stylesheet now rather than a prefersReducedMotion()
-     branch at the top of two init functions. */
-  test('reduced motion leaves both of them alone', async () => {
+  /* Decoration, so reduced motion drops it entirely. This is a media query
+     in the stylesheet now rather than a prefersReducedMotion() branch at the
+     top of an init function. (The hero parallax this test also covered is
+     gone; the hero no longer stages copy over a background scene.) */
+  test('reduced motion leaves the progress bar alone', async () => {
     const page = await newPage(browser, server, {
       viewport: VIEWPORTS.desktop, reducedMotion: 'reduce',
     });
@@ -345,13 +274,735 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       await scrollTo(page, 600);
 
-      const state = await page.evaluate(() => ({
-        bar: +new DOMMatrix(
-          getComputedStyle(document.getElementById('reading-progress')).transform).a.toFixed(3),
-        hero: getComputedStyle(document.querySelector('.hero-content')).translate,
+      const bar = await page.evaluate(() => +new DOMMatrix(
+        getComputedStyle(document.getElementById('reading-progress')).transform).a.toFixed(3));
+      assert.equal(bar, 0, 'the progress bar animated under reduced motion');
+    } finally { await page.close(); }
+  });
+});
+
+/* ─── The hero: the name through a receptive field ───────────────────────
+   js/receptive-field.js paints the name as a pixel grid and swaps the text
+   <h1> out of sight once it has. Everything here is about that swap and the
+   controls, because those are the parts a static test cannot see: whether the
+   canvas painted anything, whether the name is still the page's heading for a
+   screen reader, and whether choosing a filter or moving the window actually
+   changes the picture. */
+describe('hero: the receptive field', () => {
+  const canvasHash = (page) => page.evaluate(() => {
+    const c = document.getElementById('field-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let h = 0, ink = 0;
+    for (let i = 0; i < d.length; i += 4 * 5) { h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 3]) | 0; if (d[i + 3] > 0) ink++; }
+    return { h, ink };
+  });
+
+  {
+    const [label, viewport] = ['desktop', VIEWPORTS.desktop];
+    test(`${label}: the grid paints, the name stays the heading, the controls work`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+
+        const first = await canvasHash(page);
+        assert.ok(first.ink > 500, `the hero canvas is nearly blank (${first.ink} painted samples)`);
+
+        const h1 = await page.evaluate(() => {
+          const el = document.querySelector('#hero h1');
+          return { text: el.textContent.trim(), count: document.querySelectorAll('h1').length };
+        });
+        assert.equal(h1.text, 'Stefano Masneri');
+        assert.equal(h1.count, 1);
+        assert.equal(await page.isVisible('.field-controls'), true, 'the filter controls were not revealed');
+
+        /* Only a dropdown: no kernel readout, no caption, no range input. */
+        for (const gone of ['.field-kernel', '.field-caption', '#field-pos', '.field-next', '[data-filter]']) {
+          assert.equal(await page.locator(gone).count(), 0, `${gone} is back in the hero`);
+        }
+        const options = await page.$$eval('#field-filter option', (os) => os.map((o) => o.value));
+        assert.ok(!options.includes('corners'), 'Corners is back in the menu');
+
+        await page.selectOption('#field-filter', 'vertical');
+        await page.waitForTimeout(150);
+        const vertical = await canvasHash(page);
+        assert.notEqual(vertical.h, first.h, 'choosing a filter did not change the picture');
+
+        await page.selectOption('#field-filter', 'learned');
+        await page.waitForTimeout(400);
+        assert.notEqual((await canvasHash(page)).h, vertical.h, 'the learned filter did not change the picture');
+
+        /* Pointer path: a horizontal drag across the grid moves the window. */
+        const before = await canvasHash(page);
+        const box = await page.locator('#field-canvas').boundingBox();
+        await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.5);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.5, { steps: 5 });
+        await page.mouse.up();
+        assert.notEqual((await canvasHash(page)).h, before.h, 'dragging did not move the window');
+
+        /* A small menu, and no link out of the hero (cut in review). */
+        const menu = await page.locator('#field-filter').boundingBox();
+        assert.ok(menu.height <= 30, `the filter menu is ${Math.round(menu.height)}px tall`);
+        assert.equal(await page.locator('#hero a[href*="mnist-lenet"]').count(), 0, 'the hero links to the CNN page again');
+      } finally { await page.close(); }
+    });
+  }
+
+  /* A phone gets a still frame: the window parks at 70%, a touch is a scroll,
+     and the move/kernel controls are gone — but the filter chips still work. */
+  test('phone: a still frame whose filter still switches, and a drag does not move it', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 390, height: 844 }, hasTouch: true });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+      await page.waitForTimeout(1900); // the intro sweep
+
+      const before = await canvasHash(page);
+      assert.ok(before.ink > 500, `the hero canvas is nearly blank (${before.ink} painted samples)`);
+      const box = await page.locator('#field-canvas').boundingBox();
+      await page.mouse.move(box.x + 10, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width - 10, box.y + box.height / 2, { steps: 4 });
+      await page.mouse.up();
+      assert.equal((await canvasHash(page)).h, before.h, 'a drag moved the window on a phone');
+
+      await page.selectOption('#field-filter', 'horizontal');
+      await page.waitForTimeout(150);
+      assert.notEqual((await canvasHash(page)).h, before.h, 'choosing a filter did not change the picture');
+    } finally { await page.close(); }
+  });
+
+  test('without JavaScript the name is plain text and no dead controls show', async () => {
+    const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });
+    const page = await ctx.newPage();
+    try {
+      await page.goto(server.base + '/index.html');
+      assert.equal(await page.isVisible('#hero h1'), true, 'the name is hidden with JS off');
+      assert.equal(await page.isVisible('.field-controls'), false, 'the filter menu showed with nothing to drive it');
+    } finally { await ctx.close(); }
+  });
+});
+
+
+/* ─── Career timeline (#191) ─────────────────────────────────────────────
+   Two things only a browser can answer. On a desktop the whole edit must fit
+   — a timeline you have to scroll to see 2024 on a 1440px screen has lost
+   the one thing it is for, a career read at a glance. On a phone it cannot
+   fit, so it must open on the present: the scroller is direction: rtl for
+   exactly that, and a stylesheet change that dropped it would leave a phone
+   visitor looking at 2000 and four empty lanes. */
+describe('career timeline', () => {
+  test('desktop: the whole edit fits without scrolling', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const m = await page.$eval('.edit-scroll', (el) => ({ sw: el.scrollWidth, cw: el.clientWidth }));
+      assert.ok(m.sw <= m.cw + 1, `the timeline scrolls at 1440 (${m.sw} in ${m.cw})`);
+    } finally { await page.close(); }
+  });
+
+  test('phone: it opens on the present, with the lane names still in view', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 390, height: 844 } });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const r = await page.evaluate(() => {
+        const box = document.querySelector('.edit-scroll').getBoundingClientRect();
+        const latest = [...document.querySelectorAll('.edit-lane[data-lane="work"] .edit-clip')]
+          .map((c) => c.getBoundingClientRect())
+          .sort((a, b) => b.right - a.right)[0];
+        const name = document.querySelector('.edit-lane-name').getBoundingClientRect();
+        return { boxL: box.left, boxR: box.right, clipL: latest.left, clipR: latest.right, nameL: name.left };
+      });
+      assert.ok(r.clipR <= r.boxR + 1 && r.clipL >= r.boxL,
+        `the latest role is not in view on load (${Math.round(r.clipL)}–${Math.round(r.clipR)} in ${Math.round(r.boxL)}–${Math.round(r.boxR)})`);
+      assert.ok(Math.abs(r.nameL - r.boxL) <= 2, 'the lane names should be pinned to the left edge');
+    } finally { await page.close(); }
+  });
+});
+
+/* ─── Career timeline, pinned and scrubbed (desktop) ─────────────────────
+   On a wide screen with motion allowed, the timeline section pins to the
+   viewport and the vertical scroll drives the edit sideways — three screens
+   of timeline, explored from 2000 to the present — and then lets go. Pure
+   CSS (position: sticky + a view timeline), so every claim here is about what
+   the browser resolved: what is on screen at each point of the scroll. */
+describe('career timeline: pinned horizontal scrub', () => {
+  const settle = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo({ top: to, behavior: 'instant' }), y);
+    await page.waitForTimeout(250);
+  };
+  const state = (page) => page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const track = document.querySelector('.edit-lane[data-lane="work"] .edit-track').getBoundingClientRect();
+    const win = document.querySelector('.edit').getBoundingClientRect();
+    const clips = [...document.querySelectorAll('.edit-lane[data-lane="work"] .edit-clip')]
+      .map((c) => c.getBoundingClientRect());
+    const first = clips.sort((a, b) => a.left - b.left)[0];
+    const last = clips[clips.length - 1];
+    const stage = document.querySelector('.edit-stage').getBoundingClientRect();
+    const inWin = (r) => r.right > win.left + 120 && r.left < win.right;
+    return { vw, trackW: track.width, winW: win.width, firstIn: inWin(first), lastIn: inWin(last), stageTop: stage.top };
+  });
+
+  test('pins, scrubs from 2000 to the present, and lets go', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const pin = await page.$eval('.edit-pin', (el) => ({ top: el.getBoundingClientRect().top + scrollY, h: el.offsetHeight }));
+      assert.ok(pin.h >= 2.5 * 900, `the pinned run is only ${pin.h}px — it should give the scrub ~3 screens`);
+
+      await settle(page, pin.top);
+      const start = await state(page);
+      assert.ok(start.trackW > 2.5 * start.winW, 'the edit should be ~3 windows wide while pinned');
+      assert.ok(start.firstIn && !start.lastIn, 'at the start the past is on screen and the present is not');
+
+      await settle(page, pin.top + (pin.h - 900) / 2);
+      const mid = await state(page);
+      assert.ok(Math.abs(mid.stageTop) <= 2, `the stage should be pinned mid-scrub (top ${mid.stageTop})`);
+
+      /* Bold, not boxed: mid-run the edit is the whole screen — edge to edge,
+         and most of the height under the navbar. */
+      const fill = await page.evaluate(() => {
+        const r = document.querySelector('.edit').getBoundingClientRect();
+        const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68;
+        return { l: r.left, r: r.right, h: r.height, vw: document.documentElement.clientWidth, avail: innerHeight - nav };
+      });
+      assert.ok(fill.l <= 1 && fill.r >= fill.vw - 1,
+        `the edit spans ${Math.round(fill.l)}–${Math.round(fill.r)} of a ${fill.vw}px screen`);
+      assert.ok(fill.h >= 0.8 * fill.avail, `the edit is ${Math.round(fill.h)}px of ${Math.round(fill.avail)}px`);
+
+      await settle(page, pin.top + pin.h - 900);
+      const end = await state(page);
+      assert.ok(end.lastIn && !end.firstIn, 'at the end the present is on screen and 2000 has gone by');
+
+      /* Every project name on screen is whole: a short: name, or a long one
+         wrapped onto a second line — never "Gaussian Sp…". */
+      const cut = await page.$$eval('.edit-lane[data-lane="projects"] .edit-clip-title', (els) => els
+        .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.right <= innerWidth; })
+        .filter((el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)
+        .map((el) => el.textContent));
+      assert.deepEqual(cut, [], `project names cut short: ${cut.join(', ')}`);
+
+      await settle(page, pin.top + pin.h + 200);
+      const after = await state(page);
+      assert.ok(after.stageTop < -100, 'after the run the stage scrolls away with the page');
+    } finally { await page.close(); }
+  });
+
+  test('reduced motion: no pin, the whole edit in one window', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const h = await page.$eval('.edit-pin', (el) => el.offsetHeight);
+      assert.ok(h < 900, `the timeline is still pinned under reduced motion (${h}px)`);
+      const s = await state(page);
+      assert.ok(s.firstIn && s.lastIn, 'the whole edit should be visible at once');
+    } finally { await page.close(); }
+  });
+
+  test('keyboard: focusing a clip un-pins the edit so the clip is on screen', async () => {
+    /* A clip translated out of the window would take focus while invisible
+       (WCAG 2.4.7). Tabbing into the edit switches it back to the whole-edit
+       layout, where every clip is in view. */
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const last = page.locator('.edit-lane[data-lane="projects"] .edit-clip a').last();
+      await last.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(300);
+      const box = await last.boundingBox();
+      const win = await page.locator('.edit').boundingBox();
+      assert.ok(box && box.x >= win.x && box.x + box.width <= win.x + win.width + 1,
+        'the focused clip is outside the visible edit');
+    } finally { await page.close(); }
+  });
+});
+
+/* ─── Projects as a media bin (#192) ────────────────────────────────────
+   Every card opens on a 16:9 frame. The thumbnails are served from public/ at
+   the URL the card names — a missing one is a broken-image icon on the
+   portfolio page that no static test can see. The homepage is checked after
+   the client-side reshuffle too: it builds the same URLs in JS, which is what
+   broke when the files sat under img/ and the build hashed only the HTML. */
+describe('projects: the media bin', () => {
+  test('every frame is 16:9 and painted: a loaded thumbnail or the colour bars', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/projects.html', { waitUntil: 'networkidle' });
+      await page.$$eval('.project-card__thumb img', (imgs) => imgs.forEach((i) => { i.loading = 'eager'; }));
+      await page.waitForFunction(() => [...document.querySelectorAll('.project-card__thumb img')].every((i) => i.complete));
+      const frames = await page.$$eval('#projects-grid .project-card__thumb', (els) => els.map((el) => {
+        const r = el.getBoundingClientRect();
+        const img = el.querySelector('img');
+        return {
+          ratio: r.width / r.height,
+          img: img ? img.naturalWidth : null,
+          bars: getComputedStyle(el, '::before').backgroundImage.includes('gradient'),
+        };
       }));
-      assert.equal(state.bar, 0, 'the progress bar animated under reduced motion');
-      assert.equal(state.hero, 'none', 'the hero parallaxed under reduced motion');
+      assert.ok(frames.length >= 15, `only ${frames.length} frames`);
+      for (const [i, f] of frames.entries()) {
+        assert.ok(Math.abs(f.ratio - 16 / 9) < 0.02, `frame ${i} is ${f.ratio.toFixed(3)}:1`);
+        assert.ok(f.img === null ? f.bars : f.img > 0, `frame ${i} painted nothing (img ${f.img}, bars ${f.bars})`);
+      }
+    } finally { await page.close(); }
+  });
+
+  test('homepage: the reshuffled cards load their thumbnails as well', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.$$eval('#projects-grid img', (imgs) => imgs.forEach((i) => { i.loading = 'eager'; }));
+      await page.waitForFunction(() => [...document.querySelectorAll('#projects-grid img')].every((i) => i.complete));
+      const widths = await page.$$eval('#projects-grid img', (imgs) => imgs.map((i) => [i.getAttribute('src'), i.naturalWidth]));
+      assert.equal(widths.length, 3);
+      for (const [src, w] of widths) assert.ok(w > 0, `${src} did not load`);
+    } finally { await page.close(); }
+  });
+});
+
+/* ─── Projects: packed, in order ─────────────────────────────────────────
+   The cards keep their own heights, and each one starts just under the card
+   above it in its column instead of where the grid row starts — no hole
+   under a short card. Order is still the document's: the first cards fill
+   the top row left to right. */
+describe('projects: the cards pack under each other', () => {
+  for (const [name, vp] of [['desktop', VIEWPORTS.desktop], ['tablet', VIEWPORTS.tablet]]) {
+    test(`${name}: no gap under a short card, chronology kept`, async () => {
+      const page = await newPage(browser, server, { viewport: vp });
+      try {
+        await page.goto(server.base + '/projects.html', { waitUntil: 'networkidle' });
+        await page.$$eval('#projects-grid img', (imgs) => imgs.forEach((i) => { i.loading = 'eager'; }));
+        await page.waitForFunction(() => [...document.querySelectorAll('#projects-grid img')].every((i) => i.complete));
+        /* Layout settles as thumbnails decode and the observer re-measures;
+           give it up to 3 s to have no holes before asserting on what's left. */
+        await page.waitForFunction(() => {
+          const grid = document.getElementById('projects-grid');
+          const gap = parseFloat(getComputedStyle(grid).columnGap);
+          const cols = new Map();
+          for (const c of grid.children) {
+            if (c.hidden) continue;
+            const r = c.getBoundingClientRect();
+            const k = Math.round(r.left);
+            cols.set(k, [...(cols.get(k) || []), r]);
+          }
+          return [...cols.values()].every((rs) => rs.sort((a, b) => a.top - b.top)
+            .every((r, i) => i === 0 || r.top - rs[i - 1].bottom <= gap + 6));
+        }, null, { timeout: 3000 }).catch(() => {});
+        const { cards, gap } = await page.$eval('#projects-grid', (grid) => ({
+          gap: parseFloat(getComputedStyle(grid).columnGap),
+          cards: [...grid.children].filter((c) => !c.hidden).map((c) => {
+            const r = c.getBoundingClientRect();
+            return { left: Math.round(r.left), top: r.top, bottom: r.bottom };
+          }),
+        }));
+        const cols = [...new Set(cards.map((c) => c.left))].sort((a, b) => a - b);
+        assert.ok(cols.length >= 2, `only ${cols.length} column(s)`);
+        /* The first row is the first cards, left to right. */
+        for (let i = 0; i < cols.length; i++) {
+          assert.equal(cards[i].left, cols[i], `card ${i} is not in column ${i}`);
+        }
+        for (const col of cols) {
+          const inCol = cards.filter((c) => c.left === col).sort((a, b) => a.top - b.top);
+          for (let i = 1; i < inCol.length; i++) {
+            const hole = inCol[i].top - inCol[i - 1].bottom;
+            assert.ok(hole <= gap + 6, `a ${Math.round(hole)}px hole above a card in column at ${col}px (gap ${gap}px)`);
+          }
+        }
+      } finally { await page.close(); }
+    });
+  }
+});
+
+/* ─── Slides: About and the title cards hold while you scroll ────────────
+   On a desktop the homepage reads like a deck. About is one screen that
+   stays put for a couple of scrolls, with a bar under the navbar filling as
+   you go; each title card (Career, Projects, Publications) is a screen with
+   the title and one line of subtitle that stays put for one scroll. Then the
+   page moves on. Pure CSS — a sticky stage in a taller pin, and a view
+   timeline for the bar — so everything here asks what the browser resolved. */
+describe('slides', () => {
+  const nav = (page) => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68);
+  const pinTop = (page, sel) => page.$eval(sel, (el) => el.getBoundingClientRect().top + scrollY);
+  const go = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo({ top: to, behavior: 'instant' }), y);
+    await page.waitForTimeout(350);
+  };
+  const progress = (page, sel) => page.$eval(`${sel} .slide-progress`, (el) => {
+    const m = getComputedStyle(el).scale;
+    return m === 'none' ? 1 : parseFloat(m);
+  });
+
+  for (const viewport of [{ width: 1920, height: 1080 }, VIEWPORTS.desktop, { width: 1440, height: 720 }, { width: 1280, height: 640 }, { width: 1100, height: 640 }]) {
+    test(`desktop ${viewport.width}×${viewport.height}: About holds for a couple of screens, all of it in view`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        const vh = viewport.height;
+        const navH = await nav(page);
+        const pin = '#about .slide-pin';
+        const h = await page.$eval(pin, (el) => el.offsetHeight);
+        assert.ok(h >= 2.4 * vh, `About holds for only ${Math.round(h / vh * 10) / 10} screens`);
+
+        const top = await pinTop(page, pin);
+        const look = () => page.evaluate((n) => {
+          const parts = ['.section-title', '.photo-card', '.about-text-col p:last-of-type', '.social-links', '.stats-row']
+            .map((q) => [q, document.querySelector(`#about ${q}`).getBoundingClientRect()]);
+          return { stage: document.querySelector('#about .slide-stage').getBoundingClientRect().top,
+            out: parts.filter(([, r]) => r.top < n - 1 || r.bottom > innerHeight + 1).map(([q, r]) => `${q} ${Math.round(r.top)}–${Math.round(r.bottom)}`),
+            textW: document.querySelector('#about .about-text-col').getBoundingClientRect().width };
+        }, navH);
+
+        await go(page, top + 10);
+        await page.waitForTimeout(900); // the reveal
+        const first = await look();
+        assert.equal(first.out.length, 0, `not all of About fits on the screen: ${first.out.join(', ')}`);
+        const p0 = await progress(page, '#about');
+
+        await go(page, top + vh);
+        const held = await look();
+        assert.ok(Math.abs(held.stage) <= 1, `About did not hold (stage at ${held.stage})`);
+        assert.equal(held.out.length, 0, `About moved while held: ${held.out.join(', ')}`);
+        assert.ok(await progress(page, '#about') > p0 + 0.2, 'the progress bar did not advance while held');
+        if (viewport.width >= 1440) assert.ok(first.textW >= 640, `the text column is only ${Math.round(first.textW)}px wide`);
+        /* An external display: the bio widens with it rather than sitting in a
+           1180px strip in the middle of a 1920px screen. */
+        if (viewport.width >= 1900) assert.ok(first.textW >= 1000, `the text column is only ${Math.round(first.textW)}px wide on a ${viewport.width}px display`);
+
+        await go(page, top + h + 50);
+        assert.ok((await look()).stage < -50, 'About never lets go');
+      } finally { await page.close(); }
+    });
+  }
+
+  for (const viewport of [VIEWPORTS.desktop, { width: 1100, height: 800 }]) {
+    test(`desktop ${viewport.width}: Career, Projects and Publications open on a title card that holds for a scroll`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        const vh = viewport.height;
+        assert.equal((await page.textContent('#career .title-card .section-title')).trim(), 'The story so far');
+        assert.equal((await page.textContent('#career .title-card .section-subtitle')).replace(/\s+/g, ' ').trim(),
+          'Work, study and the cities they happened in. More details in my CV.');
+        for (const id of ['career', 'projects', 'publications']) {
+          const pin = `#${id} .slide-pin--title`;
+          const top = await pinTop(page, pin);
+          await go(page, top + 10);
+          await page.waitForTimeout(900); // the reveal
+          await go(page, top + vh * 0.6);
+          const r = await page.evaluate((sel) => {
+            const pinEl = document.querySelector(sel);
+            const card = pinEl.querySelector('.title-card');
+            const sub = card.querySelector('.section-subtitle');
+            let next = pinEl.nextElementSibling;
+            while (next && !next.getBoundingClientRect().height) next = next.nextElementSibling;
+            return { cardTop: card.getBoundingClientRect().top, subH: sub.getBoundingClientRect().height,
+              lh: parseFloat(getComputedStyle(sub).lineHeight), subText: sub.textContent,
+              nextTop: next ? next.getBoundingClientRect().top : Infinity };
+          }, pin);
+          assert.ok(Math.abs(r.cardTop) <= 1, `#${id}'s title card did not hold (top ${Math.round(r.cardTop)})`);
+          assert.ok(r.nextTop >= vh - 1, `#${id}: what follows the title card is on screen while it holds`);
+          assert.ok(r.subH < r.lh * 1.5, `#${id}'s subtitle runs to ${Math.round(r.subH / r.lh)} lines`);
+          assert.doesNotMatch(r.subText, /\b(bin|clips?|edit|cut|reel|footage)\b/i, `#${id}'s subtitle talks media again`);
+        }
+      } finally { await page.close(); }
+    });
+  }
+
+  test('reduced motion: nothing holds', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const hs = await page.$$eval('.slide-pin', (els) => els.map((el) => el.offsetHeight));
+      for (const h of hs) assert.ok(h <= 900 * 1.2, `a ${h}px pin under reduced motion`);
+    } finally { await page.close(); }
+  });
+
+  test('phone: no title card takes a screen', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 390, height: 844 } });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const hs = await page.$$eval('.title-card', (els) => els.map((el) => el.getBoundingClientRect().height));
+      for (const h of hs) assert.ok(h < 0.6 * 844, `a ${Math.round(h)}px title card on a phone`);
+    } finally { await page.close(); }
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Type roles (#190): three faces, four roles. Archivo is display and chrome,
+   JetBrains Mono is data, Source Serif 4 is prose. The body inherits the
+   prose face, so any piece of chrome without its own font-family quietly
+   becomes serif — the ⌘K palette, the footer, the skip link, the contact
+   labels and the map legends all had, and the static suite cannot see an
+   inherited value. Asked of what the browser computed, on every page.
+   ───────────────────────────────────────────────────────────────────────────── */
+describe('type roles: chrome is never set in the prose face', () => {
+  const CHROME = [
+    'nav', '.site-footer', '.skip-link', '#cmd-overlay', 'button', 'select', 'label', '.btn',
+    '.cv-back-link', '.section-tag', '.hero-location', '.stat-item', '.contact-card',
+    '.wm-legend-item', '.gl-item', '.post-meta', '.unesco-name', '.post h2', '.post h3',
+  ].join(', ');
+  const FACES = ['Archivo', 'JetBrains Mono', 'Source Serif 4'];
+
+  test('chrome is Archivo or mono, code and keys are mono, and nothing asks for a face the site does not load', async () => {
+    const bad = [];
+    for (const path of allPages()) {
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + path);
+        const found = await page.evaluate(({ chrome, faces }) => {
+          const out = [];
+          for (const el of document.querySelectorAll('body *')) {
+            if (el.closest('svg')) continue;
+            const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+            if (!own) continue;
+            const face = getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '').trim();
+            const name = el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/)[0] : '');
+            if (!faces.includes(face)) out.push(`${name} asks for ${face}`);
+            else if (el.matches('code, kbd, pre') && face !== 'JetBrains Mono') out.push(`${name} is ${face}, not mono`);
+            else if (face === 'Source Serif 4' && el.closest(chrome)) out.push(`${name} is chrome set in the serif`);
+          }
+          return [...new Set(out)];
+        }, { chrome: CHROME, faces: FACES });
+        for (const f of found) bad.push(`${path}: ${f}`);
+      } finally { await page.close(); }
+    }
+    assert.deepEqual(bad, [], `\n  ${bad.join('\n  ')}\n`);
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Pans (review of #188): two section changes on the homepage move sideways
+   instead of down. The project cards hold full screen and "On paper" pushes
+   them off to the left from the right; the same between Places and Contact.
+   Pure CSS — a sticky panel on the way out, a sticky stage on the way in,
+   both driven by one view timeline — so everything here asks where the
+   browser put things. The move has to be horizontal: both sides keep their
+   vertical position while it runs.
+   ───────────────────────────────────────────────────────────────────────────── */
+describe('pans', () => {
+  const PAIRS = [
+    { name: 'projects → publications', from: '#projects .pan-from', pin: '#publications .slide-pin--title', stage: '#publications .slide-stage', anchor: '#publications' },
+    { name: 'places → contact', from: '#places .pan-from', pin: '#contact .pan-pin', stage: '#contact .pan-stage', anchor: '#contact' },
+  ];
+  const go = async (page, y) => {
+    await page.evaluate((to) => window.scrollTo({ top: to, behavior: 'instant' }), y);
+    await page.waitForTimeout(350);
+  };
+  const boxes = (page, p) => page.evaluate(({ from, stage }) => {
+    const r = (q) => { const b = document.querySelector(q).getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top }; };
+    return { from: r(from), stage: r(stage) };
+  }, p);
+
+  for (const viewport of [VIEWPORTS.desktop, { width: 1920, height: 1080 }, { width: 1100, height: 700 }]) {
+    for (const p of PAIRS) {
+      test(`desktop ${viewport.width}×${viewport.height}: ${p.name} moves sideways`, async () => {
+        const page = await newPage(browser, server, { viewport });
+        try {
+          await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+          const vw = viewport.width;
+          const top = await page.$eval(p.pin, (el) => el.getBoundingClientRect().top + scrollY);
+          await go(page, top - 200);
+          await page.waitForTimeout(900); // the reveal
+          await go(page, top);
+          const a = await boxes(page, p);
+          assert.ok(a.from.left >= -1 && a.from.right <= vw + 1, `${p.from} not on screen at the start (${Math.round(a.from.left)})`);
+          assert.ok(a.stage.left >= vw - 1, `${p.stage} already on screen at the start (${Math.round(a.stage.left)})`);
+
+          await go(page, top + viewport.height * 0.6);
+          const b = await boxes(page, p);
+          assert.ok(b.from.left < -20 && b.stage.left < vw - 20 && b.stage.left > 20, `no sideways move midway: from ${Math.round(b.from.left)}, stage ${Math.round(b.stage.left)}`);
+          assert.ok(Math.abs(b.from.top - a.from.top) <= 2, `${p.from} moved vertically during the pan (${Math.round(a.from.top)} → ${Math.round(b.from.top)})`);
+          assert.ok(Math.abs(b.stage.top) <= 1, `${p.stage} is not pinned during the pan (top ${Math.round(b.stage.top)})`);
+
+          await go(page, top + viewport.height * 1.5);
+          const c = await boxes(page, p);
+          assert.ok(Math.abs(c.stage.left) <= 1, `${p.stage} did not arrive (left ${Math.round(c.stage.left)})`);
+          assert.ok(c.from.right <= 1, `${p.from} is still on screen after the pan`);
+        } finally { await page.close(); }
+      });
+    }
+  }
+
+  test('a nav jump to Publications or Contact lands on the arrived screen, not mid-pan', async () => {
+    for (const p of PAIRS) {
+      /* A fresh page each time: a second hash on the same document is a
+         smooth scroll, and this asks where the jump lands, not how. */
+      const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+      try {
+        await page.goto(server.base + '/index.html' + p.anchor, { waitUntil: 'networkidle' });
+        await page.waitForTimeout(1000);
+        const { stage } = await boxes(page, p);
+        assert.ok(Math.abs(stage.left) <= 3 && Math.abs(stage.top) <= 1, `${p.anchor}: stage at ${Math.round(stage.left)}, ${Math.round(stage.top)}`);
+      } finally { await page.close(); }
+    }
+  });
+
+  test('reduced motion: no pan, everything in the normal flow', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const r = await page.evaluate(() => [...document.querySelectorAll('.pan-runway')].map((el) => el.offsetHeight));
+      assert.ok(r.length === 2 && r.every((h) => h === 0), `runways under reduced motion: ${r}`);
+      for (const p of PAIRS) assert.equal(await page.$eval(p.stage, (el) => getComputedStyle(el).position), 'static', `${p.stage} still sticky`);
+    } finally { await page.close(); }
+  });
+
+  test('keyboard: focusing a project card or a contact card cancels the pan, so focus is never off screen', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      for (const q of ['#projects-grid .project-card', '#contact .contact-copy']) {
+        await page.focus(q);
+        await page.keyboard.press('Shift+Tab');
+        await page.waitForTimeout(1000); // html scrolls smoothly to focus
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(1000);
+        const r = await page.$eval(q, (el) => { const b = el.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, bt: b.bottom }; });
+        assert.ok(r.l >= 0 && r.r <= 1440 && r.t >= 0 && r.bt <= 900, `${q} focused off screen at ${Math.round(r.l)},${Math.round(r.t)}`);
+      }
+    } finally { await page.close(); }
+  });
+});
+
+/* The email address on a phone: the card is narrow enough that it wraps, and
+   `overflow-wrap: anywhere` broke it as "…masneri.c / om". It may break once,
+   before the @, and nowhere else. */
+describe('contact: the address wraps only at the @', () => {
+  for (const width of [320, 375, 390]) {
+    test(`${width}px`, async () => {
+      const page = await newPage(browser, server, { viewport: { width, height: 800 }, reducedMotion: 'reduce' });
+      try {
+        await page.goto(server.base + '/index.html#contact', { waitUntil: 'networkidle' });
+        const lines = await page.$eval('.contact-email-text', (el) => {
+          const text = el.textContent;
+          const node = [...el.childNodes].filter((n) => n.nodeType === 3);
+          const tops = [];
+          let i = 0;
+          for (const n of node) {
+            for (let k = 0; k < n.length; k++, i++) {
+              const r = document.createRange();
+              r.setStart(n, k); r.setEnd(n, k + 1);
+              tops.push([text[i], Math.round(r.getBoundingClientRect().top)]);
+            }
+          }
+          const out = [];
+          for (const [ch, t] of tops) {
+            if (!out.length || Math.abs(out.at(-1).t - t) > 4) out.push({ t, s: ch }); else out.at(-1).s += ch;
+          }
+          return out.map((l) => l.s);
+        });
+        assert.ok(lines.length <= 2, `the address runs to ${lines.length} lines: ${lines.join(' / ')}`);
+        if (lines.length === 2) assert.ok(lines[1].startsWith('@'), `it breaks inside a word: ${lines.join(' / ')}`);
+      } finally { await page.close(); }
+    });
+  }
+});
+
+/* The travel chart (#193 review): never cropped on a desktop, so what shows
+   does not depend on the window's shape; and a mark names itself the moment
+   the pointer is on it. */
+describe('travel chart', () => {
+  for (const viewport of [VIEWPORTS.desktop, { width: 1920, height: 1080 }, { width: 1280, height: 640 }]) {
+    test(`${viewport.width}×${viewport.height}: the whole chart is drawn, nothing cropped`, async () => {
+      const page = await newPage(browser, server, { viewport });
+      try {
+        await page.goto(server.base + '/travel.html', { waitUntil: 'networkidle' });
+        const r = await page.$eval('.sea-chart-svg', (el) => {
+          const vb = el.viewBox.baseVal;
+          const b = el.getBoundingClientRect();
+          return { box: b.width / b.height, vb: vb.width / vb.height };
+        });
+        assert.ok(Math.abs(r.box - r.vb) < 0.01, `frame ${r.box.toFixed(3)}:1 against a ${r.vb.toFixed(3)}:1 chart — it crops`);
+      } finally { await page.close(); }
+    });
+  }
+
+  test('hovering a port shows its name at once', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/travel.html', { waitUntil: 'networkidle' });
+      const port = page.locator('.sea-chart-port').first();
+      const name = await port.getAttribute('data-tip');
+      await port.hover();
+      await page.waitForTimeout(100);
+      const tip = await page.$eval('.sea-chart-tip', (el) => ({ text: el.textContent, shown: getComputedStyle(el).visibility === 'visible' && !el.hidden }));
+      assert.ok(tip.shown, 'no tooltip on hover');
+      assert.equal(tip.text, name);
+      assert.notEqual(await port.evaluate((el) => getComputedStyle(el).cursor), 'help');
+    } finally { await page.close(); }
+  });
+});
+
+/* Title cards (#191 review): as large as the window allows, and "story"
+   readable — Archivo's r–y pair pulls the y under the r's arm at this size. */
+describe('title cards: size and the r–y pair', () => {
+  for (const viewport of [VIEWPORTS.desktop, { width: 1920, height: 1080 }]) {
+    test(`${viewport.width}: "The story so far" spans the room to the right gutter, and its r and y do not touch`, async () => {
+      const page = await newPage(browser, server, { viewport, reducedMotion: 'reduce' });
+      try {
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        const r = await page.$eval('#career .title-card .section-title', (h) => {
+          const range = document.createRange();
+          range.selectNodeContents(h);
+          const text = range.getBoundingClientRect();
+          const fs = parseFloat(getComputedStyle(h).fontSize);
+          /* Character boxes of "r" and "y" in "story", wherever they sit. */
+          const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
+          const chars = [];
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            for (let i = 0; i < n.length; i++) {
+              const cr = document.createRange(); cr.setStart(n, i); cr.setEnd(n, i + 1);
+              chars.push([n.data[i], cr.getBoundingClientRect()]);
+            }
+          }
+          const s = chars.map(([c]) => c).join('');
+          const at = s.indexOf('story') + 3;
+          return { left: text.left, right: text.right, fs, gap: chars[at + 1][1].left - chars[at][1].right };
+        });
+        const gutter = viewport.width >= 1440 ? 48 : 0;
+        const room = viewport.width - r.left - gutter;
+        assert.ok(r.right <= viewport.width - gutter + 1, `the title runs past the gutter (${Math.round(r.right)})`);
+        assert.ok(r.right - r.left >= 0.9 * room, `the title fills ${Math.round((r.right - r.left) / room * 100)}% of the room`);
+        assert.ok(r.gap >= 0.05 * r.fs, `r and y are ${r.gap.toFixed(1)}px apart at ${Math.round(r.fs)}px`);
+      } finally { await page.close(); }
+    });
+  }
+});
+
+/* The 2D globe (reduced motion, or no WebGL): it drew a shaded ball with a
+   grid and pins and no land at all, and kept spinning under
+   prefers-reduced-motion — the one visitor who asked it not to. */
+describe('globe fallback (reduced motion)', () => {
+  test('shows the continents and stands still', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/travel.html', { waitUntil: 'networkidle' });
+      await page.$eval('#globe-canvas', (el) => el.scrollIntoView({ block: 'center' }));
+      await page.waitForFunction(() => document.getElementById('globe-canvas').width > 0);
+      await page.waitForTimeout(1500);
+      const sample = () => page.$eval('#globe-canvas', (c) => {
+        const ctx = c.getContext('2d');
+        const d = ctx.getImageData(0, 0, c.width, c.height).data;
+        let land = 0; let sum = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          sum = (sum + d[i] * 3 + d[i + 1] * 5 + d[i + 2] * 7) % 1e9;
+          /* Coastlines are drawn in the palette's cyan (#3fc4cd) and shaded
+             with the sphere, so this asks for the hue, not the brightness:
+             green and blue both well above red. Nothing else on the
+             fallback is that colour. */
+          if (d[i + 3] > 150 && d[i + 1] > 90 && d[i + 2] > 90 && d[i] < 0.55 * d[i + 1]) land++;
+        }
+        return { land, sum };
+      });
+      const a = await sample();
+      await page.waitForTimeout(800);
+      const b = await sample();
+      assert.ok(a.land > 50, `the globe shows no land (${a.land} land samples)`);
+      assert.equal(a.sum, b.sum, 'the globe moves under reduced motion');
     } finally { await page.close(); }
   });
 });

@@ -2,7 +2,7 @@
 id:          avatech
 kind:        work
 title:       "AVATecH: Automated Annotation of Audio/Video Corpora for Humanities Research"
-year:        "2009 – 2014"
+year:        "2009 – 2013"
 tags:        "Computer Vision, Education & Research"
 bg:          "img/projects/avatech-bg.webp"
 og:          "img/projects/og/avatech.png"
@@ -10,7 +10,7 @@ description: "AVATecH was a joint Fraunhofer / Max Planck project that brought s
 link_paper:  "https://aclanthology.org/L12-1137/"
 ---
 
-AVATecH (**A**udio-**V**isual **T**echnology for **H**umanities Research) was a multi-year research project I worked on at **[Fraunhofer Heinrich-Hertz-Institut](https://www.hhi.fraunhofer.de/en/index.html) (HHI)** between **2009 and 2014**, in collaboration with the **[Max Planck Institute for Psycholinguistics](https://www.mpi.nl/) (MPI Nijmegen)** and **[Fraunhofer IAIS](https://www.iais.fraunhofer.de/en.html)**. It was my first major research contribution after joining HHI, and it defined the direction of my early career: applying computer vision and audio analysis to problems outside the traditional media-tech industry.
+AVATecH (**A**udio-**V**isual **T**echnology for **H**umanities Research) was a multi-year research project I worked on at **[Fraunhofer Heinrich-Hertz-Institut](https://www.hhi.fraunhofer.de/en/index.html) (HHI)** between **2009 and 2013**, in collaboration with the **[Max Planck Institute for Psycholinguistics](https://www.mpi.nl/) (MPI Nijmegen)** and **[Fraunhofer IAIS](https://www.iais.fraunhofer.de/en.html)**. It was my first major research contribution after joining HHI, and it defined the direction of my early career: applying computer vision and audio analysis to problems outside the traditional media-tech industry.
 
 The problem was simple to state and painful to live with. Researchers in linguistics, sign-language studies, child-development psychology, and anthropology depend on annotated audio-visual recordings: transcriptions of speech, boundaries of gestures, phases of interaction, participant labels. Creating those annotations by hand takes between **50 and 100 times the length of the media itself**. A single one-hour field recording could take a PhD student two full weeks to annotate. Corpora of hundreds of hours were common, and every new study needed fresh annotations.
 
@@ -31,14 +31,12 @@ Among the recognizers delivered:
 
 The recognizers were designed as **modular components with adaptation and feedback mechanisms**: the researcher's corrections could be fed back into the models, allowing them to adapt to the often unusual acoustic and visual conditions of humanities field data (low-quality recordings, overlapping speech, non-standard camera placements).
 
-## Technical Context
-
+## Technical context
 The project ran during a period in which audio and video analysis was transitioning from hand-crafted features to learned representations (the pre-deep-learning era). The speech and speaker modules relied on MFCC features, GMM/HMM acoustic models, and clustering algorithms; the video modules used colour histograms, motion vectors, and SVM classifiers. Every recognizer had to run acceptably fast on a standard researcher laptop; no GPUs, no cloud.
 
 Making all of that **integrate cleanly into a tool users already knew and trusted** was as much of the work as the algorithms themselves. ELAN had an established user base and a very specific interaction model; any pre-annotations had to slot into that model without disrupting existing workflows.
 
-## Publications and Impact
-
+## Publications and impact
 The work produced several peer-reviewed papers, including:
 
 - *AVATecH: Audio/Video Technology for Humanities Research*: LREC Workshop on Language Technologies for Digital Humanities, Hissar, Bulgaria, **2011**.
@@ -48,6 +46,5 @@ The work produced several peer-reviewed papers, including:
 
 The recognizers shipped as part of **ELAN** and remained part of the tool's standard distribution for years. For a young engineer, seeing work that started as algorithm research end up in the daily workflow of humanities researchers in dozens of institutions was a lasting lesson: **the technical contribution matters only as much as its path into the hands of the people who need it**.
 
-## Personal Reflection
-
+## Personal reflection
 AVATecH shaped my approach to every project that followed. The constraints of the problem are the same ones I have met again and again, in AR for education and later in GenAI for enterprise: messy real-world data, domain experts who are not programmers, a tool ecosystem that already exists, and evaluation metrics that must reflect real usefulness rather than benchmark performance. The specific algorithms have aged (a modern version of almost every recognizer would be built on transformer-based models in a tenth of the code), but the engineering discipline of the project has not.

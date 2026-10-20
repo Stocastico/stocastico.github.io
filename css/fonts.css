@@ -1,3 +1,34 @@
+/* Self-hosted Archivo (latin, variable weight 300-800 x width 62-125).
+
+   The Montaggio display and interface face (#190). Chosen for its width
+   axis: the same family runs from a condensed 62% — the hero name, section
+   titles — to an expanded 125%, so one face can carry the contrast between
+   headline and chrome that the mono used to carry by being a different
+   face altogether. It also takes over the UI chrome (nav, buttons, chips,
+   tags): JetBrains Mono stays, but only for data — years, kernels, keys.
+
+   Provenance, so this is reproducible: the file is the latin "standard"
+   (wght+wdth) subset from @fontsource-variable/archivo 5.3.0 (SIL OFL 1.1),
+   further reduced with fonttools —
+     · pyftsubset to U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+00B7,
+       U+00D7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20AC,
+       U+2192, U+2212, keeping kern/ccmp/locl/mark/mkmk/liga/calt
+     · then varLib.instancer wght=300:800 wdth=62:125 (subset first, then
+       clip — same order as the serif below, same reason)
+   90.1 KB -> 71.2 KB. The width axis is most of that: clipping it to 62-100
+   would save 21 KB and lose the expanded end, which is the one this design
+   uses for its wide-set lines. Upright only; nothing here is set in an
+   Archivo italic, and an <em> in it is restyled by weight, not slant. */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 800;
+  font-stretch: 62% 125%;
+  src: url(../fonts/archivo-latin-wdth-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+2000-206F,U+20AC,U+2192,U+2212;
+}
+
 /* Self-hosted Source Serif 4 (latin, variable weight 400-700, roman + italic).
 
    The prose face. Replaces Inter, which was four static weights (96 KB) and

@@ -267,10 +267,13 @@ function buildWorldMapSvg(topo, countries) {
   // ~80 % of the inline bytes, so simplify it (Douglas-Peucker, sub-pixel at
   // this display scale) and drop speck-sized islands. Highlighted countries are
   // left at full detail below so the places someone actually marks stay crisp.
+  // 0.1°, not the 0.4° it was: at 0.4 the grey coast visibly missed the
+  // full-detail coloured countries drawn over it, and the map read as coarse
+  // (review of #188). The difference is ~11 KB of inline SVG.
   const land = topo.objects.land.geometries[0];
   const landPath = geometryToPath(land, decodeArc, round, latBounds, {
     skipAntarctica: true,
-    simplifyEps: 0.4,
+    simplifyEps: 0.1,
     minRingSpan: 0.7,
   });
 

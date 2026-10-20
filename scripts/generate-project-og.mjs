@@ -25,6 +25,12 @@
    brand card (scripts/generate-og.mjs) and the hand-drawn LeNet card already
    are, and the too-small-source problem disappears rather than being managed.
 
+   They are rendered by Chromium (scripts/lib/og-render.mjs), not by sharp:
+   sharp's SVG renderer ignores @font-face, so the old cards were set in the
+   machine's DejaVu, never in the site's type, and their wrapping was a
+   character-count estimate of a font that was not even the one drawn. Now
+   the browser sets the type and line-clamp does the cutting (#195).
+
    The palette is the second reason. The two hand-drawn cards in this directory
    are frozen in an amber palette the site stopped wearing several rotations
    ago — the same failure the inline diagrams had before they were inlined, and
@@ -44,8 +50,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
+import { fontFaces, barStops, esc, renderPngs, W, H } from './lib/og-render.mjs';
+
 const require = createRequire(import.meta.url);
-const sharp = require('sharp');
 const { parseYaml } = require('./lib/yaml.js');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -65,144 +72,45 @@ if (args.includes('--help') || args.includes('-h')) {
   process.exit(0);
 }
 
-const W = 1200;
-const H = 630;
+/* The margin every line of type keeps from the card's edge. The pixel test
+   in test/generate-project-og.test.mjs reads it. */
+export const PAD = 84;
 
-/* Both faces are embedded so the render does not depend on what fonts the
-   machine happens to have — the same reason generate-og does it. */
-const b64 = (rel) => fs.readFileSync(path.join(ROOT, rel)).toString('base64');
-const MONO = b64('fonts/jetbrains-mono-latin-wght-normal.woff2');
-const SERIF = b64('fonts/source-serif-4-latin-wght-normal.woff2');
-
-const esc = (s) => String(s)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-/* JetBrains Mono is monospaced at exactly 600/1000 em, so a mono line's width
-   is arithmetic rather than a guess. Source Serif is proportional, so its
-   average advance has to be estimated, and the estimate must err high — a low
-   one puts a line over the right edge, a high one merely wraps early. 0.50 was
-   measurably too low: the longest descriptions rendered about 35px past the
-   margin. 0.545 clears every description in data/projects.js with room, which
-   test/generate-project-og.test.mjs re-checks against the real strings rather
-   than trusting the constant. */
-const MONO_ADVANCE = 0.6;
-const SERIF_ADVANCE = 0.545;
-
-function wrap(text, maxWidth, fontSize, advance) {
-  const perChar = fontSize * advance;
-  const limit = Math.max(1, Math.floor(maxWidth / perChar));
-  const lines = [];
-  let line = '';
-  for (const word of String(text).split(/\s+/)) {
-    if (!line) { line = word; continue; }
-    if ((line + ' ' + word).length <= limit) line += ' ' + word;
-    else { lines.push(line); line = word; }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-/* Long titles step down through these sizes until they fit three lines. The
-   ladder is coarse on purpose: a card whose type size is a continuous function
-   of its title length has thirteen different type sizes and reads as thirteen
-   unrelated cards. */
-const TITLE_SIZES = [64, 56, 48, 42, 38];
-const TITLE_MAX_LINES = 3;
-
-function fitTitle(title, maxWidth) {
-  for (const size of TITLE_SIZES) {
-    const lines = wrap(title, maxWidth, size, MONO_ADVANCE);
-    if (lines.length <= TITLE_MAX_LINES) return { size, lines };
-  }
-  const size = TITLE_SIZES[TITLE_SIZES.length - 1];
-  return { size, lines: wrap(title, maxWidth, size, MONO_ADVANCE).slice(0, TITLE_MAX_LINES) };
-}
-
-export function svgFor(project, palette) {
-  const p = palette;
-  const PAD = 84;
-  const BOX = W - PAD * 2;
-
-  const { size: titleSize, lines: titleLines } = fitTitle(project.title, BOX);
-  const eyebrow = [project.year, ...(project.tags || [])].join('  ·  ').toUpperCase();
-
-  /* Two lines of description, cut on a word with an ellipsis rather than
-     mid-word — the card is a summary of a summary.
-
-     The ellipsis is appended after wrapping, so it can push a line that
-     exactly filled its measure one character past it. Two cards did overrun
-     by 4px that way. Drop trailing words until the ellipsis fits rather than
-     reserving space up front, which would shorten every line to pay for the
-     few that need it. */
-  const DESC_SIZE = 25;
-  const descFits = (s) => s.length * DESC_SIZE * SERIF_ADVANCE <= BOX;
-  const descLines = wrap(project.description || '', BOX, DESC_SIZE, SERIF_ADVANCE).slice(0, 2);
-  if (descLines.length === 2 && (project.description || '').length
-      > descLines.join(' ').length) {
-    let last = descLines[1].replace(/[,;:.]?$/, '');
-    while (!descFits(`${last}…`) && last.includes(' ')) {
-      last = last.slice(0, last.lastIndexOf(' '));
-    }
-    descLines[1] = `${last}…`;
-  }
-
-  /* Laid out from the title block outwards so a one-line and a three-line
-     title stay optically centred rather than both starting at a fixed y. */
-  const titleLead = titleSize * 1.24;
-  const titleH = titleLines.length * titleLead;
-  const titleTop = (H - titleH) / 2 - 6;
-
-  const titleTspans = titleLines
-    .map((l, i) => `<tspan x="${PAD}" y="${(titleTop + titleLead * (i + 0.78)).toFixed(1)}">${esc(l)}</tspan>`)
-    .join('');
-  const descTspans = descLines
-    .map((l, i) => `<tspan x="${PAD}" y="${(titleTop + titleH + 62 + i * 34).toFixed(1)}">${esc(l)}</tspan>`)
-    .join('');
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <defs>
-    <style>
-      @font-face { font-family: 'JetBrains Mono'; font-weight: 400 700; src: url(data:font/woff2;base64,${MONO}) format('woff2'); }
-      @font-face { font-family: 'Source Serif 4'; font-weight: 400 700; src: url(data:font/woff2;base64,${SERIF}) format('woff2'); }
-      .mono  { font-family: 'JetBrains Mono', monospace; }
-      .serif { font-family: 'Source Serif 4', serif; }
-    </style>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${p.bgAlt || p.bg}"/>
-      <stop offset="1" stop-color="${p.bg}"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.12" cy="0.14" r="0.85">
-      <stop offset="0" stop-color="${p.accent}" stop-opacity="0.26"/>
-      <stop offset="0.6" stop-color="${p.accent}" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="glow2" cx="0.96" cy="0.98" r="0.8">
-      <stop offset="0" stop-color="${p.accent2}" stop-opacity="0.22"/>
-      <stop offset="0.62" stop-color="${p.accent2}" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0.6">
-      <stop offset="0.25" stop-color="${p.heroGradFrom || p.accent}"/>
-      <stop offset="1" stop-color="${p.heroGradTo || p.accent2}"/>
-    </linearGradient>
-  </defs>
-
-  <rect width="${W}" height="${H}" fill="url(#bg)"/>
-  <rect width="${W}" height="${H}" fill="url(#glow)"/>
-  <rect width="${W}" height="${H}" fill="url(#glow2)"/>
-
-  <text class="mono" x="${PAD}" y="106" font-size="21" font-weight="700"
-        fill="${esc(p.accentText || p.accent)}" letter-spacing="3.2">${esc(eyebrow)}</text>
-
-  <text class="mono" font-size="${titleSize}" font-weight="700"
-        fill="url(#title)" letter-spacing="-2">${titleTspans}</text>
-
-  <text class="serif" font-size="25" fill="${esc(p.textMuted || p.text)}">${descTspans}</text>
-
-  <rect x="${PAD}" y="${H - 74}" width="30" height="3" rx="1.5" fill="${p.accent}"/>
-  <text class="mono" x="${PAD + 48}" y="${H - 64}" font-size="21"
-        fill="${esc(p.text)}">Stefano Masneri</text>
-  <text class="serif" x="${W - PAD}" y="${H - 64}" font-size="21"
-        fill="${esc(p.textMuted || p.text)}" text-anchor="end">stefanomasneri.com</text>
-</svg>`;
+/* The Montaggio title card for a project: the colour-bar strip, the year in
+   mono (it is data), the tags in the UI face, the title in Archivo at its
+   narrowest, two lines of description in the serif, and a footer. Titles and
+   descriptions are cut by line-clamp; a long title steps its size down once
+   rather than shrinking continuously, so thirteen cards keep one or two type
+   sizes, not thirteen. */
+export function htmlFor(project, p) {
+  const long = project.title.length > 58;
+  const tags = (project.tags || []).map((t) => `<span>${esc(t)}</span>`).join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+${fontFaces()}
+* { margin: 0; box-sizing: border-box; }
+body { width: ${W}px; height: ${H}px; background: ${p.bg}; color: ${p.text}; position: relative; overflow: hidden; }
+.bars { position: absolute; inset: 0 0 auto 0; height: 14px; background: linear-gradient(90deg, ${barStops(p)}); }
+.card { position: absolute; inset: 14px ${PAD}px 110px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+.meta { display: flex; gap: 18px; align-items: baseline; font-family: 'Archivo'; font-size: 24px; color: ${p.textMuted || p.text}; }
+.year { font-family: 'JetBrains Mono'; font-weight: 700; color: ${p.accentText || p.accent}; }
+.meta span + span::before { content: '·'; margin-right: 18px; }
+.title { font-family: 'Archivo'; font-weight: 800; font-stretch: 62%; font-size: ${long ? 76 : 92}px; line-height: 0.95;
+         display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; text-wrap: balance; }
+.desc { font-family: 'Source Serif 4'; font-size: 26px; line-height: 1.35; color: ${p.textMuted || p.text};
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.foot { position: absolute; left: ${PAD}px; right: ${PAD}px; bottom: 48px; display: flex; justify-content: space-between; align-items: baseline;
+        font-family: 'Archivo'; font-size: 24px; color: ${p.text}; }
+.foot .who::before { content: ''; display: inline-block; width: 14px; height: 14px; margin-right: 14px; background: ${p.accent}; }
+.foot .domain { font-family: 'JetBrains Mono'; font-size: 21px; color: ${p.textMuted || p.text}; }
+</style></head><body>
+<div class="bars"></div>
+<div class="card">
+  <div class="meta"><span class="year">${esc(project.year)}</span>${tags}</div>
+  <div class="title">${esc(project.title)}</div>
+  <div class="desc">${esc(project.description || '')}</div>
+</div>
+<div class="foot"><span class="who">Stefano Masneri</span><span class="domain">stefanomasneri.com</span></div>
+</body></html>`;
 }
 
 /* Which projects this generator owns: the ones whose committed page already
@@ -217,10 +125,6 @@ export function ownedProjects(projects, root = ROOT) {
       .exec(fs.readFileSync(page, 'utf8'));
     return Boolean(m) && m[1] === `img/projects/og/${proj.id}.png`;
   });
-}
-
-export async function renderCard(project, palette) {
-  return sharp(Buffer.from(svgFor(project, palette))).png({ compressionLevel: 9 }).toBuffer();
 }
 
 async function main() {
@@ -239,8 +143,9 @@ async function main() {
   }
 
   if (!DRY_RUN) fs.mkdirSync(OUT_DIR, { recursive: true });
-  for (const project of targets) {
-    const png = await renderCard(project, palette);
+  const pngs = await renderPngs(targets.map((project) => htmlFor(project, palette)));
+  for (const [i, project] of targets.entries()) {
+    const png = pngs[i];
     const out = path.join(OUT_DIR, `${project.id}.png`);
     if (!DRY_RUN) fs.writeFileSync(out, png);
     process.stdout.write(`✓ ${DRY_RUN ? '[dry] ' : ''}img/projects/og/${project.id}.png (${(png.length / 1024).toFixed(0)} KB)\n`);

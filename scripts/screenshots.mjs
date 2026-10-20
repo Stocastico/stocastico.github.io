@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ─────────────────────────────────────────────────────────────────────────────
-   screenshots.mjs — visual QA harness for the light/dark theme.
+   screenshots.mjs — visual QA harness: every page at 1440, 768 and 390px.
 
    Builds are NOT triggered here; run `npm run build` first (serves dist/ if it
    exists, else the source tree).
@@ -9,11 +9,10 @@
    emit files that looked plausible and carried no information:
 
      · It selected light mode with Playwright's `colorScheme: 'light'`, which
-       sets prefers-color-scheme — and the site deliberately ignores that. Light
-       is opt-in via the toggle only, persisted to localStorage and re-applied
-       by the <head> bootstrap before first paint. So every "light" capture was
-       a byte-identical copy of its dark twin: half the matrix, all of it noise.
-       The theme is now pinned the way a visitor pins it.
+       sets prefers-color-scheme — and the site ignored that, so every "light"
+       capture was a byte-identical copy of its dark twin. (Moot now: the site
+       ships one theme since #188, and the second axis of the matrix is the
+       three widths CLAUDE.md asks a CSS change to be looked at, instead.)
 
      · It captured full-page shots without scrolling. `[data-animate]` is
        opacity 0 until initScrollReveal() reveals it, and that sweep runs on
@@ -26,14 +25,14 @@
 ──────────────────────────────────────────────────────────────────────────────*/
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { dirname, extname, join } from 'node:path';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { launchBrowser, scrollThrough, settleReveal } from '../test/e2e/harness.mjs';
 
 const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SERVE = existsSync(join(ROOT_DIR, 'dist')) ? join(ROOT_DIR, 'dist') : ROOT_DIR;
-const OUT = join(ROOT_DIR, process.argv[2] || 'screenshots');
+const OUT = resolve(ROOT_DIR, process.argv[2] || 'screenshots');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
@@ -76,23 +75,13 @@ async function main() {
      fallback here would be a worse copy of that one. */
   const browser = await launchBrowser();
 
-  for (const scheme of ['dark', 'light']) {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
-    /* The site ships dark and treats light as an explicit choice, so this is
-       how a visitor selects it — the <head> bootstrap reads the same key
-       before first paint. Setting prefers-color-scheme would do nothing. */
-    if (scheme === 'light') {
-      await ctx.addInitScript(() => {
-        try { localStorage.setItem('theme', 'light'); } catch { /* private mode */ }
-      });
-    }
+  for (const [width, height] of [[1440, 900], [768, 1024], [390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width, height } });
     const page = await ctx.newPage();
     for (const shot of SHOTS) {
       await page.goto(base + shot.path, { waitUntil: 'load' });
-      /* nudge the hero into life (the CNN scene starts on first interaction) */
-      await page.mouse.move(640, 300);
-      await page.mouse.move(660, 320);
-      await page.waitForTimeout(shot.wait || 1400);
+      /* Long enough for the homepage hero's intro sweep (1.6 s) to land. */
+      await page.waitForTimeout(shot.wait || 1800);
       await scrollThrough(page);
       await settleReveal(page);
       /* `behavior: 'instant'`, and then wait for scrollY to actually reach 0.
@@ -113,7 +102,7 @@ async function main() {
         .catch(() => { /* a page too short to scroll is already at 0 */ });
       await page.waitForTimeout(400);
       if (shot.scroll) await page.evaluate((y) => window.scrollTo(0, y), shot.scroll);
-      const file = join(OUT, `${shot.name}-${scheme}.png`);
+      const file = join(OUT, `${shot.name}-${width}.png`);
       await page.screenshot({ path: file, fullPage: !!shot.fullPage });
       console.log('✓', file.replace(ROOT_DIR + '/', ''));
     }

@@ -9,8 +9,7 @@ og:          "img/projects/og/brand-stadium.png"
 description: "Measures how much screen time each brand gets in a football broadcast. A YOLO detector finds the boards, a DenseNet201 sorts them into 52 brands, despite motion blur, a 40× class imbalance, and LED ads that change weekly. In production on Azure."
 ---
 
-## Measuring Brand Exposure in Football Footage with Computer Vision
-
+## Measuring brand exposure in football footage with computer vision
 We've been building a computer vision system that detects and classifies advertising holders in football footage (the perimeter boards, banners, and signage you see around a pitch) so we can measure how much exposure each brand actually gets during a match. It's a deceptively hard problem, and we wanted to share where it's landed.
 
 ## The setup

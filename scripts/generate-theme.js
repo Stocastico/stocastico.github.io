@@ -44,21 +44,6 @@ const NEW_PROJECT   = path.join(ROOT, 'scripts', 'new-project.js');
 
 const CSS_START = '/* @theme-generated-start';
 const CSS_END   = '/* @theme-generated-end */';
-/* Second marked region — the light-theme override block. Lives outside :root
-   (it carries its own @media + [data-theme] selectors), so it gets its own
-   marker pair spliced independently of the dark :root block above. */
-const CSS_LIGHT_START = '/* @theme-generated-light-start';
-const CSS_LIGHT_END   = '/* @theme-generated-light-end */';
-
-/* Every palette that is NOT the active one, scoped to [data-palette="…"] so a
-   visitor can switch at runtime. The active palette is deliberately absent:
-   it already *is* the unscoped :root block, and emitting it twice would put
-   the same values in two places in one stylesheet. With no attribute set the
-   :root default applies, which is the active palette — so selecting it is
-   simply "no override". */
-const CSS_ALT_START = '/* @theme-generated-alt-start';
-const CSS_ALT_END   = '/* @theme-generated-alt-end */';
-
 /* Alpha of every translucent surface, as a fraction of `text` over `bg`.
    These are palette-independent on purpose: a surface is an *elevation* step,
    and the step should read the same whichever palette is active.
@@ -88,7 +73,6 @@ const REQUIRED_KEYS = [
   'bg', 'bgAlt',
   'text', 'textMuted', 'textFaint',
   'accent', 'accentHi', 'accent2', 'accent2Hi', 'accentText', 'accent2Text', 'onAccent',
-  'heroGradFrom', 'heroGradTo',
   'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
 ];
 const REQUIRED_PINS  = ['lived', 'current', 'worktrip', 'holiday'];
@@ -99,7 +83,6 @@ const REQUIRED_GLOBE = [
   'grid', 'gridBright', 'stars',
   'fallback1', 'fallback2', 'fallback3',
 ];
-const REQUIRED_NOISE = ['dark', 'mid', 'bright'];
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
@@ -247,21 +230,19 @@ function validate(data, paletteId) {
     return errors;
   }
 
-  /* Validate the dark body, then its required light-theme counterpart. The
-     light variant is itself a full palette body (same keys), but it is a leaf —
-     it must NOT carry its own nested `light`, so we never recurse on it. */
+  /* One body per palette. There used to be a required nested `light:`
+     variant and a runtime light/dark toggle; the site is dark only since the
+     Montaggio redesign (#188), so a `light:` key would now be dead data — it
+     is rejected rather than silently ignored. */
   validatePaletteBody(p, id, errors);
-
-  if (typeof p.light !== 'object' || p.light === null) {
-    errors.push(`${id}.light must be a mapping (the light-theme colour variant)`);
-  } else {
-    validatePaletteBody(p.light, `${id}.light`, errors);
+  if (p.light !== undefined) {
+    errors.push(`${id}.light is no longer supported — the site ships one theme, see data/palettes.yaml`);
   }
 
   return errors;
 }
 
-/* Check every required hex/name key on one palette body (dark or light). */
+/* Check every required hex/name key on one palette body. */
 function validatePaletteBody(p, ctx, errors) {
   const checkHex = (obj, key, c) => {
     if (obj[key] === undefined) { errors.push(`${c}.${key} is missing`); return; }
@@ -277,16 +258,13 @@ function validatePaletteBody(p, ctx, errors) {
   else for (const k of REQUIRED_PINS) checkHex(p.pins, k, `${ctx}.pins`);
   if (typeof p.globe !== 'object' || p.globe === null) errors.push(`${ctx}.globe must be a mapping`);
   else for (const k of REQUIRED_GLOBE) checkHex(p.globe, k, `${ctx}.globe`);
-  if (typeof p.noise !== 'object' || p.noise === null) errors.push(`${ctx}.noise must be a mapping`);
-  else for (const k of REQUIRED_NOISE) checkHex(p.noise, k, `${ctx}.noise`);
 }
 
 // ─── css/styles.css :root block ───────────────────────────────────────────────
 
 /* The colour custom-property declarations for one palette body, each line
    prefixed with `indent`. Blank separators stay truly empty (no trailing
-   indent). Shared by the dark :root block and the light override block so the
-   two can never drift in which tokens they define.
+   indent).
 
    Solid colours ship as oklch() (perceptual, wide-gamut-ready); they round-trip
    from the palette hex so rendering is unchanged. The `*-rgb` channel lists stay
@@ -328,8 +306,6 @@ function cssVarLines(p, indent) {
     `${I}--text-muted: ${ok(p.textMuted)};`,
     `${I}--text-faint: ${ok(p.textFaint)};`,
     ``,
-    `${I}--hero-grad-from: ${ok(p.heroGradFrom)};`,
-    `${I}--hero-grad-to: ${ok(p.heroGradTo)};`,
     `${I}--map-bg: ${ok(p.mapBg)};`,
     ``,
     `${I}--pin-lived: ${ok(p.pins.lived)};`,
@@ -349,56 +325,6 @@ function generateCssBlock(p, id) {
     ...cssVarLines(p, '  '),
     `  ${CSS_END}`,
   ].join('\n');
-}
-
-/* Light theme — top-level override block (sits outside :root). The site
-   defaults to dark regardless of OS preference; light is strictly opt-in via
-   the toggle, which pins [data-theme="light"] (persisted in localStorage and
-   re-applied before paint by the <head> bootstrap). `color-scheme` flips so
-   native form controls, scrollbars and the caret track the theme too. */
-function generateCssLightBlock(p, id) {
-  const pinned = cssVarLines(p, '    ').join('\n');
-  return [
-    `${CSS_LIGHT_START} — DO NOT EDIT.`,
-    `   Generated by scripts/generate-theme.js from data/palettes.yaml (light variant).`,
-    `   Run \`npm run generate-theme\` to update. Light palette: ${p.name} */`,
-    `:root[data-theme="light"] {`,
-    pinned,
-    `  color-scheme: light;`,
-    `}`,
-    `${CSS_LIGHT_END}`,
-  ].join('\n');
-}
-
-/* The non-active palettes, each as a [data-palette] scoped pair. Specificity
-   does the work: :root[data-palette="x"] (0,2,0) outranks the :root default,
-   and :root[data-palette="x"][data-theme="light"] (0,3,0) outranks the plain
-   light override — so the two axes compose without !important. */
-function generateCssAltBlock(palettes, activeId) {
-  const ids = Object.keys(palettes).filter((id) => id !== activeId);
-  const out = [
-    `${CSS_ALT_START} — DO NOT EDIT.`,
-    `   Generated by scripts/generate-theme.js from data/palettes.yaml.`,
-    `   Run \`npm run generate-theme\` to update.`,
-    `   The alternate palettes, applied when the document carries`,
-    `   data-palette="…" (set by the palette picker in js/ui.js, and re-applied`,
-    `   before first paint by the <head> bootstrap). */`,
-  ];
-  for (const id of ids) {
-    const dark = tameAccent(palettes[id]);
-    const light = tameAccent(palettes[id].light);
-    out.push('');
-    out.push(`:root[data-palette="${id}"] {`);
-    out.push(cssVarLines(dark, '  ').join('\n'));
-    out.push('}');
-    out.push('');
-    out.push(`:root[data-palette="${id}"][data-theme="light"] {`);
-    out.push(cssVarLines(light, '  ').join('\n'));
-    out.push('  color-scheme: light;');
-    out.push('}');
-  }
-  out.push(CSS_ALT_END);
-  return out.join('\n');
 }
 
 /* Replace the text between a marker pair (inclusive) with `block`. The start
@@ -432,12 +358,11 @@ function themeObjectBody(p, id, name) {
   const flat = [
     'bg', 'bgAlt', 'text', 'textMuted', 'textFaint',
     'accent', 'accentHi', 'accent2', 'accent2Hi', 'accentText', 'accent2Text', 'onAccent',
-    'heroGradFrom', 'heroGradTo', 'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
+    'mapBg', 'themeColor', 'faviconBg', 'faviconFg',
   ];
   const flatLines = flat.map(k => `  ${k}: ${q(p[k])},`).join('\n');
   const pinLines  = REQUIRED_PINS.map(k => `    ${k}: ${q(p.pins[k])},`).join('\n');
   const globeLines = REQUIRED_GLOBE.map(k => `    ${k}: ${q(p.globe[k])},`).join('\n');
-  const noiseLines = REQUIRED_NOISE.map(k => `    ${k}: ${q(p.noise[k])},`).join('\n');
   return `{
   id: '${id}',
   name: '${name}',
@@ -448,78 +373,32 @@ ${pinLines}
   globe: {
 ${globeLines}
   },
-  noise: {
-${noiseLines}
-  },
 }`;
 }
 
-function generateThemeJs(p, id, pLight, allPalettes) {
-  const light = pLight || p.light || p;
-  const darkObj  = themeObjectBody(p, id, p.name);
-  const lightObj = themeObjectBody(light, `${id}-light`, light.name);
-
-  const indent = (text) => text.split('\n').map((l) => (l ? `    ${l}` : l)).join('\n').trimStart();
-  const altEntries = Object.keys(allPalettes || { [id]: p }).map((pid) => {
-    if (pid === id) {
-      return `  ${pid}: { id: '${pid}', name: '${p.name}', dark: THEME, light: THEME_LIGHT },\n`;
-    }
-    const d = tameAccent(allPalettes[pid]);
-    const l = tameAccent(allPalettes[pid].light);
-    return `  ${pid}: {\n    id: '${pid}',\n    name: '${d.name}',\n`
-      + `    dark: ${indent(themeObjectBody(d, pid, d.name))},\n`
-      + `    light: ${indent(themeObjectBody(l, `${pid}-light`, l.name))},\n  },\n`;
-  }).join('');
-
+function generateThemeJs(p, id) {
+  const themeObj = themeObjectBody(p, id, p.name);
   return `/* ${'-'.repeat(74)}
-   Theme colours — active palette: ${p.name}  (+ light variant: ${light.name})
+   Theme colours — palette: ${p.name}
    GENERATED by scripts/generate-theme.js — edit data/palettes.yaml to update.
 
    Run:  npm run generate-theme
 
-   THEME holds the dark palette (the default); THEME_LIGHT holds the light
-   variant. The site defaults to dark regardless of OS preference — light is
-   opt-in, applied only when the document is explicitly pinned to
-   data-theme="light". All values are #rrggbb hex strings; the helpers convert
-   to the formats each layer needs:
+   The site ships one theme (dark) since the Montaggio redesign: no light
+   variant, no palette picker. All values are #rrggbb hex strings; the helpers
+   convert to the formats each layer needs:
      int(hex)        → 0xRRGGBB integer   (Three.js Color / material colours)
      rgba(hex, a)    → 'rgba(r, g, b, a)' (Canvas2D fill/stroke styles)
      glvec(hex)      → [r, g, b] 0..1     (GLSL vec3 literals / uniforms)
 ${'-'.repeat(78)} */
 
-export const THEME = ${darkObj};
+export const THEME = ${themeObj};
 
-export const THEME_LIGHT = ${lightObj};
-
-/* The palette shipped as the CSS :root default. */
-export const ACTIVE_PALETTE = '${id}';
-
-/* Every palette, so the picker can recolour the canvases live. The active one
-   reuses THEME / THEME_LIGHT rather than repeating them. */
-export const PALETTES = {
-${altEntries}};
-
-/* Resolve the palette in effect for the current document, along both axes:
-   which palette (data-palette, default ACTIVE_PALETTE) and which variant
-   (light only when explicitly pinned to data-theme="light" — everything else,
-   including no pin and SSR, is dark). */
+/* Kept as a function so the canvas modules read their colours through one
+   seam; it used to resolve a palette × light/dark matrix and now has one
+   answer. */
 export function getTheme() {
-  let paletteId = ACTIVE_PALETTE;
-  let variant = 'dark';
-  const root = typeof document !== 'undefined' ? document.documentElement : null;
-  if (root) {
-    /* getAttribute first, dataset second: js/ui.js reads the same attributes
-       that way, and it keeps this working against the minimal document stubs
-       the tests use. */
-    const read = (attr, key) => (typeof root.getAttribute === 'function'
-      ? root.getAttribute(attr)
-      : (root.dataset || {})[key]);
-    const pid = read('data-palette', 'palette');
-    if (pid && PALETTES[pid]) paletteId = pid;
-    if (read('data-theme', 'theme') === 'light') variant = 'light';
-  }
-  const entry = PALETTES[paletteId] || PALETTES[ACTIVE_PALETTE];
-  return variant === 'light' ? entry.light : entry.dark;
+  return THEME;
 }
 
 /* '#rrggbb' → 0xRRGGBB integer. */
@@ -544,13 +423,24 @@ export function glvec(hex) {
 
 // ─── HTML / favicon rewriting ─────────────────────────────────────────────────
 
+/* "SM" as Archivo outlines (width 62, weight 800 — the display cut), baked
+   once by tools/extract-favicon-glyph.py. An SVG favicon is its own document
+   and cannot load the site's web fonts, so <text font-family=…> only ever
+   rendered in a fallback (Georgia) and the icon never matched the type. */
+const FAVICON_GLYPH = JSON.parse(fs.readFileSync(path.join(__dirname, 'lib', 'favicon-glyph.json'), 'utf8'));
+
+/** The favicon as an SVG document: the ground and the two letters. */
+function faviconSvg(bgHex, fgHex) {
+  const n = FAVICON_GLYPH.viewBox;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}">`
+    + `<rect width="${n}" height="${n}" rx="8" fill="${bgHex}"/>`
+    + `<path fill="${fgHex}" d="${FAVICON_GLYPH.d}"/></svg>`;
+}
+
 function faviconDataUri(bgHex, fgHex) {
-  const bg = bgHex.slice(1);
-  const fg = fgHex.slice(1);
-  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E` +
-         `%3Crect width='64' height='64' rx='12' fill='%23${bg}'/%3E` +
-         `%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='32' fill='%23${fg}' ` +
-         `font-family='Georgia,serif'%3ESM%3C/text%3E%3C/svg%3E`;
+  return 'data:image/svg+xml,' + faviconSvg(bgHex, fgHex)
+    .replace(/"/g, "'")
+    .replace(/%/g, '%25').replace(/#/g, '%23').replace(/</g, '%3C').replace(/>/g, '%3E');
 }
 
 /** Apply the theme-colour / favicon / nav-gradient / OG-image rewrites to an
@@ -600,11 +490,10 @@ function rewriteHtml(text, p, id) {
   return out;
 }
 
-/** public/favicon.svg — rect fill = faviconBg, text fill = faviconFg. */
-function rewriteFaviconSvg(text, p) {
-  return text
-    .replace(/(<rect\b[^>]*\bfill=")#[0-9a-fA-F]{6}(")/, `$1${p.faviconBg}$2`)
-    .replace(/(<text\b[^>]*\bfill=")#[0-9a-fA-F]{6}(")/, `$1${p.faviconFg}$2`);
+/** public/favicon.svg — written whole from the palette and the glyph, so
+ *  the file is a pure function of both (theme-sync compares it). */
+function rewriteFaviconSvg(_text, p) {
+  return faviconSvg(p.faviconBg, p.faviconFg) + '\n';
 }
 
 /** public/manifest.webmanifest — PWA chrome colours. theme_color drives the
@@ -666,23 +555,17 @@ function main(argv) {
 
   const id = opts.palette || data.active;
   const p  = tameAccent(data.palettes[id]);
-  /* The light variant gets the same accent-chroma taming as the dark palette. */
-  const pLight = tameAccent(data.palettes[id].light);
 
-  const themeJs   = generateThemeJs(p, id, pLight, data.palettes);
+  const themeJs   = generateThemeJs(p, id);
   const cssBlock  = generateCssBlock(p, id);
-  const cssLight  = generateCssLightBlock(pLight, id);
-  const cssAlt    = generateCssAltBlock(data.palettes, id);
   const htmlFiles = listHtmlFiles();
 
   if (opts.dryRun) {
-    console.log(`── Active palette: ${p.name} (${id}) — light: ${pLight.name} ──\n`);
+    console.log(`── Active palette: ${p.name} (${id}) ──\n`);
     console.log(`── js/theme.js ${'─'.repeat(50)}`);
     console.log(themeJs);
-    console.log(`── css/styles.css :root block (dark) ${'─'.repeat(26)}`);
+    console.log(`── css/styles.css :root block ${'─'.repeat(33)}`);
     console.log(cssBlock);
-    console.log(`── css/styles.css light override block ${'─'.repeat(24)}`);
-    console.log(cssLight);
     console.log(`\n── would rewrite ${'─'.repeat(45)}`);
     [...htmlFiles, NEW_PROJECT, FAVICON_SVG, MANIFEST].forEach(f => console.log(`  • ${path.relative(ROOT, f)}`));
     return;
@@ -694,11 +577,9 @@ function main(argv) {
   fs.writeFileSync(THEME_FILE, themeJs, 'utf8');
   written.push(path.relative(ROOT, THEME_FILE));
 
-  /* css/styles.css — dark :root block + light override block */
+  /* css/styles.css — the :root block */
   const css = fs.readFileSync(CSS_FILE, 'utf8');
-  let nextCss = spliceCssBlock(css, cssBlock);
-  nextCss = spliceMarked(nextCss, cssLight, CSS_LIGHT_START, CSS_LIGHT_END);
-  nextCss = spliceMarked(nextCss, cssAlt, CSS_ALT_START, CSS_ALT_END);
+  const nextCss = spliceCssBlock(css, cssBlock);
   if (nextCss !== css) {
     fs.writeFileSync(CSS_FILE, nextCss, 'utf8');
     written.push(path.relative(ROOT, CSS_FILE));
@@ -749,13 +630,8 @@ module.exports = {
   SURFACE_ALPHA,
   parseArgs, validate, validatePaletteBody,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
-  cssVarLines, generateCssBlock, generateCssLightBlock, generateCssAltBlock,
+  cssVarLines, generateCssBlock,
   generateThemeJs, themeObjectBody,
   rewriteHtml, rewriteFaviconSvg, rewriteManifest,
   spliceCssBlock, spliceMarked,
-  /* Exported so test/generate-theme.test.js can splice a fresh generation into
-     the committed stylesheet and assert nothing moves. Without the markers the
-     drift test would have to keep its own copy of them, which is the drift it
-     is trying to detect. */
-  CSS_LIGHT_START, CSS_LIGHT_END, CSS_ALT_START, CSS_ALT_END,
 };

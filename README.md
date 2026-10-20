@@ -29,9 +29,8 @@ forget to re-run its generator.
 
 **One palette drives every colour.** `data/palettes.yaml` has one `active:` key. `npm run generate-theme`
 rewrites the CSS custom properties, `js/theme.js`, the `<meta theme-color>` on every page, the inline
-favicon and the manifest. CSS reads `var(--*)`; the WebGL shaders and Canvas modules import `THEME`.
-The other palettes stay shipped as `:root[data-palette="…"]` blocks, so the navbar dots and the ⌘K
-palette let a visitor pick one; `active:` is what a first-time visitor sees, and it is pinned.
+favicon and the manifest. CSS reads `var(--*)`; the globe's shaders and the Canvas modules import `THEME`.
+There is one palette and one theme (dark): no picker, no light/dark toggle — see CLAUDE.md for why.
 
 **Push to `main` deploys.** `.github/workflows/deploy.yml` runs both test suites, builds, and publishes
 to Pages. There is no release step — the deploy is the release.
@@ -43,7 +42,7 @@ to Pages. There is no release step — the deploy is the release.
 ├── projects/           13 project detail pages
 ├── css/                styles.css (@layer, nesting, oklch) + self-hosted fonts.css
 ├── js/                 ESM. main.js orchestrates; ui.js, animations.js, globe.js,
-│                       cnn-hero.js, kernel-scan.js, mnist-lab.js, europe-map.js
+│                       receptive-field.js, mnist-lab.js
 │                       are the behaviours
 ├── data/               YAML sources of truth + their generated .js modules
 ├── scripts/            the generators (all support --help and --dry-run)
@@ -58,14 +57,15 @@ Edit the source on the left, run the command on the right. The drift tests will 
 
 | To change | Edit | Then run |
 |---|---|---|
-| Career, education, skills | `data/cv.yaml` | `generate-cv`, then `generate-cards` |
-| Projects | `data/projects.js` | `generate-cards`, `generate-llms`, `generate-feed` |
+| Career, education, skills, places lived, timeline clip names (`short:`) and work with no page yet (`timeline_projects:`) | `data/cv.yaml` | `generate-cv`, then `generate-cards` and `generate-sea-chart` |
+| Projects | `data/projects.js` | `generate-thumbs` (if a `bg` changed), `generate-cards`, `generate-llms`, `generate-feed` |
 | Publications | `data/publications.js` | `generate-cards` |
-| Globe pins and trips | `data/locations.yaml` | `generate-locations` |
+| Globe pins and trips | `data/locations.yaml` | `generate-locations`, then `generate-sea-chart` |
 | Homepage world map | `data/countries.yaml` | `generate-countries`, then `generate-world-map` |
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
-| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-theme-toggle`, `generate-favicons` |
+| Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons`, `generate-thumbs`, then the social cards: `generate-og`, `generate-project-og`, `generate-mnist-og` |
+| The trained LeNet-5 | `npm run train-cnn` (slow) | `generate-lenet-weights`, `generate-hero-scan`, `generate-mnist-og` |
 | Contact address | `js/contact.js` | `generate-cards` |
 | A new project page | a Markdown file | `npm run new-project -- file.md` |
 | Adding any HTML page | — | `generate-analytics`, `generate-speculation-rules`, then `generate-csp-meta` **last** |
@@ -91,11 +91,11 @@ which is the authoritative reference for flags — this table is only a map.
 | Group | Scripts |
 |---|---|
 | Build | `dev`, `build`, `preview` |
-| Content | `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
-| Theme | `generate-theme`, `generate-theme-toggle`, `generate-favicons`, `generate-og`, `generate-project-og` |
+| Content | `generate-thumbs`, `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-sea-chart`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
+| Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og`, `generate-mnist-og` (the cards render in headless Chromium) |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
-| ML pipeline | `train-cnn`, `generate-cnn-activations`, `generate-lenet-weights`, `generate-hero-scan` |
-| Maintenance | `check-links`, `screenshots`, `set-domain`, `generate-europe-land` |
+| ML pipeline | `train-cnn`, `generate-lenet-weights`, `generate-hero-scan` |
+| Maintenance | `check-links`, `screenshots`, `set-domain` |
 | Tests | `test`, `test:e2e`, `test:e2e:a11y`, `test:e2e:budget`, `test:contrast`, and a `test:*` shorthand per suite |
 
 A note that has bitten this repo twice: **a generator must never run when it is imported.** Two of them
@@ -105,7 +105,7 @@ all sit behind a main guard now, and `test/generator-main-guard.test.mjs` enforc
 ## Testing
 
 ```bash
-npm test           # 1,100+ assertions, ~3s, no browser
+npm test           # 1,200+ assertions, ~3s, no browser
 npm run test:e2e   # builds dist/, then drives real Chromium (~5 min)
 ```
 
@@ -120,6 +120,35 @@ every assertion in the repo.
 
 Full rationale, the layer boundaries, and how to decide where a new test belongs:
 **[`docs/TESTING.md`](docs/TESTING.md)**.
+
+## Previewing without publishing
+
+Nothing reaches the live site until it is merged into `main`, so you can look at any branch on
+your own machine first:
+
+```bash
+git fetch origin
+git checkout <branch>          # e.g. redesign/montaggio-design-system
+npm install                    # first time, or after package.json changes
+
+npm run dev                    # http://localhost:5173 — live reload as you edit
+```
+
+`npm run dev` serves the source files as they are and refreshes on every save, which is best for
+editing. To see **exactly what would be deployed**, build it and serve the result:
+
+```bash
+npm run build && npm run preview   # http://localhost:4173 — the built dist/, as GitHub Pages will serve it
+```
+
+**On your phone:** add `-- --host` to either command (`npm run dev -- --host`). Vite then prints a
+`Network:` address such as `http://192.168.1.20:5173`; open it on a phone connected to the same Wi-Fi.
+
+**Several pages at once:** after `npm run build`, `npm run screenshots` captures the main pages at
+1440, 768 and 390px into `screenshots/` (gitignored), which is quicker than clicking through them.
+
+On a pull request, CI also runs both test suites against the branch (the **Browser tests** check)
+before anything can be merged.
 
 ## Deploying
 

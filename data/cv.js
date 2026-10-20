@@ -49,6 +49,7 @@ export const CV_CAREER = [
     year:        '2017 – 2018',
     role:        'Senior Data Scientist',
     company:     'AGT International',
+    short:       'AGT',
     location:    'Darmstadt, DE',
     description: 'Product owner for the video analytics department. Built computer vision and deep learning algorithms for sports video — including instrumenting a UFC octagon with multi-modal sensors to track fighters. Handled technology transfer, productisation and patenting of internal research software.',
     links:       [
@@ -106,6 +107,7 @@ export const CV_EDUCATION = [
   {
     year:        '2005 – 2008',
     degree:      'MSc in Telecommunications Engineering',
+    short:       'MSc in Telecommunications Eng.',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
   },
@@ -114,6 +116,34 @@ export const CV_EDUCATION = [
     degree:      'BSc in Information Technology',
     institution: 'Università degli Studi di Brescia',
     location:    'Brescia, IT',
+  },
+];
+
+/* ── Places lived ─────────────────────────────────────────── */
+export const CV_PLACES = [
+  {
+    year: '2000 – 2009',
+    city: 'Brescia',
+  },
+  {
+    year: '2009 – 2015',
+    city: 'Berlin',
+  },
+  {
+    year: '2015 – 2018',
+    city: 'Frankfurt',
+  },
+  {
+    year: '2018 – present',
+    city: 'San Sebastián',
+  },
+];
+
+/* ── Timeline-only projects (no page yet) ─────────────────── */
+export const CV_TIMELINE_PROJECTS = [
+  {
+    year:  '2026 – present',
+    title: 'AI Production Studio',
   },
 ];
 
@@ -203,4 +233,6 @@ if (typeof globalThis !== 'undefined') {
   globalThis.CV_CAREER = CV_CAREER;
   globalThis.CV_EDUCATION = CV_EDUCATION;
   globalThis.CV_SKILLS = CV_SKILLS;
+  globalThis.CV_PLACES = CV_PLACES;
+  globalThis.CV_TIMELINE_PROJECTS = CV_TIMELINE_PROJECTS;
 }

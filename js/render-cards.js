@@ -46,6 +46,32 @@ export function assertProjectKinds(projects) {
   return projects;
 }
 
+/* ─── The media-bin frame (#192) ──────────────────────────────
+   Every card opens on a 16:9 frame, the way an editor's bin shows a clip:
+   a picture, the year where the clip's duration would sit, and a strip in the
+   timeline's projects-lane colour along the bottom.
+
+   The picture is a thumbnail made from `project.bg` by
+   scripts/generate-thumbs.mjs, never `bg` itself. `bg` is the detail page's
+   hero banner — up to 130 KB, sized for a 1440px viewport — and projects.html
+   would otherwise fetch fifteen of them to paint frames a few hundred pixels
+   wide. (Cards once used `bg` as a background *behind* the body copy, where it
+   was illegible: faint enough not to fight the text meant faint enough to be
+   invisible. A frame above the text has neither problem.)
+
+   The files live in public/img/thumbs/, which Vite copies verbatim, so the
+   URL below is served exactly as written — by the static HTML and by the
+   homepage's client-side reshuffle alike. (Under img/ the build hashed the
+   srcs in the HTML but could not see the same URLs built in JS.) A
+   project without `bg` gets the colour bars instead — the test card a bin
+   shows for a clip with no picture — drawn by CSS from palette tokens. */
+export const THUMB_W = 640;
+export const THUMB_H = 360;
+
+export function thumbUrl(project) {
+  return project && (project.bg || project.thumb) ? '/img/thumbs/' + project.id + '.webp' : null;
+}
+
 /* One project card. `i` only drives the staggered reveal delay. */
 /* `level` sets the card title's heading rank, and it has to vary by page.
    These titles were a <span>, which left projects.html with exactly one
@@ -64,21 +90,35 @@ export function projectCardHtml(project, i = 0, { level = 3 } = {}) {
     .join('');
   /* Only personal projects are badged. Work is what the portfolio is for, so
      marking all thirteen would be thirteen labels saying nothing; marking the
-     exception is what carries information. The badge sits on the year's mono
-     metadata line and reads out as part of the link text. */
-  const kindHtml = project.kind === 'personal'
+     exception is what carries information. The badge sits in the frame's
+     corner with the year and reads out as part of the link text. The card
+     also takes .is-personal, which outlines its strip the way the career
+     timeline outlines a personal clip. */
+  const personal = project.kind === 'personal';
+  const kindHtml = personal
     ? '<span class="project-card__kind">Personal project</span>'
     : '';
-  /* `project.bg` is deliberately NOT used here. It stays the hero image of the
-     project's own detail page (and its og:image), but as a card background it
-     was never legible: faint enough not to fight the body copy meant faint
-     enough to be invisible, and several of the images are diagrams whose own
-     text showed through behind the description. Dropping it also means the
-     listing pages stop fetching a few hundred KB of imagery nobody could see. */
+  const src = thumbUrl(project);
+  /* alt="" — the title directly below says what the picture is of, so a
+     description would be heard twice. */
+  /* With no picture, the bars carry a slate with the clip's file name — what a
+     bin shows for media it cannot preview, and what keeps two bg-less cards
+     side by side from being two identical frames. aria-hidden: it is the id,
+     and the title below already says it properly. */
+  const picture = src
+    ? '<img src="' + escapeHtml(src) + '" width="' + THUMB_W + '" height="' + THUMB_H + '" loading="lazy" decoding="async" alt="">'
+    : '<span class="project-card__slate" aria-hidden="true">' + escapeHtml(project.id || '') + '</span>';
+  const thumbHtml = '<div class="project-card__thumb' + (src ? '' : ' project-card__thumb--bars') + '">' +
+      picture +
+      '<div class="project-card__meta">' +
+        kindHtml +
+        '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
+      '</div>' +
+    '</div>';
   /* Optional `lang`: the language of the page the card LINKS TO, not of the
      card. So it becomes hreflang and nothing else — putting lang="es" on the
      anchor would make a screen reader pronounce this English title in Spanish.
-     Only the one entry that leaves the English site carries it. */
+     Only the entries that leave the English site carry it. */
   const hreflangAttr = project.lang
     ? ' hreflang="' + escapeHtml(project.lang) + '"'
     : '';
@@ -86,12 +126,9 @@ export function projectCardHtml(project, i = 0, { level = 3 } = {}) {
      on the homepage cards too, where nothing reads them — one card builder,
      and an attribute costs less than a second code path. */
   const tagsAttr = ' data-tags="' + escapeHtml(tagSlugsFor(project.tags).join(' ')) + '"';
-  return '<a href="' + escapeHtml(project.url || '#') + '"' + hreflangAttr + ' class="project-card"' + tagsAttr + ' data-animate data-delay="' + (i * 80) + '">' +
+  return '<a href="' + escapeHtml(project.url || '#') + '"' + hreflangAttr + ' class="project-card' + (personal ? ' is-personal' : '') + '"' + tagsAttr + ' data-animate data-delay="' + (i * 80) + '">' +
+    thumbHtml +
     '<div class="project-card__body">' +
-      '<div class="project-card__meta">' +
-        '<span class="project-card__year">' + escapeHtml(project.year || '') + '</span>' +
-        kindHtml +
-      '</div>' +
       '<h' + level + ' class="project-card__title">' + escapeHtml(project.title) + '</h' + level + '>' +
       '<div class="project-card__tags">' + tagsHtml + '</div>' +
       '<p class="project-card__desc">' + escapeHtml(project.description || '') + '</p>' +

@@ -10,14 +10,13 @@ const {
   SURFACE_ALPHA,
   parseArgs, validate,
   hexToChannelList, hexToOklch, hexToLch, lchToHex, desaturate, tameAccent, faviconDataUri,
-  generateCssBlock, generateCssLightBlock, generateThemeJs,
-  rewriteHtml, rewriteFaviconSvg, spliceCssBlock, spliceMarked,
+  generateCssBlock, generateThemeJs,
+  rewriteHtml, rewriteFaviconSvg, spliceCssBlock,
 } = require('../scripts/generate-theme');
 
 // ─── A complete, valid sample palette ────────────────────────────────────────
 
-/* A valid flat palette body (no nested `light`) — used both as the dark
-   palette and, on its own, as a light variant. */
+/* A valid palette body. */
 function paletteBody(overrides = {}) {
   return {
     name: 'Test Palette',
@@ -26,7 +25,6 @@ function paletteBody(overrides = {}) {
     accent: '#c8a44d', accentHi: '#dcb968',
     accent2: '#6db088', accent2Hi: '#9bd4b0',
     accentText: '#dcb968', accent2Text: '#9bd4b0', onAccent: '#1a1408',
-    heroGradFrom: '#e6d4a4', heroGradTo: '#6db088',
     mapBg: '#08100c', themeColor: '#0a120e', faviconBg: '#0a120e', faviconFg: '#c8a44d',
     pins: { lived: '#6db088', current: '#e8c468', worktrip: '#4a9e8f', holiday: '#d98e54' },
     globe: {
@@ -37,28 +35,12 @@ function paletteBody(overrides = {}) {
       grid: '#3f8f72', gridBright: '#6dd0a8', stars: '#e8eee5',
       fallback1: '#46785a', fallback2: '#163424', fallback3: '#08140d',
     },
-    noise: { dark: '#0a120e', mid: '#2c5e42', bright: '#7a9e4a' },
     ...overrides,
   };
 }
 
-/* A light-theme variant body. Surfaces light, text dark — a plausible
-   counterpart so the paired-palette validation has something valid to chew. */
-function sampleLight(overrides = {}) {
-  return paletteBody({
-    name: 'Test Palette Light',
-    bg: '#faf6f3', bgAlt: '#f2e9e5',
-    text: '#1d2620', textMuted: '#55605a', textFaint: '#7a857e',
-    onAccent: '#fdfdfb',
-    themeColor: '#faf6f3', faviconBg: '#faf6f3',
-    mapBg: '#eef3ec',
-    ...overrides,
-  });
-}
-
-/* Full palette: dark body + nested `light` variant (the new required shape). */
 function samplePalette(overrides = {}) {
-  return paletteBody({ light: sampleLight(), ...overrides });
+  return paletteBody(overrides);
 }
 
 function sampleDoc(overrides = {}) {
@@ -118,34 +100,16 @@ test('validate: the --palette override is honoured', () => {
   assert.ok(validate(doc, 'missing').some(e => /missing/.test(e)));
 });
 
-// ─── validate: light-theme variant ───────────────────────────────────────────
+// ─── validate: one theme ─────────────────────────────────────────────────────
 
-test('validate: a missing `light` variant is reported', () => {
-  const p = samplePalette();
-  delete p.light;
+test('validate: a `light` variant is rejected, not silently ignored', () => {
+  /* The site ships one theme since the Montaggio redesign (#188). A light
+     block left in the YAML would be colours nobody ships and no contrast test
+     measures, so the generator refuses it. */
+  const p = samplePalette({ light: paletteBody({ name: 'Light' }) });
   const errors = validate({ active: 'test', palettes: { test: p } });
-  assert.ok(errors.some(e => /test\.light must be a mapping/.test(e)),
-    `expected a light-missing error, got: ${JSON.stringify(errors)}`);
-});
-
-test('validate: a bad colour inside the `light` variant is reported', () => {
-  const p = samplePalette();
-  p.light.accent = 'rebeccapurple';
-  const errors = validate({ active: 'test', palettes: { test: p } });
-  assert.ok(errors.some(e => /test\.light\.accent must be a #rrggbb hex/.test(e)),
-    `expected a light.accent error, got: ${JSON.stringify(errors)}`);
-});
-
-test('validate: a missing globe colour inside `light` is reported', () => {
-  const p = samplePalette();
-  delete p.light.globe.ocean;
-  const errors = validate({ active: 'test', palettes: { test: p } });
-  assert.ok(errors.some(e => /test\.light\.globe\.ocean is missing/.test(e)));
-});
-
-test('validate: the `light` variant does not itself require a nested light', () => {
-  /* light bodies are leaf palettes — no infinite light.light.light nesting. */
-  assert.deepEqual(validate(sampleDoc()), []);
+  assert.ok(errors.some(e => /test\.light is no longer supported/.test(e)),
+    `expected a light-rejected error, got: ${JSON.stringify(errors)}`);
 });
 
 // ─── generateCssBlock ────────────────────────────────────────────────────────
@@ -171,34 +135,6 @@ test('generateCssBlock: emits markers, oklch vars, channel lists and pin vars', 
   assert.match(css, new RegExp(`--bg-card: rgb\\(232 238 229 / ${SURFACE_ALPHA.card}\\);`));
   assert.match(css, new RegExp(`--map-land: rgb\\(232 238 229 / ${SURFACE_ALPHA.mapLand}\\);`));
   assert.match(css, new RegExp(`--border-hov: rgb\\(200 164 77 / ${SURFACE_ALPHA.borderHover}\\);`));
-});
-
-// ─── generateCssLightBlock ───────────────────────────────────────────────────
-
-test('generateCssLightBlock: applies only when explicitly pinned to light', () => {
-  const css = generateCssLightBlock(sampleLight(), 'test');
-  assert.match(css, /@theme-generated-light-start/);
-  assert.match(css, /@theme-generated-light-end/);
-  /* Light is opt-in: the only selector is the explicit pin. */
-  assert.match(css, /:root\[data-theme="light"\]/);
-  /* No OS-preference auto-apply — the site defaults to dark regardless of OS. */
-  assert.doesNotMatch(css, /prefers-color-scheme/);
-  assert.doesNotMatch(css, /:root:not\(/);
-  /* Native UI flips to light too. */
-  assert.match(css, /color-scheme: light;/);
-  /* Light surfaces present as oklch, derived from the light palette hex. */
-  assert.ok(css.includes(`--bg: ${hexToOklch('#faf6f3')};`), 'light --bg should be oklch of light surface');
-});
-
-test('generateCssLightBlock: shares the same token set as the dark block', () => {
-  const light = generateCssLightBlock(sampleLight(), 'test');
-  /* Every custom property the dark block defines must also be overridden in
-     light, or a token would silently keep its dark value under light. */
-  const dark = generateCssBlock(samplePalette(), 'test');
-  const darkTokens = [...dark.matchAll(/^\s*(--[a-z0-9-]+):/gim)].map(m => m[1]).sort();
-  const lightTokens = [...new Set([...light.matchAll(/(--[a-z0-9-]+):/g)].map(m => m[1]))].sort();
-  assert.deepEqual(lightTokens, darkTokens,
-    'light block must override exactly the dark token set');
 });
 
 test('hexToOklch: round-trips to oklch() and is deterministic', () => {
@@ -245,44 +181,25 @@ test('generateThemeJs: emits a THEME object plus int/rgba/glvec helpers', () => 
   assert.match(js, /export function glvec\(/);
   assert.match(js, /pins: \{/);
   assert.match(js, /globe: \{/);
-  assert.match(js, /noise: \{/);
+  /* heroGradFrom/To and the noise block fed the gradient headings and the
+     WebGL hero; both are gone (#189, #190), and the keys went with them (#195). */
+  assert.doesNotMatch(js, /noise: \{|heroGrad/);
 });
 
-test('generateThemeJs: emits THEME_LIGHT and a getTheme() accessor', () => {
-  const js = generateThemeJs(samplePalette(), 'test', sampleLight());
-  assert.match(js, /export const THEME_LIGHT = \{/);
-  assert.match(js, /export function getTheme\(/);
-  /* THEME stays the dark default; THEME_LIGHT carries the light surfaces. */
-  assert.match(js, /export const THEME = \{/);
-  assert.match(js, /bg: '#faf6f3'/);
+test('generateCssBlock: no --hero-grad-* vars (nothing reads them since #190)', () => {
+  assert.doesNotMatch(generateCssBlock(samplePalette()), /--hero-grad/);
 });
 
-test('generateThemeJs: getTheme() is dark by default, light only when pinned', () => {
-  const body = generateThemeJs(samplePalette(), 'test', sampleLight()).replace(/export /g, '');
+test('generateThemeJs: getTheme() returns the one theme, whatever the document says', () => {
+  const body = generateThemeJs(samplePalette(), 'test').replace(/export /g, '');
   const vm = require('node:vm');
-
-  /* No document → SSR/test default is the dark theme. */
-  const ssr = {};
-  vm.runInNewContext(body + '\nthis.getTheme = getTheme;', ssr);
-  assert.equal(ssr.getTheme().bg, '#0a120e', 'no document defaults to dark');
-
-  /* documentElement pinned to light → light palette. */
-  const pinnedLight = { document: { documentElement: { dataset: { theme: 'light' } } } };
-  vm.runInNewContext(body + '\nthis.getTheme = getTheme;', pinnedLight);
-  assert.equal(pinnedLight.getTheme().bg, '#faf6f3', 'data-theme=light selects light');
-
-  /* documentElement pinned to dark → dark palette. */
-  const pinnedDark = { document: { documentElement: { dataset: { theme: 'dark' } } } };
-  vm.runInNewContext(body + '\nthis.getTheme = getTheme;', pinnedDark);
-  assert.equal(pinnedDark.getTheme().bg, '#0a120e', 'data-theme=dark pins dark');
-
-  /* No pin — dark, regardless of OS preference (OS is intentionally ignored). */
-  const osLight = {
-    document: { documentElement: { dataset: {} } },
-    matchMedia: (q) => ({ matches: /light/.test(q) }),
-  };
-  vm.runInNewContext(body + '\nthis.getTheme = getTheme;', osLight);
-  assert.equal(osLight.getTheme().bg, '#0a120e', 'OS light pref is ignored; defaults dark');
+  assert.doesNotMatch(body, /THEME_LIGHT|PALETTES|data-theme|data-palette/,
+    'no light variant or palette table should survive into js/theme.js');
+  /* A stale data-theme from an old visit's bootstrap must not matter. */
+  const sandbox = { document: { documentElement: { dataset: { theme: 'light', palette: 'forest' } } } };
+  vm.runInNewContext(body + '\nthis.getTheme = getTheme; this.THEME = THEME;', sandbox);
+  assert.equal(sandbox.getTheme(), sandbox.THEME);
+  assert.equal(sandbox.getTheme().bg, '#0a120e');
 });
 
 test('generateThemeJs: the emitted helpers behave correctly', () => {
@@ -307,7 +224,11 @@ test('faviconDataUri: URL-encodes both fills into an SVG data URI', () => {
   assert.match(uri, /^data:image\/svg\+xml,/);
   assert.match(uri, /fill='%230a120e'/);
   assert.match(uri, /fill='%23c8a44d'/);
-  assert.match(uri, /%3ESM%3C\/text%3E/);
+  /* "SM" as Archivo outlines, not text: an SVG favicon is its own document
+     and cannot load the site's web fonts, so <text font-family=…> fell back
+     to Georgia and the icon never matched the type (#195). */
+  assert.match(uri, /%3Cpath /);
+  assert.doesNotMatch(uri, /%3Ctext|font-family|Georgia/);
 });
 
 // ─── rewriteHtml ─────────────────────────────────────────────────────────────
@@ -348,16 +269,12 @@ test('rewriteHtml: is idempotent', () => {
 
 // ─── rewriteFaviconSvg ───────────────────────────────────────────────────────
 
-test('rewriteFaviconSvg: rewrites the rect and text fills', () => {
-  const svg = [
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">',
-    '  <rect width="64" height="64" rx="12" fill="#080c14"/>',
-    '  <text x="50%" y="56%" fill="#00d4ff">SM</text>',
-    '</svg>',
-  ].join('\n');
-  const out = rewriteFaviconSvg(svg, samplePalette());
+test('rewriteFaviconSvg: writes the whole icon from the palette, replacing an old text favicon', () => {
+  const old = '<svg viewBox="0 0 64 64"><rect fill="#080c14"/><text fill="#00d4ff">SM</text></svg>';
+  const out = rewriteFaviconSvg(old, samplePalette());
   assert.match(out, /<rect[^>]*fill="#0a120e"/);
-  assert.match(out, /<text[^>]*fill="#c8a44d"/);
+  assert.match(out, /<path fill="#c8a44d" d="M/);
+  assert.doesNotMatch(out, /<text/);
 });
 
 // ─── spliceCssBlock ──────────────────────────────────────────────────────────
@@ -404,7 +321,7 @@ test('parseArgs: unknown argument throws', () => {
    stylesheet by one digit left all 33 tests in this file green.
 
    That is the one file CLAUDE.md says most emphatically never to hand-edit,
-   and the one a weekly unattended workflow rewrites and commits to main. The
+   and the one that used to be rewritten by an unattended weekly workflow. The
    failure it leaves is quiet in a specific way: css/styles.css paints the page,
    js/theme.js colours the WebGL hero and the globe, and data/palettes.yaml is
    what test/contrast.test.mjs measures for WCAG. Let the first drift from the
@@ -417,31 +334,22 @@ test('parseArgs: unknown argument throws', () => {
 ──────────────────────────────────────────────────────────────────────────────*/
 const fs   = require('node:fs');
 const path = require('node:path');
-const {
-  generateCssAltBlock,
-  CSS_LIGHT_START, CSS_LIGHT_END, CSS_ALT_START, CSS_ALT_END,
-} = require('../scripts/generate-theme');
 const { parseYaml } = require('../scripts/lib/yaml');
 
 const ROOT = path.resolve(__dirname, '..');
 const livePalettes = () => {
   const data = parseYaml(fs.readFileSync(path.join(ROOT, 'data', 'palettes.yaml'), 'utf8'));
   const id = data.active;
-  return {
-    id,
-    data,
-    p: tameAccent(data.palettes[id]),
-    pLight: tameAccent(data.palettes[id].light),
-  };
+  return { id, p: tameAccent(data.palettes[id]) };
 };
 
 test('drift: css/styles.css theme blocks match data/palettes.yaml', () => {
-  const { id, data, p, pLight } = livePalettes();
+  const { id, p } = livePalettes();
   const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
 
-  let next = spliceCssBlock(css, generateCssBlock(p, id));
-  next = spliceMarked(next, generateCssLightBlock(pLight, id), CSS_LIGHT_START, CSS_LIGHT_END);
-  next = spliceMarked(next, generateCssAltBlock(data.palettes, id), CSS_ALT_START, CSS_ALT_END);
+  const next = spliceCssBlock(css, generateCssBlock(p, id));
+  assert.doesNotMatch(css, /@theme-generated-(light|alt)-start/,
+    'the light and alternate-palette blocks were retired with the toggle (#188)');
 
   assert.equal(next, css,
     'css/styles.css disagrees with data/palettes.yaml — run `npm run generate-theme`. '
@@ -450,9 +358,9 @@ test('drift: css/styles.css theme blocks match data/palettes.yaml', () => {
 });
 
 test('drift: js/theme.js matches data/palettes.yaml', () => {
-  const { id, data, p, pLight } = livePalettes();
+  const { id, p } = livePalettes();
   const committed = fs.readFileSync(path.join(ROOT, 'js', 'theme.js'), 'utf8');
-  assert.equal(generateThemeJs(p, id, pLight, data.palettes), committed,
+  assert.equal(generateThemeJs(p, id), committed,
     'js/theme.js disagrees with data/palettes.yaml — run `npm run generate-theme`. '
     + 'This module is what the hero shader, the globe and the Europe map read '
     + 'their colours from, so drift here repaints the canvases and nothing else.');

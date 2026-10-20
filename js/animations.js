@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   ANIMATIONS — scroll-driven effects, card tilt, parallax,
+   ANIMATIONS — scroll-driven effects,
    skill bars, timeline entrance.
 
    Pure DOM / Canvas API — no Three.js dependency.
@@ -168,105 +168,6 @@ export function revealNewContent(root) {
     return;
   }
   _reveal(els);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   3-D CARD TILT + SPECULAR GLOSS
-   ═══════════════════════════════════════════════════════════ */
-export function initCardTilt() {
-  if (prefersReducedMotion()) return;
-  if (typeof window === 'undefined') return;
-  if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) return;
-
-  const MAX_RX = 10;   /* max degrees rotateX */
-  const MAX_RY = 12;   /* max degrees rotateY */
-  const SPRING  = 0.10; /* lerp factor per frame */
-
-  const teardowns = [];
-
-  Array.from(document.querySelectorAll('.research-card, .project-card, .contact-card, .pub-item'))
-    .forEach((card) => {
-      let targetRX = 0, targetRY = 0, targetZ = 0;
-      let currentRX = 0, currentRY = 0, currentZ = 0;
-      let raf = null;
-      let isHovered = false;
-      let rect = null;   /* cached on mouseenter — avoids a layout read per mousemove */
-
-      card.style.setProperty('--gloss-x', '50%');
-      card.style.setProperty('--gloss-y', '50%');
-      card.classList.add('tilt-ready');
-
-      function loop() {
-        currentRX += (targetRX - currentRX) * SPRING;
-        currentRY += (targetRY - currentRY) * SPRING;
-        currentZ  += (targetZ  - currentZ)  * SPRING;
-
-        card.style.transform = `perspective(900px) rotateX(${currentRX.toFixed(3)}deg) rotateY(${currentRY.toFixed(3)}deg) translateZ(${currentZ.toFixed(2)}px)`;
-
-        const done = !isHovered
-          && Math.abs(targetRX - currentRX) < 0.05
-          && Math.abs(targetRY - currentRY) < 0.05
-          && Math.abs(targetZ  - currentZ)  < 0.1;
-
-        if (done) {
-          raf = null;
-          card.style.transform  = '';
-          card.style.transition = '';  /* restore CSS transitions (needed for 3D entrance) */
-          return;
-        }
-        raf = requestAnimationFrame(loop);
-      }
-
-      const onEnter = () => {
-        if (card.classList.contains('is-flipped')) return;
-        isHovered = true;
-        targetZ   = 8;
-        /* Cache the (pre-transform) rect once per hover — the card box doesn't
-           move while hovered, so re-reading it on every mousemove would only
-           thrash layout. */
-        rect = card.getBoundingClientRect();
-        /* Suppress the CSS transform-transition while the spring runs */
-        card.style.transition = `border-color var(--t-med), background var(--t-med), box-shadow var(--t-med)`;
-        if (!raf) raf = requestAnimationFrame(loop);
-      };
-
-      const onMove = (e) => {
-        if (card.classList.contains('is-flipped')) return;
-        const r  = rect || (rect = card.getBoundingClientRect());
-        const cx = (e.clientX - r.left) / r.width;
-        const cy = (e.clientY - r.top) / r.height;
-        targetRY =  (cx - 0.5) * MAX_RY * 2;
-        targetRX = -(cy - 0.5) * MAX_RX * 2;
-        card.style.setProperty('--gloss-x', `${(cx * 100).toFixed(1)}%`);
-        card.style.setProperty('--gloss-y', `${(cy * 100).toFixed(1)}%`);
-      };
-
-      const onLeave = () => {
-        isHovered = false;
-        rect = null;
-        targetRX = 0;
-        targetRY = 0;
-        targetZ  = 0;
-        card.style.setProperty('--gloss-x', '50%');
-        card.style.setProperty('--gloss-y', '50%');
-        if (!raf) raf = requestAnimationFrame(loop);
-      };
-
-      card.addEventListener('mouseenter', onEnter);
-      card.addEventListener('mousemove', onMove);
-      card.addEventListener('mouseleave', onLeave);
-
-      teardowns.push(() => {
-        if (raf) { cancelAnimationFrame(raf); raf = null; }
-        card.removeEventListener('mouseenter', onEnter);
-        card.removeEventListener('mousemove', onMove);
-        card.removeEventListener('mouseleave', onLeave);
-      });
-    });
-
-  /* Returned so page teardown (pagehide / bfcache) can drop every pointer
-     listener and cancel any in-flight spring loop in one call. */
-  return () => teardowns.forEach(fn => fn());
 }
 
 /* The hero parallax used to live here as initScroll3D(): a scroll listener, a

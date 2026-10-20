@@ -10,12 +10,9 @@
 
      js/ui.js             — navbar, command palette, mobile menu,
                             counters, toast, back-to-top
-     js/animations.js     — scroll reveals, card tilt, parallax
-     js/noise-gradient.js — hero background WebGL shader
+     js/animations.js     — scroll reveals
+     js/receptive-field.js — the hero: the name through a 5×5 filter
      js/globe.js          — 3D globe (Three.js)
-     js/cnn-hero.js       — LeNet-5 hero, wide viewports (Canvas2D)
-     js/kernel-scan.js    — conv1 hero, narrow/touch viewports (Canvas2D)
-     js/europe-map.js     — 2D Canvas Europe map
 
    Content lives in separate, easy-to-edit files:
 
@@ -41,11 +38,11 @@
    of Three.js back into every page. Tests import the THREE mock hook
    (__setThreeForTests) directly from ./three-context.js.
 
-   europe-map.js follows the same rule for the same reason, even though it has
-   no Three.js in it: it was statically imported here, which put its chunk in
-   the eager graph of all 21 pages when exactly one has a #europe-canvas. Any
-   module that serves a single page belongs behind a dynamic import at its
-   init site, not up here. */
+   The (since deleted) 2D Europe map taught the same rule without any Three.js
+   in it: it was statically imported here, which put its chunk in the eager
+   graph of all 21 pages when exactly one had a canvas for it. Any module that
+   serves a single page belongs behind a dynamic import at its init site, not
+   up here. */
 
 /* Nothing is imported here. Every data module is loaded with a dynamic
    import() at the DOM gate that needs it, further down.
@@ -57,7 +54,7 @@
    UNESCO world-heritage tree, the 49-entry blogroll, every travel pin, the
    full CV, all 37 publications and all 14 projects.
 
-   This is the same mistake CLAUDE.md already records for europe-map.js —
+   This is the same mistake CLAUDE.md records for the old 2D Europe map —
    "shipped 10 KB to the twenty pages with no #europe-canvas" — learned for
    code and never applied to data. Every renderer already gated on a DOM id, so
    the fix is only moving the import inside the gate that was there all along.
@@ -67,7 +64,7 @@
    which is exactly what puts it back in the eager graph. */
 
 /* Shared environment helpers + escapeHtml (shared with js/ui.js) */
-import { isLowPowerDevice, prefersReducedMotion, hasWebGLSupport, escapeHtml, supportsCnnHero, CNN_HERO_QUERY } from './utils.js';
+import { prefersReducedMotion, hasWebGLSupport, escapeHtml } from './utils.js';
 
 /* Card / list-item markup — shared with the static generator
    (scripts/generate-cards.mjs) so SSR and client markup never drift. */
@@ -85,19 +82,14 @@ import {
    this file — initAnimatedFavicon(), now deleted — and every other colour-baked
    module resolves its own palette through getTheme() at construction. */
 
-/* Hero background noise gradient (raw WebGL, no Three.js) */
-import { NoiseGradient } from './noise-gradient.js';
+/* The hero (receptive-field.js) and globe.js (Globe3D/GlobeFallback2D) are
+   dynamically imported at their init sites below — see the Three.js
+   loading-strategy note at the top. The hero serves one page, so it follows
+   the same rule even though it is small. */
 
-/* The two hero backgrounds (cnn-hero.js / kernel-scan.js) and globe.js
-   (Globe3D/GlobeFallback2D) are dynamically imported at their init sites
-   below — see the Three.js loading-strategy note at the top. Each hero module
-   statically imports its own data (activations / conv1 kernels), which is
-   precisely why neither may be imported here. */
-
-/* DOM animations: scroll reveal, card tilt, parallax (extracted) */
+/* DOM animations: scroll reveal (extracted) */
 import {
   initScrollReveal,
-  initCardTilt,
   revealNewContent,
 } from './animations.js';
 
@@ -106,7 +98,6 @@ import {
 import {
   initCounters,
   animateCounter,
-  initTheme,
   initNavbar,
   initBackToTop,
   initCommandPalette,
@@ -537,40 +528,15 @@ export function initLifecycleCleanup(disposables) {
   window.addEventListener('pagehide', cleanup);
 }
 
-/* Swap a WebGL <canvas> for a pristine clone before a theme-switch rebuild.
-
-   The colour-baked WebGL surfaces (noise-gradient hero, Three.js globe) force
-   their context to be lost in destroy() (renderer.forceContextLoss() /
-   WEBGL_lose_context.loseContext()) so teardown frees the GPU resources
-   promptly. But a force-lost context is permanent for that node — getContext()
-   keeps returning the same dead context, so rebuilding the instance on the
-   *same* canvas paints onto a context that never restores and the surface goes
-   blank (the bug behind "the globe disappears in light mode" and "the hero
-   effect is gone after a theme switch").
-
-   Replacing the node with cloneNode(false) gives the rebuild a fresh canvas
-   that can acquire a live context, while preserving the id / classes / inline
-   attributes so CSS and the FOUC fade-in still apply. Returns the live canvas
-   (the clone when a swap happened, else the original), so callers must use the
-   returned reference for the rebuild. No-op (returns the input) when the node
-   is missing or detached. */
-export function freshCanvasForRebuild(canvas) {
-  if (!canvas || !canvas.parentNode || typeof canvas.cloneNode !== 'function') return canvas;
-  const clone = canvas.cloneNode(false);
-  canvas.parentNode.replaceChild(clone, canvas);
-  return clone;
-}
-
 /* Test surface — ES module exports.
-   UI behaviours (js/ui.js), DOM animations (js/animations.js), and the
-   noise gradient (js/noise-gradient.js) are re-exported here so the test
-   suite can keep importing them from ../js/main.js.
+   UI behaviours (js/ui.js) and DOM animations (js/animations.js) are
+   re-exported here so the test suite can keep importing them from
+   ../js/main.js.
 
-   The Three.js-backed classes (Globe3D, GlobeFallback2D) and the two hero
-   canvases (CnnHero, KernelScan) are intentionally NOT re-exported here:
-   doing so would static-link globe.js (and all of Three.js) back into the
-   main chunk, and pull each hero's baked data onto every page. Tests import
-   them from their source modules instead. */
+   The Three.js-backed classes (Globe3D, GlobeFallback2D) and the hero
+   (ReceptiveField) are intentionally NOT re-exported here: doing so would
+   static-link them back into the main chunk of every page. Tests import them
+   from their source modules instead. */
 export {
   formatIsoDate,
   renderPublications,
@@ -581,8 +547,6 @@ export {
   renderCV,
   renderSkills,
   setFooterYear,
-  initTheme,
-  initCardTilt,
   initNavbar,
   initMobileMenu,
   initBackToTop,
@@ -590,7 +554,6 @@ export {
   initScrollReveal,
   initCounters,
   animateCounter,
-  NoiseGradient,
   initCmdTriggerHint,
 };
 
@@ -612,36 +575,37 @@ if (typeof document !== 'undefined') {
      load-bearing — which is what lets them wait for a dynamic import(). The
      element check comes first so a page without the section never fetches the
      data at all. */
-  /* Renders that replace server-rendered nodes are collected here so
-     enhancements that bind listeners to those nodes (card tilt) can wait for
-     the final DOM — binding before a re-render leaves the fresh nodes inert. */
-  const _renderSettled = [];
   const pubList = document.getElementById('publications-list');
   if (pubList) {
-    _renderSettled.push(import('../data/publications.js').then(({ PUBLICATIONS }) => {
+    import('../data/publications.js').then(({ PUBLICATIONS }) => {
       renderPublications(PUBLICATIONS);
       revealNewContent(pubList);
-    }));
+    });
   }
   const projGrid = document.getElementById('projects-grid');
   if (projGrid) {
-    _renderSettled.push(import('../data/projects.js').then(({ PROJECTS }) => {
+    import('../data/projects.js').then(({ PROJECTS }) => {
       renderProjects(PROJECTS);
       revealNewContent(projGrid);
       /* After the re-render, so the chips filter the cards that are actually
          on the page rather than the ones generate-cards baked in. */
       initProjectFilter();
-    }));
+    });
+    /* Pack the cards under each other (a few hundred bytes, only where
+       there are cards). Observes the grid, so it follows the re-render. */
+    import('./masonry.js').then(({ initMasonry }) => {
+      _disposables.push(initMasonry(projGrid));
+    });
   }
   const cvTimeline = document.getElementById('cv-timeline');
   const cvSkills = document.getElementById('cv-skills');
   if (cvTimeline || cvSkills) {
-    _renderSettled.push(import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
+    import('../data/cv.js').then(({ CV_CAREER, CV_EDUCATION, CV_SKILLS }) => {
       renderCV(CV_CAREER, CV_EDUCATION);
       renderSkills(CV_SKILLS);
       revealNewContent(cvTimeline);
       revealNewContent(cvSkills);
-    }));
+    });
   }
   setFooterYear();
 
@@ -657,7 +621,6 @@ if (typeof document !== 'undefined') {
   const _pushTeardown = (fn) => { if (typeof fn === 'function') _disposables.push({ destroy: fn }); };
 
   /* UI behaviours */
-  _pushTeardown(initTheme());
   _pushTeardown(initNavbar());
   _pushTeardown(initMobileMenu());
   initContactCopy();
@@ -670,27 +633,9 @@ if (typeof document !== 'undefined') {
   _pushTeardown(initScrollReveal());
   _pushTeardown(initCounters());
 
-  /* The hero parallax and the reading-progress bar used to be initialised
-     here. Both are scroll-progress timelines in css/styles.css now — off the
-     main thread, and with nothing to tear down on pagehide. */
-
-  /* Pointer-only enhancement (card tilt) — deferred to idle time so it does
-     not compete with content rendering on the main thread. requestIdleCallback
-     fires within milliseconds on a quiet page; the 2 s timeout guarantees it
-     still initialises on heavily loaded devices.
-     It also waits for _renderSettled: the renderers above replace the
-     server-rendered cards, and on a slow network the idle deadline used to
-     beat the data chunks — tilt then bound to nodes about to be discarded and
-     the fresh cards never got it. allSettled (not all) so one failed chunk
-     doesn't cost the static cards their tilt too.                             */
-  const whenIdle = typeof requestIdleCallback !== 'undefined'
-    ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
-    : (fn) => setTimeout(fn, 0);
-  Promise.allSettled(_renderSettled).then(() => {
-    whenIdle(() => {
-      _pushTeardown(initCardTilt());
-    });
-  });
+  /* The reading-progress bar used to be initialised here. It is a
+     scroll-progress timeline in css/styles.css now — off the main thread, and
+     with nothing to tear down on pagehide. */
 
   /* The favicon is static markup now — nothing to initialise.
 
@@ -706,7 +651,7 @@ if (typeof document !== 'undefined') {
      a different face, so on any JS-enabled visit the tab disagreed with the
      bookmark, the PWA icon and the OS icon. Worse, it imported the dark THEME
      statically rather than resolving getTheme(), and never listened for
-     `themechange`: light mode kept the dark square, and switching palette left
+     theme changes: light mode kept the dark square, and switching palette left
      it on the old accent. That is why the light variant's faviconBg/faviconFg
      existed in js/theme.js with no consumer at all.
 
@@ -714,246 +659,35 @@ if (typeof document !== 'undefined') {
      the correct, palette-aware icon — and removes a toDataURL PNG encode plus
      a document.fonts.ready wait from every page load. */
 
-  /* ── Hero background canvases ──────────────────────────────────────────
-     Both the WebGL noise gradient and the Canvas2D neural net bake their
-     palette colours in at construction (the shader source / gradient stops).
-     They are therefore built through small factory closures so a theme switch
-     can tear the instance down and rebuild it with the now-active palette. */
-  let noiseCanvas  = document.getElementById('noise-canvas');
-  let neuralCanvas = document.getElementById('neural-canvas');
-  let noiseInstance  = null;
-  let neuralInstance = null;
-  let neuralStarted  = false;
+  /* ── Hero: the name through a receptive field ────────────────────────────
+     js/receptive-field.js draws the <h1> as a pixel grid with a 5×5 filter
+     window over it. It replaced three renderers (the CNN pipeline, the
+     narrow-viewport kernel scan and the WebGL noise gradient) and the
+     breakpoint swap between them: one scene for every viewport.
 
-  /* Noise gradient — raw WebGL, runs on devices that support it */
-  const buildNoise = () => {
-    if (!noiseCanvas) return;
-    if (!prefersReducedMotion() && !isLowPowerDevice() && hasWebGLSupport()) {
-      noiseCanvas.style.display = '';
-      noiseInstance = new NoiseGradient(noiseCanvas);
-      _disposables.push(noiseInstance);
-    } else {
-      noiseCanvas.style.display = 'none';
-    }
-  };
-  buildNoise();
-
-  /* Canvas2D hero background (no Three.js on this page — see kernel-scan.js).
-     Two implementations share the canvas, and both draw the same trained
-     LeNet-5 at the scale their viewport can carry:
-       · js/cnn-hero.js    — the whole pipeline, replayed from precomputed
-                             activations, on roomy pointer-driven viewports
-                             where its six labelled layers are legible;
-       · js/kernel-scan.js — conv1 alone, close up: a 5×5 window sweeping the
-                             digit while the feature map fills in behind it.
-                             Portrait-shaped, and the browser runs the one
-                             convolution rather than downloading its result.
-     Whichever applies is dynamically imported at idle time (see the note on
-     the start block further down — the interaction listeners are only an
-     accelerator now), so it stays off the critical path on load while the
-     noise gradient fills the hero meanwhile. The branch happens *before* the
-     import so phones never download the CNN chunk's activation data. On
-     reduced-motion the canvas is hidden entirely. */
-  const buildNeural = () => {
-    if (!neuralCanvas || prefersReducedMotion()) return;
-    const isCnn = supportsCnnHero();
-    const loading = isCnn
-      ? import('./cnn-hero.js').then((m) => m.CnnHero)
-      : import('./kernel-scan.js').then((m) => m.KernelScan);
-    loading.then((Background) => {
-      /* Fade the canvas in once the first frame has painted (see the
-         #neural-canvas opacity transition in css/styles.css), so the
-         network materialises gently instead of popping in fully-formed. */
-      const reveal = () => {
-        neuralCanvas.classList.add('is-visible');
-        /* Same moment the network becomes visible, and the only moment the
-           aside's claim becomes true — see syncHeroCnnLink below. */
-        heroCnnPainted = true;
-        syncHeroCnnLink();
-        /* The aside was display:none while the scene measured the hero around
-           it, so both renderers need telling that the copy just got a line
-           taller. Called after the constructor has returned, from the first
-           painted frame, so neuralInstance is assigned. */
-        if (neuralInstance && typeof neuralInstance.relayout === 'function') neuralInstance.relayout();
-      };
-      if (isCnn) {
-        neuralInstance = new Background(neuralCanvas, reveal, pinHeroCnnLink);
-      } else {
-        unpinHeroCnnLink();
-        neuralInstance = new Background(neuralCanvas, reveal);
-      }
-      _disposables.push(neuralInstance);
-    });
-  };
-
-  /* The hero's aside says "A real LeNet-5 — draw it a digit". That is a claim
-     about something the visitor can see, so it may only be on screen while the
-     thing is.
-
-     It used to be gated on supportsCnnHero() alone, evaluated immediately, so
-     that it would not have to wait for a deferred import. But buildNeural() is
-     deliberately held back until the first mousemove / scroll / touchstart, to
-     keep the hero off the critical path — which meant that on arrival the
-     sentence sat under an empty black rectangle, asserting a network that had
-     not been drawn. Brief for anyone using a mouse; permanent for every
-     headless renderer, social-preview fetcher and print.
-
-     So eligibility and existence are separate conditions: reduced-motion (the
-     one case where no background is built at all) decides whether it *can*
-     appear, and heroCnnPainted — set from the same callback that fades the
-     canvas in — decides whether it does.
-
-     supportsCnnHero() used to be part of that gate, because the narrow
-     viewports fell back to a drifting particle field and the sentence would
-     have been describing something that was not there. It no longer is: the
-     fallback is js/kernel-scan.js, which convolves the same network's conv1
-     kernels over a real digit, so the claim holds on a phone — and the phone
-     is where "draw it a digit" is the better invitation, since drawing one
-     with a finger beats drawing one with a mouse. */
-  let heroCnnPainted = false;
-  const heroCnnLink = document.querySelector('.hero-cnn-link');
-  const syncHeroCnnLink = () => {
-    if (!heroCnnLink) return;
-    heroCnnLink.hidden = !heroCnnPainted || prefersReducedMotion();
-  };
-  syncHeroCnnLink();
-
-  /* Where the aside sits depends on which scene painted, because the two put
-     the drawing in different places.
-
-     The full pipeline (cnn-hero.js) occupies the right-hand column, so the
-     aside is parked directly under it as a caption on the artwork it is
-     talking about. That also takes it out of `.hero-content`, which matters
-     for more than tidiness: the copy is vertically centred in a hero that
-     clips, and it drifts down on scroll (the hero-parallax timeline), so the
-     last thing in that column is the first thing the bottom edge eats — the
-     aside was being cut off, and then the Download CV button after it.
-
-     KernelScan (narrow, touch) already draws in the band *below* the copy, so
-     there is nothing to park under: the aside stays in flow where it is, one
-     line above the scene, and the scene measures around it.
-
-     The coordinates come from the renderer (sceneBox), never from a second
-     copy of its arithmetic here. */
+     Built straight away rather than at idle time. The old scenes waited for
+     requestIdleCallback because one of them downloaded ~11 KB gzip of
+     activations; this chunk is a few KB of arithmetic, and the box it paints
+     into is reserved by CSS, so the sooner it lands the shorter the moment the
+     plain <h1> shows in its place. Reduced motion still gets the scene — only
+     its intro sweep is skipped — because every other change it makes answers
+     something the visitor did. */
   const heroEl = document.getElementById('hero');
-  const heroCopy = document.querySelector('.hero-content');
-  const pinHeroCnnLink = (box) => {
-    if (!heroCnnLink || !heroEl || !box) return;
-    if (heroCnnLink.parentNode !== heroEl) heroEl.appendChild(heroCnnLink);
-    heroCnnLink.classList.add('is-pinned');
-    /* Anchored to the scene's *right* edge, not its left. The scroll hint sits
-       centred at the bottom of the hero, and on a short window the caption's
-       last line and the hint's first pixel arrive within a couple of px of each
-       other; hugging the right edge puts ~400px of clear air between them at
-       every height instead of relying on the gap staying positive. It is also
-       the end of the pipeline — the caption lands under the verdict it is
-       inviting you to go and reproduce. */
-    heroEl.style.setProperty('--hero-link-r', `${Math.round(heroEl.clientWidth - box.right)}px`);
-    heroEl.style.setProperty('--hero-link-y', `${Math.round(box.bottom)}px`);
-  };
-  const unpinHeroCnnLink = () => {
-    if (!heroCnnLink || !heroCopy) return;
-    heroCnnLink.classList.remove('is-pinned');
-    if (heroCnnLink.parentNode !== heroCopy) heroCopy.appendChild(heroCnnLink);
-  };
-
-  /* Tear the current hero background down and build the one that now applies —
-     shared by the theme switch and the breakpoint watcher below. Canvas2D
-     survives reuse, but swapping the node gives the rebuild a clean drawing
-     buffer (and drops the .is-visible class, so it fades back in). */
-  const rebuildNeural = () => {
-    if (!neuralStarted || !neuralInstance) return;
-    try { neuralInstance.destroy(); } catch (_) { /* ignore */ }
-    neuralInstance = null;
-    neuralCanvas = freshCanvasForRebuild(neuralCanvas);
-    buildNeural();
-  };
-
-  /* The hero background starts on its own.
-
-     It used to wait for a mousemove, scroll or touchstart, which kept it off
-     the critical path but made "is there a network behind the name?" depend on
-     whether the visitor happened to move. Anyone reading without touching the
-     mouse saw an empty rectangle; so did every keyboard user, every headless
-     renderer, every social-preview fetcher and every print. The hero is the
-     one idea on this page worth showing, and gating it on an input event was
-     asking for a gesture in exchange for the thing the page is about.
-
-     Idle time, not load time. requestIdleCallback runs once the browser has
-     nothing more pressing, so the fetch and first paint still sit behind
-     layout, the fonts and the static content — the original goal — without
-     needing a person to trigger them. The interaction listeners stay as an
-     accelerator: someone who moves the mouse immediately gets it immediately
-     rather than at the next idle slot.
-
-     The timeout is the part that matters for the silent cases. A busy main
-     thread can defer an idle callback indefinitely, and browsers withhold it
-     entirely on a page that never becomes interactive — exactly the headless
-     case — so the 1500 ms deadline is what guarantees a paint. Browsers
-     without requestIdleCallback (Safari shipped it late) get the same
-     deadline via setTimeout. */
-  if (neuralCanvas) {
-    if (prefersReducedMotion()) {
-      neuralCanvas.style.display = 'none';
-    } else {
-      const IDLE_DEADLINE = 1500;
-      const startNeural = () => {
-        if (neuralStarted) return;
-        neuralStarted = true;
-        ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
-          window.removeEventListener(evt, startNeural));
-        buildNeural();
-      };
-      ['mousemove', 'scroll', 'touchstart'].forEach(evt =>
-        window.addEventListener(evt, startNeural, { passive: true, once: true }));
-
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(startNeural, { timeout: IDLE_DEADLINE });
-      } else {
-        setTimeout(startNeural, IDLE_DEADLINE);
-      }
-    }
-  }
-
-  /* Recolour the colour-baked hero canvases on a theme switch — destroy the
-     old instances and rebuild with the active palette (getTheme() inside each
-     module now resolves dark/light). Only rebuild the neural net if it had
-     already started, so we never pull its chunk early. */
-  const onThemeChange = () => {
-    if (noiseInstance) {
-      try { noiseInstance.destroy(); } catch (_) { /* ignore */ }
-      noiseInstance = null;
-      /* destroy() force-lost the WebGL context — rebuild on a fresh canvas. */
-      noiseCanvas = freshCanvasForRebuild(noiseCanvas);
-      buildNoise();
-    }
-    rebuildNeural();
-  };
-  window.addEventListener('themechange', onThemeChange);
-  _pushTeardown(() => window.removeEventListener('themechange', onThemeChange));
-
-  /* Resizing across the CNN-hero breakpoint swaps the two backgrounds —
-     without this, a window dragged narrow would keep painting a scene whose
-     labels no longer fit (and vice versa). */
-  if (typeof window.matchMedia === 'function') {
-    const heroMq = window.matchMedia(CNN_HERO_QUERY);
-    if (typeof heroMq.addEventListener === 'function') {
-      const onHeroBreakpoint = () => { syncHeroCnnLink(); rebuildNeural(); };
-      heroMq.addEventListener('change', onHeroBreakpoint);
-      _pushTeardown(() => heroMq.removeEventListener('change', onHeroBreakpoint));
-    }
+  if (heroEl && document.getElementById('field-canvas')) {
+    import('./receptive-field.js').then(({ ReceptiveField }) => {
+      _disposables.push(new ReceptiveField(heroEl, () => heroEl.classList.add('is-drawn')));
+    });
   }
 
   /* Lazy-init helper: build a heavy WebGL/Canvas component only when its
      canvas is about to enter the viewport. The maps live in the #places
-     section near the bottom of the page — eagerly building them costs a
-     coastline fetch (Europe map) and a Globe scene with stars/grids/pins,
-     neither of which the user sees until they scroll there. */
+     section near the bottom of the page — eagerly building the globe costs a
+     Three.js download and a scene with stars/grids/pins the user does not
+     see until they scroll there. */
   /* The observer is registered for teardown, not just disconnected on hit.
      It used to be the one observer in this file with no path to
      _pushTeardown: it disconnects itself when the canvas arrives, but a
-     visitor who never scrolls that far leaves it live, and travel.html builds
-     two of them. That is the leak the pagehide rule exists to prevent —
+     visitor who never scrolls that far leaves it live. That is the leak the pagehide rule exists to prevent —
      "any new init that adds a document/window listener or observer must
      return a teardown and be _pushTeardown-ed" — and this one had quietly
      opted out. Disconnecting twice is a no-op, so the self-disconnect on hit
@@ -988,7 +722,7 @@ if (typeof document !== 'undefined') {
        viewport — so Three.js downloads lazily, on scroll, not on load. */
     /* data/locations.js comes down here rather than at the top of the file:
        28 KB of pins that only travel.html has a canvas for. Importing it also
-       sets globalThis.LOCATIONS, which is how EuropeMap2D and Globe3D read it
+       sets globalThis.LOCATIONS, which is how Globe3D reads it
        from their constructor bodies. */
     return Promise.all([
       import('./globe.js'),
@@ -1019,58 +753,14 @@ if (typeof document !== 'undefined') {
     _lazyOnViewport(globeCanvas, buildGlobe);
   }
 
-  /* 2D Europe Map — Canvas-based representation of European locations.
-
-     Dynamically imported, like the globe above and for the same reason: a
-     static `import './europe-map.js'` put its chunk in the eager module graph
-     of *every* page, so all twenty pages without a #europe-canvas were
-     downloading, parsing and executing 10 KB for a map they do not have. Only
-     travel.html has the canvas, and only when it nears the viewport. */
-  let europeCanvas = document.getElementById('europe-canvas');
-  let europeInstance = null;
-  let europeBuildToken = 0;
-  const buildEurope = () => {
-    const token = ++europeBuildToken;
-    /* locations.js alongside the map for the same reason as the globe — and it
-       must resolve before the constructor runs, which reads globalThis. */
-    return Promise.all([
-      import('./europe-map.js'),
-      import('../data/locations.js'),
-    ]).then(([{ EuropeMap2D }]) => {
-      /* A newer build superseded this one (a theme switch landed while the
-         import was in flight) — same guard the globe uses. */
-      if (token !== europeBuildToken) return;
-      europeInstance = new EuropeMap2D(europeCanvas);
-      _disposables.push(europeInstance);
-    }).catch((err) => {
-      if (typeof console !== 'undefined') console.warn('Europe map build skipped:', err);
+  /* Travel chart tooltips (travel page only): a few hundred bytes the other
+     pages never fetch. */
+  const seaChart = document.querySelector('.sea-chart-svg');
+  if (seaChart) {
+    import('./sea-chart.js').then(({ initSeaChartTips }) => {
+      _disposables.push(initSeaChartTips(seaChart));
     });
-  };
-  if (europeCanvas) {
-    _lazyOnViewport(europeCanvas, buildEurope);
   }
-
-  /* Recolour the travel-page maps on a theme switch — only if already built
-     (don't pull Three.js early). Rebuild reuses the same lazy builders. */
-  const onMapThemeChange = () => {
-    if (globeInstance) {
-      try { globeInstance.destroy?.(); } catch (_) { /* ignore */ }
-      globeInstance = null;
-      /* Globe3D.destroy() calls renderer.forceContextLoss(); the WebGL
-         context can't be revived on the same node, so rebuild on a clone. */
-      globeCanvas = freshCanvasForRebuild(globeCanvas);
-      buildGlobe();
-    }
-    if (europeInstance) {
-      try { europeInstance.destroy?.(); } catch (_) { /* ignore */ }
-      europeInstance = null;
-      /* Canvas2D — swap for a clean buffer to match the globe rebuild path. */
-      europeCanvas = freshCanvasForRebuild(europeCanvas);
-      buildEurope();
-    }
-  };
-  window.addEventListener('themechange', onMapThemeChange);
-  _pushTeardown(() => window.removeEventListener('themechange', onMapThemeChange));
 
   /* UNESCO World Heritage accordion (travel page only) — 20 KB of tree that
      the other 20 pages have no use for. */
@@ -1094,8 +784,8 @@ if (typeof document !== 'undefined') {
   /* Interactive MNIST lab (projects/mnist-lenet.html only).
      Dynamically imported behind the element check, so the int8 weights
      (data/lenet-weights.js, ~44 KB gzip) and the forward pass never reach
-     any other page — the homepage hero replays precomputed activations and
-     downloads no model at all. */
+     any other page — the homepage hero borrows only the six conv1 kernels
+     (data/hero-scan.js), and only when its Learned filter is chosen. */
   const mnistLab = document.getElementById('mnist-lab');
   if (mnistLab) {
     import('./mnist-lab.js')

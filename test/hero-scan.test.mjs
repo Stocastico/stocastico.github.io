@@ -1,22 +1,17 @@
-/* Regression tests for the narrow/touch hero pipeline (data/hero-scan.js →
-   js/kernel-scan.js).
+/* Regression tests for the hero's learned filter (data/hero-scan.js →
+   js/receptive-field.js).
 
-   Four things matter here:
-     1. data/hero-scan.js must not drift from the committed model + digits (the
+   Three things matter here:
+     1. data/hero-scan.js must not drift from the committed model (the
         generator is deterministic, so this is exact);
-     2. the baked blobs must describe the shapes js/kernel-scan.js indexes into
-        — a wrong length silently paints garbage;
-     3. the int8 kernels must still *be* conv1. This is the assertion worth
-        having: the scene's whole claim is that it convolves the real trained
-        filters over a real MNIST digit, and that claim is only true if the
-        feature map the renderer computes matches the one js/lenet.js's
-        forward() computes for the same digit. Quantisation is allowed to move
-        it a little; it is not allowed to move it anywhere interesting;
-     4. the module must stay off every page that is not the homepage hero,
-        which means main.js may only reach it through a dynamic import.
-
-   The 14 KB of digits are the reason (2) is not enough on its own: a blob of
-   the right length full of the wrong bytes passes a shape check and fails (3).
+     2. the int8 kernels must still *be* conv1 — the button says "Learned",
+        and that is only true if convolving with them reproduces the layer
+        js/lenet.js's forward() computes. Quantisation may move it a little,
+        not anywhere interesting. The digits for that check come from
+        data/cnn-samples.json, since the data module no longer carries any;
+     3. the kernels must stay off every page and every visit that does not ask
+        for them: main.js reaches the hero only through a dynamic import, and
+        the hero reaches this module only through another one.
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,11 +27,13 @@ import { MEAN, STD, C1, K } from '../js/lenet.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
+const SAMPLES = JSON.parse(read('data/cnn-samples.json')).samples;
 
 const IN_W = 28;
 const OUT_W = IN_W - K + 1;
 
-/* The renderer's own decode path, kept in step with js/kernel-scan.js. */
+/* An independent decode (Buffer, not atob) — js/receptive-field.js has its own
+   decodeLearned(), held to the model by test/receptive-field.test.mjs. */
 function decodeKernels() {
   const { count, scale, weights, bias } = HERO_SCAN.kernels;
   const raw = Buffer.from(weights, 'base64');
@@ -52,7 +49,7 @@ function decodeKernels() {
   return out;
 }
 
-/* The convolution js/kernel-scan.js runs, for one filter. */
+/* A valid-padding conv1 with bias and ReLU — what lenet.js computes. */
 function convolve(pixels, kernel) {
   const map = new Float32Array(OUT_W * OUT_W);
   for (let oy = 0; oy < OUT_W; oy++) {
@@ -85,46 +82,27 @@ test('hero-scan: normalisation constants come from js/lenet.js, not a copy', () 
   assert.equal(HERO_SCAN.meta.std, STD);
 });
 
-test('hero-scan: kernels and digits have the shapes kernel-scan.js indexes', () => {
+test('hero-scan: the kernels have the shapes the hero indexes', () => {
   assert.equal(HERO_SCAN.kernels.count, C1, 'conv1 has six filters');
   assert.equal(HERO_SCAN.kernels.k, K);
   assert.equal(HERO_SCAN.kernels.bias.length, C1);
   assert.ok(HERO_SCAN.kernels.scale > 0, 'int8 scale must be positive');
   assert.equal(Buffer.from(HERO_SCAN.kernels.weights, 'base64').length, C1 * K * K);
 
-  assert.equal(HERO_SCAN.digits.length, 10, 'one digit per class');
-  const labels = HERO_SCAN.digits.map((d) => d.label).sort((a, b) => a - b);
-  assert.deepEqual(labels, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-  for (const d of HERO_SCAN.digits) {
-    assert.equal(Buffer.from(d.pixels, 'base64').length, IN_W * IN_W,
-      `digit ${d.label}: not a 28×28 blob`);
-  }
+  assert.equal(HERO_SCAN.digits, undefined, 'the digits left with the narrow-viewport hero');
 });
 
-test('hero-scan: the digits are not blank, and are mostly background', () => {
-  /* Both halves matter: an all-zero blob passes every length check above and
-     renders an empty grid, and an all-255 blob would render a solid block. */
-  for (const d of HERO_SCAN.digits) {
-    const bytes = Buffer.from(d.pixels, 'base64');
-    let ink = 0;
-    for (const b of bytes) if (b > 32) ink++;
-    assert.ok(ink > 40, `digit ${d.label}: only ${ink} inked pixels — blank?`);
-    assert.ok(ink < 400, `digit ${d.label}: ${ink} inked pixels — not an MNIST digit`);
-  }
-});
-
-test('hero-scan: the browser-side convolution reproduces lenet.js conv1', () => {
-  /* This is the claim the whole scene rests on. Run the committed digits
-     through the full float32 model, then compute the same layer the way
-     js/kernel-scan.js does — from the int8 kernels in data/hero-scan.js — and
-     require the two to agree. */
+test('hero-scan: the int8 kernels reproduce lenet.js conv1', () => {
+  /* The claim the Learned button rests on. Run the committed sample digits
+     through the full float32 model, then compute the same layer from the int8
+     kernels in data/hero-scan.js, and require the two to agree. */
   const model = deserializeModel(JSON.parse(read('data/cnn-model.json')));
   const state = createState();
   const kernels = decodeKernels();
 
   let worst = 0;
   let scale = 0;
-  for (const d of HERO_SCAN.digits) {
+  for (const d of SAMPLES) {
     const pixels = new Uint8Array(Buffer.from(d.pixels, 'base64'));
     forward(model, pixels, state);
     for (let f = 0; f < C1; f++) {
@@ -148,49 +126,27 @@ test('hero-scan: the browser-side convolution reproduces lenet.js conv1', () => 
     `conv1 disagrees with lenet.js by ${worst.toFixed(4)} (layer range ${scale.toFixed(2)})`);
 });
 
-test('hero-scan: every digit has a live filter to show', () => {
-  /* This model has two dead conv1 units: filters 2 and 6 (indices 1 and 5)
-     never leave zero on any MNIST digit — an ordinary training outcome, and
-     the reason js/kernel-scan.js skips a blank pairing rather than animating
-     three and a half seconds of empty grid.
-
-     What must hold for the scene to work is the other half: every digit has
-     filters that *do* respond. If a retrained model ever killed enough of
-     them, the renderer's skip loop would run out of alternatives and paint an
-     empty box — this fails first, and says why. */
-  const kernels = decodeKernels();
-  for (const d of HERO_SCAN.digits) {
-    const pixels = new Uint8Array(Buffer.from(d.pixels, 'base64'));
-    const live = kernels.filter((k) => convolve(pixels, k).some((v) => v > 0));
-    assert.ok(live.length >= 2,
-      `digit ${d.label}: only ${live.length} of ${kernels.length} conv1 filters respond`);
-  }
-});
-
-test('hero-scan: kernel-scan.js is dynamically imported, and ships no runtime', () => {
+test('hero-scan: reached only through two dynamic imports', () => {
   const main = read('js/main.js');
-  assert.ok(/import\(['"]\.\/kernel-scan\.js['"]\)[\s\S]{0,80}KernelScan/.test(main),
-    'main.js must reach the narrow-viewport hero through a dynamic import');
-  assert.ok(!/^import[\s\S]{0,120}['"]\.\/kernel-scan\.js['"]/m.test(main),
-    'main.js must not statically import kernel-scan.js — that lands it in every page');
+  assert.ok(/import\(['"]\.\/receptive-field\.js['"]\)/.test(main),
+    'main.js must reach the hero through a dynamic import');
+  assert.ok(!/^import[\s\S]{0,120}['"]\.\/receptive-field\.js['"]/m.test(main),
+    'main.js must not statically import receptive-field.js — that lands it in every page');
 
-  const src = read('js/kernel-scan.js');
-  assert.ok(!/three-context|from ['"]three['"]/.test(src),
-    'kernel-scan.js must not pull Three.js onto the homepage');
-  assert.ok(!/from ['"]\.\/lenet\.js['"]/.test(src),
-    'kernel-scan.js must not import the full forward pass — it draws one layer');
-  assert.ok(!/cnn-activations/.test(src),
-    'kernel-scan.js must not import the desktop hero\'s activation blobs');
-  assert.ok(/from ['"]\.\.\/data\/hero-scan\.js['"]/.test(src),
-    'kernel-scan.js should read its kernels from data/hero-scan.js');
+  const src = read('js/receptive-field.js');
+  assert.ok(/import\(['"]\.\.\/data\/hero-scan\.js['"]\)/.test(src),
+    'the hero must load the learned kernels only when that filter is chosen');
+  assert.ok(!/^import[\s\S]{0,120}hero-scan/m.test(src),
+    'a static import would make every homepage visit pay for a button few press');
+  assert.ok(!/three-context|from ['"]three['"]|from ['"]\.\/lenet\.js['"]/.test(src),
+    'the hero must not pull Three.js or the forward pass onto the homepage');
 });
 
-test('hero-scan: the payload stays small enough for a phone', () => {
-  /* The point of a separate data module (rather than reusing
-     data/cnn-activations.js, 42 KB of five other layers) is that this one is
-     small. A ceiling, not a measurement — well above the ~13 KB it is now, so
-     it fails on a category change rather than on a retrained digit. */
+test('hero-scan: the payload stays tiny', () => {
+  /* Six 5×5 int8 kernels are 150 bytes; the rest is header. A ceiling, not a
+     measurement, so it fails on a category change (digits creeping back in)
+     rather than on a retrained model. */
   const bytes = Buffer.byteLength(read(OUT_FILE));
-  assert.ok(bytes < 24 * 1024,
-    `${OUT_FILE} is ${(bytes / 1024).toFixed(1)} KB — the mobile hero's data budget is 24 KB`);
+  assert.ok(bytes < 4 * 1024,
+    `${OUT_FILE} is ${(bytes / 1024).toFixed(1)} KB — the learned filter's budget is 4 KB`);
 });

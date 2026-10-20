@@ -35,6 +35,7 @@ import {
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
   AdditiveBlending, NormalBlending, BackSide, DoubleSide,
+  SRGBColorSpace,
 } from 'three';
 
 const _THREE_NPM = {
@@ -49,6 +50,7 @@ const _THREE_NPM = {
   Vector2, Vector3, QuadraticBezierCurve3,
   Raycaster, Color,
   AdditiveBlending, NormalBlending, BackSide, DoubleSide,
+  SRGBColorSpace,
 };
 
 let _current = _THREE_NPM;

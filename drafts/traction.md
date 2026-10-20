@@ -15,8 +15,7 @@ TRACTION (*Opera co-creation for a social transformation*) was a three-year EU [
 
 That ambition was tested in three very different places: the inner-city neighbourhoods of **Barcelona** (Raval), a youth prison in **Leiria, Portugal**, and the rural communities of **Ireland**. The technological backbone of the project was a pair of digital platforms developed at Vicomtech and [CWI](https://www.cwi.nl/en/): the **Co-creation Space** and the **Co-creation Stage**.
 
-## My Role
-
+## My role
 My main contribution was to the **Co-creation Stage**: the real-time distributed performance tool that allowed a single opera to be staged simultaneously across multiple co-located venues, synchronising live video, audio and interaction between stages. I was involved across the full lifecycle, in a role that combined technical development with research and partnership activities:
 
 - **Development**: working on both the frontend and the backend of the Stage, contributing to the low-latency adaptive media transmission layer that made synchronised live performance across venues possible.
@@ -26,8 +25,7 @@ My main contribution was to the **Co-creation Stage**: the real-time distributed
 
 The Co-creation Stage was the centrepiece of the live-performance moments: a production could be co-presented from a main opera house and from community sites at the same time, dissolving the traditional boundary between professional stage and audience or participant.
 
-## Tech Stack
-
+## Tech stack
 The Co-creation Stage is a real-time distributed performance application:
 
 - **Frontend**: [Angular](https://angular.dev/) with [TypeScript](https://www.typescriptlang.org/), designed for multi-venue operator interfaces and audience-facing views.
@@ -46,8 +44,7 @@ By the end of the project, the two tools had supported three full community oper
 
 Survey data from participants reported that 94% felt actively involved, 89% learned from others, and 75% reported improved well-being.
 
-## Social Implications
-
+## Social implications
 What stayed with me long after the project finished is what the technology *enabled* rather than what the technology *was*. A platform for sharing videos, comments and audio clips is, in pure software terms, not a remarkable thing. But put it in the hands of a teenager in a juvenile detention centre who has spent years being told their voice does not matter, and the same software becomes a way to record a song that ends up performed at the Gulbenkian concert hall in front of their family. Put it in the hands of a migrant choir in Raval, and it becomes the connective tissue of an opera that fills the Liceu.
 
 That is also where the responsibility of the technical role becomes very tangible: every design choice (what is private and what is shared, who can comment on what, how reliable the upload is on a tablet on a slow connection inside a prison) has consequences that go far beyond a usability metric. Building software that is going to be used in those settings requires a different kind of attention than building software for a generic "user".

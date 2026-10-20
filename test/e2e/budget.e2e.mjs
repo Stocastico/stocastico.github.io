@@ -32,17 +32,21 @@ const gzipKB = (file) => zlib.gzipSync(fs.readFileSync(file), { level: 9 }).leng
 /* Matched by prefix, so the content hash in the filename does not matter. */
 const BUDGETS = [
   /* The shared entry chunk — every page pays for this one, so it is the
-     number that actually matters. 15.8 KB at the time of writing, down from
-     32.5 KB before the data modules moved behind their DOM gates. */
-  { prefix: 'main-', ext: '.js', maxKB: 20, what: 'shared entry chunk (every page)' },
-  /* One stylesheet for the whole site. 13.0 KB. */
+     number that actually matters. 32.5 KB before the data modules moved
+     behind their DOM gates, 15.8 KB after, and 10.7 KB after the redesign
+     (#195: the WebGL/CNN heroes, the theme switch and the card tilt went).
+     Lowered from 20 to keep the ~25-30% headroom meaningful. */
+  { prefix: 'main-', ext: '.js', maxKB: 14, what: 'shared entry chunk (every page)' },
+  /* One stylesheet for the whole site. 13.0 KB before the redesign, 14.3 KB
+     after it (the timeline, the slides, the travel chart) — the one budget
+     that did not shrink, so it stays at 17. */
   { prefix: 'main-', ext: '.css', maxKB: 17, what: 'stylesheet (every page)' },
 ];
 
 /* Chunks that are legitimately large but lazily loaded. Listed so that a
    regression which drags one onto the critical path shows up as the entry
    chunk blowing its budget above, rather than being hidden here. */
-const LAZY_ALLOWED = ['globe-', 'lenet-weights-', 'cnn-hero-', 'cnn-samples-', 'mnist-lab-'];
+const LAZY_ALLOWED = ['globe-', 'lenet-weights-', 'receptive-field-', 'hero-scan-', 'cnn-samples-', 'mnist-lab-'];
 
 function assetsMatching({ prefix, ext }) {
   const dir = path.join(DIST, 'assets');

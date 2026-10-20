@@ -94,6 +94,7 @@ career:
   - year: "2017 – 2018"
     role: Senior Data Scientist
     company: AGT International
+    short: AGT
     location: "Darmstadt, DE"
     description: >
       Product owner for the video analytics department. Built computer vision
@@ -160,6 +161,30 @@ career:
       - Image Processing
       - Research
 
+# ── Places ───────────────────────────────────────────────────────────────────
+# Where you lived, which is not where the employer sat: NTT DATA was in Bilbao
+# and AGT in Darmstadt, while home stayed San Sebastián and Frankfurt. Drawn
+# as the "places" lane of the homepage career timeline (#191).
+# Required:  year, city
+places:
+  - year: "2000 – 2009"
+    city: "Brescia"
+  - year: "2009 – 2015"
+    city: "Berlin"
+  - year: "2015 – 2018"
+    city: "Frankfurt"
+  - year: "2018 – present"
+    city: "San Sebastián"
+
+# ── Timeline-only projects ───────────────────────────────────────────────────
+# Work projects that are real but have no write-up yet (and so no entry in
+# data/projects.js, which would put them on cards, the sitemap and the feed).
+# Each is a clip on the homepage timeline's projects lane, without a link.
+# When the project page exists, move it to data/projects.js and delete it here.
+timeline_projects:
+  - year: "2026 – present"
+    title: AI Production Studio
+
 # ── Education ─────────────────────────────────────────────────────────────────
 # Required:  year, degree, institution
 # Optional:  location, description
@@ -186,6 +211,7 @@ education:
 
   - year: "2005 – 2008"
     degree: "MSc in Telecommunications Engineering"
+    short: "MSc in Telecommunications Eng."
     institution: "Università degli Studi di Brescia"
     location: "Brescia, IT"
 

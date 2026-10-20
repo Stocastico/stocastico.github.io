@@ -17,19 +17,87 @@ it is built on that framing.
 **A stale TODO costs more than an empty one**: it invites work that is already
 done and hides the items that are real.
 
+## Redesign "Montaggio" (#188) — what is left
+
+**Where things stand.** Phases 1–5 are done on the branch
+`redesign/montaggio-design-system`, open as **draft PR #196**. Work continues
+on that branch; **nothing goes to `main`** and the PR is not merged until
+Stefano has tried it locally (`README.md` → "Previewing without publishing").
+After each phase: push to the branch and update the PR #196 description.
+Working rules for every phase: tests first (red/green), `npm test` +
+`npm run test:e2e` green, `npm run screenshots` checked at 390/768/1440,
+CLAUDE.md updated, small commits.
+
+Done: hero through a receptive field (#189), design system with one dark theme
+(#190), career timeline as an edit with pinned scrub and title card (#191),
+project cards as a media bin with generated thumbnails, plus title cards on
+Projects and Publications (#192), travel page as a nautical chart with the
+globe and UNESCO list restyled around it (#193). The reasoning for each is in
+`CLAUDE.md`.
+
+**Decided** (19 Oct): the 2D Europe map is gone. The chart carries its
+European pins now; see "Travel page: the nautical chart" in `CLAUDE.md`.
+
+**Waiting on Stefano after the local test** (do not decide alone):
+- The title-card copy after the second review: "The story so far" with
+  Stefano's subtitle, "Selected work" with "Three projects, picked at random
+  on every visit. The full list has the rest.", and "On paper" with "The core
+  of my PhD. All of it is on the publications page and Scholar." No media
+  vocabulary in subtitles (an e2e test enforces it).
+- "AI Production" is on the timeline as "2026 – present" (confirmed). Move it
+  from `timeline_projects:` in `data/cv.yaml` to `data/projects.js` once the
+  write-up is cleared.
+- The copy written for the travel page: the cartouche intro (rewritten to
+  mention the chart), "Further afield" as the globe's heading, "Route between
+  homes" in the key, and the leg labels using the employer's full name
+  ("Fraunhofer Heinrich Hertz Institut" wraps to two lines; a `short:` field
+  in `data/cv.yaml` would be the clean way to say "Fraunhofer HHI").
+
+### Phase 6 — sub-pages in the new system (#194)
+
+Done on 19 Oct: headings in sentence case everywhere (incl. the project
+drafts, guarded by `test/sentence-case.test.mjs`), one card radius
+(`--r-md`), the filter chips' active state solid instead of a gradient,
+project titles in the condensed display face, and a "no signal" 404 (the
+last gradient text on the site).
+
+Then, same day: the CV page became an edit decision list (one ruled row per
+job or degree, lane colour down the edge, the PhD overlap as an "Alongside …"
+line instead of a three-column block), and a whole-site consistency pass —
+one left edge (the gutter now sits outside `--container`, so sections line
+up with the logo and the hero), Contact on that edge instead of centred, one
+corner scale (4 / 8 / 12px, no pills), chrome in the UI face everywhere
+(guarded by a computed-font probe in the e2e suite), article headings in the
+display cut, no uppercase-tracked labels.
+
+Still to look at together:
+- copy (Stefano reads it on 20 Oct).
+- known traps still apply: navbar width at the burger breakpoint
+  (1024/1025), the `aroundtheworld` table on phones.
+
+### Phase 7 — cleanup and docs (#195)
+
+Done on 19 Oct: `heroGradFrom`/`heroGradTo` and `noise` out of the palette
+schema; the vestigial `refreshActiveTheme()` out of the globe; the card
+tilt (and its gloss, and the render wait that existed only for it) gone;
+the shared JS budget lowered 20 → 14 KB (10.7 KB now); the social cards —
+site and projects — redrawn as Montaggio title cards and rendered by
+Chromium so they are finally set in the site's own faces; favicons checked
+(already current).
+
+Then: the favicon set redrawn as "SM" in Archivo condensed 800 (outlines,
+`scripts/lib/favicon-glyph.json`), the MNIST card regenerated from the model
+(`generate-mnist-og`), and CLAUDE.md / README re-read for things that no
+longer exist.
+
+Left:
+- Close #188–#195 when the PR is merged.
+
 ## Test coverage — known gaps, deliberately left
 
 Written down after a sweep that mutated every generated artefact and ran the
 whole suite against each. Everything that could be closed cheaply was closed;
 these are what is left, with the reason.
-
-- **`js/cnn-hero.js` (691 lines) has no unit coverage.** Only its *loading* is
-  asserted (`test/cnn-activations.test.mjs` checks `js/main.js` imports it
-  dynamically and gates on `supportsCnnHero()`), plus whatever the homepage
-  reveal tests happen to exercise. The projection maths — `_view()`,
-  `_project()`, the turntable, the signed depth parallax — is pure and testable
-  in principle; nothing tests it. A regression there degrades the hero's sense
-  of depth without failing anything or throwing.
 
 - **The dev/analysis scripts still run at import time.** `train-cnn.mjs`, the
   `eval-*` and `diagnose-*` pair, `screenshots.mjs` and `ingest-digit-capture.mjs`
@@ -107,11 +175,6 @@ these are what is left, with the reason.
   swappable in one line (`js/contact.js`), not that the string is hidden — base64
   in an attribute named `data-email-user` stopped nobody. Full reasoning in
   `CLAUDE.md`.
-- Globe land texture (2048×1024) is rebuilt per construction / theme switch
-  rather than cached across instances. Considered and skipped: the colours are
-  theme-dependent and the rebuild path is the one behind past "blank globe
-  after theme switch" bugs — not worth the GL-lifetime risk for a cost only
-  paid on a manual (infrequent) theme toggle.
 - `public/feed.xml` is checked by shape, not bytes — entry count, every project
   present, RFC 3339 dates, https-only, the `/now` date in sync, and (since the
   date policy changed) that project dates come from `data/projects.js` rather

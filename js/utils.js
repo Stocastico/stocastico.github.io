@@ -27,6 +27,19 @@ export function getTopoJSON() {
   return window._topoPromise;
 }
 
+/* The travel page's nautical chart frame (#193), in degrees.
+
+   One frame, two readers. scripts/generate-sea-chart.mjs projects it to the
+   chart's viewBox, and js/globe.js hides the European worktrips and holidays
+   inside it — because the chart draws them, and a globe at that zoom can only
+   pile seventy pins on one continent. Sharing the numbers is what guarantees
+   no pin falls between the two views. The frame is centred on the route's
+   longitude so a phone's centred crop keeps all of it. It runs south to
+   31.5°N, past Crete to the African coast: at 35°N it stopped just below
+   Sicily, and a wide screen's crop (the SVG slices) took the south of Spain,
+   Italy and Greece with it. That makes it ~1.6:1 rather than 16:9. */
+export const CHART_BOUNDS = { minLon: -28.5, maxLon: 39.5, minLat: 31.5, maxLat: 60 };
+
 /* A LOCATIONS entry the maps can actually place.
 
    Replaces the `_skip` flag the old runtime geocoder set on a failed lookup.
@@ -35,11 +48,9 @@ export function getTopoJSON() {
    this one a position" — and an entry without one must be skipped rather than
    projected to NaN.
 
-   Lives here rather than in globe.js because js/europe-map.js needs it too, and
-   globe.js already imports EUROPE_BOUNDS from europe-map.js: importing back the
-   other way would be a cycle, and would pull the 540 KB Three.js chunk into the
-   Europe map's. utils.js has no dependencies, which is why it is the right
-   home. */
+   Lives here rather than in globe.js so that nothing which only needs this
+   check has to import the module that pulls the 540 KB Three.js chunk.
+   utils.js has no dependencies, which is why it is the right home. */
 export function hasCoords(item) {
   return !!item
     && typeof item.lat === 'number' && Number.isFinite(item.lat)
@@ -58,28 +69,6 @@ export function isLowPowerDevice() {
   const slowNetwork = !!(nav?.connection?.effectiveType
     && nav.connection.effectiveType !== '4g');
   return coarsePointer || narrowViewport || cores <= 4 || savesData || slowNetwork;
-}
-
-/* The CNN hero (js/cnn-hero.js) draws a labelled LeNet-5 with 8×8 feature maps
-   and 7px layer captions — information-dense by design. Below laptop widths,
-   or on a touch-first device, none of that is legible and the scene is just
-   noise, so those viewports keep the lighter particle background instead.
-   Exported as a string too so js/main.js can watch the same query for changes
-   and swap backgrounds when the window crosses the breakpoint. */
-export const CNN_HERO_QUERY = '(min-width: 1100px) and (pointer: fine)';
-
-export function supportsCnnHero() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  if (!window.matchMedia(CNN_HERO_QUERY).matches) return false;
-  /* Deliberately NOT gated on isLowPowerDevice(): its core-count and
-     viewport-width heuristics are aimed at phones, which the media query above
-     already excludes, and they would veto perfectly capable quad-core laptops.
-     What still applies is the user asking for less: data-saver mode, a slow
-     connection, or a machine too small to spare a thread. */
-  const nav = typeof navigator !== 'undefined' ? navigator : null;
-  if (nav?.connection?.saveData) return false;
-  if (nav?.connection?.effectiveType && nav.connection.effectiveType !== '4g') return false;
-  return !(typeof nav?.hardwareConcurrency === 'number' && nav.hardwareConcurrency <= 2);
 }
 
 export function prefersReducedMotion() {

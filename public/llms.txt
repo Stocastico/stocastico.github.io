@@ -11,7 +11,7 @@ All content is written by Stefano Masneri unless a page says otherwise. Every pa
 - [Projects](https://stefanomasneri.com/projects.html): Projects and portfolio of Stefano Masneri, Senior AI Engineer. AR, Computer Vision, LLMs and more.
 - [Publications](https://stefanomasneri.com/publications.html): Full list of peer-reviewed publications by Stefano Masneri — augmented reality for education, computer vision, multimedia analysis, and media technology.
 - [Now](https://stefanomasneri.com/now.html): A now page: what Stefano Masneri is focused on at the moment — work, reading, hobbies and life in Gipuzkoa, San Sebastián.
-- [Travel](https://stefanomasneri.com/travel.html): Travel and places: an interactive 3D globe, a 2D map of Europe, and the UNESCO World Heritage sites Stefano Masneri has visited around the world.
+- [Travel](https://stefanomasneri.com/travel.html): Travel and places: a nautical chart of the route from Brescia to San Sebastián, an interactive 3D globe, and the UNESCO World Heritage sites Stefano Masneri has visited around the world.
 - [Links](https://stefanomasneri.com/links.html): A small, curated blogroll: the high-quality websites and technical blogs Stefano Masneri reads and recommends, grouped by topic.
 
 ## Projects
@@ -30,7 +30,7 @@ All content is written by Stefano Masneri unless a page says otherwise. Every pa
 - [UFC Fighter Tracking: Multi-Modal Sensing in the Octagon](https://stefanomasneri.com/projects/ufc-fighter-tracking.html): Professional work, 2017. Real-time analytics for live UFC events: stereo vision in the truss above the octagon, accelerometers in the gloves, GPU inference at the venue. Demoed live during Werner Vogels' keynote at AWS re:Invent 2017.
 - [MPI for Brain Research: Software for Reptilian Neuroscience](https://stefanomasneri.com/projects/mpi-brain-research.html): Professional work, 2015 – 2017. Two years as a scientific software developer in Gilles Laurent's department at the Max Planck Institute for Brain Research in Frankfurt, building MATLAB analysis pipelines and R/Shiny web apps for electrophysiologists studying sleep in bearded dragons and visual processing in ex-vivo turtle brains.
 - [inEvent: Structuring and Linking Multimedia Archives of Lectures and Meetings](https://stefanomasneri.com/projects/inevent.html): Professional work, 2011 – 2014. An EU FP7 project treating archives of lectures and meetings as interconnected hyper-events. At Fraunhofer HHI I led the video analysis: segmentation, slide-transition detection, and face features for speaker linking. Published at VISAPP, Interspeech and the ACM MM Grand Challenge.
-- [AVATecH: Automated Annotation of Audio/Video Corpora for Humanities Research](https://stefanomasneri.com/projects/avatech.html): Professional work, 2009 – 2014. AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN, the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide, turning weeks of manual labelling into minutes of supervised review.
+- [AVATecH: Automated Annotation of Audio/Video Corpora for Humanities Research](https://stefanomasneri.com/projects/avatech.html): Professional work, 2009 – 2013. AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN, the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide, turning weeks of manual labelling into minutes of supervised review.
 
 ## Publications
 

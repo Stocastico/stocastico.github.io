@@ -86,14 +86,11 @@ function okLightness(rgb) {
 }
 const lightnessStep = (a, b) => Math.abs(okLightness(a) - okLightness(b));
 
-/* Every variant that ships: each palette's dark body and its nested light. */
+/* Every variant that ships. Each palette used to carry a nested light variant
+   as well; the site is dark only since the Montaggio redesign (#188). If a
+   `light:` key ever comes back, generate-theme rejects it before this matters. */
 function variants() {
-  const out = [];
-  for (const [id, p] of Object.entries(palettes)) {
-    out.push({ name: `${id} (dark)`, p });
-    out.push({ name: `${id} (light)`, p: p.light });
-  }
-  return out;
+  return Object.entries(palettes).map(([id, p]) => ({ name: id, p }));
 }
 
 /* The derived surfaces, exactly as generate-theme.js composes them. */
@@ -157,15 +154,15 @@ test('contrast: body and muted text meet WCAG AA (4.5:1) on the page background'
       inside a `--bg-card` <details>, i.e. 0.17·text over (0.12·text over bg).
       In apricot/dark the browser paints that at rgb(82,77,72) where a lone card
       is rgb(49,44,41) — so even "text on a card" was the wrong surface for it.
-   2. **Tag chips add an accent tint.** `.tl-tag` and `.project-tag` sit on
-      `rgb(var(--accent-rgb) / 0.11)` over a card, which lightens the backdrop in
+   2. **Tag chips add an accent tint.** `.cv-tag` and `.project-tag` sit on
+      `rgb(var(--accent-rgb) / 0.12)` over a card, which lightens the backdrop in
       dark mode and darkens it in light.
 
    The mapping is per token rather than the cartesian product, deliberately.
    Requiring `textMuted` to survive a tag tint it never touches cost real chroma
    in the accents for nothing — the constraint has to match where the colour is
    actually painted, which is the whole lesson of this file. */
-const TINT_ALPHA = 0.11; /* .tl-tag / .project-tag chip fill */
+const TINT_ALPHA = 0.12; /* .cv-tag / .project-tag chip fill */
 
 function textSurfaces(p, token) {
   const s = surfaces(p);
@@ -261,8 +258,10 @@ test('contrast: the small-text CSS uses the accent *text* tokens, not the brand 
   const css = fs.readFileSync(path.join(ROOT, 'css/styles.css'), 'utf8');
   const SMALL_TEXT_RULES = [
     ['.project-tag', '--accent-text'],
-    ['.tl-tag', '--accent-text'],
-    ['.section-tag', '--accent-text'],
+    ['.cv-tag', '--accent-text'],
+    /* A track label since #190: the colour is carried by its chip (a non-text
+       mark, 3:1 is enough), and the word itself is a text tier. */
+    ['.section-tag', '--text-muted'],
     ['.skill-panel-title', '--accent-text'],
     ['.project-card__year', '--accent-text'],
     ['.unesco-site', '--accent-text'],
@@ -426,13 +425,6 @@ test('contrast: dark backgrounds sit in a sane luminance band', () => {
     const pct = luminance(channels(p.bg)) * 100;
     assert.ok(pct >= 0.4 && pct <= 2.0,
       `${id} (dark) — background luminance ${pct.toFixed(2)}% is outside 0.40–2.00%`);
-  }
-});
-
-test('contrast: light backgrounds sit in a sane luminance band', () => {
-  for (const [id, p] of Object.entries(palettes)) {
-    const pct = luminance(channels(p.light.bg)) * 100;
-    assert.ok(pct >= 80, `${id} (light) — background luminance ${pct.toFixed(2)}% is below 80%`);
   }
 });
 

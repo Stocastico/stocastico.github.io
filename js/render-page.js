@@ -32,57 +32,62 @@ import { escapeHtml } from './utils.js';
    CV — TIMELINE
    ═══════════════════════════════════════════════════════════ */
 
-/* One card per job/degree — all details visible, no flipping.
+/* One row per job or degree, newest first, the way an edit decision list
+   reads: when and where on the left, what on the right, and a lane colour —
+   work or study, as on the homepage timeline — down the row's edge.
 
    The title is an <h3>: these are the only headings on the CV page besides its
    <h1>, and without them a screen-reader user has no way to skim the career
    history. */
-function tlCardHtml(entry, type) {
-  const isCareer = type === 'career';
-  const title = isCareer ? entry.role : entry.degree;
-  const sub = isCareer ? entry.company : entry.institution;
-  const locHtml = entry.location
-    ? `<span class="tl-location">${escapeHtml(entry.location)}</span>`
+function cvEntryHtml(entry, type) {
+  const isWork = type === 'work';
+  const title = isWork ? entry.role : entry.degree;
+  const org = isWork ? entry.company : entry.institution;
+  const whereHtml = entry.location
+    ? `<span class="cv-where">${escapeHtml(entry.location)}</span>`
+    : '';
+  /* A degree taken while employed (`concurrent_with`) used to be a block
+     spanning the jobs it overlapped, placed with inline grid rows. One line
+     says the same thing, and the list stays a list on every width. */
+  const along = Array.isArray(entry.concurrent_with) ? entry.concurrent_with : [];
+  const alongHtml = along.length
+    ? `<p class="cv-alongside">Alongside ${escapeHtml(along.join(' and '))}</p>`
     : '';
   const descHtml = entry.description
-    ? `<p class="tl-desc">${escapeHtml(entry.description)}</p>`
+    ? `<p class="cv-desc">${escapeHtml(entry.description)}</p>`
     : '';
   const tagsArr = entry.tags || [];
   const tagsHtml = tagsArr.length
-    ? `<div class="tl-tags">${tagsArr.map((t) => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    ? `<ul class="cv-tags">${tagsArr.map((t) => `<li class="cv-tag">${escapeHtml(t)}</li>`).join('')}</ul>`
     : '';
 
   /* "Related work" — the CV's way back into the project pages and the
      publication list. The label is prefixed with a visually-hidden phrase
-     naming the role, because a screen-reader user pulling up a list of links
-     would otherwise get a dozen bare project titles with no idea which job
-     each belonged to. generate-cv validates that every url is root-relative,
-     so there is no target/rel handling to do here. */
+     naming the employer, because a screen-reader user pulling up a list of
+     links would otherwise get a dozen bare project titles with no idea which
+     job each belonged to. generate-cv validates that every url is
+     root-relative, so there is no target/rel handling to do here. */
   const linksArr = entry.links || [];
   const linksHtml = linksArr.length
-    ? '<div class="tl-links">'
-      + `<span class="tl-links-label" aria-hidden="true">${isCareer ? 'Related work' : 'More'}</span>`
-      + '<ul class="tl-links-list">'
+    ? '<div class="cv-links">'
+      + `<span class="cv-links-label" aria-hidden="true">${isWork ? 'Related work' : 'More'}</span>`
+      + '<ul class="cv-links-list">'
       + linksArr.map((l) => (
-        '<li><a class="tl-link" href="' + escapeHtml(l.url) + '">'
-        + `<span class="visually-hidden">${escapeHtml(sub || '')} &mdash; </span>`
+        '<li><a class="cv-link" href="' + escapeHtml(l.url) + '">'
+        + `<span class="visually-hidden">${escapeHtml(org || '')} &mdash; </span>`
         + escapeHtml(l.label)
         + '</a></li>'
       )).join('')
       + '</ul></div>'
     : '';
 
-  return (
-    '<div class="tl-card-single">'
-    + '<div class="tl-card-header">'
-    + `<span class="tl-year">${escapeHtml(String(entry.year))}</span>`
-    + locHtml
-    + '</div>'
-    + `<h3 class="tl-title">${escapeHtml(title || '')}</h3>`
-    + `<p class="tl-sub">${escapeHtml(sub || '')}</p>`
-    + descHtml + linksHtml + tagsHtml
-    + '</div>'
-  );
+  return `<li class="cv-entry cv-entry--${type}" data-animate>`
+    + `<div class="cv-when"><span class="cv-years">${escapeHtml(String(entry.year))}</span>${whereHtml}</div>`
+    + '<div class="cv-what">'
+    + `<h3 class="cv-role">${escapeHtml(title || '')}</h3>`
+    + `<p class="cv-org">${escapeHtml(org || '')}</p>`
+    + alongHtml + descHtml + linksHtml + tagsHtml
+    + '</div></li>';
 }
 
 function startYear(yearStr) {
@@ -90,89 +95,13 @@ function startYear(yearStr) {
   return m ? parseInt(m[0], 10) : 0;
 }
 
-/* Rows newest-first. An education entry carrying `concurrent_with` is drawn as
-   a single block spanning the career rows it overlaps, so a degree taken while
-   employed reads as one period rather than two unrelated ones. */
+/* Newest first by start year; on a tie, work before study. */
 export function cvTimelineLines(career, education) {
-  const concurrentEduEntries = [];
-  const normalEduEntries = [];
-  (education || []).forEach((e) => {
-    if (Array.isArray(e.concurrent_with) && e.concurrent_with.length > 0) {
-      concurrentEduEntries.push(e);
-    } else {
-      normalEduEntries.push(e);
-    }
-  });
-
-  const concurrentCareerSet = {};
-  concurrentEduEntries.forEach((edu) => {
-    edu.concurrent_with.forEach((company) => { concurrentCareerSet[company] = true; });
-  });
-
-  const concurrentCareerEntries = [];
-  const normalCareerEntries = [];
-  (career || []).forEach((e) => {
-    if (concurrentCareerSet[e.company]) concurrentCareerEntries.push(e);
-    else normalCareerEntries.push(e);
-  });
-
-  const rows = [];
-
-  normalCareerEntries.forEach((entry) => {
-    rows.push({
-      sort: startYear(entry.year),
-      html: '<div class="tl-row tl-row--career" data-animate>'
-        + `<div class="tl-left">${tlCardHtml(entry, 'career')}</div>`
-        + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-        + '<div class="tl-right"><div class="tl-empty"></div></div>'
-        + '</div>',
-    });
-  });
-
-  normalEduEntries.forEach((entry) => {
-    rows.push({
-      sort: startYear(entry.year),
-      html: '<div class="tl-row tl-row--education" data-animate>'
-        + '<div class="tl-left"><div class="tl-empty"></div></div>'
-        + '<div class="tl-spine"><div class="tl-dot" aria-hidden="true"></div></div>'
-        + `<div class="tl-right">${tlCardHtml(entry, 'education')}</div>`
-        + '</div>',
-    });
-  });
-
-  concurrentEduEntries.forEach((eduEntry) => {
-    const companies = eduEntry.concurrent_with;
-    const careerPairs = concurrentCareerEntries
-      .filter((c) => companies.indexOf(c.company) !== -1)
-      .sort((a, b) => startYear(b.year) - startYear(a.year));
-
-    const n = careerPairs.length;
-
-    /* Column 1 is the spine, column 2 the concurrent career cards (one per
-       grid row), column 3 the education card beside them. Placement is inline
-       because the row index depends on how many careers the entry overlaps,
-       which CSS cannot express — see .tl-concurrent-block in css/styles.css. */
-    const leftCells = careerPairs.map((c, i) => {
-      const row = i + 1;
-      return `<div class="tl-left tl-row--career" style="grid-column:2;grid-row:${row}">`
-        + tlCardHtml(c, 'career')
-        + '</div>'
-        + `<div class="tl-spine" style="grid-column:1;grid-row:${row}">`
-        + '<div class="tl-dot" aria-hidden="true"></div>'
-        + '</div>';
-    }).join('');
-
-    const rightCell = `<div class="tl-right tl-row--education" style="grid-column:3;grid-row:1/${n + 1}">`
-      + tlCardHtml(eduEntry, 'education')
-      + '</div>';
-
-    rows.push({
-      sort: n > 0 ? startYear(careerPairs[0].year) : startYear(eduEntry.year),
-      html: `<div class="tl-concurrent-block" data-animate>${leftCells}${rightCell}</div>`,
-    });
-  });
-
-  rows.sort((a, b) => b.sort - a.sort);
+  const rows = [
+    ...(career || []).map((e) => ({ sort: startYear(e.year), rank: 0, html: cvEntryHtml(e, 'work') })),
+    ...(education || []).map((e) => ({ sort: startYear(e.year), rank: 1, html: cvEntryHtml(e, 'study') })),
+  ];
+  rows.sort((a, b) => b.sort - a.sort || a.rank - b.rank);
   return rows.map((r) => r.html);
 }
 
@@ -379,7 +308,9 @@ export function contactEmailLines(email) {
     '  <div class="contact-info">',
     '    <span class="contact-label">Email</span>',
     `    <button type="button" class="contact-value contact-copy" data-email="${addr}" aria-label="Copy email address ${addr}">`,
-    `      <span class="contact-email-text">${addr}</span>`,
+    /* <wbr> before the @: on a phone the card is too narrow for the whole
+       address, and this is the one place it may break. */
+    `      <span class="contact-email-text">${addr.replace('@', '<wbr>@')}</span>`,
     '      <svg class="contact-copy-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">',
     '        <rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>',
     '        <path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',

@@ -7,6 +7,7 @@
      id:          'my-project',               // kebab-case, used as HTML anchor
      kind:        'work',                     // REQUIRED — 'work' | 'personal'
      title:       'My Project Title',         // short title (one line)
+     short:       'Project',                  // optional — the name on the homepage timeline
      year:        '2024',                     // project year (string)
      tags:        ['Computer Vision'],        // 1–2 labels from PROJECT_TAGS below
      bg:          'img/projects/my-bg.jpg',    // detail-page hero + og:image
@@ -76,6 +77,9 @@ export const PROJECTS = [
                it and no English detail page sits in between. */
             url: "/brescia-dataviz/",
             lang: "it",
+            /* The card frame only (no detail page reads it): one of the
+               piece's own maps, captured by tools/capture-dataviz-thumbs.mjs. */
+            thumb: "drafts/thumbs/brescia-dataviz.png",
             updated: "2026-09-17",
         },
     {
@@ -93,6 +97,7 @@ export const PROJECTS = [
                the card, and generate-sitemap skips any url outside projects/. */
             url: "/donostia-dataviz/",
             lang: "es",
+            thumb: "drafts/thumbs/donostia-dataviz.png",
         },
     {
             id: "mnist-lenet",
@@ -108,6 +113,7 @@ export const PROJECTS = [
             id: "gaussian-nerf",
             kind: "work",
             title: "3D reconstruction using Gaussian Splatting and NeRF",
+            short: "Gaussian Splatting",
             year: "2025",
             tags: ["Computer Vision","AR & 3D"],
             bg: "img/projects/gaussian-splat.webp",
@@ -118,6 +124,7 @@ export const PROJECTS = [
             id: "brand-stadium",
             kind: "work",
             title: "Brand recognition in football matches",
+            short: "BrandIA",
             year: "2025",
             tags: ["Computer Vision","Media & Live Events"],
             bg: "img/projects/annotated-stadium.webp",
@@ -128,6 +135,7 @@ export const PROJECTS = [
             id: "aroundtheworld",
             kind: "work",
             title: "ARoundTheWorld: Collaborative AR for Education",
+            short: "AR Geography",
             year: "2024",
             tags: ["AR & 3D","Education & Research"],
             bg: "img/projects/ARound_the_world_2.webp",
@@ -148,6 +156,7 @@ export const PROJECTS = [
             id: "rag-document-qa",
             kind: "work",
             title: "RAG Document Assistant for Financial Services",
+            short: "RAG for banking",
             year: "2023",
             tags: ["LLMs & MLOps"],
             bg: "img/projects/rag-query.svg",
@@ -158,9 +167,10 @@ export const PROJECTS = [
             id: "mlops-vertex-media",
             kind: "work",
             title: "MLOps Platform on GCP for a Spanish Media Group",
+            short: "MLOps on GCP",
             year: "2022 – 2023",
             tags: ["LLMs & MLOps"],
-            bg: "img/projects/mlops-bg.webp",
+            bg: "img/projects/mlops-architecture.svg",
             description: "An MLOps platform on Google Cloud for one of Spain's largest media groups. Took a portfolio of disconnected models (churn prediction, article recommendation and more) and rebuilt them as Vertex AI pipelines with versioning, monitoring and drift detection.",
             url: "projects/mlops-vertex-media.html",
         },
@@ -178,6 +188,7 @@ export const PROJECTS = [
             id: "audience-engagement",
             kind: "work",
             title: "Multi-modal Audience Engagement Measurement System",
+            short: "Audience engagement",
             year: "2020",
             tags: ["Computer Vision","Media & Live Events"],
             bg: "img/projects/audience-engagement-bg.webp",
@@ -188,6 +199,7 @@ export const PROJECTS = [
             id: "ufc-fighter-tracking",
             kind: "work",
             title: "UFC Fighter Tracking: Multi-Modal Sensing in the Octagon",
+            short: "UFC fighter tracking",
             year: "2017",
             tags: ["Computer Vision","Media & Live Events"],
             bg: "img/projects/ufc-octagon-bg.webp",
@@ -198,6 +210,7 @@ export const PROJECTS = [
             id: "mpi-brain-research",
             kind: "work",
             title: "MPI for Brain Research: Software for Reptilian Neuroscience",
+            short: "Software for neuroscience",
             year: "2015 – 2017",
             tags: ["Education & Research"],
             bg: "img/projects/mpi-brain-bg.webp",
@@ -218,7 +231,7 @@ export const PROJECTS = [
             id: "avatech",
             kind: "work",
             title: "AVATecH: Automated Annotation of Audio/Video Corpora for Humanities Research",
-            year: "2009 – 2014",
+            year: "2009 – 2013",
             tags: ["Computer Vision","Education & Research"],
             bg: "img/projects/avatech-bg.webp",
             description: "AVATecH was a joint Fraunhofer / Max Planck project that brought state-of-the-art audio and video pattern recognition into ELAN, the de-facto annotation tool used by linguists, anthropologists, and psychologists worldwide, turning weeks of manual labelling into minutes of supervised review.",

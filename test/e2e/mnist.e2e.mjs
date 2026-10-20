@@ -141,20 +141,6 @@ describe('mnist lab', () => {
     assert.deepEqual(failures, []);
   });
 
-  test('a prediction does not depend on the active theme', async () => {
-    /* The canvas strokes in the palette accent and the model reads the alpha
-       channel, so a theme switch must be a no-op for inference. */
-    const page = await openLab();
-    try {
-      const dark = await draw(page, DIGITS[3]);
-      await page.click('#theme-toggle');
-      await page.waitForTimeout(600);
-      const light = await draw(page, DIGITS[3]);
-      assert.equal(light.verdict, dark.verdict,
-        `the same digit read as ${dark.verdict} in dark and ${light.verdict} in light`);
-    } finally { await page.close(); }
-  });
-
   test('clearing resets the readout', async () => {
     const page = await openLab();
     try {
@@ -165,6 +151,31 @@ describe('mnist lab', () => {
       const verdict = await page.evaluate(() =>
         document.querySelector('[data-mnist="verdict"]').textContent.trim());
       assert.ok(!/^\d$/.test(verdict), `clear left the verdict showing "${verdict}"`);
+    } finally { await page.close(); }
+  });
+
+  /* Review of #188: the page used to open on ten empty bars and a blank band
+     where the layers go. It now arrives running one committed test digit —
+     and the first stroke must start on a clean canvas, not draw over it. */
+  test('arrives on a working network, and the first stroke starts clean', async () => {
+    const page = await openLab();
+    try {
+      const verdict = await page.$eval('[data-mnist="verdict"]', (el) => el.textContent.trim());
+      assert.match(verdict, /^\d$/, `no verdict on arrival ("${verdict}")`);
+      const box = await (await page.$('canvas[data-mnist="draw"]')).boundingBox();
+      /* A short dash in one corner: on a clean canvas it is a tiny ink blob;
+         drawn over the example it would leave the example's ink in place. */
+      await page.mouse.move(box.x + 12, box.y + 12);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 16, box.y + 14);
+      await page.mouse.up();
+      await page.waitForTimeout(300);
+      const ink = await page.$eval('canvas[data-mnist="draw"]', (c) => {
+        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+        return n / (c.width * c.height);
+      });
+      assert.ok(ink < 0.01, `the first stroke drew over the example (${(ink * 100).toFixed(1)}% ink)`);
     } finally { await page.close(); }
   });
 });

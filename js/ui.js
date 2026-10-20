@@ -11,7 +11,6 @@
    DOMContentLoaded orchestration stay in js/main.js.
    ═══════════════════════════════════════════════════════════ */
 import { prefersReducedMotion, escapeHtml, rafThrottle } from './utils.js';
-import { THEME, THEME_LIGHT, PALETTES, ACTIVE_PALETTE, getTheme } from './theme.js';
 import { CONTACT_EMAIL } from './contact.js';
 
 /* ═══════════════════════════════════════════════════════════
@@ -91,165 +90,10 @@ export function animateCounter(el, target) {
   requestAnimationFrame(step);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   THEME — dark by default, light opt-in
-
-   The site is dark by default regardless of OS preference. Light is opt-in via
-   the navbar toggle, which pins data-theme="light", persists the choice in
-   localStorage, and is re-applied before first paint by the <head> bootstrap.
-   Toggling flips the resolved theme, updates <meta theme-color>, and fires a
-   `themechange` event so js/main.js can rebuild the colour-baked hero canvases.
-   ═══════════════════════════════════════════════════════════ */
-export const THEME_STORAGE_KEY = 'theme';
-export const PALETTE_STORAGE_KEY = 'palette';
-
-/* Which palette the document is wearing. data/palettes.yaml ships one as the
-   CSS :root default (ACTIVE_PALETTE); the others are [data-palette] scoped
-   overrides emitted by generate-theme, so switching is one attribute. */
-export function resolvedPalette() {
-  if (typeof document !== 'undefined' && document.documentElement) {
-    const id = document.documentElement.getAttribute('data-palette');
-    if (id && PALETTES[id]) return id;
-  }
-  return ACTIVE_PALETTE;
-}
-
-/* Apply a palette: pin it, persist it, repoint the browser-chrome colour, and
-   tell the colour-baked canvases to rebuild. Same `themechange` event the
-   light/dark toggle fires — from their side a palette swap and a theme swap
-   are the same job. */
-export function applyPalette(id) {
-  if (typeof document === 'undefined' || !PALETTES[id]) return;
-  const root = document.documentElement;
-  if (id === ACTIVE_PALETTE) root.removeAttribute('data-palette');
-  else root.setAttribute('data-palette', id);
-  try { localStorage.setItem(PALETTE_STORAGE_KEY, id); } catch (_) { /* private mode */ }
-  syncThemeColorMeta(resolvedTheme());
-  broadcastThemeChange(resolvedTheme());
-}
-
-/* The theme actually in effect right now: light only when explicitly pinned;
-   everything else (no pin / pinned dark / no DOM) is dark. */
-export function resolvedTheme() {
-  if (typeof document !== 'undefined' && document.documentElement) {
-    if (document.documentElement.getAttribute('data-theme') === 'light') return 'light';
-  }
-  return 'dark';
-}
-
-/* Point the browser-chrome <meta theme-color> at the active palette's colour. */
-function syncThemeColorMeta(theme) {
-  if (typeof document === 'undefined') return;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (!meta) return;
-  /* getTheme() reads both axes off the document, so this stays correct when
-     the palette changes as well as when the light/dark variant does. */
-  const active = getTheme();
-  const fallback = theme === 'light' ? THEME_LIGHT : THEME;
-  meta.setAttribute('content', (active && active.themeColor) || fallback.themeColor);
-}
-
-/* Reflect the resolved theme on the toggle button (the icon swap is pure CSS;
-   here we just keep the accessible label pointing at the *action*). */
-function syncToggleButton(btn, theme) {
-  if (!btn) return;
-  const next = theme === 'dark' ? 'light' : 'dark';
-  btn.setAttribute('aria-label', `Switch to ${next} theme`);
-  btn.setAttribute('title', `Switch to ${next} theme`);
-}
-
-/* Speak a short confirmation without showing anything.
-
-   The appearance controls changed state silently. The light/dark toggle
-   rewrites its own aria-label, and a name change on the focused element is
-   announced inconsistently across screen-reader/browser pairs; the palette
-   dots flip aria-pressed, which is announced, but "pressed" alone does not say
-   which palette won. Meanwhile the same palette switch made from the ⌘K list
-   fires a visible toast — so one action had two entry points and only one of
-   them told you it had worked.
-
-   A visually-hidden live region rather than the toast: for a sighted user
-   clicking the toggle, the page changing colour *is* the confirmation, and a
-   toast on every click would be noise. The ⌘K path keeps its toast because
-   there the user is in a menu and has no other feedback that the menu acted. */
-function announce(message) {
-  if (typeof document === 'undefined' || !document.body) return;
-  let el = document.getElementById('a11y-status');
-  if (!el) {
-    el = document.createElement('p');
-    el.id = 'a11y-status';
-    el.className = 'visually-hidden';
-    el.setAttribute('role', 'status');
-    el.setAttribute('aria-live', 'polite');
-    document.body.appendChild(el);
-  }
-  /* Clear first: setting the same text twice in a row is not a change, and a
-     live region only announces changes — so picking the same palette twice
-     would go unspoken. */
-  el.textContent = '';
-  if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(() => { el.textContent = message; });
-  } else {
-    el.textContent = message;
-  }
-}
-
-function broadcastThemeChange(theme) {
-  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
-  const Evt = typeof CustomEvent === 'function' ? CustomEvent : null;
-  const event = Evt ? new Evt('themechange', { detail: { theme } }) : { type: 'themechange', detail: { theme } };
-  window.dispatchEvent(event);
-}
-
-export function initTheme() {
-  if (typeof document === 'undefined') return;
-
-  const bag = listenerBag();
-  const btn = document.getElementById('theme-toggle');
-  const dots = typeof document.querySelectorAll === 'function'
-    ? Array.from(document.querySelectorAll('.palette-dot'))
-    : [];
-
-  /* Keep the navbar dots in sync with whichever palette is actually in
-     effect — the ⌘K "Appearance" list can also change it, and a stored pin
-     from a previous visit may disagree with the generated default. */
-  const syncDots = () => {
-    const current = resolvedPalette();
-    dots.forEach((dot) => {
-      dot.setAttribute('aria-pressed', dot.getAttribute('data-palette') === current ? 'true' : 'false');
-    });
-  };
-
-  /* Initial sync — the bootstrap script already applied any stored pin. */
-  syncThemeColorMeta(resolvedTheme());
-  syncToggleButton(btn, resolvedTheme());
-  syncDots();
-
-  if (btn) {
-    bag.on(btn, 'click', () => {
-      const next = resolvedTheme() === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (_) { /* private mode */ }
-      syncThemeColorMeta(next);
-      syncToggleButton(btn, next);
-      broadcastThemeChange(next);
-      announce(next === 'light' ? 'Light theme' : 'Dark theme');
-    });
-  }
-
-  dots.forEach((dot) => {
-    bag.on(dot, 'click', () => {
-      const id = dot.getAttribute('data-palette');
-      applyPalette(id);
-      syncDots();
-      announce(`Palette: ${(PALETTES[id] && PALETTES[id].name) || id}`);
-    });
-  });
-
-  bag.on(window, 'themechange', syncDots);
-
-  return bag.teardown;
-}
+/* The light/dark toggle and the palette picker lived here (initTheme,
+   applyPalette, resolvedTheme and their live-region announcer). The site
+   ships one theme since the Montaggio redesign (#188) — see the note at the
+   top of data/palettes.yaml — so there is nothing left to switch. */
 
 /* ═══════════════════════════════════════════════════════════
    NAVBAR SCROLL BEHAVIOUR
@@ -381,14 +225,13 @@ export function showToast(message) {
   clearTimeout(el._tid);
   el._tid = setTimeout(() => el.classList.remove('visible'), 2500);
 
-  /* Clear, then write on the next frame — the same two-step announce() above
-     already does, and for the same two reasons. `role="status"` is a live
+  /* Clear, then write on the next frame, for two reasons. `role="status"` is a live
      region, and a live region that enters the DOM with its text already in
      place is a *node insertion* rather than a content change, which several
      screen-reader/browser pairs do not announce — so the very first toast of a
      session was silent. And setting identical text twice running is not a
-     change at all, so picking the same palette from ⌘K twice went unspoken
-     after that. Clearing fixes the second; deferring fixes the first.
+     change at all, so the same toast twice running went unspoken after
+     that. Clearing fixes the second; deferring fixes the first.
 
      The `visible` class rides along on the same frame rather than being added
      synchronously above: adding it first would paint one frame of an empty
@@ -524,31 +367,6 @@ export function initCommandPalette() {
     }
   }
 
-  /* ── Palettes ───────────────────────────────────────────────
-     The whole site's colour scheme is generated from one YAML key, and until
-     now no visitor could ever see that. Each entry swaps [data-palette]; CSS
-     custom properties repaint instantly and the canvases rebuild off the
-     `themechange` event. The swatch is the palette's own accent pair, so the
-     list is self-describing without needing a colour name in the label. */
-  const paletteSwatch = (entry) =>
-    `<svg viewBox="0 0 24 24" aria-hidden="true">`
-    + `<circle cx="9" cy="12" r="6" fill="${entry.dark.accent}"/>`
-    + `<circle cx="16" cy="12" r="6" fill="${entry.dark.accent2}" opacity="0.9"/>`
-    + `</svg>`;
-
-  const PALETTE_ITEMS = Object.keys(PALETTES).map((id) => {
-    const entry = PALETTES[id];
-    return {
-      label: entry.name,
-      hint: id === ACTIVE_PALETTE ? 'Palette · default' : 'Palette',
-      icon: paletteSwatch(entry),
-      action() {
-        applyPalette(id);
-        showToast(`Palette: ${entry.name}`);
-      },
-    };
-  });
-
   /* ── Build all command items ────────────────────────────── */
   const allItems = [
     ...SECTIONS.map(s => ({
@@ -567,7 +385,6 @@ export function initCommandPalette() {
       group: 'Navigate',
     })),
     ...ACTIONS.map(a => ({ ...a, group: 'Actions' })),
-    ...PALETTE_ITEMS.map(p => ({ ...p, group: 'Appearance' })),
   ];
 
   /* allItems index → filtered set; activeIdx is an index into allItems. */
@@ -874,15 +691,11 @@ export function initMobileMenu() {
   bag.on(document, 'keydown', (e) => {
     if (e.key === 'Escape' && toggle.classList.contains('open')) setMenuState(false);
 
-    /* Focus trapping when mobile menu is open. The theme controls (palette
-       dots + light/dark toggle) sit between the burger and the links in DOM
-       order and stay visible on mobile, so they belong inside the trap —
-       enumerating only [toggle, links] made the wrap points skip them. The
-       ⌘K chip is display:none below 901px — the width at which the burger
-       takes over — and needs no entry. */
+    /* Focus trapping when mobile menu is open: the burger and the links. The
+       ⌘K chip is display:none at the width at which the burger takes over,
+       and needs no entry. */
     if (e.key === 'Tab' && toggle.classList.contains('open')) {
-      const themeButtons = document.querySelectorAll('.theme-controls button');
-      const focusable = [toggle, ...themeButtons, ...links.querySelectorAll('a')];
+      const focusable = [toggle, ...links.querySelectorAll('a')];
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (e.shiftKey) {

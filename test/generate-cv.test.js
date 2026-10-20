@@ -340,6 +340,8 @@ function evalCvJs(js) {
     CV_CAREER:    ctx.CV_CAREER,
     CV_EDUCATION: ctx.CV_EDUCATION,
     CV_SKILLS:    ctx.CV_SKILLS,
+    CV_PLACES:    ctx.CV_PLACES,
+    CV_TIMELINE_PROJECTS: ctx.CV_TIMELINE_PROJECTS,
   };
 }
 
@@ -381,6 +383,42 @@ test('generateCvJs: strings with single quotes are escaped correctly', () => {
   }));
   assert.equal(CV_CAREER[0].year,    "it's 2020");
   assert.equal(CV_CAREER[0].company, "O'Corp");
+});
+
+// ─── places ───────────────────────────────────────────────────────────────────
+
+test('validateCv: places is optional, and each entry needs a year and a city', () => {
+  assert.deepEqual(validateCv({ ...minimalValid, places: [{ year: '2018 – present', city: 'San Sebastián' }] }), []);
+  const errors = validateCv({ ...minimalValid, places: [{ year: '2018 – present' }] });
+  assert.ok(errors.some((e) => /places\[0\]\.city/.test(e)), JSON.stringify(errors));
+  assert.ok(validateCv({ ...minimalValid, places: 'Berlin' }).some((e) => /places must be an array/.test(e)));
+});
+
+test('validateCv: timeline_projects is optional, and each entry needs a year and a title', () => {
+  assert.deepEqual(validateCv({ ...minimalValid, timeline_projects: [{ year: '2024 – present', title: 'AI Production' }] }), []);
+  const errors = validateCv({ ...minimalValid, timeline_projects: [{ year: '2024 – present' }] });
+  assert.ok(errors.some((e) => /timeline_projects\[0\]\.title/.test(e)), JSON.stringify(errors));
+  assert.ok(validateCv({ ...minimalValid, timeline_projects: 'x' }).some((e) => /timeline_projects must be an array/.test(e)));
+});
+
+test('generateCvJs: emits CV_TIMELINE_PROJECTS, empty when the YAML has none', () => {
+  const { CV_TIMELINE_PROJECTS } = evalCvJs(generateCvJs({
+    ...minimalValid, skills: {}, timeline_projects: [{ year: '2024 – present', title: 'AI Production' }],
+  }));
+  /* Objects from another vm realm: compare fields, not prototypes. */
+  assert.equal(CV_TIMELINE_PROJECTS.length, 1);
+  assert.equal(CV_TIMELINE_PROJECTS[0].title, 'AI Production');
+  assert.equal(CV_TIMELINE_PROJECTS[0].year, '2024 – present');
+  assert.equal(evalCvJs(generateCvJs({ ...minimalValid, skills: {} })).CV_TIMELINE_PROJECTS.length, 0);
+});
+
+test('generateCvJs: emits CV_PLACES, empty when the YAML has none', () => {
+  const { CV_PLACES } = evalCvJs(generateCvJs({
+    ...minimalValid, skills: {}, places: [{ year: '2009 – 2015', city: 'Berlin' }],
+  }));
+  assert.equal(CV_PLACES.length, 1);
+  assert.equal(CV_PLACES[0].city, 'Berlin');
+  assert.equal(evalCvJs(generateCvJs({ ...minimalValid, skills: {} })).CV_PLACES.length, 0);
 });
 
 // ─── parseArgs ────────────────────────────────────────────────────────────────

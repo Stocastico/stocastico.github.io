@@ -2,27 +2,25 @@
 /* ============================================================
    generate-hero-scan.mjs
    --------------------------------------------------------------
-   data/cnn-model.json + data/cnn-samples.json  ->  data/hero-scan.js
+   data/cnn-model.json  ->  data/hero-scan.js
 
-   The narrow/touch hero (js/kernel-scan.js) draws one convolution: a 5x5
-   window sweeping a 28x28 digit while the 24x24 feature map fills in behind
-   it. That needs exactly two things — the digits, and conv1's six kernels —
-   so this emits exactly those, and nothing else.
+   The homepage hero (js/receptive-field.js) offers a "Learned" filter: one of
+   the six conv1 kernels of the LeNet-5 behind projects/mnist-lenet.html,
+   convolved over the visitor's view of the name. That needs conv1's kernels
+   and nothing else, so this emits exactly those — ~1 KB, imported only when
+   the button is pressed.
 
-   It is deliberately *not* data/cnn-activations.js. That file carries every
-   layer of ten forward passes (42 KB source, ~11 KB gzip) because the desktop
-   hero replays the whole pipeline; a phone drawing one layer would be
-   downloading five it never paints. Here the browser runs the convolution
-   itself, which is 24*24*25 = 14,400 multiply-adds per feature map — nothing,
-   next to the bytes that would otherwise be spent shipping the answer.
+   It used to carry ten MNIST digits as well (14 KB), for the narrow-viewport
+   hero that swept a window over them; that renderer is gone, and the digits
+   went with it. test/hero-scan.test.mjs reads them from data/cnn-samples.json
+   instead when it checks the kernels against the full model.
 
    The kernels are the real trained ones, quantised to int8 with a single
    symmetric scale (the same treatment as generate-lenet-weights, for the same
    reason: 0 stays exactly 0). Biases stay float32 — there are six of them.
 
-   Inputs (committed, produced by `npm run train-cnn`):
+   Input (committed, produced by `npm run train-cnn`):
      data/cnn-model.json     trained weights + test accuracy
-     data/cnn-samples.json   ten MNIST test digits, one per class
 
    Deterministic and network-free: same inputs -> byte-identical output, which
    is what test/hero-scan.test.mjs asserts.
@@ -42,7 +40,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
 const MODEL_PATH = path.join(ROOT, 'data/cnn-model.json');
-const SAMPLES_PATH = path.join(ROOT, 'data/cnn-samples.json');
 export const OUT_FILE = 'data/hero-scan.js';
 
 const args = process.argv.slice(2);
@@ -75,7 +72,6 @@ export function quantizeInt8(values) {
 
 export function build() {
   const modelJson = JSON.parse(fs.readFileSync(MODEL_PATH, 'utf8'));
-  const samplesJson = JSON.parse(fs.readFileSync(SAMPLES_PATH, 'utf8'));
   const model = deserializeModel(modelJson);
 
   /* conv1 only: w1 is C1 filters of K*K, filter f at w1[f*25 + ky*5 + kx]. */
@@ -92,9 +88,8 @@ export function build() {
          network was trained on rather than raw greys. */
       mean: MEAN,
       std: STD,
-      note: 'conv1 kernels + ten test digits — the browser runs this one layer.',
+      note: 'conv1 kernels only — the homepage hero\'s Learned filter.',
     },
-    input: { w: 28, h: 28 },
     kernels: {
       count: C1,
       k: K,
@@ -102,7 +97,6 @@ export function build() {
       weights: Buffer.from(q.buffer, q.byteOffset, q.byteLength).toString('base64'),
       bias: Array.from(model.b1.slice(0, C1)),
     },
-    digits: samplesJson.samples.map((s) => ({ label: s.digit, pixels: s.pixels })),
   };
 }
 
@@ -113,16 +107,13 @@ export function render() {
     '   hero-scan.js — GENERATED FILE, DO NOT EDIT',
     '   Regenerate with: npm run generate-hero-scan',
     '',
-    '   Source: data/cnn-model.json + data/cnn-samples.json',
+    '   Source: data/cnn-model.json',
     '',
-    '   conv1 of the LeNet-5 trained by scripts/train-cnn.mjs, plus the ten',
-    '   MNIST test digits it was sampled against. js/kernel-scan.js — the hero',
-    '   background on narrow and touch viewports — convolves these in the',
-    '   browser: six 5x5 kernels over a 28x28 digit is 14 kMACs per feature',
-    '   map, far cheaper than shipping precomputed activations would be.',
+    '   conv1 of the LeNet-5 trained by scripts/train-cnn.mjs. The homepage',
+    '   hero (js/receptive-field.js) imports this only when its Learned filter',
+    '   is chosen, and convolves the name with one of these six kernels.',
     '',
     '   Kernels are int8 (multiply by `kernels.scale`); biases are float32.',
-    '   Digits are base64 uint8, 784 raw MNIST greys in row-major order.',
     '   ============================================================ */',
     `export const HERO_SCAN = ${JSON.stringify(data, null, 2)};`,
     '',
@@ -147,8 +138,8 @@ function main() {
   fs.writeFileSync(target, out);
   const data = build();
   process.stdout.write(
-    `wrote ${OUT_FILE} — ${data.kernels.count} conv1 kernels + ` +
-    `${data.digits.length} digits (${(out.length / 1024).toFixed(1)} KB source)\n`);
+    `wrote ${OUT_FILE} — ${data.kernels.count} conv1 kernels ` +
+    `(${(out.length / 1024).toFixed(1)} KB source)\n`);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

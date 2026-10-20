@@ -490,7 +490,7 @@ describe('contact', () => {
   });
 });
 
-/* ─── Theme and palette ──────────────────────────────────────────────────── */
+/* ─── Theme: one, dark ───────────────────────────────────────────────────── */
 
 describe('theme', () => {
   test('the site is dark by default even when the OS prefers light', async () => {
@@ -504,49 +504,27 @@ describe('theme', () => {
     } finally { await page.close(); }
   });
 
-  test('the toggle switches to light and the choice survives a reload', async () => {
+  /* The toggle and the palette picker are gone (#188). A returning visitor
+     whose browser still holds the old choices must get the one theme, not a
+     half-applied light page: nothing reads those keys any more, and this
+     checks that nothing quietly starts reading them again. */
+  test('a stored light theme or palette from an old visit is ignored', async () => {
     const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
     const page = await ctx.newPage();
     await blockExternalRequests(page, server.base);
+    await page.addInitScript(() => {
+      try { localStorage.setItem('theme', 'light'); localStorage.setItem('palette', 'forest'); } catch { /* private mode */ }
+    });
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      await page.click('#theme-toggle');
-      await page.waitForTimeout(500);
-      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light');
-
-      const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-      await page.reload({ waitUntil: 'networkidle' });
-      await page.waitForTimeout(300);
-      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light',
-        'the light choice did not survive a reload');
-      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), lightBg,
-        'the restored light theme painted a different background');
-    } finally { await ctx.close(); }
-  });
-
-  test('each palette dot repaints the page and persists', async () => {
-    const ctx = await browser.newContext({ viewport: VIEWPORTS.desktop });
-    const page = await ctx.newPage();
-    await blockExternalRequests(page, server.base);
-    try {
-      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-      const ids = await page.$$eval('.palette-dot', (bs) => bs.map((b) => b.dataset.palette));
-      assert.ok(ids.length >= 2, `expected several palettes, found ${ids.length}`);
-
-      const seen = new Set();
-      for (const id of ids) {
-        await page.click(`.palette-dot[data-palette="${id}"]`);
-        await page.waitForTimeout(400);
-        const accent = await page.evaluate(() =>
-          getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
-        assert.ok(accent, `palette ${id} produced no --accent`);
-        seen.add(accent);
-        assert.equal(
-          await page.evaluate(() => localStorage.getItem('palette')) ?? id,
-          await page.evaluate(() => localStorage.getItem('palette')) ?? id);
-      }
-      assert.equal(seen.size, ids.length,
-        `${ids.length} palettes produced only ${seen.size} distinct accents`);
+      const attrs = await page.evaluate(() => ({
+        theme: document.documentElement.getAttribute('data-theme'),
+        palette: document.documentElement.getAttribute('data-palette'),
+      }));
+      assert.deepEqual(attrs, { theme: null, palette: null });
+      const css = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      const { luminance } = await resolveColor(page, css);
+      assert.ok(luminance < 60, `a stale stored choice repainted the page (luminance ${luminance.toFixed(1)})`);
     } finally { await ctx.close(); }
   });
 });
@@ -568,18 +546,26 @@ describe('theme', () => {
    that shipped the bug). The property test above still holds the line. */
 
 describe('lifecycle: the page survives Back', () => {
+  /* The hero no longer animates on its own (it draws on demand), so "alive"
+     means: it still answers input. Switch the filter menu to another value
+     and require the canvas to change. A torn-down instance has lost its click
+     listeners, and the canvas stays as it was. */
   const heroIsAnimating = (page) => page.evaluate(async () => {
-    const c = document.getElementById('neural-canvas');
+    const c = document.getElementById('field-canvas');
     if (!c) return 'no-canvas';
     const ctx = c.getContext('2d');
     const hash = () => {
       const d = ctx.getImageData(0, 0, c.width, c.height).data;
       let h = 0;
-      for (let i = 3; i < d.length; i += 4 * 13) h = (h * 31 + d[i]) | 0;
+      for (let i = 0; i < d.length; i += 4 * 7) h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 3]) | 0;
       return h;
     };
     const before = hash();
-    await new Promise((r) => setTimeout(r, 900));
+    const picker = document.getElementById('field-filter');
+    if (!picker) return 'no-picker';
+    picker.value = picker.value === 'vertical' ? 'horizontal' : 'vertical';
+    picker.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 300));
     return before !== hash();
   });
 
@@ -678,5 +664,53 @@ describe('lifecycle: the page survives Back', () => {
       }));
       assert.equal(destroyed, true, 'a non-persisted pagehide must still fire teardown');
     } finally { await page.close(); }
+  });
+});
+
+/* The cut between pages (review of #188): a same-site navigation runs a
+   cross-document view transition — the old page wipes off over the colour
+   bars and the new one wipes in — and none under reduced motion. Asked of
+   the browser through `pagereveal`, whose event carries the transition. */
+describe('page transition: the cut', () => {
+  const navigate = async (reducedMotion) => {
+    const page = await newPage(browser, server, { viewport: { width: 1440, height: 900 }, reducedMotion });
+    await page.addInitScript(() => {
+      /* How long the transition runs, not whether one exists: the opt-in
+         holds under reduced motion too (see css/styles.css), so the
+         question there is whether it takes any time. */
+      window.addEventListener('pagereveal', (e) => {
+        if (!e.viewTransition) { window.__cut = 0; return; }
+        const t0 = performance.now();
+        e.viewTransition.finished.then(() => { window.__cut = performance.now() - t0; });
+      });
+    });
+    await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
+    await Promise.all([page.waitForURL('**/cv.html'), page.click('nav a[href$="cv.html"]')]);
+    await page.waitForTimeout(800);
+    const cut = await page.evaluate(() => window.__cut);
+    await page.close();
+    return cut;
+  };
+  /* Chromium may skip a transition on its own (a slow first paint under a
+     loaded runner), which is the browser's call, not the site's — so the
+     opt-in is checked in the stylesheet, and the duration is the best of
+     three navigations. */
+  test('a navigation between pages is a cut', async () => {
+    let ms = 0;
+    for (let i = 0; i < 3 && ms <= 300; i++) ms = Math.max(ms, await navigate('no-preference'));
+    assert.ok(ms > 300, `the cut ran ${ms} ms`);
+  });
+  test('every page opts in to the transition', async () => {
+    const page = await newPage(browser, server, { viewport: { width: 1440, height: 900 } });
+    try {
+      await page.goto(server.base + '/now.html');
+      const nav = await page.evaluate(() => [...document.styleSheets].flatMap((sh) => [...sh.cssRules])
+        .filter((r) => r.constructor.name === 'CSSViewTransitionRule').map((r) => r.navigation));
+      assert.deepEqual(nav, ['auto']);
+    } finally { await page.close(); }
+  });
+  test('reduced motion: no cut', async () => {
+    const ms = await navigate('reduce');
+    assert.ok(ms < 100, `the cut ran ${ms} ms under reduced motion`);
   });
 });

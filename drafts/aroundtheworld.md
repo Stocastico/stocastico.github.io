@@ -58,8 +58,7 @@ A Pearson correlation analysis between the number of in-app interactions and the
 
 Post-study teacher interviews confirmed that the collaborative capabilities and the ability to personalise content (creating their own question sets) were the two factors most likely to drive sustained adoption of AR in the classroom.
 
-## Context and Impact
-
+## Context and impact
 The work was conducted as part of the ARETE project (Augmented Reality Interactive Educational System), funded under the EU [Horizon 2020](https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en) programme (grant agreement No 856533). The evaluation results show that an application built on the cleAR architecture can fulfil all the design objectives identified by teachers, receive strong approval from students, and integrate into existing school infrastructure with minimal friction.
 
 If there is one thing I took from this work, it is that the bottleneck for AR in schools is rarely the technology itself; it is the time teachers don't have to rebuild the same plumbing for every new application. Shared infrastructure that just works lets them focus on teaching instead.
