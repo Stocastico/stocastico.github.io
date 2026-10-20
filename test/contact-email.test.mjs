@@ -39,9 +39,9 @@ test('contact: the address is in the static HTML, readable without JS', () => {
      address the browser does — there is no reveal step left to run. */
   assert.ok(indexHtml.includes(CONTACT_EMAIL),
     'index.html does not contain the address in plain text');
-  const value = indexHtml.match(/<span class="contact-email-text">([^<]*)<\/span>/);
+  const value = indexHtml.match(/<span class="contact-email-text">((?:[^<]|<wbr>)*)<\/span>/);
   assert.ok(value, 'no .contact-email-text element on index.html');
-  assert.equal(value[1].trim(), CONTACT_EMAIL,
+  assert.equal(value[1].replace(/<wbr>/g, '').trim(), CONTACT_EMAIL,
     'the visible address has drifted from CONTACT_EMAIL — run `npm run generate-cards`');
 });
 

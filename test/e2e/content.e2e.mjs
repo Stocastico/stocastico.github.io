@@ -815,3 +815,37 @@ describe('pans', () => {
     } finally { await page.close(); }
   });
 });
+
+/* The email address on a phone: the card is narrow enough that it wraps, and
+   `overflow-wrap: anywhere` broke it as "…masneri.c / om". It may break once,
+   before the @, and nowhere else. */
+describe('contact: the address wraps only at the @', () => {
+  for (const width of [320, 375, 390]) {
+    test(`${width}px`, async () => {
+      const page = await newPage(browser, server, { viewport: { width, height: 800 }, reducedMotion: 'reduce' });
+      try {
+        await page.goto(server.base + '/index.html#contact', { waitUntil: 'networkidle' });
+        const lines = await page.$eval('.contact-email-text', (el) => {
+          const text = el.textContent;
+          const node = [...el.childNodes].filter((n) => n.nodeType === 3);
+          const tops = [];
+          let i = 0;
+          for (const n of node) {
+            for (let k = 0; k < n.length; k++, i++) {
+              const r = document.createRange();
+              r.setStart(n, k); r.setEnd(n, k + 1);
+              tops.push([text[i], Math.round(r.getBoundingClientRect().top)]);
+            }
+          }
+          const out = [];
+          for (const [ch, t] of tops) {
+            if (!out.length || Math.abs(out.at(-1).t - t) > 4) out.push({ t, s: ch }); else out.at(-1).s += ch;
+          }
+          return out.map((l) => l.s);
+        });
+        assert.ok(lines.length <= 2, `the address runs to ${lines.length} lines: ${lines.join(' / ')}`);
+        if (lines.length === 2) assert.ok(lines[1].startsWith('@'), `it breaks inside a word: ${lines.join(' / ')}`);
+      } finally { await page.close(); }
+    });
+  }
+});

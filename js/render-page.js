@@ -308,7 +308,9 @@ export function contactEmailLines(email) {
     '  <div class="contact-info">',
     '    <span class="contact-label">Email</span>',
     `    <button type="button" class="contact-value contact-copy" data-email="${addr}" aria-label="Copy email address ${addr}">`,
-    `      <span class="contact-email-text">${addr}</span>`,
+    /* <wbr> before the @: on a phone the card is too narrow for the whole
+       address, and this is the one place it may break. */
+    `      <span class="contact-email-text">${addr.replace('@', '<wbr>@')}</span>`,
     '      <svg class="contact-copy-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">',
     '        <rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>',
     '        <path d="M3 16V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
