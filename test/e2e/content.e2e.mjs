@@ -570,7 +570,18 @@ describe('projects: the media bin', () => {
    under a short card. Order is still the document's: the first cards fill
    the top row left to right. */
 describe('projects: the cards pack under each other', () => {
-  for (const [name, vp] of [['desktop', VIEWPORTS.desktop], ['tablet', VIEWPORTS.tablet]]) {
+  /* Several widths, because which card ends up next to which depends on how
+     each description wraps.
+
+     Positions are layout boxes (offsetLeft/Top/Height), never
+     getBoundingClientRect: [data-animate] cards sit translated 30px down
+     until the reveal reaches them, so a revealed card above an unrevealed
+     one read as a 24 + 30 = 54px hole. That failed CI twice (55 and 57px)
+     on a layout that had none, depending on how far the reveal had got. */
+  for (const [name, vp] of [
+    ['desktop', VIEWPORTS.desktop], ['laptop', VIEWPORTS.laptop], ['tablet', VIEWPORTS.tablet],
+    ['1100', { width: 1100, height: 800 }], ['1920', { width: 1920, height: 1080 }],
+  ]) {
     test(`${name}: no gap under a short card, chronology kept`, async () => {
       const page = await newPage(browser, server, { viewport: vp });
       try {
@@ -585,8 +596,8 @@ describe('projects: the cards pack under each other', () => {
           const cols = new Map();
           for (const c of grid.children) {
             if (c.hidden) continue;
-            const r = c.getBoundingClientRect();
-            const k = Math.round(r.left);
+            const r = { top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight };
+            const k = c.offsetLeft;
             cols.set(k, [...(cols.get(k) || []), r]);
           }
           return [...cols.values()].every((rs) => rs.sort((a, b) => a.top - b.top)
@@ -595,8 +606,7 @@ describe('projects: the cards pack under each other', () => {
         const { cards, gap } = await page.$eval('#projects-grid', (grid) => ({
           gap: parseFloat(getComputedStyle(grid).columnGap),
           cards: [...grid.children].filter((c) => !c.hidden).map((c) => {
-            const r = c.getBoundingClientRect();
-            return { left: Math.round(r.left), top: r.top, bottom: r.bottom };
+            return { left: c.offsetLeft, top: c.offsetTop, bottom: c.offsetTop + c.offsetHeight };
           }),
         }));
         const cols = [...new Set(cards.map((c) => c.left))].sort((a, b) => a - b);
@@ -615,6 +625,39 @@ describe('projects: the cards pack under each other', () => {
       } finally { await page.close(); }
     });
   }
+});
+
+/* ─── /now: the standing intro is not the update ─────────────────────────
+   The lead says what the page is ("what I'd tell you over a coffee") and
+   stays the same; the paragraphs after it are the update and change. They
+   used to be set in the same serif a shade apart, which read as one text.
+   The lead is a note in the UI face, the update is the prose. */
+describe('now: the intro reads differently from the update', () => {
+  test('lead in the UI face, update in the prose face and at full colour', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
+      const r = await page.evaluate(() => {
+        const cs = (el) => getComputedStyle(el);
+        const lead = document.querySelector('#now-content .post-lead');
+        const body = document.querySelector('#now-content .post-lead ~ p');
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--text)';
+        document.body.appendChild(probe);
+        const text = cs(probe).color;
+        probe.remove();
+        return {
+          leadFont: cs(lead).fontFamily, bodyFont: cs(body).fontFamily,
+          bodyColor: cs(body).color, text,
+          leadSize: parseFloat(cs(lead).fontSize), bodySize: parseFloat(cs(body).fontSize),
+        };
+      });
+      assert.notEqual(r.leadFont, r.bodyFont, 'lead and update share a face');
+      assert.match(r.bodyFont, /Source Serif/);
+      assert.equal(r.bodyColor, r.text, 'the update is set at full text colour');
+      assert.ok(r.bodySize > r.leadSize, `update ${r.bodySize}px is not larger than the lead ${r.leadSize}px`);
+    } finally { await page.close(); }
+  });
 });
 
 /* ─── Slides: About and the title cards hold while you scroll ────────────

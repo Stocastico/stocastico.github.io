@@ -686,7 +686,7 @@ describe('page transition: the cut', () => {
     });
     await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
     await Promise.all([page.waitForURL('**/cv.html'), page.click('nav a[href$="cv.html"]')]);
-    await page.waitForTimeout(800);
+    await page.waitForFunction(() => window.__cut !== undefined, null, { timeout: 5000 });
     const cut = await page.evaluate(() => window.__cut);
     await page.close();
     return cut;
