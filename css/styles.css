@@ -1252,7 +1252,7 @@ body::before {
 
 .sea-chart-frame {
   position: relative;
-  aspect-ratio: 1632 / 913;
+  aspect-ratio: 1632 / 1014;
   max-height: calc(100svh - var(--nav-h));
   width: 100%;
   overflow: hidden;
@@ -1370,22 +1370,21 @@ body::before {
   stroke-linecap: round;
 }
 
-.sea-chart-leg-label {
-  font-family: var(--font-ui);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.2;
-  fill: var(--text);
-  paint-order: stroke;
-  stroke: var(--map-bg);
-  stroke-width: 4px;
-  stroke-linejoin: round;
+/* Every mark names itself in a tooltip (its <title>). The hit ring is
+   invisible but painted, so the pointer finds a 3.5px port. */
+.sea-chart-hit {
+  fill: transparent;
+  stroke: none;
 }
 
-.sea-chart-leg-year {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  fill: var(--pin-current);
+.sea-chart-port,
+.sea-chart-home {
+  cursor: help;
+}
+
+.sea-chart-port:hover > :not(.sea-chart-hit) {
+  stroke: var(--text);
+  stroke-width: 2;
 }
 
 .sea-chart-home-ring {
@@ -1464,12 +1463,6 @@ body::before {
   flex: none;
 }
 
-.sea-chart-key-mark--route {
-  width: 1.5rem;
-  height: 0;
-  border-top: 3px dashed var(--pin-current);
-}
-
 .sea-chart-key-mark--home {
   border-radius: 50%;
   background: var(--pin-lived);
@@ -1502,7 +1495,6 @@ body::before {
 
   .sea-chart-sea { font-size: 28px; }
   .sea-chart-sea--ocean { font-size: 32px; letter-spacing: 0.2em; }
-  .sea-chart-leg-label { font-size: 26px; stroke-width: 7px; }
   .sea-chart-home-label { font-size: 46px; stroke-width: 8px; }
   .sea-chart-home-years { font-size: 24px; }
   .sea-chart-degree { font-size: 18px; }

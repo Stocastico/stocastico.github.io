@@ -11,9 +11,9 @@
    is: Mercator, a graticule, land as a flat fill, depth contours as rings
    around every coast, sea names in an italic serif, a compass rose, and the
    one route that matters — Brescia → Berlin → Frankfurt → San Sebastián —
-   dashed in the hazard colour, each leg labelled with the year and the lab
-   that started it. The European worktrips and holidays sit on it as ports of
-   call (the globe hides them for exactly that reason; see CHART_BOUNDS).
+   dashed in the hazard colour. The European worktrips and holidays sit on it
+   as ports of call (the globe hides them for exactly that reason; see
+   CHART_BOUNDS), and every mark names itself in a tooltip.
 
    Why build time. All of it is static; a canvas would mean shipping coastline
    data and a renderer to draw a picture that never changes. Inlined, the
@@ -32,8 +32,11 @@
      contour colour with the sea colour, then filled on top: what survives is
      a thin line at a fixed distance off every coast. One path, many rings.
    · Nothing about the route is typed here. Places and their order come from
-     CV_PLACES, coordinates from the lived/current pins in LOCATIONS, and each
-     leg's label from the CV_CAREER entry that starts in that city that year.
+     CV_PLACES, coordinates from the lived/current pins in LOCATIONS. The legs
+     used to be lettered with the year and the lab that started each move; the
+     review of #193 took that off — this page is the places, the career has
+     the homepage timeline and the CV. chartLegs() still checks each move
+     against CV_CAREER, so a place with no job behind it fails the build.
    · No colours. Every paint is a class; css/styles.css owns them.
 
    Usage:
@@ -278,7 +281,7 @@ const SEAS = [
 
 /* Compass rose, in open Atlantic at the bottom left — the top left is the
    cartouche's on a desktop. */
-const COMPASS = { lon: -23.5, lat: 38.6, r: 54 };
+const COMPASS = { lon: -23.5, lat: 36.4, r: 54 };
 
 function compass() {
   const [cx, cy] = project(COMPASS.lon, COMPASS.lat);
@@ -366,52 +369,6 @@ function homeLabel(h) {
     + `${esc(h.city)}<tspan class="sea-chart-home-years" x="${fmt(h.x + dx)}" dy="1.25em">${esc(h.years)}</tspan></text>`;
 }
 
-/* Where each leg's label sits, keyed by the city the leg arrives at: which
-   side of the line is clear is a judgement about that stretch of map. The
-   label is horizontal and beside the line rather than set along it — the
-   Berlin–Frankfurt leg is too short to carry "MPI for Brain Research" along
-   its length, and the three legs meet at Berlin, where text along each would
-   collide. `side` is the compass direction from the leg's midpoint. */
-const LEG_LABEL = {
-  Berlin: { side: 'e', at: 0.5 },
-  Frankfurt: { side: 'n', at: 0.62 },
-  'San Sebastián': { side: 'nw', at: 0.5 },
-};
-const LEG_WRAP = 20;
-
-/** Break a name into lines of at most `max` characters, on spaces. */
-export function wrap(text, max) {
-  const lines = [];
-  let line = '';
-  for (const word of String(text).split(/\s+/)) {
-    if (line && (line.length + 1 + word.length) > max) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = line ? `${line} ${word}` : word;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-/** The anchor point of a leg's label, beside the leg's line. */
-export function legLabelAnchor(leg) {
-  const { side, at } = LEG_LABEL[leg.to.city] || { side: 'e', at: 0.5 };
-  const mx = leg.from.x + (leg.to.x - leg.from.x) * at;
-  const my = leg.from.y + (leg.to.y - leg.from.y) * at;
-  const GAP = 16;
-  const lines = 1 + wrap(leg.lab, LEG_WRAP).length;
-  /* The block is ~1.2em per line; a label above its line rises by its height. */
-  const rise = lines * 1.2 * 14;
-  switch (side) {
-    case 'n': return { x: mx, y: my - GAP - rise + 14, anchor: 'middle' };
-    case 'nw': return { x: mx - GAP, y: my - rise + 4, anchor: 'end' };
-    case 'w': return { x: mx - GAP, y: my - rise / 2 + 10, anchor: 'end' };
-    default: return { x: mx + GAP, y: my - rise / 2 + 10, anchor: 'start' };
-  }
-}
-
 /* ─── Assembly ───────────────────────────────────────────────────────────── */
 
 export function buildSeaChart(topo = JSON.parse(fs.readFileSync(LAND, 'utf8'))) {
@@ -420,30 +377,25 @@ export function buildSeaChart(topo = JSON.parse(fs.readFileSync(LAND, 'utf8'))) 
   const ports = chartPorts();
 
   const desc = `A nautical chart of Europe. The route runs ${homes.map((h) => h.city).join(' to ')}: `
-    + legs.map((l) => `${l.to.city} in ${l.year}, for ${l.lab}`).join('; ')
+    + legs.map((l) => `${l.to.city} in ${l.year}`).join(', ')
     + `. ${ports.length} other places visited for work or on holiday are marked along the way.`;
 
   const route = `M${homes.map((h) => `${fmt(h.x)} ${fmt(h.y)}`).join('L')}`;
-
-  const legLines = legs.map((leg) => {
-    const { x, y, anchor } = legLabelAnchor(leg);
-    const lab = wrap(leg.lab, LEG_WRAP);
-    return `  <text class="sea-chart-leg-label" data-leg="${esc(leg.to.city)}" x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}">`
-      + `<tspan class="sea-chart-leg-year">${leg.year}</tspan>`
-      + lab.map((line) => `<tspan x="${fmt(x)}" dy="1.2em">${esc(line)}</tspan>`).join('')
-      + '</text>';
-  });
 
   const portLines = ports.map((p) => {
     const shape = p.type === 'worktrip'
       ? `<rect x="${fmt(p.x - 3.5)}" y="${fmt(p.y - 3.5)}" width="7" height="7" transform="rotate(45 ${fmt(p.x)} ${fmt(p.y)})"/>`
       : `<circle cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="3.5"/>`;
     const info = p.info ? ` — ${esc(p.info)}` : '';
-    return `  <g class="sea-chart-port sea-chart-port--${p.type}"><title>${esc(p.name)}${info}</title>${shape}</g>`;
+    /* A 3.5px mark is too small to find with a pointer; the transparent
+       ring around it is what the tooltip actually hangs on. */
+    const hit = `<circle class="sea-chart-hit" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="11"/>`;
+    return `  <g class="sea-chart-port sea-chart-port--${p.type}"><title>${esc(p.name)}${info}</title>${hit}${shape}</g>`;
   });
 
   const homeLines = homes.map((h) => [
     `  <g class="sea-chart-home${h.current ? ' sea-chart-home--current' : ''}" data-city="${esc(h.city)}">`,
+    `    <title>${esc(h.city)} — home, ${esc(h.years)}</title>`,
     `    <circle class="sea-chart-home-ring" cx="${fmt(h.x)}" cy="${fmt(h.y)}" r="11"/>`,
     `    <circle class="sea-chart-home-dot" cx="${fmt(h.x)}" cy="${fmt(h.y)}" r="5"/>`,
     `    ${homeLabel(h)}`,
@@ -485,7 +437,6 @@ export function buildSeaChart(topo = JSON.parse(fs.readFileSync(LAND, 'utf8'))) 
     '</g>',
     '<g class="sea-chart-route">',
     `  <path class="sea-chart-route-line" d="${route}"/>`,
-    ...legLines,
     '</g>',
     '<g class="sea-chart-homes">',
     ...homeLines,

@@ -18,7 +18,7 @@ import {
 } from '../scripts/generate-sea-chart.mjs';
 import { CHART_BOUNDS } from '../js/utils.js';
 import { isEuropeanSecondaryPin } from '../js/globe.js';
-import { CV_PLACES, CV_CAREER } from '../data/cv.js';
+import { CV_PLACES } from '../data/cv.js';
 import { LOCATIONS } from '../data/locations.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -34,9 +34,16 @@ test('the chart is an inline SVG with a viewBox and an accessible name', () => {
   assert.match(svg, /<desc id="sea-chart-desc">[^<]+<\/desc>/);
 });
 
-test('the frame is landscape, close to 16:9', () => {
+test('the frame is landscape', () => {
   const ratio = VIEW.width / VIEW.height;
-  assert.ok(ratio > 1.7 && ratio < 1.85, `ratio ${ratio}`);
+  assert.ok(ratio > 1.45 && ratio < 1.85, `ratio ${ratio}`);
+});
+
+test('the frame reaches south of Crete, so a wide screen\'s crop does not cut southern Europe', () => {
+  /* At 35°N the chart stopped just below Sicily; a 1920×1080 screen crops
+     the slice top and bottom, and that crop took Crete, the Peloponnese and
+     the tip of Andalusia with it (review of #193). */
+  assert.ok(CHART_BOUNDS.minLat <= 32, `minLat ${CHART_BOUNDS.minLat}`);
 });
 
 test('land is drawn as closed rings, never open polylines', () => {
@@ -75,25 +82,18 @@ test('the route visits every place from the CV, in order', () => {
   }
 });
 
-test('each leg is labelled with its year and the role that started it, read from the CV', () => {
+test('the legs carry no year and no employer: the chart is about places, not jobs', () => {
+  /* They did, in the hazard red, until the review of #193: the career has the
+     homepage timeline and the CV; this page is the places. */
+  assert.doesNotMatch(svg, /sea-chart-leg-label/);
   for (const leg of chartLegs()) {
-    const role = CV_CAREER.find((c) => c.company === leg.lab);
-    assert.ok(role, `leg to ${leg.to.city} names "${leg.lab}", which is not in CV_CAREER`);
-    assert.equal(parseInt(role.year, 10), leg.year);
-    assert.ok(role.location.startsWith(leg.to.city), `${role.company} is not in ${leg.to.city}`);
-    assert.ok(svg.includes(String(leg.year)) && svg.includes(leg.lab.replace(/&/g, '&amp;')));
+    assert.ok(!svg.includes(`>${leg.lab.replace(/&/g, '&amp;')}<`), `${leg.lab} is still lettered on the chart`);
   }
 });
 
-test('each leg label sits beside its own leg, inside the frame', () => {
-  for (const leg of chartLegs()) {
-    const m = svg.match(new RegExp(`<text class="sea-chart-leg-label" data-leg="${leg.to.city}" x="([\\d.]+)" y="([\\d.]+)"`));
-    assert.ok(m, `no label for the leg to ${leg.to.city}`);
-    const [x, y] = [Number(m[1]), Number(m[2])];
-    const mx = (leg.from.x + leg.to.x) / 2;
-    const my = (leg.from.y + leg.to.y) / 2;
-    assert.ok(Math.hypot(x - mx, y - my) < 120, `label for ${leg.to.city} is far from its leg`);
-    assert.ok(x > 0 && x < VIEW.width && y > 0 && y < VIEW.height);
+test('every home names itself on hover, like the ports do', () => {
+  for (const p of CV_PLACES) {
+    assert.match(svg, new RegExp(`data-city="${p.city}">\\s*<title>${p.city}`), `${p.city} has no tooltip`);
   }
 });
 

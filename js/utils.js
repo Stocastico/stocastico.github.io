@@ -33,10 +33,12 @@ export function getTopoJSON() {
    chart's viewBox, and js/globe.js hides the European worktrips and holidays
    inside it — because the chart draws them, and a globe at that zoom can only
    pile seventy pins on one continent. Sharing the numbers is what guarantees
-   no pin falls between the two views. The ratio is ~16:9 in Mercator (35°–60°N
-   is 38° of stretched latitude against 68° of longitude), and the frame is
-   centred on the route's longitude so a phone's centred crop keeps all of it. */
-export const CHART_BOUNDS = { minLon: -28.5, maxLon: 39.5, minLat: 35, maxLat: 60 };
+   no pin falls between the two views. The frame is centred on the route's
+   longitude so a phone's centred crop keeps all of it. It runs south to
+   31.5°N, past Crete to the African coast: at 35°N it stopped just below
+   Sicily, and a wide screen's crop (the SVG slices) took the south of Spain,
+   Italy and Greece with it. That makes it ~1.6:1 rather than 16:9. */
+export const CHART_BOUNDS = { minLon: -28.5, maxLon: 39.5, minLat: 31.5, maxLat: 60 };
 
 /* A LOCATIONS entry the maps can actually place.
 
