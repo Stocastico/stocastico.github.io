@@ -920,3 +920,37 @@ describe('title cards: size and the r–y pair', () => {
     });
   }
 });
+
+/* The 2D globe (reduced motion, or no WebGL): it drew a shaded ball with a
+   grid and pins and no land at all, and kept spinning under
+   prefers-reduced-motion — the one visitor who asked it not to. */
+describe('globe fallback (reduced motion)', () => {
+  test('shows the continents and stands still', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/travel.html', { waitUntil: 'networkidle' });
+      await page.$eval('#globe-canvas', (el) => el.scrollIntoView({ block: 'center' }));
+      await page.waitForFunction(() => document.getElementById('globe-canvas').width > 0);
+      await page.waitForTimeout(1500);
+      const sample = () => page.$eval('#globe-canvas', (c) => {
+        const ctx = c.getContext('2d');
+        const d = ctx.getImageData(0, 0, c.width, c.height).data;
+        let land = 0; let sum = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          sum = (sum + d[i] * 3 + d[i + 1] * 5 + d[i + 2] * 7) % 1e9;
+          /* Coastlines are drawn in the palette's cyan (#3fc4cd) and shaded
+             with the sphere, so this asks for the hue, not the brightness:
+             green and blue both well above red. Nothing else on the
+             fallback is that colour. */
+          if (d[i + 3] > 150 && d[i + 1] > 90 && d[i + 2] > 90 && d[i] < 0.55 * d[i + 1]) land++;
+        }
+        return { land, sum };
+      });
+      const a = await sample();
+      await page.waitForTimeout(800);
+      const b = await sample();
+      assert.ok(a.land > 50, `the globe shows no land (${a.land} land samples)`);
+      assert.equal(a.sum, b.sum, 'the globe moves under reduced motion');
+    } finally { await page.close(); }
+  });
+});

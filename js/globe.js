@@ -1108,7 +1108,15 @@ export class GlobeFallback2D {
     this._io = null;
     this._isLowPower = isLowPowerDevice();
     this._rot = -1.55;
-    this._spin = this._isLowPower ? 0.001 : 0.0016;
+    /* No auto-spin under reduced motion: this fallback is what that visitor
+       gets, and it used to turn regardless. Dragging still turns it. */
+    this._still = prefersReducedMotion();
+    this._spin = this._still ? 0 : (this._isLowPower ? 0.001 : 0.0016);
+    /* A still globe shows one face for good, so make it the one with the
+       pins: centred on 25°W, the Americas on the left and Europe and Africa
+       on the right (the rotation is minus the centre longitude, in radians). */
+    if (this._still) this._rot = (25 * Math.PI) / 180;
+    this._land = null;
     this._drag = false;
     this._prevX = 0;
     this._points = [];
@@ -1119,6 +1127,7 @@ export class GlobeFallback2D {
     this._collectPoints();
     this._resize();
     this._bindEvents();
+    this._loadLand();
     this._animate();
 
     this._io = new IntersectionObserver(([entry]) => {
@@ -1137,6 +1146,88 @@ export class GlobeFallback2D {
     if (!target || typeof target.addEventListener !== 'function') return;
     target.addEventListener(type, fn, opts);
     this._listeners.push({ target, type, fn, opts });
+  }
+
+  /* The continents. Globe3D's equirectangular texture (land fill and cyan
+     coasts on the ocean colour) is drawn once into a canvas and read back as
+     pixels; _paintLand() samples it through an inverse orthographic
+     projection, so the fallback shows the same map as the WebGL globe. It
+     drew a shaded ball with no land at all before. Same fallback polygons as
+     Globe3D when the TopoJSON cannot be fetched. */
+  async _loadLand() {
+    if (typeof document === 'undefined' || typeof document.createElement !== 'function') return;
+    let rings;
+    try {
+      rings = Globe3D.prototype._decodeTopoJSON(await getTopoJSON());
+    } catch (_) {
+      rings = GLOBE_CONTINENTS.map((pts) => pts.map(([lat, lon]) => [lon, lat]));
+    }
+    try {
+      /* _buildGlobeTexture wraps its canvas with `new CT(cvs)`; a plain
+         function that returns its argument hands the canvas back. */
+      const cvs = Globe3D.prototype._buildGlobeTexture(rings, document.createElement('canvas'), function Same(c) { return c; });
+      const W = 1024; const H = 512;
+      const small = document.createElement('canvas');
+      small.width = W; small.height = H;
+      const sctx = small.getContext('2d');
+      sctx.drawImage(cvs, 0, 0, W, H);
+      this._land = { W, H, px: new Uint32Array(sctx.getImageData(0, 0, W, H).data.buffer) };
+      this._disc = null;
+      this._draw();
+    } catch (_) { /* no 2D canvas readback: keep the plain sphere */ }
+  }
+
+  /* Per-pixel lookups that do not depend on the rotation, rebuilt when the
+     size changes: each disc pixel's latitude row, its longitude before
+     rotation, and a shade for a lit sphere. */
+  _buildDisc(size) {
+    const n = size * size;
+    const row = new Int16Array(n).fill(-1);
+    const lon0 = new Float32Array(n);
+    const shade = new Float32Array(n);
+    const { H } = this._land;
+    for (let j = 0; j < size; j++) {
+      const v = 1 - (2 * (j + 0.5)) / size;
+      for (let i = 0; i < size; i++) {
+        const u = (2 * (i + 0.5)) / size - 1;
+        const q = u * u + v * v;
+        if (q >= 1) continue;
+        const z = Math.sqrt(1 - q);
+        const k = j * size + i;
+        row[k] = Math.min(H - 1, Math.floor(((Math.PI / 2 - Math.asin(v)) / Math.PI) * H));
+        lon0[k] = Math.atan2(u, z);
+        /* Light from the upper left, a little darker towards the limb. */
+        shade[k] = 0.62 + 0.38 * Math.max(0, z * 0.8 - u * 0.25 + v * 0.3);
+      }
+    }
+    const img = this.ctx.createImageData(size, size);
+    const off = document.createElement('canvas');
+    off.width = size; off.height = size;
+    this._disc = { size, row, lon0, shade, img, out: new Uint32Array(img.data.buffer), off };
+  }
+
+  _paintLand() {
+    const size = Math.max(2, Math.round(this.r * 2 * (this.canvas.width / this.w)));
+    if (!this._disc || this._disc.size !== size) this._buildDisc(size);
+    const { row, lon0, shade, img, out, off } = this._disc;
+    const { W, px } = this._land;
+    const TWO_PI = Math.PI * 2;
+    for (let k = 0; k < size * size; k++) {
+      const r = row[k];
+      if (r < 0) { out[k] = 0; continue; }
+      let lon = lon0[k] - this._rot + Math.PI;
+      lon -= Math.floor(lon / TWO_PI) * TWO_PI;
+      const c = px[r * W + Math.min(W - 1, Math.floor((lon / TWO_PI) * W))];
+      const f = shade[k];
+      /* RGBA bytes read as a little-endian Uint32 (ABGR): scale B, G, R and
+         keep the alpha opaque. */
+      out[k] = (0xff000000
+        | (Math.min(255, ((c >>> 16) & 255) * f) << 16)
+        | (Math.min(255, ((c >>> 8) & 255) * f) << 8)
+        | Math.min(255, (c & 255) * f)) >>> 0;
+    }
+    off.getContext('2d').putImageData(img, 0, 0);
+    this.ctx.drawImage(off, this.cx - this.r, this.cy - this.r, this.r * 2, this.r * 2);
   }
 
   _collectPoints() {
@@ -1161,10 +1252,12 @@ export class GlobeFallback2D {
     this.cx = this.w * 0.5;
     this.cy = this.h * 0.52;
     this.r = Math.min(this.w, this.h) * 0.3;
+    if (this._still && this._land) this._draw();
   }
 
   _bindEvents() {
-    this._addListener(this.canvas, 'mousedown', (e) => { this._drag = true; this._prevX = e.clientX; });
+    const wake = () => { if (!this._rafId) this._animate(); };
+    this._addListener(this.canvas, 'mousedown', (e) => { this._drag = true; this._prevX = e.clientX; wake(); });
     this._addListener(window, 'mousemove', (e) => {
       if (!this._drag) return;
       const dx = e.clientX - this._prevX;
@@ -1172,7 +1265,7 @@ export class GlobeFallback2D {
       this._prevX = e.clientX;
     });
     this._addListener(window, 'mouseup', () => { this._drag = false; });
-    this._addListener(this.canvas, 'touchstart', (e) => { if (e.touches[0]) { this._drag = true; this._prevX = e.touches[0].clientX; } }, { passive: true });
+    this._addListener(this.canvas, 'touchstart', (e) => { if (e.touches[0]) { this._drag = true; this._prevX = e.touches[0].clientX; wake(); } }, { passive: true });
     this._addListener(this.canvas, 'touchmove', (e) => {
       if (!this._drag || !e.touches[0]) return;
       const dx = e.touches[0].clientX - this._prevX;
@@ -1222,7 +1315,17 @@ export class GlobeFallback2D {
   _draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.w, this.h);
+    if (this._land) {
+      this._paintLand();
+    } else {
+      this._paintPlain();
+    }
+    this._drawPins();
+  }
 
+  /* Before the land arrives (or without canvas readback): a shaded ball. */
+  _paintPlain() {
+    const ctx = this.ctx;
     const bg = ctx.createRadialGradient(this.cx - this.r * 0.25, this.cy - this.r * 0.35, this.r * 0.2, this.cx, this.cy, this.r * 1.25);
     bg.addColorStop(0, rgba(THEME.globe.fallback1, 0.9));
     bg.addColorStop(0.55, rgba(THEME.globe.fallback2, 0.92));
@@ -1231,7 +1334,10 @@ export class GlobeFallback2D {
     ctx.beginPath();
     ctx.arc(this.cx, this.cy, this.r, 0, Math.PI * 2);
     ctx.fill();
+  }
 
+  _drawPins() {
+    const ctx = this.ctx;
     this._drawGrid();
 
     this._points.forEach((pt) => {
@@ -1247,13 +1353,13 @@ export class GlobeFallback2D {
       ctx.globalAlpha = 1;
     });
 
-    const halo = ctx.createRadialGradient(this.cx, this.cy, this.r * 0.86, this.cx, this.cy, this.r * 1.35);
-    halo.addColorStop(0, rgba(THEME.accent, 0));
-    halo.addColorStop(1, rgba(THEME.accent, 0.24));
-    ctx.fillStyle = halo;
+    /* A thin rim in the coast colour instead of the yellow halo it had: a
+       glow in the accent read as a different site. */
+    ctx.strokeStyle = rgba(THEME.globe.coast, 0.35);
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(this.cx, this.cy, this.r * 1.35, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(this.cx, this.cy, this.r + 0.5, 0, Math.PI * 2);
+    ctx.stroke();
   }
 
   _animate() {
@@ -1264,6 +1370,8 @@ export class GlobeFallback2D {
     this._lastDrawTime = now;
     if (!this._drag) this._rot += this._spin;
     this._draw();
+    /* Standing still: nothing to animate until a drag starts. */
+    if (this._still && !this._drag) { cancelAnimationFrame(this._rafId); this._rafId = null; }
   }
 
   destroy() {
