@@ -3934,6 +3934,31 @@ a.edit-clip-body:focus-visible {
   padding: 0.15rem 0;
 }
 
+/* The credit line wraps between phrases, never inside one: on a phone it
+   broke wherever the width ran out ("Written by / me, coded with…"). Each
+   .footer-part is unbreakable; below 640px the separator after the licence
+   goes and the authorship starts its own line, so no dot dangles at a line's
+   end. test/e2e/content.e2e.mjs measures it at five widths. */
+.footer-part {
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  /* Room for the fixed back-to-top button (2rem + 44px off the bottom):
+     at the foot of the page it ended 1px from the credit's last line. */
+  .site-footer {
+    padding-bottom: calc(3rem + 44px);
+  }
+
+  .footer-sep {
+    display: none;
+  }
+
+  .footer-part:first-child {
+    display: block;
+  }
+}
+
 /* ─── 16. Scroll Reveal Animations ─────────────────────── */
 
 /* The hidden state is deliberately scoped to `scripting: enabled`. Only JS
