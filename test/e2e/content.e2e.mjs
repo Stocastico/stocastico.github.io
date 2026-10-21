@@ -929,6 +929,66 @@ describe('pans', () => {
 /* The email address on a phone: the card is narrow enough that it wraps, and
    `overflow-wrap: anywhere` broke it as "…masneri.c / om". It may break once,
    before the @, and nowhere else. */
+/* The footer line on a phone broke wherever the width ran out — "Written by /
+   me, coded with…" — and a separator dot could dangle at a line's end. It is
+   now phrases that wrap whole: each .footer-part stays on one line, and a
+   desktop gets the whole credit on one. */
+describe('footer: the credit wraps between phrases, never inside one', () => {
+  for (const width of [320, 375, 390, 768, 1440]) {
+    test(`${width}px`, async () => {
+      const page = await newPage(browser, server, { viewport: { width, height: 800 }, reducedMotion: 'reduce' });
+      try {
+        await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
+        const r = await page.$eval('.site-footer p', (p) => {
+          const lines = (el) => {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            /* By vertical centre: a padded link's box sticks out above and
+               below its line by the same amount, so its edges do not line up
+               with the text beside it but its centre does. */
+            const mids = [];
+            for (const b of range.getClientRects()) {
+              const m = (b.top + b.bottom) / 2;
+              if (b.width && !mids.some((t) => Math.abs(t - m) < 4)) mids.push(m);
+            }
+            return mids.length;
+          };
+          const parts = [...p.querySelectorAll('.footer-part')];
+          return { n: parts.length, split: parts.filter((el) => lines(el) > 1).map((el) => el.textContent.trim()), total: lines(p) };
+        });
+        assert.ok(r.n >= 3, `the credit is not split into phrases (${r.n} .footer-part)`);
+        assert.deepEqual(r.split, [], 'a phrase breaks across lines');
+        if (width >= 1100) assert.equal(r.total, 1, `the credit runs to ${r.total} lines on a desktop`);
+      } finally { await page.close(); }
+    });
+  }
+});
+
+/* At the very bottom of a page the fixed back-to-top button sat on the
+   credit's last line: on a 320px phone it ended 1px from "San Sebastián",
+   which on screen reads as the button sitting on the text. It must keep
+   8px clear of every line of the credit. */
+describe('footer: the back-to-top button keeps clear of the credit', () => {
+  for (const width of [320, 375, 390]) {
+    test(`${width}px`, async () => {
+      const page = await newPage(browser, server, { viewport: { width, height: 700 }, reducedMotion: 'reduce' });
+      try {
+        await page.goto(server.base + '/now.html', { waitUntil: 'networkidle' });
+        await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+        await page.waitForSelector('#back-to-top.visible');
+        const hit = await page.evaluate(() => {
+          const b = document.getElementById('back-to-top').getBoundingClientRect();
+          const btn = { left: b.left - 8, right: b.right + 8, top: b.top - 8, bottom: b.bottom + 8 };
+          const range = document.createRange();
+          range.selectNodeContents(document.querySelector('.site-footer p'));
+          return [...range.getClientRects()].filter((r) => r.width && r.right > btn.left && r.left < btn.right && r.bottom > btn.top && r.top < btn.bottom).length;
+        });
+        assert.equal(hit, 0, 'the back-to-top button is within 8px of the footer credit');
+      } finally { await page.close(); }
+    });
+  }
+});
+
 describe('contact: the address wraps only at the @', () => {
   for (const width of [320, 375, 390]) {
     test(`${width}px`, async () => {
