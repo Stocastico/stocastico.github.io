@@ -872,6 +872,19 @@ describe('pans', () => {
     }
   }
 
+  /* "On paper" held a whole screen after its pan, on top of the pan itself and
+     the project cards' hold before it: a double pause. It now lets go after
+     half a screen, like Contact. */
+  test('both pans hold the arrived screen for the same half screen', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      const [pub, contact] = await Promise.all(PAIRS.map((p) => page.$eval(p.pin, (el) => el.offsetHeight)));
+      const vh = VIEWPORTS.desktop.height;
+      assert.ok(Math.abs(pub - contact) <= 1, `Publications' pin is ${Math.round(pub / vh * 100)}svh, Contact's ${Math.round(contact / vh * 100)}svh`);
+    } finally { await page.close(); }
+  });
+
   test('a nav jump to Publications or Contact lands on the arrived screen, not mid-pan', async () => {
     for (const p of PAIRS) {
       /* A fresh page each time: a second hash on the same document is a

@@ -3054,8 +3054,9 @@ a.edit-clip-body:focus-visible {
 
     #projects .pan-from {
       animation-timeline: --pan-pub;
-      /* The run over the stage's held stretch (run + one screen): 150/250. */
-      --pan-end: 60%;
+      /* 150 of the 200svh the stage is held, as for Contact: it held a whole
+         screen after the pan once, a second pause straight after the first. */
+      --pan-end: 75%;
     }
 
     #projects .pan-runway {
@@ -3063,7 +3064,7 @@ a.edit-clip-body:focus-visible {
     }
 
     #publications .pan-pin {
-      height: calc(var(--pan-run) + 200svh);
+      height: calc(var(--pan-run) + 150svh);
       margin-top: calc(-1 * (var(--pan-run) + 100svh));
       margin-inline: calc(50% - 50vw);
       view-timeline: --slide block, --pan-pub block;
@@ -3078,7 +3079,7 @@ a.edit-clip-body:focus-visible {
       padding-inline: max(var(--gutter), calc((100vw - var(--container)) / 2));
       animation: pan-in linear both;
       animation-timeline: --pan-pub;
-      animation-range: contain 0% contain 60%;
+      animation-range: contain 0% contain 75%;
     }
 
     #places {
