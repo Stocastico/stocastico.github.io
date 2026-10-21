@@ -680,7 +680,7 @@ describe('slides', () => {
   });
 
   for (const viewport of [{ width: 1920, height: 1080 }, VIEWPORTS.desktop, { width: 1440, height: 720 }, { width: 1280, height: 640 }, { width: 1100, height: 640 }]) {
-    test(`desktop ${viewport.width}×${viewport.height}: About holds for a couple of screens, all of it in view`, async () => {
+    test(`desktop ${viewport.width}×${viewport.height}: About holds for about a screen, all of it in view`, async () => {
       const page = await newPage(browser, server, { viewport });
       try {
         await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
@@ -688,7 +688,9 @@ describe('slides', () => {
         const navH = await nav(page);
         const pin = '#about .slide-pin';
         const h = await page.$eval(pin, (el) => el.offsetHeight);
-        assert.ok(h >= 2.4 * vh, `About holds for only ${Math.round(h / vh * 10) / 10} screens`);
+        /* ~1.1 extra screens: 1.6 read as too many scrolls before the page moved
+           on, and less than a title card's one would make About the shorter beat. */
+        assert.ok(h >= 2.0 * vh && h <= 2.2 * vh, `About's pin is ${Math.round(h / vh * 10) / 10} screens tall, expected 2.0–2.2`);
 
         const top = await pinTop(page, pin);
         const look = () => page.evaluate((n) => {

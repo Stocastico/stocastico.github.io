@@ -2825,7 +2825,7 @@ a.edit-clip-body:focus-visible {
 
 /* ─── Slides: About and the title cards hold while you scroll ───────────
    On a desktop the homepage reads like a deck: About is one screen that
-   stays put for a couple of scrolls, each title card for one, and a bar
+   stays put for a little over one scroll (1.6 read as too many), each title card for one, and a bar
    under the navbar fills as you go so a held screen does not read as a stuck
    page. Then the page moves on.
 
@@ -2848,7 +2848,7 @@ a.edit-clip-body:focus-visible {
   }
 
   .slide-pin--about {
-    height: 260svh;
+    height: 210svh;
     view-timeline: --slide block;
   }
 
