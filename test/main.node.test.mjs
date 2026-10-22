@@ -1291,6 +1291,24 @@ test('the hero ships no filter menu', () => {
   assert.ok(!/\.field-(controls|picker)|\.hero-aside/.test(css), 'dead filter-menu CSS left behind');
 });
 
+test('ReceptiveField on a phone always draws Edges, whatever the dice say', () => {
+  const last = () => 0.999;
+  const phone = fieldEnv(({ root }) => {
+    const rf = new ReceptiveField(root, null, { random: last });
+    const id = rf.filter.id;
+    rf.destroy();
+    return id;
+  }, { narrow: true });
+  assert.equal(phone, 'edges', 'a phone drew a random filter');
+  const desktop = fieldEnv(({ root }) => {
+    const rf = new ReceptiveField(root, null, { random: last });
+    const id = rf.filter.id;
+    rf.destroy();
+    return id;
+  });
+  assert.equal(desktop, FILTERS[FILTERS.length - 1].id, 'a desktop stopped drawing at random');
+});
+
 test('ReceptiveField: under reduced motion there is no intro sweep, but the window is placed', () => {
   fieldEnv(({ root, parts }) => {
     const rf = new ReceptiveField(root);

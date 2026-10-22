@@ -5,8 +5,8 @@
    and a 5×5 window — one receptive field — sits over it. Every column the
    window has passed shows that filter's response instead of the ink: one
    accent where it is positive, the other where it is negative, nothing where
-   the filter has nothing to say. Each load draws one filter at random and
-   the visitor moves the window by dragging; there is no chrome at all. The
+   the filter has nothing to say. Each load draws one filter at random (a
+   phone always gets Edges) and the visitor moves the window by dragging; there is no chrome at all. The
    kernel readout, the per-filter captions and the range input were cut in
    the #188 review, and the filter menu after them: the hero is a picture,
    not an instrument or an explainer, and the MNIST page is where the
@@ -213,7 +213,10 @@ export class ReceptiveField {
     this._onReady = typeof onReady === 'function' ? onReady : null;
     this._words = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
 
-    this.filter = FILTERS[Math.min(FILTERS.length - 1, Math.floor(random() * FILTERS.length))];
+    /* A phone is a still frame with no way to tune it, so it always gets the
+       clearest filter, Edges (FILTERS[0]); a desktop draws one at random. */
+    this.filter = onPhone() ? FILTERS[0]
+      : FILTERS[Math.min(FILTERS.length - 1, Math.floor(random() * FILTERS.length))];
     this._learned = null;
     this._learnedIdx = 0;
     this._stopAt = onPhone() ? PHONE_AT : INTRO_TO;
