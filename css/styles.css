@@ -890,9 +890,6 @@ body::before {
 
 .hero-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: clamp(1.5rem, 4vw, 4rem);
-  align-items: start;
   margin-top: clamp(1.5rem, 4vh, 2.75rem);
 }
 
@@ -978,68 +975,9 @@ body::before {
   flex-wrap: wrap;
 }
 
-/* ── Filter menu ───────────────────────────────────────────
-   One small native <select>, top right under the grid. Nothing else: the
-   kernel readout, the captions, the range input and the link to the MNIST
-   page were all cut in review — the hero is a picture you can tune, not an
-   explainer. */
-.hero-aside {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.field-controls[hidden] {
-  display: none;
-}
-
-.field-picker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  color: var(--text-muted);
-
-  & select {
-    appearance: none;
-    font: inherit;
-    font-weight: 600;
-    color: var(--text);
-    background-color: var(--bg);
-    /* A chevron drawn in the text colour, so no icon file and no hex. */
-    background-image:
-      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-    background-position: right 0.7rem center, right 0.4rem center;
-    background-size: 0.3rem 0.3rem;
-    background-repeat: no-repeat;
-    border: 1px solid var(--border);
-    border-radius: var(--r-sm);
-    /* 24px: small, and still the WCAG 2.5.8 minimum target. */
-    min-height: 1.5rem;
-    padding: 0.15rem 1.6rem 0.15rem 0.5rem;
-    border-radius: var(--r-sm);
-    cursor: pointer;
-  }
-
-  & select:hover {
-    border-color: var(--text-faint);
-  }
-}
-
 /* Phones get a still frame (js/receptive-field.js, PHONE_QUERY): the window
-   parks at 70% and a touch is a scroll. The menu stays — a tap on it is the
-   gesture a phone does well. */
+   parks at 70% and a touch is a scroll. */
 @media (max-width: 760px) {
-  .hero-body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .hero-aside {
-    align-items: flex-start;
-  }
-
   #field-canvas {
     touch-action: auto;
     cursor: default;
@@ -5525,10 +5463,9 @@ a.edit-clip-body:focus-visible {
 
    The static suite cannot see this — the attribute is set exactly as intended
    — and the e2e check asserted `.cmd-item:not([hidden])`, which reads the same
-   attribute rather than what the browser drew. The two rules below
-   (.field-controls, .cmd-overlay) are this same trap, already worked around;
-   this is the third element JS hides with `hidden` and the one that was
-   missed. Anything given a `display` here that JS toggles `hidden` on needs
+   attribute rather than what the browser drew. The .cmd-overlay rule is
+   this same trap, already worked around; this is the second element JS
+   hides with `hidden` and the one that was missed. Anything given a `display` here that JS toggles `hidden` on needs
    its own `[hidden]` companion. */
 .cmd-item[hidden] {
   display: none;
@@ -5861,7 +5798,6 @@ a.edit-clip-body:focus-visible {
   .back-to-top,
   .cmd-overlay,
   #field-canvas,
-  .field-controls,
   #globe-canvas,
   .globe-legend,
   .globe-subtitle,

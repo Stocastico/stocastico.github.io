@@ -299,7 +299,23 @@ describe('hero: the receptive field', () => {
 
   {
     const [label, viewport] = ['desktop', VIEWPORTS.desktop];
-    test(`${label}: the grid paints, the name stays the heading, the controls work`, async () => {
+    test(`${label}: the grid paints, the name stays the heading, the filter is drawn per load`, async () => {
+      /* The filter is Math.random's choice; pin it to compare two loads. */
+      const load = async (r) => {
+        const page = await newPage(browser, server, { viewport });
+        await page.addInitScript((v) => { Math.random = () => v; }, r);
+        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+        await page.waitForTimeout(1900); // the intro sweep
+        return page;
+      };
+      const edges = await load(0);
+      const learned = await load(0.99);
+      try {
+        assert.notEqual((await canvasHash(learned)).h, (await canvasHash(edges)).h,
+          'two loads drawing different filters painted the same picture');
+      } finally { await learned.close(); await edges.close(); }
+
       const page = await newPage(browser, server, { viewport });
       try {
         await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
@@ -314,23 +330,11 @@ describe('hero: the receptive field', () => {
         });
         assert.equal(h1.text, 'Stefano Masneri');
         assert.equal(h1.count, 1);
-        assert.equal(await page.isVisible('.field-controls'), true, 'the filter controls were not revealed');
 
-        /* Only a dropdown: no kernel readout, no caption, no range input. */
-        for (const gone of ['.field-kernel', '.field-caption', '#field-pos', '.field-next', '[data-filter]']) {
+        /* No chrome at all: no menu, no kernel readout, no caption, no range input. */
+        for (const gone of ['#hero select', '.field-controls', '.field-kernel', '.field-caption', '#field-pos', '.field-next', '[data-filter]']) {
           assert.equal(await page.locator(gone).count(), 0, `${gone} is back in the hero`);
         }
-        const options = await page.$$eval('#field-filter option', (os) => os.map((o) => o.value));
-        assert.ok(!options.includes('corners'), 'Corners is back in the menu');
-
-        await page.selectOption('#field-filter', 'vertical');
-        await page.waitForTimeout(150);
-        const vertical = await canvasHash(page);
-        assert.notEqual(vertical.h, first.h, 'choosing a filter did not change the picture');
-
-        await page.selectOption('#field-filter', 'learned');
-        await page.waitForTimeout(400);
-        assert.notEqual((await canvasHash(page)).h, vertical.h, 'the learned filter did not change the picture');
 
         /* Pointer path: a horizontal drag across the grid moves the window. */
         const before = await canvasHash(page);
@@ -341,17 +345,14 @@ describe('hero: the receptive field', () => {
         await page.mouse.up();
         assert.notEqual((await canvasHash(page)).h, before.h, 'dragging did not move the window');
 
-        /* A small menu, and no link out of the hero (cut in review). */
-        const menu = await page.locator('#field-filter').boundingBox();
-        assert.ok(menu.height <= 30, `the filter menu is ${Math.round(menu.height)}px tall`);
+        /* No link out of the hero (cut in review). */
         assert.equal(await page.locator('#hero a[href*="mnist-lenet"]').count(), 0, 'the hero links to the CNN page again');
       } finally { await page.close(); }
     });
   }
 
-  /* A phone gets a still frame: the window parks at 70%, a touch is a scroll,
-     and the move/kernel controls are gone — but the filter chips still work. */
-  test('phone: a still frame whose filter still switches, and a drag does not move it', async () => {
+  /* A phone gets a still frame: the window parks at 70% and a touch is a scroll. */
+  test('phone: a still frame, and a drag does not move it', async () => {
     const page = await newPage(browser, server, { viewport: { width: 390, height: 844 }, hasTouch: true });
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
@@ -366,20 +367,15 @@ describe('hero: the receptive field', () => {
       await page.mouse.move(box.x + box.width - 10, box.y + box.height / 2, { steps: 4 });
       await page.mouse.up();
       assert.equal((await canvasHash(page)).h, before.h, 'a drag moved the window on a phone');
-
-      await page.selectOption('#field-filter', 'horizontal');
-      await page.waitForTimeout(150);
-      assert.notEqual((await canvasHash(page)).h, before.h, 'choosing a filter did not change the picture');
     } finally { await page.close(); }
   });
 
-  test('without JavaScript the name is plain text and no dead controls show', async () => {
+  test('without JavaScript the name is plain text', async () => {
     const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });
     const page = await ctx.newPage();
     try {
       await page.goto(server.base + '/index.html');
       assert.equal(await page.isVisible('#hero h1'), true, 'the name is hidden with JS off');
-      assert.equal(await page.isVisible('.field-controls'), false, 'the filter menu showed with nothing to drive it');
     } finally { await ctx.close(); }
   });
 });

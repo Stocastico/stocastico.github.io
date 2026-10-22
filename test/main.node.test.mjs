@@ -1227,10 +1227,8 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   const canvas = { width: 0, height: 0, clientWidth: 1200, style: {},
     getContext: () => ctx, setPointerCapture() {},
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1200, height: 500 }), ...track('canvas') };
-  const picker = el({ value: 'edges', ...track('picker') });
   const parts = {
     '#field-canvas': canvas, h1: el({ textContent: 'Stefano Masneri' }),
-    '.field-controls': el({ hidden: true }), '#field-filter': picker,
   };
   const root = { clientWidth: 1200, querySelector: (s) => parts[s] || null,
     querySelectorAll: () => [], classList: { add() {} } };
@@ -1245,7 +1243,7 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   const observers = [];
   global.ResizeObserver = class { constructor() { observers.push(this); } observe() {} disconnect() { this.disconnected = true; } };
   try {
-    return fn({ root, parts, picker, canvas, listeners, observers, drawn });
+    return fn({ root, parts, canvas, listeners, observers, drawn });
   } finally {
     for (const [k, v] of Object.entries(prev)) {
       if (v === undefined) delete global[k]; else global[k] = v;
@@ -1253,12 +1251,11 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   }
 }
 
-test('ReceptiveField draws the name, reveals its controls and reports its first paint', () => {
-  fieldEnv(({ root, parts, drawn }) => {
+test('ReceptiveField draws the name and reports its first paint', () => {
+  fieldEnv(({ root, drawn }) => {
     let ready = 0;
-    const rf = new ReceptiveField(root, () => ready++);
+    const rf = new ReceptiveField(root, () => ready++, { random: () => 0 });
     assert.ok(rf.cols > 50 && rf.rows > 5, `grid ${rf.cols}×${rf.rows}`);
-    assert.equal(parts['.field-controls'].hidden, false, 'controls are revealed once JS has a filter to offer');
     assert.ok(drawn.fillRect >= rf.cols * rf.rows, 'every cell is painted');
     assert.ok(drawn.strokeRect >= 1, 'the window is drawn');
     assert.equal(ready, 1, 'onReady fires once, after the first frame');
@@ -1267,20 +1264,31 @@ test('ReceptiveField draws the name, reveals its controls and reports its first 
   });
 });
 
-test('ReceptiveField: the dropdown chooses the filter', () => {
-  /* One native <select>, nothing else: no caption, no kernel readout, no
-     range input. The hero is a picture you can tune, not an explainer. */
-  fieldEnv(({ root, picker, listeners, drawn }) => {
+test('ReceptiveField: the filter is drawn at random on each load, and nothing lets the visitor choose', () => {
+  /* No menu, no picker: every load is one filter, chosen uniformly from
+     FILTERS. The visitor's only input is dragging the window. */
+  const seen = FILTERS.map((f, i) => fieldEnv(({ root }) => {
+    const rf = new ReceptiveField(root, null, { random: () => (i + 0.5) / FILTERS.length });
+    const id = rf.filter.id;
+    rf.destroy();
+    return id;
+  }));
+  assert.deepEqual(seen, FILTERS.map((f) => f.id), 'every filter is reachable');
+  fieldEnv(({ root, listeners }) => {
     const rf = new ReceptiveField(root);
-    const change = listeners.find((l) => l.on === 'picker' && l.type === 'change');
-    assert.ok(change, 'the dropdown is wired');
-    const before = drawn.fillRect;
-    picker.value = 'vertical';
-    change.fn({ target: picker });
-    assert.equal(rf.filter.id, 'vertical');
-    assert.ok(drawn.fillRect > before, 'choosing a filter redraws');
+    assert.ok(FILTERS.includes(rf.filter), 'the default draw uses Math.random');
+    assert.ok(!listeners.some((l) => l.type === 'change'), 'a filter control is wired again');
     rf.destroy();
   });
+});
+
+test('the hero ships no filter menu', () => {
+  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  for (const gone of ['field-filter', 'field-controls', 'field-picker', 'hero-aside']) {
+    assert.ok(!html.includes(gone), `${gone} is back in index.html`);
+  }
+  const css = fs.readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
+  assert.ok(!/\.field-(controls|picker)|\.hero-aside/.test(css), 'dead filter-menu CSS left behind');
 });
 
 test('ReceptiveField: under reduced motion there is no intro sweep, but the window is placed', () => {
@@ -1295,15 +1303,13 @@ test('ReceptiveField: under reduced motion there is no intro sweep, but the wind
 test('ReceptiveField on a phone: a still frame at 70%, and a drag does not move it', () => {
   /* The hero is a picture on a phone, not an instrument: the window settles
      at 70% of the name (filtered left of it, raw ink right of it) and stays
-     there. A finger on the hero is a scroll; the filter chips still work. */
+     there. A finger on the hero is a scroll. */
   fieldEnv(({ root, listeners }) => {
     const rf = new ReceptiveField(root);
     assert.equal(rf.t, 0.7);
     const down = listeners.find((l) => l.on === 'canvas' && l.type === 'pointerdown');
     if (down) down.fn({ pointerId: 1, clientX: 50, clientY: 10 });
     assert.equal(rf.t, 0.7, 'a touch on the hero moved the window');
-    rf._select('vertical');
-    assert.equal(rf.filter.id, 'vertical', 'filters still switch');
     rf.destroy();
   }, { reduced: true, narrow: true });
 });
