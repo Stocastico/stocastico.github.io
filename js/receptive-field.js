@@ -5,12 +5,13 @@
    and a 5×5 window — one receptive field — sits over it. Every column the
    window has passed shows that filter's response instead of the ink: one
    accent where it is positive, the other where it is negative, nothing where
-   the filter has nothing to say. The visitor chooses the filter from one
-   native <select> and moves the window by dragging. That is all the chrome
-   there is: the kernel readout, the per-filter captions and the range input
-   were cut (#188 review) — the hero is a picture you can tune, not an
-   explainer, and the MNIST page is where the explaining happens. Harris
-   corners went with them: on a condensed face it lit up as speckle.
+   the filter has nothing to say. Each load draws one filter at random and
+   the visitor moves the window by dragging; there is no chrome at all. The
+   kernel readout, the per-filter captions and the range input were cut in
+   the #188 review, and the filter menu after them: the hero is a picture,
+   not an instrument or an explainer, and the MNIST page is where the
+   explaining happens. Harris corners went too: on a condensed face it lit
+   up as speckle.
 
    It replaced three renderers (cnn-hero.js, kernel-scan.js, the WebGL noise
    gradient) and their breakpoint swap. One scene now serves every viewport,
@@ -30,7 +31,7 @@
 
    · **The learned filter is the real one.** Its kernels are conv1 of the
      LeNet-5 behind projects/mnist-lenet.html (data/hero-scan.js, int8), and
-     the module is imported only when that option is chosen.
+     the module is imported only on the loads that draw it.
      test/receptive-field.test.mjs holds it to the committed model.
 
    The <h1> stays in the DOM as real text; the canvas is aria-hidden
@@ -197,10 +198,9 @@ const onPhone = () => typeof window !== 'undefined' && typeof window.matchMedia 
   && window.matchMedia(PHONE_QUERY).matches;
 
 export class ReceptiveField {
-  /* root: the hero section. It must contain #field-canvas, the h1 the name is
-     read from, and the .field-controls block holding the #field-filter
-     <select>. */
-  constructor(root, onReady) {
+  /* root: the hero section. It must contain #field-canvas and the h1 the
+     name is read from. opts.random draws the filter (tests pin it). */
+  constructor(root, onReady, { random = Math.random } = {}) {
     this.root = root;
     this.canvas = root.querySelector('#field-canvas');
     this.ctx = this.canvas && typeof this.canvas.getContext === 'function' ? this.canvas.getContext('2d') : null;
@@ -211,11 +211,9 @@ export class ReceptiveField {
 
     this._theme = getTheme();
     this._onReady = typeof onReady === 'function' ? onReady : null;
-    this._controls = root.querySelector('.field-controls');
-    this._picker = root.querySelector('#field-filter');
     this._words = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
 
-    this.filter = FILTERS[0];
+    this.filter = FILTERS[Math.min(FILTERS.length - 1, Math.floor(random() * FILTERS.length))];
     this._learned = null;
     this._learnedIdx = 0;
     this._stopAt = onPhone() ? PHONE_AT : INTRO_TO;
@@ -224,9 +222,6 @@ export class ReceptiveField {
 
     this._layout();
     this._select(this.filter.id);
-    if (this._controls) this._controls.hidden = false;
-
-    if (this._picker) this._on(this._picker, 'change', (e) => this._select(e.target.value));
 
     /* Horizontal drags steer the window; vertical ones stay a page scroll
        (touch-action: pan-y on the canvas), so the hero never steals the
@@ -319,6 +314,9 @@ export class ReceptiveField {
   }
 
   _compute() {
+    /* A load that drew Learned has nothing to show until its kernels
+       arrive; _draw waits on a null response, and _select recomputes. */
+    if (this.filter.id === 'learned' && !this._learned) { this.response = null; return; }
     this.response = respond(this.grid, this.cols, this.rows, this.filter, this._learned?.[this._learnedIdx]);
   }
 
@@ -341,7 +339,6 @@ export class ReceptiveField {
       });
     }
     this.filter = f;
-    if (this._picker && this._picker.value !== id) this._picker.value = id;
     this._compute();
     this._draw();
   }
