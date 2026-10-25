@@ -65,7 +65,7 @@ Edit the source on the left, run the command on the right. The drift tests will 
 | UNESCO accordion | `data/unesco.yaml` | `generate-unesco`, then `generate-cards` |
 | Blogroll | `data/links.yaml` | `generate-links`, then `generate-cards` |
 | Colour palette | `data/palettes.yaml` | `generate-theme`, `generate-favicons`, `generate-thumbs`, then the social cards: `generate-og`, `generate-project-og`, `generate-mnist-og` |
-| The trained LeNet-5 | `npm run train-cnn` (slow) | `generate-lenet-weights`, `generate-hero-scan`, `generate-mnist-og` |
+| The trained LeNet-5 | `npm run train-cnn` (slow) | `generate-lenet-weights`, `generate-mnist-og` |
 | Contact address | `js/contact.js` | `generate-cards` |
 | A new project page | a Markdown file | `npm run new-project -- file.md` |
 | Adding any HTML page | — | `generate-analytics`, `generate-speculation-rules`, then `generate-csp-meta` **last** |
@@ -94,7 +94,7 @@ which is the authoritative reference for flags — this table is only a map.
 | Content | `generate-thumbs`, `generate-cv`, `generate-locations`, `generate-countries`, `generate-world-map`, `generate-sea-chart`, `generate-unesco`, `generate-links`, `generate-cards`, `new-project` |
 | Theme | `generate-theme`, `generate-favicons`, `generate-og`, `generate-project-og`, `generate-mnist-og` (the cards render in headless Chromium) |
 | SEO / metadata | `generate-sitemap`, `generate-llms`, `generate-feed`, `generate-project-jsonld`, `generate-csp-meta`, `generate-analytics`, `generate-speculation-rules` |
-| ML pipeline | `train-cnn`, `generate-lenet-weights`, `generate-hero-scan` |
+| ML pipeline | `train-cnn`, `generate-lenet-weights` |
 | Maintenance | `check-links`, `screenshots`, `set-domain` |
 | Tests | `test`, `test:e2e`, `test:e2e:a11y`, `test:e2e:budget`, `test:contrast`, and a `test:*` shorthand per suite |
 

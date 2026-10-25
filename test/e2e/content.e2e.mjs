@@ -281,48 +281,55 @@ describe('scroll-driven animations replace the old scroll handlers', () => {
   });
 });
 
-/* ─── The hero: the name through a receptive field ───────────────────────
-   js/receptive-field.js paints the name as a pixel grid and swaps the text
-   <h1> out of sight once it has. Everything here is about that swap and the
-   controls, because those are the parts a static test cannot see: whether the
-   canvas painted anything, whether the name is still the page's heading for a
-   screen reader, and whether choosing a filter or moving the window actually
-   changes the picture. */
-describe('hero: the receptive field', () => {
-  const canvasHash = (page) => page.evaluate(() => {
+/* ─── The hero: the name as an untuned television shows it ──────────────
+   js/hero-grid.js paints the name as a pixel grid in black and white and swaps
+   the text <h1> out of sight once it has. Every few seconds a burst of static
+   tears a few bands sideways and splits some of their edges into palette
+   colours, then the plain name comes back. Those are the parts a static test
+   cannot see: whether the canvas painted anything, whether the name is still
+   the page's heading for a screen reader, whether a burst really reaches the
+   screen in colour and then clears, and whether it stays away entirely under
+   reduced motion. */
+describe('hero: the name as static', () => {
+  /* Samples the canvas every `every` ms for up to `ms`, from inside the page
+     (a round trip per sample would miss a 60 ms frame). Stops early once it
+     has seen a burst and the picture has settled back to its first frame. */
+  const watch = (page, { ms, every }) => page.evaluate(async ({ ms, every }) => {
     const c = document.getElementById('field-canvas');
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    let h = 0, ink = 0;
-    for (let i = 0; i < d.length; i += 4 * 5) { h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 3]) | 0; if (d[i + 3] > 0) ink++; }
-    return { h, ink };
-  });
+    const ctx = c.getContext('2d');
+    const read = () => {
+      const d = ctx.getImageData(0, 0, c.width, c.height).data;
+      let h = 0, coloured = 0, ink = 0;
+      for (let i = 0; i < d.length; i += 4 * 3) {
+        h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7 + d[i + 3]) | 0;
+        if (d[i + 3] > 200) {
+          ink++;
+          if (Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]) > 60) coloured++;
+        }
+      }
+      return { h, coloured, ink };
+    };
+    const first = read();
+    const out = { first, hashes: new Set([first.h]), maxColoured: first.coloured, burst: false, settled: false };
+    const t0 = performance.now();
+    while (performance.now() - t0 < ms) {
+      await new Promise((r) => setTimeout(r, every));
+      const f = read();
+      out.hashes.add(f.h);
+      out.maxColoured = Math.max(out.maxColoured, f.coloured);
+      if (f.h !== first.h) out.burst = true;
+      else if (out.burst) { out.settled = true; break; }
+    }
+    return { ...out, hashes: out.hashes.size };
+  }, { ms, every });
 
   {
     const [label, viewport] = ['desktop', VIEWPORTS.desktop];
-    test(`${label}: the grid paints, the name stays the heading, the filter is drawn per load`, async () => {
-      /* The filter is Math.random's choice; pin it to compare two loads. */
-      const load = async (r) => {
-        const page = await newPage(browser, server, { viewport });
-        await page.addInitScript((v) => { Math.random = () => v; }, r);
-        await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
-        await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
-        await page.waitForTimeout(1900); // the intro sweep
-        return page;
-      };
-      const edges = await load(0);
-      const learned = await load(0.99);
-      try {
-        assert.notEqual((await canvasHash(learned)).h, (await canvasHash(edges)).h,
-          'two loads drawing different filters painted the same picture');
-      } finally { await learned.close(); await edges.close(); }
-
+    test(`${label}: plain black and white, a burst tears it in colour, and the name comes back`, async () => {
       const page = await newPage(browser, server, { viewport });
       try {
         await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
         await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
-
-        const first = await canvasHash(page);
-        assert.ok(first.ink > 500, `the hero canvas is nearly blank (${first.ink} painted samples)`);
 
         const h1 = await page.evaluate(() => {
           const el = document.querySelector('#hero h1');
@@ -331,42 +338,47 @@ describe('hero: the receptive field', () => {
         assert.equal(h1.text, 'Stefano Masneri');
         assert.equal(h1.count, 1);
 
-        /* No chrome at all: no menu, no kernel readout, no caption, no range input. */
+        /* No chrome of any kind, and no link out of the hero. */
         for (const gone of ['#hero select', '.field-controls', '.field-kernel', '.field-caption', '#field-pos', '.field-next', '[data-filter]']) {
           assert.equal(await page.locator(gone).count(), 0, `${gone} is back in the hero`);
         }
-
-        /* Pointer path: a horizontal drag across the grid moves the window. */
-        const before = await canvasHash(page);
-        const box = await page.locator('#field-canvas').boundingBox();
-        await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.5);
-        await page.mouse.down();
-        await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.5, { steps: 5 });
-        await page.mouse.up();
-        assert.notEqual((await canvasHash(page)).h, before.h, 'dragging did not move the window');
-
-        /* No link out of the hero (cut in review). */
         assert.equal(await page.locator('#hero a[href*="mnist-lenet"]').count(), 0, 'the hero links to the CNN page again');
+
+        /* The first burst is due within ~1.8 s of the grid painting and the
+           next within 10 s of that, so 14 s always contains one. */
+        const seen = await watch(page, { ms: 14000, every: 30 });
+        assert.ok(seen.first.ink > 500, `the hero canvas is nearly blank (${seen.first.ink} painted samples)`);
+        assert.equal(seen.first.coloured, 0, 'the resting picture is not black and white');
+        assert.equal(seen.burst, true, 'no burst of static in 14 s');
+        assert.ok(seen.maxColoured > 0, 'a burst showed no colour');
+        assert.equal(seen.settled, true, 'the picture did not return to the plain name after a burst');
       } finally { await page.close(); }
     });
   }
 
-  /* A phone gets a still frame: the window parks at 70% and a touch is a scroll. */
-  test('phone: a still frame, and a drag does not move it', async () => {
+  test('reduced motion: the plain grid, and no burst ever', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop, reducedMotion: 'reduce' });
+    try {
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+      const seen = await watch(page, { ms: 3500, every: 40 });
+      assert.ok(seen.first.ink > 500, 'the hero canvas is nearly blank');
+      assert.equal(seen.hashes, 1, 'the hero moved under prefers-reduced-motion');
+      assert.equal(seen.maxColoured, 0);
+    } finally { await page.close(); }
+  });
+
+  /* A phone gets the same picture and the same bursts: nothing on it takes
+     input, and a touch on it is a scroll. */
+  test('phone: the grid paints and a touch on it is a page scroll', async () => {
     const page = await newPage(browser, server, { viewport: { width: 390, height: 844 }, hasTouch: true });
     try {
       await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
       await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
-      await page.waitForTimeout(1900); // the intro sweep
-
-      const before = await canvasHash(page);
-      assert.ok(before.ink > 500, `the hero canvas is nearly blank (${before.ink} painted samples)`);
-      const box = await page.locator('#field-canvas').boundingBox();
-      await page.mouse.move(box.x + 10, box.y + box.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(box.x + box.width - 10, box.y + box.height / 2, { steps: 4 });
-      await page.mouse.up();
-      assert.equal((await canvasHash(page)).h, before.h, 'a drag moved the window on a phone');
+      const seen = await watch(page, { ms: 200, every: 50 });
+      assert.ok(seen.first.ink > 500, `the hero canvas is nearly blank (${seen.first.ink} painted samples)`);
+      const touch = await page.$eval('#field-canvas', (el) => getComputedStyle(el).touchAction);
+      assert.equal(touch, 'auto', 'the hero canvas constrains touch although there is nothing to drag');
     } finally { await page.close(); }
   });
 

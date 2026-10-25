@@ -11,7 +11,7 @@
      js/ui.js             — navbar, command palette, mobile menu,
                             counters, toast, back-to-top
      js/animations.js     — scroll reveals
-     js/receptive-field.js — the hero: the name through a 5×5 filter
+     js/hero-grid.js      — the hero: the name as a pixel grid, with static
      js/globe.js          — 3D globe (Three.js)
 
    Content lives in separate, easy-to-edit files:
@@ -82,7 +82,7 @@ import {
    this file — initAnimatedFavicon(), now deleted — and every other colour-baked
    module resolves its own palette through getTheme() at construction. */
 
-/* The hero (receptive-field.js) and globe.js (Globe3D/GlobeFallback2D) are
+/* The hero (hero-grid.js) and globe.js (Globe3D/GlobeFallback2D) are
    dynamically imported at their init sites below — see the Three.js
    loading-strategy note at the top. The hero serves one page, so it follows
    the same rule even though it is small. */
@@ -659,23 +659,22 @@ if (typeof document !== 'undefined') {
      the correct, palette-aware icon — and removes a toDataURL PNG encode plus
      a document.fonts.ready wait from every page load. */
 
-  /* ── Hero: the name through a receptive field ────────────────────────────
-     js/receptive-field.js draws the <h1> as a pixel grid with a 5×5 filter
-     window over it. It replaced three renderers (the CNN pipeline, the
-     narrow-viewport kernel scan and the WebGL noise gradient) and the
-     breakpoint swap between them: one scene for every viewport.
+  /* ── Hero: the name as a pixel grid ──────────────────────────────────────
+     js/hero-grid.js draws the <h1> as a grid of cells in black and white and,
+     every few seconds, tears a few bands of it sideways like broadcast static.
+     It replaced the receptive-field hero, which replaced three renderers (the
+     CNN pipeline, the narrow-viewport kernel scan and the WebGL noise
+     gradient) and the breakpoint swap between them: one scene for every
+     viewport.
 
-     Built straight away rather than at idle time. The old scenes waited for
-     requestIdleCallback because one of them downloaded ~11 KB gzip of
-     activations; this chunk is a few KB of arithmetic, and the box it paints
-     into is reserved by CSS, so the sooner it lands the shorter the moment the
-     plain <h1> shows in its place. Reduced motion still gets the scene — only
-     its intro sweep is skipped — because every other change it makes answers
-     something the visitor did. */
+     Built straight away rather than at idle time: the chunk is a few KB of
+     arithmetic and the box it paints into is reserved by CSS, so the sooner it
+     lands the shorter the moment the plain <h1> shows in its place. Reduced
+     motion still gets the picture — only the bursts are skipped. */
   const heroEl = document.getElementById('hero');
   if (heroEl && document.getElementById('field-canvas')) {
-    import('./receptive-field.js').then(({ ReceptiveField }) => {
-      _disposables.push(new ReceptiveField(heroEl, () => heroEl.classList.add('is-drawn')));
+    import('./hero-grid.js').then(({ HeroGrid }) => {
+      _disposables.push(new HeroGrid(heroEl, () => heroEl.classList.add('is-drawn')));
     });
   }
 
@@ -784,8 +783,7 @@ if (typeof document !== 'undefined') {
   /* Interactive MNIST lab (projects/mnist-lenet.html only).
      Dynamically imported behind the element check, so the int8 weights
      (data/lenet-weights.js, ~44 KB gzip) and the forward pass never reach
-     any other page — the homepage hero borrows only the six conv1 kernels
-     (data/hero-scan.js), and only when its Learned filter is chosen. */
+     any other page. */
   const mnistLab = document.getElementById('mnist-lab');
   if (mnistLab) {
     import('./mnist-lab.js')

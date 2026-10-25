@@ -9,11 +9,10 @@
 
    Used by `scripts/train-cnn.mjs` (trains on MNIST),
    `scripts/generate-lenet-weights.mjs` (quantises the trained weights to int8
-   for the interactive page) and `scripts/generate-hero-scan.mjs` (conv1 only,
-   for the homepage hero's Learned filter).
+   for the interactive page).
 
-   The homepage ships at most conv1 (for its hero), so it stays free of
-   any ML runtime; the weights reach the browser on
+   The homepage ships none of it, so it stays free of any ML runtime; the
+   weights reach the browser on
    projects/mnist-lenet.html alone.
 
    Architecture: see js/lenet.js.

@@ -546,32 +546,30 @@ describe('theme', () => {
    that shipped the bug). The property test above still holds the line. */
 
 describe('lifecycle: the page survives Back', () => {
-  /* The hero no longer animates on its own (it draws on demand), so "alive"
-     means: it still answers input. Drag across it and require the canvas to
-     change. A torn-down instance has lost its pointer listeners, and the
-     canvas stays as it was. Each call ends the drag at the opposite end
-     from the last, so consecutive calls both move the window. */
-  let dragRight = false;
-  const heroIsAnimating = async (page) => {
-    const hash = () => page.evaluate(() => {
-      const c = document.getElementById('field-canvas');
-      if (!c) return 'no-canvas';
-      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  /* The hero draws a still picture and only moves in short bursts of static,
+     so "alive" cannot be read off two quiet samples. It means: it is still
+     laid out and painted after the freeze, and its timers survived — so the
+     check watches for a burst (the first is due ~1.5 s after it paints, the
+     next within 10 s). A torn-down instance has cancelled its timer, and the
+     canvas never changes again. Resolves true on the first changed frame. */
+  const heroIsAnimating = (page) => page.evaluate(async () => {
+    const c = document.getElementById('field-canvas');
+    if (!c) return 'no-canvas';
+    const ctx = c.getContext('2d');
+    const hash = () => {
+      const d = ctx.getImageData(0, 0, c.width, c.height).data;
       let h = 0;
-      for (let i = 0; i < d.length; i += 4 * 7) h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 3]) | 0;
+      for (let i = 0; i < d.length; i += 4 * 7) h = (h * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7 + d[i + 3]) | 0;
       return h;
-    });
-    const before = await hash();
-    if (before === 'no-canvas') return before;
-    const box = await page.locator('#field-canvas').boundingBox();
-    const [from, to] = (dragRight = !dragRight) ? [0.2, 0.9] : [0.9, 0.2];
-    await page.mouse.move(box.x + box.width * from, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width * to, box.y + box.height / 2, { steps: 5 });
-    await page.mouse.up();
-    await page.waitForTimeout(100);
-    return before !== await hash();
-  };
+    };
+    const before = hash();
+    const t0 = performance.now();
+    while (performance.now() - t0 < 14000) {
+      await new Promise((r) => setTimeout(r, 30));
+      if (hash() !== before) return true;
+    }
+    return false;
+  });
 
   const paletteOpens = async (page) => {
     await page.keyboard.press('Control+k');
