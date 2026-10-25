@@ -788,10 +788,10 @@ body::before {
 }
 
 /* ─── 6. Hero Section ───────────────────────────────────── */
-/* The name, as a convolution sees it (js/receptive-field.js): a full-width
-   pixel grid on top, the copy and the filter controls side by side beneath.
-   No full-viewport centring and no parallax any more — both existed to stage
-   copy over a background scene, and here the scene *is* the headline.
+/* The name, as an untuned television shows it (js/hero-grid.js): a full-width
+   pixel grid on top, the copy beneath. No full-viewport centring and no
+   parallax any more — both existed to stage copy over a background scene, and
+   here the scene *is* the headline.
 
    #hero no longer clips (it used to, for the scene canvases), so nothing in it
    can be cut off at any scroll position; the content.e2e guard for that still
@@ -813,7 +813,7 @@ body::before {
    swaps one picture of the name for another instead of shoving the page down.
    The two ratios are what the condensed display face fills at the grid's
    cell sizes: two lines on a narrow canvas (~1.6 : 1), one line once the
-   canvas is 900px wide (~6.8 : 1). js/receptive-field.js measures the real
+   canvas is 900px wide (~6.8 : 1). js/hero-grid.js measures the real
    value and sets the canvas height from it — this is only the placeholder.
    No reservation without scripting: then there is no canvas, and the <h1> is
    the whole hero name. */
@@ -853,10 +853,6 @@ body::before {
   position: absolute;
   inset: 0 0 auto 0;
   width: 100%;
-  /* Horizontal drags steer the filter window; vertical ones must stay a page
-     scroll, or the hero would steal the phone's primary gesture. */
-  touch-action: pan-y;
-  cursor: ew-resize;
   opacity: 0;
 }
 
@@ -973,15 +969,6 @@ body::before {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-}
-
-/* Phones get a still frame (js/receptive-field.js, PHONE_QUERY): the window
-   parks at 70% and a touch is a scroll. */
-@media (max-width: 760px) {
-  #field-canvas {
-    touch-action: auto;
-    cursor: default;
-  }
 }
 
 /* ─── 7. Buttons ────────────────────────────────────────── */

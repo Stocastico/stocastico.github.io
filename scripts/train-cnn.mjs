@@ -10,8 +10,7 @@
    This is a one-off, run-by-hand step — it downloads ~11 MB of MNIST into
    .cache/mnist/ (gitignored) and takes a few minutes of pure-JS CPU. Neither
    the dataset nor any ML library ever ships to the browser: only the int8
-   weights produced later by `generate-lenet-weights` and
-   `generate-hero-scan` do.
+   weights produced later by `generate-lenet-weights` do.
 
    Run:  node scripts/train-cnn.mjs [--epochs 8] [--train 60000] [--seed 1337]
                                     [--lr 0.05] [--decay 0.68] [--batch 32]
@@ -392,7 +391,7 @@ async function main() {
     JSON.stringify(modelJson) + '\n');
   writeSamples(samples);
   process.stdout.write('  wrote data/cnn-model.json + data/cnn-samples.json\n');
-  process.stdout.write('  next: npm run generate-lenet-weights && npm run generate-hero-scan\n');
+  process.stdout.write('  next: npm run generate-lenet-weights\n');
 }
 
 main().catch((err) => {

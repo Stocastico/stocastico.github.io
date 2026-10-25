@@ -28,7 +28,7 @@ import {
    dynamically imports them so Three.js is not in the per-page bundle. */
 import { Globe3D, GlobeFallback2D, isEuropeanSecondaryPin } from '../js/globe.js';
 import { hasCoords } from '../js/utils.js';
-import { ReceptiveField, FILTERS } from '../js/receptive-field.js';
+import { HeroGrid, glitchBands } from '../js/hero-grid.js';
 import { __setThreeForTests, __resetThreeForTests } from '../js/three-context.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1161,14 +1161,13 @@ test('no card tilts: initCardTilt and the .tilt-ready gloss are gone', () => {
    background scene). Its three tests went with the JS version. */
 /* The hero used to be two Canvas2D scenes (the CNN pipeline, the conv1 kernel
    scan) over a WebGL noise gradient, swapped at a breakpoint. All three went
-   when the hero became js/receptive-field.js; their tests went with them. The
-   filter arithmetic is tested in test/receptive-field.test.mjs, and the
-   chunk boundaries in test/hero-scan.test.mjs. What is left for this layer is
-   the wiring and the renderer's DOM contract. */
+   when the hero became a pixel grid (js/hero-grid.js now); their tests went
+   with them. The glitch arithmetic is tested in test/hero-grid.test.mjs. What
+   is left for this layer is the wiring and the renderer's DOM contract. */
 
 test('main.js reaches the hero through a dynamic import', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'main.js'), 'utf8');
-  assert.ok(/import\(['"]\.\/receptive-field\.js['"]\)[\s\S]{0,80}ReceptiveField/.test(src),
+  assert.ok(/import\(['"]\.\/hero-grid\.js['"]\)[\s\S]{0,80}HeroGrid/.test(src),
     'the hero should be loaded at its init site');
   assert.ok(!/cnn-hero|kernel-scan|noise-gradient|NoiseGradient/.test(src),
     'nothing may still reach for the retired hero modules');
@@ -1176,11 +1175,12 @@ test('main.js reaches the hero through a dynamic import', () => {
     'there is one theme (#188): nothing should listen for, or set up, a theme switch');
 });
 
-/* ─── ReceptiveField (the hero) ──────────────────────────────
+/* ─── HeroGrid (the hero) ────────────────────────────────────
    Stubs enough of a document for the renderer to rasterise the name into an
    offscreen canvas and draw a frame. The offscreen getImageData returns ink
-   in a block, so the convolution has edges to find. */
-function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
+   in a block, and the main context records every fill colour so a test can
+   tell a torn frame from a plain one. */
+function fieldEnv(fn, { reduced = true } = {}) {
   const prev = {
     document: global.document, window: global.window,
     getComputedStyle: global.getComputedStyle,
@@ -1196,11 +1196,11 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
       if (i >= 0) listeners.splice(i, 1);
     },
   });
-  const drawn = { fillRect: 0, strokeRect: 0 };
+  const drawn = { fillRect: 0, styles: [] };
   const ctx = {
-    fillStyle: '', strokeStyle: '', lineWidth: 0,
-    setTransform() {}, clearRect() {}, setLineDash() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
-    fillRect() { drawn.fillRect++; }, strokeRect() { drawn.strokeRect++; },
+    set fillStyle(v) { drawn.styles.push(v); },
+    setTransform() {}, clearRect() {},
+    fillRect() { drawn.fillRect++; },
   };
   const offscreen = () => {
     const c = { width: 0, height: 0 };
@@ -1235,7 +1235,7 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
 
   global.document = { createElement: () => (created++ === 0 ? Object.assign(offscreen(), { getContext: () => probe() }) : offscreen()), ...track('document') };
   global.window = { devicePixelRatio: 2,
-    matchMedia: (q) => ({ matches: /max-width/.test(q) ? narrow : reduced }), ...track('window') };
+    matchMedia: () => ({ matches: reduced }), ...track('window') };
   global.getComputedStyle = () => ({ fontFamily: 'monospace' });
   global.requestAnimationFrame = () => 1;
   global.cancelAnimationFrame = () => {};
@@ -1251,99 +1251,59 @@ function fieldEnv(fn, { reduced = true, narrow = false } = {}) {
   }
 }
 
-test('ReceptiveField draws the name and reports its first paint', () => {
+test('HeroGrid draws the name and reports its first paint', () => {
   fieldEnv(({ root, drawn }) => {
     let ready = 0;
-    const rf = new ReceptiveField(root, () => ready++, { random: () => 0 });
-    assert.ok(rf.cols > 50 && rf.rows > 5, `grid ${rf.cols}×${rf.rows}`);
-    assert.ok(drawn.fillRect >= rf.cols * rf.rows, 'every cell is painted');
-    assert.ok(drawn.strokeRect >= 1, 'the window is drawn');
+    const hg = new HeroGrid(root, () => ready++, { random: () => 0.5 });
+    assert.ok(hg.cols > 50 && hg.rows > 5, `grid ${hg.cols}×${hg.rows}`);
+    assert.ok(drawn.fillRect >= hg.cols * hg.rows, 'every cell is painted');
     assert.equal(ready, 1, 'onReady fires once, after the first frame');
-    assert.equal(rf.filter.id, 'edges');
-    rf.destroy();
+    hg.destroy();
   });
 });
 
-test('ReceptiveField: the filter is drawn at random on each load, and nothing lets the visitor choose', () => {
-  /* No menu, no picker: every load is one filter, chosen uniformly from
-     FILTERS. The visitor's only input is dragging the window. */
-  const seen = FILTERS.map((f, i) => fieldEnv(({ root }) => {
-    const rf = new ReceptiveField(root, null, { random: () => (i + 0.5) / FILTERS.length });
-    const id = rf.filter.id;
-    rf.destroy();
-    return id;
-  }));
-  assert.deepEqual(seen, FILTERS.map((f) => f.id), 'every filter is reachable');
-  fieldEnv(({ root, listeners }) => {
-    const rf = new ReceptiveField(root);
-    assert.ok(FILTERS.includes(rf.filter), 'the default draw uses Math.random');
-    assert.ok(!listeners.some((l) => l.type === 'change'), 'a filter control is wired again');
-    rf.destroy();
+test('HeroGrid: a torn frame differs from the plain one, uses palette colours, and the next plain frame restores it', () => {
+  fieldEnv(({ root, drawn }) => {
+    const hg = new HeroGrid(root, null, { random: () => 0.5 });
+    const frame = (bands) => { drawn.styles.length = 0; hg._draw(bands); return drawn.styles.slice(); };
+    const plain = frame(null);
+    const bands = glitchBands(() => 0.37, hg.cols, hg.rows, hg._colors);
+    assert.ok(bands.some((b) => b.tint), 'the test burst carries a tinted band');
+    const torn = frame(bands);
+    assert.notDeepEqual(torn, plain, 'a burst changed nothing');
+    const rgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, 1)`; };
+    const tint = bands.find((b) => b.tint).tint;
+    assert.ok(torn.some((c) => tint.map(rgb).includes(c)), 'the tinted band painted none of its colours');
+    assert.deepEqual(frame(null), plain, 'the plain frame is not restored after a burst');
+    hg.destroy();
   });
 });
 
-test('the hero ships no filter menu', () => {
-  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  for (const gone of ['field-filter', 'field-controls', 'field-picker', 'hero-aside']) {
-    assert.ok(!html.includes(gone), `${gone} is back in index.html`);
-  }
-  const css = fs.readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
-  assert.ok(!/\.field-(controls|picker)|\.hero-aside/.test(css), 'dead filter-menu CSS left behind');
-});
-
-test('ReceptiveField on a phone always draws Edges, whatever the dice say', () => {
-  const last = () => 0.999;
-  const phone = fieldEnv(({ root }) => {
-    const rf = new ReceptiveField(root, null, { random: last });
-    const id = rf.filter.id;
-    rf.destroy();
-    return id;
-  }, { narrow: true });
-  assert.equal(phone, 'edges', 'a phone drew a random filter');
-  const desktop = fieldEnv(({ root }) => {
-    const rf = new ReceptiveField(root, null, { random: last });
-    const id = rf.filter.id;
-    rf.destroy();
-    return id;
-  });
-  assert.equal(desktop, FILTERS[FILTERS.length - 1].id, 'a desktop stopped drawing at random');
-});
-
-test('ReceptiveField: under reduced motion there is no intro sweep, but the window is placed', () => {
-  fieldEnv(({ root, parts }) => {
-    const rf = new ReceptiveField(root);
-    assert.equal(rf._frame, null, 'no animation frame requested');
-    assert.ok(rf.t > 0.5, 'the window starts part-way across, so the effect is visible at once');
-    rf.destroy();
+test('HeroGrid: bursts are scheduled when motion is allowed, never under reduced motion, and destroy() cancels them', () => {
+  fieldEnv(({ root }) => {
+    const calm = new HeroGrid(root);
+    assert.equal(calm._timers.length, 0, 'reduced motion must not schedule a burst');
+    calm.destroy();
   }, { reduced: true });
+  fieldEnv(({ root }) => {
+    const hg = new HeroGrid(root, null, { random: () => 0 });
+    assert.equal(hg._timers.length, 1, 'one burst is scheduled, not a loop');
+    hg.destroy();
+    assert.equal(hg._timers.length, 0, 'destroy() leaves a timer behind');
+    assert.equal(hg.ctx, null);
+  }, { reduced: false });
 });
 
-test('ReceptiveField on a phone: a still frame at 70%, and a drag does not move it', () => {
-  /* The hero is a picture on a phone, not an instrument: the window settles
-     at 70% of the name (filtered left of it, raw ink right of it) and stays
-     there. A finger on the hero is a scroll. */
-  fieldEnv(({ root, listeners }) => {
-    const rf = new ReceptiveField(root);
-    assert.equal(rf.t, 0.7);
-    const down = listeners.find((l) => l.on === 'canvas' && l.type === 'pointerdown');
-    if (down) down.fn({ pointerId: 1, clientX: 50, clientY: 10 });
-    assert.equal(rf.t, 0.7, 'a touch on the hero moved the window');
-    rf.destroy();
-  }, { reduced: true, narrow: true });
-});
-
-test('ReceptiveField: dragging is pan-y only, and destroy() releases everything (bfcache)', () => {
+test('HeroGrid: nothing to drag, nothing listening, and destroy() releases everything (bfcache)', () => {
   fieldEnv(({ root, listeners, observers }) => {
-    const rf = new ReceptiveField(root);
-    assert.ok(listeners.some((l) => l.on === 'canvas' && l.type === 'pointerdown'), 'drag is wired');
-    rf.destroy();
-    assert.equal(listeners.length, 0,
-      `destroy() left ${listeners.length} listener(s): ${listeners.map((l) => l.type).join(', ')}`);
+    const hg = new HeroGrid(root);
+    assert.equal(listeners.length, 0, `the hero is decoration, yet it listens: ${listeners.map((l) => l.type).join(', ')}`);
+    hg.destroy();
     assert.ok(observers.every((o) => o.disconnected), 'destroy() disconnects the ResizeObserver');
   });
   const css = fs.readFileSync(path.join(ROOT, 'css', 'styles.css'), 'utf8');
-  assert.match(css, /#field-canvas\s*\{[^}]*touch-action:\s*pan-y/,
-    'a vertical swipe over the hero must stay a page scroll on a phone');
+  assert.doesNotMatch(css, /ew-resize/, 'the canvas still advertises a drag that no longer exists');
+  assert.doesNotMatch(css, /#field-canvas\s*\{[^}]*touch-action:\s*pan-y/, 'a hero with nothing to drag must not constrain touch');
 });
 
 /* ─── GlobeFallback2D tests ───────────────────────────────── */
