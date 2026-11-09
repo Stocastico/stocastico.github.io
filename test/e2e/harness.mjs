@@ -83,7 +83,7 @@ export function startServer(root = DIST) {
    one; a dev container often carries a different revision, and the resulting
    "Executable doesn't exist" is not a test failure worth debugging. Fall back
    to whatever chromium is actually on disk. */
-function findChromium() {
+export function findChromium() {
   if (process.env.CHROMIUM_EXECUTABLE) return process.env.CHROMIUM_EXECUTABLE;
   const dir = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
   if (!existsSync(dir)) return null;
@@ -91,7 +91,9 @@ function findChromium() {
     .filter((d) => d.startsWith('chromium-'))
     .sort()
     .reverse()
-    .map((d) => join(dir, d, 'chrome-linux', 'chrome'))
+    /* Playwright has shipped both layouts; newest build first, then whichever
+       directory name exists inside it. */
+    .flatMap((d) => ['chrome-linux64', 'chrome-linux'].map((l) => join(dir, d, l, 'chrome')))
     .filter(existsSync);
   return candidates[0] ?? null;
 }
