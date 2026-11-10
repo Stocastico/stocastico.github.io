@@ -820,19 +820,9 @@ body::before {
 .field {
   position: relative;
   display: grid;
-  align-items: center;
-}
-
-@media (scripting: enabled) {
-  .field {
-    aspect-ratio: 1.6 / 1;
-  }
-
-  @media (min-width: 1030px) {
-    .field {
-      aspect-ratio: 6.8 / 1;
-    }
-  }
+  align-items: start;
+  /* The name is sized in the box's own width (cqw), below. */
+  container-type: inline-size;
 }
 
 .hero-name {
@@ -840,13 +830,59 @@ body::before {
   font-size: clamp(3.5rem, 14vw, 12rem);
   font-weight: 800;
   /* The canvas reads weight, stretch and family off this element when it
-     rasterises the name, so the grid and the no-JS text are the same type. */
-  font-stretch: 62%;
-  line-height: 0.9;
-  letter-spacing: var(--tracking-display);
+     rasterises the name, so the grid and the no-JS text are the same type.
+     62.5% is the keyword the canvas can say (extra-condensed), so the two
+     match exactly; no letter-spacing, which the canvas does not apply. */
+  font-stretch: 62.5%;
+  line-height: 0.94;
+  letter-spacing: 0;
   margin: 0;
   color: var(--text);
   user-select: text;
+}
+
+/* The text is the first thing painted and the grid replaces it, so the two
+   have to be the same size and sit on the same line, or the name visibly
+   changes type when the grid arrives. The grid fits the longest line to its
+   width (js/hero-grid.js fitFont), which makes the font size width / K with K
+   the advance in em: 5.615 for the whole name on one line (the grid's rule
+   from 900px), 2.819 for "Masneri", the wider of the two words, below it.
+   Measured from the face (Archivo 800, 62.5%); test/e2e/content.e2e.mjs holds
+   text and grid to the same width and baseline, so a different face or weight
+   fails there instead of shifting the name.
+   The height is the grid's: its rows are 2 + 0.94 em per extra line + 0.76 em
+   (cap height) in cells of 7, 6 or 5px, so the box reserves exactly that and
+   does not change size when the grid draws. The grid's first baseline is
+   0.76 em + one cell from the top; the line box puts the text's at 0.804 em
+   (half-leading + ascent), so it is nudged up by the difference. */
+@container (max-width: 599.98px) {
+  .hero-name {
+    font-size: calc(100cqw / 2.819);
+    height: calc(1.7em + 10px);
+    position: relative;
+    top: calc(5px - 0.044em);
+  }
+}
+
+@container (min-width: 600px) and (max-width: 899.98px) {
+  .hero-name {
+    font-size: calc(100cqw / 2.819);
+    height: calc(1.7em + 12px);
+    position: relative;
+    top: calc(6px - 0.044em);
+  }
+}
+
+@container (min-width: 900px) {
+  .hero-name {
+    font-size: calc(100cqw / 5.615);
+    /* Sized to exactly its box, so a browser that measures it a hair wider
+       would otherwise break the line (a newer Chromium did, in CI). */
+    white-space: nowrap;
+    height: calc(0.76em + 14px);
+    position: relative;
+    top: calc(7px - 0.044em);
+  }
 }
 
 #field-canvas {

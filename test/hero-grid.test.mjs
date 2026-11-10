@@ -86,12 +86,18 @@ test('sampleShifted: a slipped row reads from the cell it slipped from, and wrap
   assert.equal(sampleShifted(g, w, 3, 0, 12), sampleShifted(g, w, 3, 0, 2), 'a slip longer than the row wraps');
 });
 
-test('fitFont: the longer line fills the grid width without overflowing it', () => {
+test('fitFont: the longer line fills the grid width exactly, so the <h1> can be sized by the same ratio', () => {
   /* A fake measure: every glyph is 0.6 em wide, like a monospace. */
   const measure = (text, size) => text.length * size * 0.6;
-  const size = fitFont(['Stefano', 'Masneri'], 140, measure);
-  assert.ok(measure('Stefano', size) <= 140);
-  assert.ok(measure('Stefano', size + 1) > 140 * 0.97, 'leaves more than 3% of the width unused');
+  for (const cols of [93, 140, 169, 1180 / 7]) {
+    const size = fitFont(['Stefano', 'Masneri'], cols, measure);
+    const w = measure('Stefano', size);
+    assert.ok(w <= cols, `${w} overflows ${cols}`);
+    assert.ok(w > cols * 0.999, `${w} leaves ${(100 * (1 - w / cols)).toFixed(2)}% of ${cols} unused`);
+  }
+  /* The CSS sizes the text as width / K with K the advance in em, so the size
+     must be the width over that advance: no integer rounding in between. */
+  assert.ok(Math.abs(fitFont(['Stefano Masneri'], 169, measure) - 169 / (15 * 0.6)) < 0.02);
 });
 
 test('stretchKeyword: percentages map to the nearest keyword the canvas font accepts', () => {

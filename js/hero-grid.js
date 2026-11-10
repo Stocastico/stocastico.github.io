@@ -91,12 +91,19 @@ export function sampleShifted(grid, w, x, y, dx) {
   return grid[y * w + (((x - dx) % w) + w) % w];
 }
 
-/* Largest integer font size (in cells) at which the widest line still fits
-   the grid. `measure(text, size)` is canvas measureText in production and a
-   stub in the tests. */
+/* The font size (in cells) at which the widest line exactly fills the grid.
+   `measure(text, size)` is canvas measureText in production and a stub in the
+   tests. */
 export function fitFont(lines, cols, measure) {
-  let size = 4;
-  while (size < 400 && Math.max(...lines.map((l) => measure(l, size + 1))) <= cols) size++;
+  /* Text width is linear in the font size, so the size that fills `cols` is
+     cols over the width of the longest line at any reference size. No integer
+     steps: the <h1> is sized in CSS as width / (advance in em), and the grid
+     has to use the same ratio or the two are visibly different sizes. The
+     loop only guards a measure that is not quite linear (hinting). */
+  const REF = 100;
+  const widest = (s) => Math.max(...lines.map((l) => measure(l, s)));
+  let size = Math.min(400, Math.max(4, (cols * REF) / widest(REF)));
+  while (size > 4 && widest(size) > cols) size *= 0.999;
   return size;
 }
 
@@ -115,6 +122,9 @@ export function stretchKeyword(value) {
 }
 
 /* ── Renderer ──────────────────────────────────────────────────────────── */
+
+/* Longest the first paint waits for the display face before drawing anyway. */
+const FONT_WAIT_MS = 2500;
 
 const INK = 0.35; // coverage above which a cell counts as ink
 
@@ -138,7 +148,17 @@ export class HeroGrid {
     this._words = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
 
     this._layout();
-    this._draw(null);
+    /* The display face is a web font, and the canvas only uses a face the
+       browser already has: drawn too early it measures and rasterises the
+       fallback, hides the <h1>, and then redraws in Archivo a moment later, so
+       the name visibly changes type after load. When the face is not in yet,
+       hold the first paint (the <h1> text, reserved box and all, stays on
+       screen meanwhile) and draw once it arrives, or after FONT_WAIT_MS if it
+       never does, so the name cannot stay hidden behind a font that failed. */
+    const fonts = typeof document !== 'undefined' && document.fonts && typeof document.fonts.load === 'function'
+      ? document.fonts : null;
+    this._waiting = !!fonts && typeof fonts.check === 'function' && !fonts.check(this._font(100));
+    if (!this._waiting) this._draw(null);
 
     if (typeof ResizeObserver === 'function') {
       let last = this.canvas.clientWidth;
@@ -151,14 +171,17 @@ export class HeroGrid {
       this._ro.observe(this.root);
     }
 
-    /* The display face is a web font with font-display: swap, so the first
-       layout may have measured a fallback. Lay out again once it is in. */
-    if (document.fonts && typeof document.fonts.load === 'function') {
-      document.fonts.load(this._font(100)).then(() => {
-        if (!this.ctx) return;
-        this._layout();
+    if (fonts) {
+      let settled = false;
+      const settle = () => {
+        if (settled || !this.ctx) return;
+        settled = true;
+        this._waiting = false;
+        this._layout(); // measured against the real face this time
         this._draw(null);
-      }, () => {});
+      };
+      fonts.load(this._font(100)).then(settle, settle);
+      if (this._waiting) this._later(settle, FONT_WAIT_MS);
     }
 
     if (!prefersReducedMotion()) this._schedule(BURST.firstAfterMs);
@@ -217,9 +240,16 @@ export class HeroGrid {
     const font = (s) => `${head} ${s}px ${cs.fontFamily}`;
     this._font = font;
     const size = fitFont(this._lines, cols, (text, s) => { probe.font = font(s); return probe.measureText(text).width; });
-    const lineH = Math.round(size * 0.94);
-    const cap = Math.round(size * 0.76);
-    const rows = 2 + lineH * (this._lines.length - 1) + cap;
+    /* Exact, not rounded to whole cells: the cells are shaded by coverage, so a
+       fractional baseline costs nothing, and the <h1> that stands in for the
+       grid is placed in CSS from the same 0.94 em line and 0.76 em of cap
+       height. Rounding each to a cell put the two a cell or more apart. */
+    const lineH = size * 0.94;
+    const cap = size * 0.76;
+    const n = this._lines.length;
+    /* Two cells of margin, and never fewer rows than the last baseline plus
+       half a cell, or the bottom of a round letter is cut. */
+    const rows = Math.max(Math.round(2 + lineH * (n - 1) + cap), Math.ceil(1 + cap + lineH * (n - 1) + 0.5));
 
     const off = document.createElement('canvas');
     off.width = cols; off.height = rows;
@@ -244,7 +274,7 @@ export class HeroGrid {
   /* One frame. `bands` is null for the plain name, or glitchBands() output. */
   _draw(bands) {
     const { ctx, cols, rows, cell, grid } = this;
-    if (!ctx || !grid) return;
+    if (!ctx || !grid || this._waiting) return;
     const { text } = this._theme;
     const gap = Math.max(1, cell * 0.14);
     const s = cell - gap;
