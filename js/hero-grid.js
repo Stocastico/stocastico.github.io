@@ -91,12 +91,19 @@ export function sampleShifted(grid, w, x, y, dx) {
   return grid[y * w + (((x - dx) % w) + w) % w];
 }
 
-/* Largest integer font size (in cells) at which the widest line still fits
-   the grid. `measure(text, size)` is canvas measureText in production and a
-   stub in the tests. */
+/* The font size (in cells) at which the widest line exactly fills the grid.
+   `measure(text, size)` is canvas measureText in production and a stub in the
+   tests. */
 export function fitFont(lines, cols, measure) {
-  let size = 4;
-  while (size < 400 && Math.max(...lines.map((l) => measure(l, size + 1))) <= cols) size++;
+  /* Text width is linear in the font size, so the size that fills `cols` is
+     cols over the width of the longest line at any reference size. No integer
+     steps: the <h1> is sized in CSS as width / (advance in em), and the grid
+     has to use the same ratio or the two are visibly different sizes. The
+     loop only guards a measure that is not quite linear (hinting). */
+  const REF = 100;
+  const widest = (s) => Math.max(...lines.map((l) => measure(l, s)));
+  let size = Math.min(400, Math.max(4, (cols * REF) / widest(REF)));
+  while (size > 4 && widest(size) > cols) size *= 0.999;
   return size;
 }
 
@@ -233,9 +240,16 @@ export class HeroGrid {
     const font = (s) => `${head} ${s}px ${cs.fontFamily}`;
     this._font = font;
     const size = fitFont(this._lines, cols, (text, s) => { probe.font = font(s); return probe.measureText(text).width; });
-    const lineH = Math.round(size * 0.94);
-    const cap = Math.round(size * 0.76);
-    const rows = 2 + lineH * (this._lines.length - 1) + cap;
+    /* Exact, not rounded to whole cells: the cells are shaded by coverage, so a
+       fractional baseline costs nothing, and the <h1> that stands in for the
+       grid is placed in CSS from the same 0.94 em line and 0.76 em of cap
+       height. Rounding each to a cell put the two a cell or more apart. */
+    const lineH = size * 0.94;
+    const cap = size * 0.76;
+    const n = this._lines.length;
+    /* Two cells of margin, and never fewer rows than the last baseline plus
+       half a cell, or the bottom of a round letter is cut. */
+    const rows = Math.max(Math.round(2 + lineH * (n - 1) + cap), Math.ceil(1 + cap + lineH * (n - 1) + 0.5));
 
     const off = document.createElement('canvas');
     off.width = cols; off.height = rows;

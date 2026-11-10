@@ -382,39 +382,68 @@ describe('hero: the name as static', () => {
     } finally { await page.close(); }
   });
 
-  /* The handover. The <h1> is the no-JS text and the grid replaces it, so if
-     the text is painted first the name visibly changes type and width when the
-     grid arrives (the grid is fitted to the full width; the text is not). With
-     JS on, the text stays unpainted until the grid has drawn, and a CSS timer
-     brings it back if the grid never does — hidden content needs a way out. */
-  const nameOpacity = (page) => page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#hero h1')).opacity));
-
-  test('the text name is not painted while the grid is on its way', async () => {
-    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
-    try {
-      await page.route('**/assets/hero-grid-*.js', async (route) => {
-        await new Promise((r) => setTimeout(r, 1500));
-        await route.continue();
-      });
-      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(500);
-      assert.equal(await page.evaluate(() => document.querySelector('#hero').classList.contains('is-drawn')), false,
-        'the grid drew early; the test is not looking at the wait');
-      assert.equal(await nameOpacity(page), 0, 'the plain <h1> is painted before the grid, so the name changes type when it arrives');
-      await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
-    } finally { await page.close(); }
+  /* The handover. The <h1> is painted first and the grid replaces it, so if the
+     two differ in size or place the name visibly changes type when the grid
+     arrives. The text is sized to the grid by construction (CSS: width over the
+     font's advance in em; JS: the same ratio, unrounded), and these tests hold
+     it to that on what the browser painted. Measured on two loads: one with the
+     grid's chunk aborted, so the <h1> stays unclipped and measurable, and one
+     normal, for the canvas. */
+  const measureText = (page) => page.evaluate(() => {
+    const h1 = document.querySelector('#hero h1');
+    const field = document.querySelector('#hero .field');
+    const range = document.createRange();
+    range.selectNodeContents(h1);
+    const lines = [...range.getClientRects()].map((r) => ({ left: r.left, width: r.width }));
+    const mark = document.createElement('span');
+    mark.style.cssText = 'display:inline-block;width:0;height:0';
+    h1.appendChild(mark);
+    const baseline = mark.getBoundingClientRect().bottom;
+    mark.remove();
+    const f = field.getBoundingClientRect();
+    const next = document.querySelector('.hero-body').getBoundingClientRect().top;
+    return { fieldLeft: f.left, fieldTop: f.top, fieldWidth: f.width, fieldHeight: f.height, baseline, lines, next,
+      opacity: parseFloat(getComputedStyle(h1).opacity) };
+  });
+  const measureGrid = (page) => page.evaluate(() => {
+    const c = document.getElementById('field-canvas');
+    const r = c.getBoundingClientRect();
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let bottom = -1;
+    for (let y = c.height - 1; y >= 0 && bottom < 0; y--) {
+      for (let x = 0; x < c.width; x += 2) { const i = (y * c.width + x) * 4; if (d[i + 3] > 200 && d[i] > 200 && d[i + 1] > 200) { bottom = y; break; } }
+    }
+    const scale = r.height / c.height;
+    const next = document.querySelector('.hero-body').getBoundingClientRect().top;
+    return { top: r.top, width: r.width, height: r.height, inkBottom: r.top + (bottom + 1) * scale, next };
   });
 
-  test('if the grid never arrives the name comes back on its own', async () => {
-    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
-    try {
-      await page.route('**/assets/hero-grid-*.js', (route) => route.abort());
-      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(3800);
-      assert.equal(await page.evaluate(() => document.querySelector('#hero').classList.contains('is-drawn')), false);
-      assert.equal(await nameOpacity(page), 1, 'the name stayed invisible behind a script that never ran');
-    } finally { await page.close(); }
-  });
+  for (const [label, viewport] of [['desktop', VIEWPORTS.desktop], ['tablet', VIEWPORTS.tablet], ['phone', VIEWPORTS.mobile]]) {
+    test(`${label}: the text name and the grid are the same size and sit on the same line, and nothing moves when the grid draws`, async () => {
+      const before = await newPage(browser, server, { viewport });
+      const after = await newPage(browser, server, { viewport });
+      try {
+        await before.route('**/assets/hero-grid-*.js', (route) => route.abort());
+        await before.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        await before.evaluate(() => document.fonts.ready);
+        const t = await measureText(before);
+        assert.equal(t.opacity, 1, 'the text name is not painted before the grid');
+
+        await after.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+        await after.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+        const g = await measureGrid(after);
+
+        const widest = Math.max(...t.lines.map((l) => l.width));
+        assert.ok(Math.abs(widest - g.width) / g.width < 0.01,
+          `text is ${widest.toFixed(1)}px wide, grid ${g.width.toFixed(1)}px: the name changes size when it is drawn`);
+        const cell = g.width / Math.round(g.width / (g.width >= 900 ? 7 : g.width >= 600 ? 6 : 5));
+        assert.ok(Math.abs((t.baseline - t.fieldTop) - (g.inkBottom - g.top)) < cell,
+          `baselines differ by ${((t.baseline - t.fieldTop) - (g.inkBottom - g.top)).toFixed(1)}px: the name jumps when it is drawn`);
+        assert.ok(Math.abs(t.next - g.next) <= cell, `content below the name moves ${(g.next - t.next).toFixed(1)}px when the grid draws`);
+        assert.equal(t.lines.length, g.width >= 900 ? 1 : 2, 'the text wraps differently from the grid');
+      } finally { await before.close(); await after.close(); }
+    });
+  }
 
   test('without JavaScript the name is plain text', async () => {
     const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });
