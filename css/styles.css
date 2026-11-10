@@ -878,6 +878,25 @@ body::before {
   white-space: nowrap;
 }
 
+/* The text is the no-JS name, not the one a visitor with JS is meant to see:
+   the grid is fitted to the full width and the <h1> is not, so painting the
+   text first and swapping in the grid ~300 ms later reads as the name changing
+   type and size after load. With scripting on, hold the text unpainted (it
+   stays in the box, the accessibility tree and find-in-page; opacity, not
+   display) until the grid has drawn. The animation is the way out: it fires
+   after 3 s whatever JS did, so a failed chunk cannot leave the page without
+   its name. A delay survives reduced-motion's 0.01 ms duration clamp. */
+@media (scripting: enabled) {
+  #hero:not(.is-drawn) .hero-name {
+    opacity: 0;
+    animation: hero-name-failsafe 0s linear 3s forwards;
+  }
+}
+
+@keyframes hero-name-failsafe {
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   #field-canvas {
     transition: opacity 400ms var(--ease);
@@ -5767,7 +5786,13 @@ a.edit-clip-body:focus-visible {
     animation: none !important;
   }
 
-  /* The hero grid is not printed, so the name it stood in for has to be. */
+  /* The hero grid is not printed, so the name it stood in for has to be. A
+     page printed before the grid drew would otherwise print it unpainted. */
+  #hero .hero-name {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
   #hero.is-drawn .hero-name {
     position: static;
     width: auto;

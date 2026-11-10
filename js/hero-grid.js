@@ -116,6 +116,9 @@ export function stretchKeyword(value) {
 
 /* ── Renderer ──────────────────────────────────────────────────────────── */
 
+/* Longest the first paint waits for the display face before drawing anyway. */
+const FONT_WAIT_MS = 2500;
+
 const INK = 0.35; // coverage above which a cell counts as ink
 
 export class HeroGrid {
@@ -138,7 +141,17 @@ export class HeroGrid {
     this._words = (root.querySelector('h1')?.textContent || 'Stefano Masneri').trim().split(/\s+/);
 
     this._layout();
-    this._draw(null);
+    /* The display face is a web font, and the canvas only uses a face the
+       browser already has: drawn too early it measures and rasterises the
+       fallback, hides the <h1>, and then redraws in Archivo a moment later, so
+       the name visibly changes type after load. When the face is not in yet,
+       hold the first paint (the <h1> text, reserved box and all, stays on
+       screen meanwhile) and draw once it arrives, or after FONT_WAIT_MS if it
+       never does, so the name cannot stay hidden behind a font that failed. */
+    const fonts = typeof document !== 'undefined' && document.fonts && typeof document.fonts.load === 'function'
+      ? document.fonts : null;
+    this._waiting = !!fonts && typeof fonts.check === 'function' && !fonts.check(this._font(100));
+    if (!this._waiting) this._draw(null);
 
     if (typeof ResizeObserver === 'function') {
       let last = this.canvas.clientWidth;
@@ -151,14 +164,17 @@ export class HeroGrid {
       this._ro.observe(this.root);
     }
 
-    /* The display face is a web font with font-display: swap, so the first
-       layout may have measured a fallback. Lay out again once it is in. */
-    if (document.fonts && typeof document.fonts.load === 'function') {
-      document.fonts.load(this._font(100)).then(() => {
-        if (!this.ctx) return;
-        this._layout();
+    if (fonts) {
+      let settled = false;
+      const settle = () => {
+        if (settled || !this.ctx) return;
+        settled = true;
+        this._waiting = false;
+        this._layout(); // measured against the real face this time
         this._draw(null);
-      }, () => {});
+      };
+      fonts.load(this._font(100)).then(settle, settle);
+      if (this._waiting) this._later(settle, FONT_WAIT_MS);
     }
 
     if (!prefersReducedMotion()) this._schedule(BURST.firstAfterMs);
@@ -244,7 +260,7 @@ export class HeroGrid {
   /* One frame. `bands` is null for the plain name, or glitchBands() output. */
   _draw(bands) {
     const { ctx, cols, rows, cell, grid } = this;
-    if (!ctx || !grid) return;
+    if (!ctx || !grid || this._waiting) return;
     const { text } = this._theme;
     const gap = Math.max(1, cell * 0.14);
     const s = cell - gap;

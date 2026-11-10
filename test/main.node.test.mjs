@@ -1207,6 +1207,8 @@ function fieldEnv(fn, { reduced = true } = {}) {
     c.getContext = () => ({
       font: '', fillStyle: '', textBaseline: '',
       fillText() {},
+      /* Every layout makes a fresh probe canvas, so every stub context can measure. */
+      measureText(t) { return { width: t.length * 0.6 * (parseFloat((this.font.match(/(\d+)px/) || [])[1]) || 1) }; },
       getImageData: (x, y, w, h) => {
         const data = new Uint8ClampedArray(w * h * 4);
         for (let yy = 2; yy < h - 2; yy++) for (let xx = 3; xx < Math.min(w - 3, 40); xx++) data[(yy * w + xx) * 4 + 3] = 255;
@@ -1258,6 +1260,59 @@ test('HeroGrid draws the name and reports its first paint', () => {
     assert.ok(hg.cols > 50 && hg.rows > 5, `grid ${hg.cols}×${hg.rows}`);
     assert.ok(drawn.fillRect >= hg.cols * hg.rows, 'every cell is painted');
     assert.equal(ready, 1, 'onReady fires once, after the first frame');
+    hg.destroy();
+  });
+});
+
+/* The first paint must not use a face the canvas does not have yet: it measured
+   and rasterised the fallback, painted it, hid the <h1>, and then redrew in
+   Archivo a moment later — the name visibly changed type after load. A
+   synchronous fake stands in for the FontFaceSet so the order is deterministic. */
+function fakeFonts({ loaded }) {
+  let settle = null;
+  return {
+    check: () => loaded,
+    load: () => ({ then(ok) { settle = ok; } }),
+    arrive() { loaded = true; if (settle) settle(); },
+  };
+}
+
+test('HeroGrid does not paint, or report ready, until the display face is in', () => {
+  fieldEnv(({ root, drawn }) => {
+    const fonts = fakeFonts({ loaded: false });
+    global.document.fonts = fonts;
+    let ready = 0;
+    const hg = new HeroGrid(root, () => ready++, { random: () => 0.5 });
+    assert.equal(drawn.fillRect, 0, 'painted with a face the canvas does not have yet');
+    assert.equal(ready, 0, 'the <h1> text was handed over before the real face existed');
+    fonts.arrive();
+    assert.ok(drawn.fillRect >= hg.cols * hg.rows, 'every cell is painted once the face arrives');
+    assert.equal(ready, 1, 'onReady fires once');
+    hg.destroy();
+  });
+});
+
+test('HeroGrid paints at once when the display face is already loaded', () => {
+  fieldEnv(({ root, drawn }) => {
+    global.document.fonts = fakeFonts({ loaded: true });
+    let ready = 0;
+    const hg = new HeroGrid(root, () => ready++, { random: () => 0.5 });
+    assert.ok(drawn.fillRect >= hg.cols * hg.rows, 'a loaded face should not delay the first frame');
+    assert.equal(ready, 1);
+    hg.destroy();
+  });
+});
+
+test('HeroGrid still paints if the display face never arrives', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  fieldEnv(({ root, drawn }) => {
+    global.document.fonts = fakeFonts({ loaded: false });
+    let ready = 0;
+    const hg = new HeroGrid(root, () => ready++, { random: () => 0.5 });
+    assert.equal(ready, 0);
+    t.mock.timers.tick(5000);
+    assert.equal(ready, 1, 'a font that never loads must not leave the name hidden for good');
+    assert.ok(drawn.fillRect > 0);
     hg.destroy();
   });
 });

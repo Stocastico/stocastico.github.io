@@ -382,6 +382,40 @@ describe('hero: the name as static', () => {
     } finally { await page.close(); }
   });
 
+  /* The handover. The <h1> is the no-JS text and the grid replaces it, so if
+     the text is painted first the name visibly changes type and width when the
+     grid arrives (the grid is fitted to the full width; the text is not). With
+     JS on, the text stays unpainted until the grid has drawn, and a CSS timer
+     brings it back if the grid never does — hidden content needs a way out. */
+  const nameOpacity = (page) => page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#hero h1')).opacity));
+
+  test('the text name is not painted while the grid is on its way', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.route('**/assets/hero-grid-*.js', async (route) => {
+        await new Promise((r) => setTimeout(r, 1500));
+        await route.continue();
+      });
+      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      assert.equal(await page.evaluate(() => document.querySelector('#hero').classList.contains('is-drawn')), false,
+        'the grid drew early; the test is not looking at the wait');
+      assert.equal(await nameOpacity(page), 0, 'the plain <h1> is painted before the grid, so the name changes type when it arrives');
+      await page.waitForSelector('#hero.is-drawn', { timeout: 8000 });
+    } finally { await page.close(); }
+  });
+
+  test('if the grid never arrives the name comes back on its own', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.route('**/assets/hero-grid-*.js', (route) => route.abort());
+      await page.goto(server.base + '/index.html', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(3800);
+      assert.equal(await page.evaluate(() => document.querySelector('#hero').classList.contains('is-drawn')), false);
+      assert.equal(await nameOpacity(page), 1, 'the name stayed invisible behind a script that never ran');
+    } finally { await page.close(); }
+  });
+
   test('without JavaScript the name is plain text', async () => {
     const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });
     const page = await ctx.newPage();
