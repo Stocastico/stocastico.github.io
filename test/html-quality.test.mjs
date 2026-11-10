@@ -86,13 +86,17 @@ for (const rel of PAGES) {
       `${rel} external <a> without rel="noopener":\n  ${offenders.join('\n  ')}`);
   });
 
-  test(`html: ${rel} preloads the two above-the-fold web fonts`, () => {
-    /* Every page loads css/fonts.css; preloading the two critical woff2 files
-       avoids FOUT/layout shift. One missing page = an inconsistent flash. */
-    for (const font of ['source-serif-4-latin-wght-normal.woff2', 'jetbrains-mono-latin-wght-normal.woff2']) {
-      const re = new RegExp(
-        `<link[^>]*rel="preload"[^>]*href="[^"]*${font.replace(/\./g, '\\.')}"[^>]*as="font"`, 'i');
-      assert.match(html, re, `${rel} missing <link rel="preload"> for ${font}`);
+  test(`html: ${rel} preloads the display face, and only that`, () => {
+    /* Archivo is the display face and the hero canvas waits on it: unpreloaded
+       it is found only after CSS parse and the text swaps late (CLS 0.137
+       measured, 0.009 with the preload). Mono is data-only; Serif is left to
+       the CSS so it does not compete with it. */
+    const link = (font) => new RegExp(
+      `<link[^>]*rel="preload"[^>]*href="[^"]*${font.replace(/\./g, '\\.')}"[^>]*as="font"`, 'i');
+    assert.match(html, link('archivo-latin-wdth-wght-normal.woff2'),
+      `${rel} missing <link rel="preload"> for the Archivo display face`);
+    for (const font of ['jetbrains-mono-latin-wght-normal.woff2', 'source-serif-4-latin-wght-normal.woff2']) {
+      assert.doesNotMatch(html, link(font), `${rel} still preloads ${font}`);
     }
   });
 
