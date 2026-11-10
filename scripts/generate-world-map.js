@@ -146,6 +146,70 @@ function ringSpan(coords) {
   return Math.max(maxX - minX, maxY - minY);
 }
 
+/* Path data is written relative: an absolute `M x y` for the first vertex and
+   then l/h/v steps from the previous one. At one decimal of a degree most steps
+   are a single digit, so the same geometry takes about 60% of the bytes of
+   `L x y` and under half the gzip. Everything is done in integer tenths, so a
+   delta is exact and decoding lands on the identical vertex — there is no
+   accumulated rounding. A leading minus is self-delimiting, so a separator is
+   only written before a non-negative number. */
+function fmtTenths(n) {
+  const abs = Math.abs(n);
+  const whole = Math.floor(abs / 10);
+  const frac = abs % 10;
+  const text = (whole ? String(whole) : '') + (frac ? `.${frac}` : '');
+  return (n < 0 ? '-' : '') + (text || '0');
+}
+
+function encodeSubpath(pts) {
+  const first = pts[0];
+  const join = (tokens) => tokens.reduce((acc, t, i) => (i === 0 || t[0] === '-' ? acc + t : `${acc} ${t}`), '');
+  let d = `M${join([fmtTenths(first.x), fmtTenths(first.y)])}`;
+  let prevCmd = '';
+  for (let i = 1; i < pts.length; i += 1) {
+    const dx = pts[i].x - pts[i - 1].x;
+    const dy = pts[i].y - pts[i - 1].y;
+    const cmd = dy === 0 ? 'h' : dx === 0 ? 'v' : 'l';
+    const args = cmd === 'h' ? [dx] : cmd === 'v' ? [dy] : [dx, dy];
+    const body = join(args.map(fmtTenths));
+    // A repeated command letter may be omitted; the next number then needs a
+    // separator unless it starts with a minus.
+    d += cmd === prevCmd ? (body[0] === '-' ? body : ` ${body}`) : cmd + body;
+    prevCmd = cmd;
+  }
+  return `${d}Z`;
+}
+
+/* The inverse, for tests and for anyone checking the encoding: absolute
+   vertices in integer tenths, `{ cmd: 'M' | 'L' | 'Z', x, y }`. Understands
+   exactly what encodeSubpath writes (M, l, h, v, Z). */
+function decodePath(d) {
+  const out = [];
+  let x = 0;
+  let y = 0;
+  for (const m of d.matchAll(/([MlhvZ])([^MlhvZ]*)/g)) {
+    const [, cmd, rest] = m;
+    if (cmd === 'Z') {
+      out.push({ cmd: 'Z' });
+      continue;
+    }
+    const nums = (rest.match(/-?\d*\.?\d+/g) || []).map((n) => Math.round(parseFloat(n) * 10));
+    if (cmd === 'M') {
+      [x, y] = nums;
+      out.push({ cmd: 'M', x, y });
+      continue;
+    }
+    const step = cmd === 'l' ? 2 : 1;
+    for (let i = 0; i < nums.length; i += step) {
+      if (cmd === 'l') { x += nums[i]; y += nums[i + 1]; }
+      else if (cmd === 'h') x += nums[i];
+      else y += nums[i];
+      out.push({ cmd: 'L', x, y });
+    }
+  }
+  return out;
+}
+
 /* Build the SVG subpath(s) for one ring. Equirectangular projection
    (x = lon, y = -lat), rounded to 1 decimal. The ring is unwrapped first;
    when the unwrapped ring spills past ±180° we also emit a copy shifted by
@@ -163,26 +227,18 @@ function ringSubpaths(coords, round, latBounds) {
   }
 
   const subpathAt = (shift) => {
-    let d = '';
-    let prevX = null;
-    let prevY = null;
-    let emitted = 0;
+    const pts = [];
     for (const [lon, lat] of unwrapped) {
-      const x = round(lon + shift);
-      const y = round(-lat);
+      const x = Math.round(round(lon + shift) * 10);
+      const y = Math.round(round(-lat) * 10);
+      const last = pts[pts.length - 1];
       // Skip points that collapse onto the previous one after rounding.
-      if (x === prevX && y === prevY) continue;
-      prevX = x;
-      prevY = y;
+      if (last && x === last.x && y === last.y) continue;
+      pts.push({ x, y });
       if (lat < latBounds.min) latBounds.min = lat;
       if (lat > latBounds.max) latBounds.max = lat;
-      // Compact path data: a leading minus is self-delimiting, so only emit a
-      // space separator before a non-negative y.
-      const sep = y < 0 ? '' : ' ';
-      d += `${emitted === 0 ? 'M' : 'L'}${x}${sep}${y}`;
-      emitted += 1;
     }
-    return emitted >= 2 ? `${d}Z` : '';
+    return pts.length >= 2 ? encodeSubpath(pts) : '';
   };
 
   const subs = [];
@@ -404,6 +460,8 @@ module.exports = {
   makeArcDecoder,
   replaceBlock,
   readCountriesModule,
+  encodeSubpath,
+  decodePath,
   BLOCK_START,
   BLOCK_END,
 };
