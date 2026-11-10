@@ -8,6 +8,8 @@ const path = require('node:path');
 const {
   buildWorldMapSvg,
   replaceBlock,
+  encodeSubpath,
+  decodePath,
   BLOCK_START,
   BLOCK_END,
 } = require('../scripts/generate-world-map.js');
@@ -55,7 +57,7 @@ test('buildWorldMapSvg simplifies the silhouette to keep the inline markup small
   // well under its pre-simplification size (~78 KB) at this display scale.
   assert.ok(svg.length < 90000, `expected simplified SVG < 90 KB, got ${svg.length}`);
   const land = svg.match(/class="wm-land" d="([^"]*)"/)[1];
-  const verts = (land.match(/[ML]/g) || []).length;
+  const verts = decodePath(land).filter((p) => p.cmd !== 'Z').length;
   // Detailed enough to meet the highlighted countries, which are drawn at
   // full detail on top of it: at eps 0.4° (~1,600 vertices) the grey coast
   // visibly missed the coloured ones — the review's "sgranata" — so the floor
@@ -107,4 +109,57 @@ test('drift: the index.html world map matches data/countries.js', () => {
   assert.equal(replaceBlock(html, svg), html,
     'the world-map SVG in index.html is stale — run `npm run generate-world-map`. '
     + 'A country is being drawn in a category data/countries.js no longer gives it.');
+});
+
+/* Path data is written relative (l/h/v from the previous vertex): the same
+   geometry as absolute coordinates in about 60% of the bytes and under half
+   the gzip. The encoding is only acceptable if it is exact, so these tests
+   decode what the generator writes and compare it vertex for vertex. */
+
+// Integer tenths of a degree: the generator's own resolution.
+const ring = (...pts) => pts.map(([x, y]) => ({ x, y }));
+
+test('encodeSubpath round-trips exactly, including the awkward deltas', () => {
+  const cases = [
+    // plain diagonal steps, mixed signs
+    ring([1781, 175], [1784, 173], [1787, 176], [1786, 182]),
+    // purely horizontal and vertical steps (h / v)
+    ring([0, 0], [30, 0], [30, -20], [-10, -20], [-10, 0]),
+    // sub-1 deltas: leading-zero and sign formatting (.3, -.3, -.1 -.2)
+    ring([-1800, 161], [-1798, 160], [-1800, 166], [-1806, 168]),
+    // zero crossing and large jumps
+    ring([-5, 5], [5, -5], [1800, -900], [-1800, 900]),
+  ];
+  for (const pts of cases) {
+    const d = encodeSubpath(pts);
+    const back = decodePath(d).filter((p) => p.cmd !== 'Z').map(({ x, y }) => ({ x, y }));
+    assert.deepEqual(back, pts, `round trip failed for ${d}`);
+    assert.ok(d.endsWith('Z') || d.endsWith('z'), 'subpath must be closed');
+  }
+});
+
+test('encodeSubpath output has no absolute L and is shorter than the absolute form', () => {
+  const pts = ring([1781, 175], [1784, 173], [1787, 176], [1786, 182], [1779, 183], [1774, 182]);
+  const d = encodeSubpath(pts);
+  assert.ok(!/L/.test(d), `absolute L left in ${d}`);
+  const absolute = 'M' + pts.map((p) => `${p.x / 10} ${p.y / 10}`).join('L') + 'Z';
+  assert.ok(d.length < absolute.length, `${d.length} !< ${absolute.length}`);
+});
+
+test('two subpaths decode independently (each starts from its own absolute M)', () => {
+  const a = ring([100, 100], [110, 105], [95, 120]);
+  const b = ring([-50, 20], [-40, 20], [-40, 30]);
+  const back = decodePath(encodeSubpath(a) + encodeSubpath(b))
+    .filter((p) => p.cmd !== 'Z').map(({ x, y }) => ({ x, y }));
+  assert.deepEqual(back, [...a, ...b]);
+});
+
+test('the shipped map uses relative path data throughout', () => {
+  const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  const block = html.slice(html.indexOf(BLOCK_START), html.indexOf(BLOCK_END));
+  const ds = [...block.matchAll(/ d="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(ds.length > 20, 'expected the land silhouette plus the highlighted countries');
+  for (const d of ds) assert.ok(!/L/.test(d), `absolute L in committed map path: ${d.slice(0, 60)}`);
+  const total = ds.reduce((n, d) => n + d.length, 0);
+  assert.ok(total < 45000, `path data should be ~38 KB relative (was ~64 KB absolute), got ${total}`);
 });
