@@ -1,33 +1,32 @@
-/* The e2e harness falls back to whatever Chromium is on disk when the pinned
-   one is missing. Playwright has shipped two layouts for that binary
-   (chrome-linux/ and chrome-linux64/); a lookup that knows only one finds
-   nothing on a machine with the other, and the whole browser suite dies at
-   launch with "Executable doesn't exist". */
+/* The harness falls back to whatever Chromium is on disk. Playwright has
+   shipped two layouts for it (chrome-linux/, chrome-linux64/); knowing only
+   one kills the whole browser suite at launch on a machine with the other. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { findChromium } from './e2e/harness.mjs';
+import { findChromium } from '../scripts/lib/chromium.mjs';
 
-function fakeBrowsers(layout, build) {
+test('findChromium: prefers the newest build, then chrome-linux64 within it', (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'pw-'));
-  mkdirSync(join(dir, `chromium-${build}`, layout), { recursive: true });
-  writeFileSync(join(dir, `chromium-${build}`, layout, 'chrome'), '');
-  return dir;
-}
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  for (const [build, layout] of [['1200', 'chrome-linux64'], ['1243', 'chrome-linux'], ['1243', 'chrome-linux64']]) {
+    mkdirSync(join(dir, `chromium-${build}`, layout), { recursive: true });
+    writeFileSync(join(dir, `chromium-${build}`, layout, 'chrome'), '');
+  }
+  delete process.env.CHROMIUM_EXECUTABLE;
+  assert.equal(findChromium(dir), join(dir, 'chromium-1243', 'chrome-linux64', 'chrome'));
+});
 
 for (const layout of ['chrome-linux', 'chrome-linux64']) {
-  test(`findChromium: finds the binary under ${layout}/`, () => {
-    const dir = fakeBrowsers(layout, '1243');
-    const prev = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  test(`findChromium: finds the binary under ${layout}/`, (t) => {
+    const dir = mkdtempSync(join(tmpdir(), 'pw-'));
+    t.after(() => rmSync(dir, { recursive: true, force: true }));
+    const exe = join(dir, 'chromium-1243', layout, 'chrome');
+    mkdirSync(join(dir, 'chromium-1243', layout), { recursive: true });
+    writeFileSync(exe, '');
     delete process.env.CHROMIUM_EXECUTABLE;
-    process.env.PLAYWRIGHT_BROWSERS_PATH = dir;
-    try {
-      assert.equal(findChromium(), join(dir, 'chromium-1243', layout, 'chrome'));
-    } finally {
-      if (prev === undefined) delete process.env.PLAYWRIGHT_BROWSERS_PATH;
-      else process.env.PLAYWRIGHT_BROWSERS_PATH = prev;
-    }
+    assert.equal(findChromium(dir), exe);
   });
 }

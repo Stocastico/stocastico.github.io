@@ -19,6 +19,7 @@ import { createRequire } from 'node:module';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findChromium } from '../../scripts/lib/chromium.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -83,21 +84,6 @@ export function startServer(root = DIST) {
    one; a dev container often carries a different revision, and the resulting
    "Executable doesn't exist" is not a test failure worth debugging. Fall back
    to whatever chromium is actually on disk. */
-export function findChromium() {
-  if (process.env.CHROMIUM_EXECUTABLE) return process.env.CHROMIUM_EXECUTABLE;
-  const dir = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
-  if (!existsSync(dir)) return null;
-  const candidates = readdirSync(dir)
-    .filter((d) => d.startsWith('chromium-'))
-    .sort()
-    .reverse()
-    /* Playwright has shipped both layouts; newest build first, then whichever
-       directory name exists inside it. */
-    .flatMap((d) => ['chrome-linux64', 'chrome-linux'].map((l) => join(dir, d, l, 'chrome')))
-    .filter(existsSync);
-  return candidates[0] ?? null;
-}
-
 export async function launchBrowser(opts = {}) {
   try {
     return await chromium.launch(opts);

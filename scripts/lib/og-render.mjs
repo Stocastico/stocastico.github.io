@@ -16,6 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findChromium } from './chromium.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const W = 1200;
@@ -47,11 +48,7 @@ async function launch() {
   try {
     return await chromium.launch();
   } catch (err) {
-    const base = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
-    const exe = fs.existsSync(base) && fs.readdirSync(base)
-      .filter((d) => d.startsWith('chromium-'))
-      .map((d) => path.join(base, d, 'chrome-linux', 'chrome'))
-      .find((p) => fs.existsSync(p));
+    const exe = findChromium();
     if (!exe) throw err;
     return chromium.launch({ executablePath: exe });
   }

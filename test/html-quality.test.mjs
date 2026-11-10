@@ -87,12 +87,10 @@ for (const rel of PAGES) {
   });
 
   test(`html: ${rel} preloads the display face, and only that`, () => {
-    /* Archivo sets the hero name, every section title and the chrome, and the
-       hero canvas waits on it. Unpreloaded, the browser finds it only after
-       parsing the CSS, so the text swaps late: measured on a throttled
-       connection, CLS 0.137 (over the 0.1 "good" limit) against 0.009 with the
-       preload. JetBrains Mono is data only (years, kernel weights, keys) and
-       is no longer preloaded; its 13 KB would only compete with the CSS. */
+    /* Archivo is the display face and the hero canvas waits on it: unpreloaded
+       it is found only after CSS parse and the text swaps late (CLS 0.137
+       measured, 0.009 with the preload). Mono is data-only; Serif is left to
+       the CSS so it does not compete with it. */
     const link = (font) => new RegExp(
       `<link[^>]*rel="preload"[^>]*href="[^"]*${font.replace(/\./g, '\\.')}"[^>]*as="font"`, 'i');
     assert.match(html, link('archivo-latin-wdth-wght-normal.woff2'),
