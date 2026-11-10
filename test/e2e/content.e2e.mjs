@@ -445,6 +445,28 @@ describe('hero: the name as static', () => {
     });
   }
 
+  /* The one-line name is sized to exactly its box, so a browser that measures
+     it a hair wider (a newer Chromium did, in CI: 593px wide, wrapped onto two
+     lines, against a 1180px grid) would break the line. It must not wrap, however
+     little room it has. */
+  test('the one-line name never wraps, even a hair wider than its box', async () => {
+    const page = await newPage(browser, server, { viewport: VIEWPORTS.desktop });
+    try {
+      await page.route('**/assets/hero-grid-*.js', (route) => route.abort());
+      await page.goto(server.base + '/index.html', { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      const lines = await page.evaluate(() => {
+        const st = document.createElement('style');
+        st.textContent = '@container (min-width: 900px) { .hero-name { font-size: calc(100cqw / 5.615 * 1.003) !important; } }';
+        document.head.appendChild(st);
+        const r = document.createRange();
+        r.selectNodeContents(document.querySelector('#hero h1'));
+        return r.getClientRects().length;
+      });
+      assert.equal(lines, 1, 'the name wrapped when it was 0.3% wider than its box');
+    } finally { await page.close(); }
+  });
+
   test('without JavaScript the name is plain text', async () => {
     const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: VIEWPORTS.desktop });
     const page = await ctx.newPage();

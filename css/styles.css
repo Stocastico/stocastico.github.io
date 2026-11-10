@@ -876,6 +876,9 @@ body::before {
 @container (min-width: 900px) {
   .hero-name {
     font-size: calc(100cqw / 5.615);
+    /* Sized to exactly its box, so a browser that measures it a hair wider
+       would otherwise break the line (a newer Chromium did, in CI). */
+    white-space: nowrap;
     height: calc(0.76em + 14px);
     position: relative;
     top: calc(7px - 0.044em);
