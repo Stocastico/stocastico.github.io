@@ -22,6 +22,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('font')
 ap.add_argument('--wght', type=int, default=500)
 ap.add_argument('--gap', type=float, default=-5, help='space between S and M in grid units (negative = overlap)')
+ap.add_argument('--stack', action='store_true', help='centre S and M on top of each other (a monogram); ignores --gap')
 ap.add_argument('--out', default=os.path.join(os.path.dirname(__file__), '..', 'scripts', 'lib', 'favicon-glyph.json'))
 a = ap.parse_args()
 
@@ -35,6 +36,8 @@ def bounds(ch):
 h = bounds('H'); k = CAP / (h[3] - h[1])
 sb, mb = bounds('S'), bounds('M')
 sw, mw = (sb[2] - sb[0]) * k, (mb[2] - mb[0]) * k
+if a.stack:
+    a.gap = -(sw + mw) / 2
 x0 = (GRID - (sw + a.gap + mw)) / 2
 fmt = lambda v: ('%.2f' % v).rstrip('0').rstrip('.')
 parts = []
