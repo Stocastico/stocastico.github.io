@@ -4,7 +4,7 @@
 An SVG favicon is its own document and cannot load a web font, so the letters
 are shipped as outlines. Needs fontTools (pip install fonttools).
 
-  python3 tools/extract-favicon-glyph.py Quicksand[wght].ttf --wght 500 --gap -1.5
+  python3 tools/extract-favicon-glyph.py Quicksand[wght].ttf --wght 500 --gap -5
 
 The glyph is Quicksand (SIL OFL 1.1, https://github.com/google/fonts/tree/main/ofl/quicksand).
 S and M are scaled to a 35-unit cap height, baseline at y=50 on a 64 grid, and
@@ -21,7 +21,7 @@ from fontTools.pens.boundsPen import BoundsPen
 ap = argparse.ArgumentParser()
 ap.add_argument('font')
 ap.add_argument('--wght', type=int, default=500)
-ap.add_argument('--gap', type=float, default=-1.5, help='space between S and M in grid units (negative = overlap)')
+ap.add_argument('--gap', type=float, default=-5, help='space between S and M in grid units (negative = overlap)')
 ap.add_argument('--out', default=os.path.join(os.path.dirname(__file__), '..', 'scripts', 'lib', 'favicon-glyph.json'))
 a = ap.parse_args()
 
