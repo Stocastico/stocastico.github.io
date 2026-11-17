@@ -219,17 +219,14 @@ test('generateThemeJs: the emitted helpers behave correctly', () => {
 
 // ─── faviconDataUri ──────────────────────────────────────────────────────────
 
-test('faviconDataUri: a transparent line mark, light on dark tabs and dark on light ones', () => {
-  const uri = faviconDataUri('#c8a44d');
+test('faviconDataUri: URL-encodes both fills into an SVG data URI', () => {
+  const uri = faviconDataUri('#0a120e', '#c8a44d');
   assert.match(uri, /^data:image\/svg\+xml,/);
-  /* No ground: the tab shows through, like a line drawn on the browser chrome. */
-  assert.doesNotMatch(uri, /%3Crect/);
-  assert.match(uri, /%3Cpath fill='%23c8a44d'/);
-  assert.doesNotMatch(uri, /stroke/);
-  /* A light tab strip gets a near-black fill; yellow does not hold on white. */
-  assert.match(uri, /prefers-color-scheme:light/);
-  /* Outlines, not text: an SVG favicon is its own document and cannot load
-     the site's web fonts (#195). */
+  assert.match(uri, /fill='%230a120e'/);
+  assert.match(uri, /fill='%23c8a44d'/);
+  /* "SM" as Archivo outlines, not text: an SVG favicon is its own document
+     and cannot load the site's web fonts, so <text font-family=…> fell back
+     to Georgia and the icon never matched the type (#195). */
   assert.match(uri, /%3Cpath /);
   assert.doesNotMatch(uri, /%3Ctext|font-family|Georgia/);
 });
@@ -247,8 +244,8 @@ test('rewriteHtml: rewrites theme-color, favicon and nav-gradient stops', () => 
   const out = rewriteHtml(html, samplePalette());
 
   assert.match(out, /content="#0a120e"/);
-  assert.match(out, /%3Cpath fill='%23c8a44d'/);
-  assert.doesNotMatch(out, /%3Crect|%3Ctext/);
+  assert.match(out, /fill='%230a120e'/);
+  assert.match(out, /fill='%23c8a44d'/);
   /* The nav mark points at the custom properties, not baked hex, so it follows
      a runtime palette switch (js/ui.js applyPalette) instead of freezing on
      whichever palette was active at build time. */
@@ -275,9 +272,9 @@ test('rewriteHtml: is idempotent', () => {
 test('rewriteFaviconSvg: writes the whole icon from the palette, replacing an old text favicon', () => {
   const old = '<svg viewBox="0 0 64 64"><rect fill="#080c14"/><text fill="#00d4ff">SM</text></svg>';
   const out = rewriteFaviconSvg(old, samplePalette());
-  assert.doesNotMatch(out, /<rect|<text/);
+  assert.match(out, /<rect[^>]*fill="#0a120e"/);
   assert.match(out, /<path fill="#c8a44d" d="M/);
-  assert.equal((out.match(/<path /g) || []).length, 1, 'S and M are one outline, so they can overlap');
+  assert.doesNotMatch(out, /<text/);
 });
 
 // ─── spliceCssBlock ──────────────────────────────────────────────────────────

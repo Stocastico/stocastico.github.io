@@ -74,30 +74,27 @@ async function renderPng(svg, size) {
     .toBuffer();
 }
 
-/* The opaque raster icons (iOS fills transparency with black; .ico has no
-   colour-scheme query) put the same outline as favicon.svg on the palette's
-   ground. The glyph comes from scripts/lib/favicon-glyph.json, the ground from
-   the manifest's background_color and the fill from favicon.svg, so all three
-   stay in step with `npm run generate-theme`. `scale` shrinks the mark about
-   the centre — the maskable variants need the central safe zone. */
-async function buildIconSvg(svgBuffer, { rounded, scale }) {
-  const glyph = JSON.parse(await readFile(path.join(ROOT, 'scripts', 'lib', 'favicon-glyph.json'), 'utf8'));
-  const fill = (svgBuffer.toString('utf8').match(/<path fill="([^"]+)"/) || [])[1];
-  const manifest = JSON.parse(await readFile(path.join(PUBLIC_DIR, 'manifest.webmanifest'), 'utf8'));
-  if (!fill) throw new Error('public/favicon.svg has no filled <path> — run `npm run generate-theme` first');
-  const n = glyph.viewBox;
-  const off = (n - n * scale) / 2;
+/* Derive a maskable SVG from the themed favicon: drop the rounded corners
+   (the OS supplies the mask shape) and shrink the glyph so it sits inside the
+   maskable safe zone. Colours are read from favicon.svg, so this stays in
+   sync with `npm run generate-theme`. */
+function buildMaskableSvg(svgBuffer) {
+  const svgText = svgBuffer.toString('utf8');
+  const bg = (svgText.match(/<rect[^>]*fill="([^"]+)"/) || [])[1] || '#0a120e';
+  /* The glyph is the favicon's own "SM" outline (Archivo, baked as a path —
+     an SVG cannot load web fonts), scaled to 75% about the centre. */
+  const glyph = svgText.match(/<path\b[^>]*\/>/);
+  if (!glyph) throw new Error('public/favicon.svg has no <path> glyph — run `npm run generate-theme` first');
   return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}">` +
-    `<rect width="${n}" height="${n}"${rounded ? ' rx="8"' : ''} fill="${manifest.background_color}"/>` +
-    `<path transform="translate(${off} ${off}) scale(${scale})" fill="${fill}" d="${glyph.d}"/>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<rect width="64" height="64" fill="${bg}"/>` +
+    `<g transform="translate(8 8) scale(0.75)">${glyph[0]}</g>` +
     `</svg>`,
   );
 }
 
 async function main() {
-  const svgSource = await readFile(SVG_PATH);
-  const svg = await buildIconSvg(svgSource, { rounded: true, scale: 1 });
+  const svg = await readFile(SVG_PATH);
   await mkdir(PUBLIC_DIR, { recursive: true });
 
   const sizes = [16, 32, 48, 180, 192, 512];
@@ -110,7 +107,7 @@ async function main() {
   await writeFile(path.join(PUBLIC_DIR, 'icon-192.png'), pngs[192]);
   await writeFile(path.join(PUBLIC_DIR, 'icon-512.png'), pngs[512]);
 
-  const maskableSvg = await buildIconSvg(svgSource, { rounded: false, scale: 0.75 });
+  const maskableSvg = buildMaskableSvg(svg);
   await writeFile(path.join(PUBLIC_DIR, 'icon-maskable-192.png'), await renderPng(maskableSvg, 192));
   await writeFile(path.join(PUBLIC_DIR, 'icon-maskable-512.png'), await renderPng(maskableSvg, 512));
 

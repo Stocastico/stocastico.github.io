@@ -108,7 +108,7 @@ data/publications.js Publication entries — ESM (edit directly; `featured: true
 js/theme.js         Generated ESM module — active palette in hex/int/glvec forms (do not edit manually)
 scripts/            Generator scripts (new-project, generate-cv, generate-locations, generate-theme, generate-countries, generate-world-map, generate-unesco, generate-links, generate-cards, generate-og, generate-project-og, generate-mnist-og, generate-thumbs, train-cnn, generate-lenet-weights)
 scripts/lib/og-render.mjs  HTML → 1200×630 PNG in headless Chromium, shared by the three social-card generators (sharp/librsvg ignores @font-face)
-scripts/lib/favicon-glyph.json  The favicon mark: "S" and "M" outlines from Quicksand 500 (SIL OFL 1.1) as one path, overlapping slightly, plus the light-scheme fill colour; read by generate-theme (favicon.svg + inline data: URIs) and generate-favicons (rasters). Regenerate with `tools/extract-favicon-glyph.py <Quicksand[wght].ttf> --wght 500 --gap -5` (Python + fontTools) only if the face, weight or overlap changes
+scripts/lib/favicon-glyph.json  "SM" in Archivo (wdth 62, wght 800) as SVG outlines; read by generate-theme. Regenerate with tools/extract-favicon-glyph.py (Python + fontTools) only if the face or lettering changes
 scripts/lib/career-edit.mjs  Build-time builder for the homepage career timeline (#191) — baked into index.html by generate-cards, never bundled
 scripts/lib/lenet.mjs  Training-side LeNet-5 (init + backward + float32 serialisation); re-exports the forward pass from js/lenet.js
 test/               Tests for each script + main.js + SEO + Playwright E2E

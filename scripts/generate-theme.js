@@ -423,27 +423,22 @@ export function glvec(hex) {
 
 // ─── HTML / favicon rewriting ─────────────────────────────────────────────────
 
-/* "SM" as one outline from Quicksand 500 (SIL OFL 1.1), baked by
-   tools/extract-favicon-glyph.py — a thin round-ended line on a transparent
-   ground, the way a browser tab strip likes a mark. An SVG favicon is its own
-   document and cannot load the site's web fonts, so it is drawn, not typed.
-   S and M are one path so they can overlap slightly. The fill is the palette
-   accent on a dark tab strip and near-black on a light one (yellow does not
-   hold 3:1 on white): the media query lives inside the SVG, which Chromium and
-   Firefox honour. The raster fallbacks (generate-favicons) put the same mark
-   on the palette ground instead. */
+/* "SM" as Archivo outlines (width 62, weight 800 — the display cut), baked
+   once by tools/extract-favicon-glyph.py. An SVG favicon is its own document
+   and cannot load the site's web fonts, so <text font-family=…> only ever
+   rendered in a fallback (Georgia) and the icon never matched the type. */
 const FAVICON_GLYPH = JSON.parse(fs.readFileSync(path.join(__dirname, 'lib', 'favicon-glyph.json'), 'utf8'));
 
-/** The favicon as an SVG document: one outline, no ground. */
-function faviconSvg(fgHex) {
+/** The favicon as an SVG document: the ground and the two letters. */
+function faviconSvg(bgHex, fgHex) {
   const n = FAVICON_GLYPH.viewBox;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}">`
-    + `<style>@media (prefers-color-scheme:light){path{fill:${FAVICON_GLYPH.lightFill}}}</style>`
+    + `<rect width="${n}" height="${n}" rx="8" fill="${bgHex}"/>`
     + `<path fill="${fgHex}" d="${FAVICON_GLYPH.d}"/></svg>`;
 }
 
-function faviconDataUri(fgHex) {
-  return 'data:image/svg+xml,' + faviconSvg(fgHex)
+function faviconDataUri(bgHex, fgHex) {
+  return 'data:image/svg+xml,' + faviconSvg(bgHex, fgHex)
     .replace(/"/g, "'")
     .replace(/%/g, '%25').replace(/#/g, '%23').replace(/</g, '%3C').replace(/>/g, '%3E');
 }
@@ -463,7 +458,7 @@ function rewriteHtml(text, p, id) {
   /* 2. Inline data: SVG favicon */
   out = out.replace(
     /href="data:image\/svg\+xml,%3Csvg[^"]*%3C\/svg%3E"/g,
-    `href="${faviconDataUri(p.faviconFg)}"`,
+    `href="${faviconDataUri(p.faviconBg, p.faviconFg)}"`,
   );
 
   /* 3. nav-logo <linearGradient> stops — scoped to the nav-grad block so no
@@ -498,7 +493,7 @@ function rewriteHtml(text, p, id) {
 /** public/favicon.svg — written whole from the palette and the glyph, so
  *  the file is a pure function of both (theme-sync compares it). */
 function rewriteFaviconSvg(_text, p) {
-  return faviconSvg(p.faviconFg) + '\n';
+  return faviconSvg(p.faviconBg, p.faviconFg) + '\n';
 }
 
 /** public/manifest.webmanifest — PWA chrome colours. theme_color drives the
