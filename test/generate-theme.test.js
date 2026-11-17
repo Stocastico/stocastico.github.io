@@ -224,10 +224,9 @@ test('faviconDataUri: a transparent line mark, light on dark tabs and dark on li
   assert.match(uri, /^data:image\/svg\+xml,/);
   /* No ground: the tab shows through, like a line drawn on the browser chrome. */
   assert.doesNotMatch(uri, /%3Crect/);
-  assert.match(uri, /stroke='%23c8a44d'/);
-  assert.match(uri, /stroke-linecap='round'/);
-  assert.match(uri, /stroke-linejoin='round'/);
-  /* A light tab strip gets a near-black stroke; yellow does not hold on white. */
+  assert.match(uri, /%3Cpath fill='%23c8a44d'/);
+  assert.doesNotMatch(uri, /stroke/);
+  /* A light tab strip gets a near-black fill; yellow does not hold on white. */
   assert.match(uri, /prefers-color-scheme:light/);
   /* Outlines, not text: an SVG favicon is its own document and cannot load
      the site's web fonts (#195). */
@@ -248,7 +247,7 @@ test('rewriteHtml: rewrites theme-color, favicon and nav-gradient stops', () => 
   const out = rewriteHtml(html, samplePalette());
 
   assert.match(out, /content="#0a120e"/);
-  assert.match(out, /stroke='%23c8a44d'/);
+  assert.match(out, /%3Cpath fill='%23c8a44d'/);
   assert.doesNotMatch(out, /%3Crect|%3Ctext/);
   /* The nav mark points at the custom properties, not baked hex, so it follows
      a runtime palette switch (js/ui.js applyPalette) instead of freezing on
@@ -277,8 +276,8 @@ test('rewriteFaviconSvg: writes the whole icon from the palette, replacing an ol
   const old = '<svg viewBox="0 0 64 64"><rect fill="#080c14"/><text fill="#00d4ff">SM</text></svg>';
   const out = rewriteFaviconSvg(old, samplePalette());
   assert.doesNotMatch(out, /<rect|<text/);
-  assert.match(out, /stroke="#c8a44d"/);
-  assert.equal((out.match(/<path /g) || []).length, 2, 'one path for S, one for M');
+  assert.match(out, /<path fill="#c8a44d" d="M/);
+  assert.equal((out.match(/<path /g) || []).length, 1, 'S and M are one outline, so they can overlap');
 });
 
 // ─── spliceCssBlock ──────────────────────────────────────────────────────────

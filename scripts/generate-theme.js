@@ -423,23 +423,23 @@ export function glvec(hex) {
 
 // ─── HTML / favicon rewriting ─────────────────────────────────────────────────
 
-/* "SM" as two monoline strokes with round caps — a thin line on a transparent
+/* "SM" as one outline from Quicksand 500 (SIL OFL 1.1), baked by
+   tools/extract-favicon-glyph.py — a thin round-ended line on a transparent
    ground, the way a browser tab strip likes a mark. An SVG favicon is its own
    document and cannot load the site's web fonts, so it is drawn, not typed.
-   The stroke is the palette accent on a dark tab strip and near-black on a
-   light one (yellow does not hold 3:1 on white): the media query lives inside
-   the SVG, which Chromium and Firefox honour. The raster fallbacks
-   (generate-favicons) put the same mark on the palette ground instead. */
+   S and M are one path so they can overlap slightly. The fill is the palette
+   accent on a dark tab strip and near-black on a light one (yellow does not
+   hold 3:1 on white): the media query lives inside the SVG, which Chromium and
+   Firefox honour. The raster fallbacks (generate-favicons) put the same mark
+   on the palette ground instead. */
 const FAVICON_GLYPH = JSON.parse(fs.readFileSync(path.join(__dirname, 'lib', 'favicon-glyph.json'), 'utf8'));
 
-/** The favicon as an SVG document: two strokes, no ground. */
+/** The favicon as an SVG document: one outline, no ground. */
 function faviconSvg(fgHex) {
   const n = FAVICON_GLYPH.viewBox;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}">`
-    + `<style>@media (prefers-color-scheme:light){g{stroke:${FAVICON_GLYPH.lightStroke}}}</style>`
-    + `<g fill="none" stroke="${fgHex}" stroke-width="${FAVICON_GLYPH.strokeWidth}" stroke-linecap="round" stroke-linejoin="round">`
-    + FAVICON_GLYPH.paths.map(d => `<path d="${d}"/>`).join('')
-    + `</g></svg>`;
+    + `<style>@media (prefers-color-scheme:light){path{fill:${FAVICON_GLYPH.lightFill}}}</style>`
+    + `<path fill="${fgHex}" d="${FAVICON_GLYPH.d}"/></svg>`;
 }
 
 function faviconDataUri(fgHex) {
